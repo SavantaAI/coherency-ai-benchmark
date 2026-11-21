@@ -1,0 +1,8 @@
+{
+  "enableProviderUpdateChecks": false,
+  "providerInstances": {
+    "claudeAgent": { "driver": "claudeAgent", "enabled": true },
+    "codex": { "driver": "codex", "enabled": false },
+    "pi": { "driver": "pi", "enabled": false }
+  }
+}
