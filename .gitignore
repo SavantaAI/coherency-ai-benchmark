@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Secrets never enter the repository
+.env
+.env.*
+*.key
+keys.env
+
+# Run output (trajectories, transcripts, logs) is large and may hold model output
+runs/
+out/
+
+# Local review material that stays outside the public repository
+council/
+LEARNINGS.md
+
+.DS_Store
