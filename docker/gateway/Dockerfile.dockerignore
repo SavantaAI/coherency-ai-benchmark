@@ -1,0 +1,5 @@
+# Build context is the repository root; send only the gateway package.
+*
+!gateway/*.py
+!gateway/config.json
+gateway/verify_topology.py

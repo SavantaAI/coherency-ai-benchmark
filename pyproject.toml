@@ -1,0 +1,18 @@
+[project]
+name = "coherency-benchmark"
+version = "0.0.0"
+description = "User-grounded LLM coherency benchmark"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

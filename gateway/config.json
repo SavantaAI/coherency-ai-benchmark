@@ -1,0 +1,57 @@
+{
+  "listen": {"host": "127.0.0.1", "port": 8080, "prefix_routes": false},
+  "log_dir": "/var/log/gateway",
+  "store_bodies": false,
+  "upstream_timeout_seconds": 900,
+  "client_idle_timeout_seconds": 60,
+  "client_read_timeout_seconds": 300,
+  "upstream_connect_timeout_seconds": 15,
+  "max_request_bytes": 33554432,
+  "max_connections": 256,
+  "max_response_body_bytes": 16777216,
+  "max_sse_event_bytes": 16777216,
+  "max_stored_body_bytes": 16777216,
+  "max_buffered_bytes": 536870912,
+  "single_provider": true,
+  "transparent": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 443,
+    "tls_dir": "/run/gateway-tls",
+    "cert_days": 7,
+    "ca_name": "Local Root CA",
+    "ca_cert_file": "local-ca.crt"
+  },
+  "routes": [
+    {
+      "name": "anthropic",
+      "prefix": "/anthropic",
+      "upstream": "https://api.anthropic.com",
+      "hosts": ["api.anthropic.com"],
+      "credential": {"header": "x-api-key", "format": "{key}", "key_file": "/run/secrets/anthropic_key"},
+      "usage": "anthropic",
+      "allow": [
+        {"method": "POST", "path": "/v1/messages", "match": "exact"},
+        {"method": "POST", "path": "/v1/messages/count_tokens", "match": "exact"},
+        {"method": "GET", "path": "/api/claude_code/settings", "match": "exact"},
+        {"method": "GET", "path": "/api/claude_code/policy_limits", "match": "exact"}
+      ]
+    },
+    {
+      "name": "openai",
+      "prefix": "/openai",
+      "upstream": "https://api.openai.com",
+      "hosts": ["api.openai.com"],
+      "credential": {"header": "authorization", "format": "Bearer {key}", "key_file": "/run/secrets/openai_key"},
+      "usage": "openai",
+      "allow": [
+        {"method": "POST", "path": "/v1/chat/completions", "match": "exact"},
+        {"method": "POST", "path": "/v1/responses", "match": "exact"},
+        {"method": "GET", "path": "/v1/responses/{id}", "match": "exact"},
+        {"method": "DELETE", "path": "/v1/responses/{id}", "match": "exact"},
+        {"method": "POST", "path": "/v1/responses/{id}/cancel", "match": "exact"},
+        {"method": "GET", "path": "/v1/responses/{id}/input_items", "match": "exact"}
+      ]
+    }
+  ]
+}
