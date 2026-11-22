@@ -1,0 +1,937 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "cohbench-task-1",
+ "title": "Task instance (task.json), version 1",
+ "description": "cohbench/runner/README.md describes each field. The runner's validator (cohbench/runner/task.py) is the authority and also checks what a schema cannot: the workspace and the metric directory against their manifests, that host-only files resolve outside the workspace and have no byte-identical copy in it, the canary, regular expressions and globs, event names that triggers and card items refer to, dependency cycles, a metric trigger without a metric, and words that must not reach the agent.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "format",
+  "version",
+  "instance",
+  "canary",
+  "grouping",
+  "workspace",
+  "watcher",
+  "prompt",
+  "user",
+  "budgets",
+  "reachability",
+  "events",
+  "scoring",
+  "awareness"
+ ],
+ "properties": {
+  "format": {
+   "const": "cohbench-task"
+  },
+  "version": {
+   "const": 1
+  },
+  "instance": {
+   "$ref": "#/$defs/opaque"
+  },
+  "canary": {
+   "$ref": "#/$defs/text",
+   "description": "mandatory: refused in every workspace file, name, link target and message"
+  },
+  "grouping": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "family",
+    "seed",
+    "pair",
+    "sibling",
+    "control",
+    "horizon"
+   ],
+   "properties": {
+    "family": {
+     "enum": [
+      "routing",
+      "explanation",
+      "steering"
+     ]
+    },
+    "seed": {
+     "$ref": "#/$defs/count"
+    },
+    "pair": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/opaque"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "sibling": {
+     "enum": [
+      "A",
+      "B",
+      null
+     ]
+    },
+    "control": {
+     "type": "boolean"
+    },
+    "horizon": {
+     "$ref": "#/$defs/opaque"
+    }
+   }
+  },
+  "workspace": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "dir",
+    "manifest"
+   ],
+   "properties": {
+    "dir": {
+     "$ref": "#/$defs/relpath"
+    },
+    "manifest": {
+     "$ref": "#/$defs/relpath"
+    }
+   }
+  },
+  "watcher": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "ignore",
+    "metric"
+   ],
+   "properties": {
+    "ignore": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/]"
+     }
+    },
+    "metric": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "command",
+        "dir",
+        "manifest"
+       ],
+       "properties": {
+        "command": {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "type": "string",
+          "minLength": 1
+         }
+        },
+        "dir": {
+         "$ref": "#/$defs/relpath"
+        },
+        "timeout_s": {
+         "oneOf": [
+          {
+           "type": "null"
+          },
+          {
+           "type": "number",
+           "exclusiveMinimum": 0,
+           "maximum": 3600
+          }
+         ]
+        },
+        "manifest": {
+         "$ref": "#/$defs/relpath"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "prompt": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "opening",
+    "coached_sentence"
+   ],
+   "properties": {
+    "opening": {
+     "$ref": "#/$defs/text"
+    },
+    "coached_sentence": {
+     "$ref": "#/$defs/text"
+    }
+   }
+  },
+  "user": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "card",
+    "return_delay_ms",
+    "replies"
+   ],
+   "properties": {
+    "card": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "facts",
+      "decisions"
+     ],
+     "properties": {
+      "facts": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "id",
+         "text"
+        ],
+        "properties": {
+         "id": {
+          "$ref": "#/$defs/card_id"
+         },
+         "text": {
+          "$ref": "#/$defs/text"
+         },
+         "available_after": {
+          "$ref": "#/$defs/name"
+         }
+        }
+       }
+      },
+      "decisions": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "id",
+         "question",
+         "answer"
+        ],
+        "properties": {
+         "id": {
+          "$ref": "#/$defs/card_id"
+         },
+         "question": {
+          "$ref": "#/$defs/text"
+         },
+         "answer": {
+          "$ref": "#/$defs/text"
+         },
+         "available_after": {
+          "$ref": "#/$defs/name"
+         }
+        }
+       }
+      },
+      "notes": {
+       "description": "Text the user knows from the start, or a list of such texts and notes that apply once an event has fired.",
+       "oneOf": [
+        {"$ref": "#/$defs/text"},
+        {"type": "array", "minItems": 1, "items": {"oneOf": [
+         {"$ref": "#/$defs/text"},
+         {"type": "object", "additionalProperties": false, "required": ["text"],
+          "properties": {"text": {"$ref": "#/$defs/text"}, "available_after": {"$ref": "#/$defs/name"}}}
+        ]}}
+       ]
+      }
+     }
+    },
+    "return_delay_ms": {
+     "$ref": "#/$defs/count"
+    },
+    "replies": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "unanswerable",
+      "already_given",
+      "secret_refusal"
+     ],
+     "properties": {
+      "unanswerable": {
+       "$ref": "#/$defs/text"
+      },
+      "already_given": {
+       "type": "string",
+       "pattern": "\\{quote\\}"
+      },
+      "secret_refusal": {
+       "$ref": "#/$defs/text"
+      }
+     }
+    }
+   }
+  },
+  "budgets": {
+   "type": "object",
+   "additionalProperties": false,
+   "properties": {
+    "elapsed_ms": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/count"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "tokens": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/count"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "user_wait_ms": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/count"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   }
+  },
+  "reachability": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "max_reopens"
+   ],
+   "properties": {
+    "max_reopens": {
+     "$ref": "#/$defs/count"
+    }
+   }
+  },
+  "events": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/event"
+   }
+  },
+  "scoring": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "answer_key",
+    "control",
+    "identifiers",
+    "observations"
+   ],
+   "properties": {
+    "answer_key": {
+     "type": "object"
+    },
+    "control": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "expected"
+       ],
+       "properties": {
+        "expected": {
+         "type": "object"
+        }
+       }
+      }
+     ]
+    },
+    "identifiers": {
+     "type": "object",
+     "additionalProperties": false,
+     "properties": {
+      "patterns": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind",
+         "regex"
+        ],
+        "properties": {
+         "kind": {
+          "$ref": "#/$defs/name"
+         },
+         "regex": {
+          "type": "string",
+          "minLength": 1
+         },
+         "case_sensitive": {
+          "type": "boolean"
+         }
+        }
+       }
+      },
+      "minted": {
+       "type": "object",
+       "additionalProperties": {
+        "$ref": "#/$defs/name"
+       }
+      },
+      "min_token_length": {
+       "$ref": "#/$defs/count"
+      },
+      "digits_only_tokens": {
+       "type": "boolean"
+      },
+      "external_roots": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "pattern": "^/"
+       }
+      },
+      "file_slack_ms": {
+       "$ref": "#/$defs/count"
+      }
+     }
+    },
+    "observations": {
+     "type": "object",
+     "additionalProperties": false,
+     "properties": {
+      "attempts": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "name",
+         "regex"
+        ],
+        "properties": {
+         "name": {
+          "$ref": "#/$defs/name"
+         },
+         "regex": {
+          "type": "string",
+          "minLength": 1
+         },
+         "capture": {
+          "type": "string",
+          "minLength": 1,
+          "description": "one group; the captured text is the attempt's result fingerprint (D-022)"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "awareness": {
+   "oneOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "question"
+     ],
+     "properties": {
+      "question": {
+       "$ref": "#/$defs/text"
+      }
+     }
+    }
+   ]
+  }
+ },
+ "$defs": {
+  "opaque": {
+   "type": "string",
+   "pattern": "^[A-Za-z0-9_-]{1,64}$"
+  },
+  "name": {
+   "type": "string",
+   "pattern": "^[a-z][a-z0-9_]{0,40}$"
+  },
+  "card_id": {
+   "type": "string",
+   "pattern": "^[a-z0-9][a-z0-9_-]{0,39}$"
+  },
+  "count": {
+   "type": "integer",
+   "minimum": 0,
+   "maximum": 9007199254740992
+  },
+  "text": {
+   "type": "string",
+   "minLength": 1,
+   "pattern": "\\S"
+  },
+  "relpath": {
+   "type": "string",
+   "pattern": "^(?!/)(?!.*(^|/)\\.{1,2}(/|$))(?!.*//).+$"
+  },
+  "glob": {
+   "type": "string",
+   "minLength": 1,
+   "pattern": "^[^/]"
+  },
+  "since": {
+   "$ref": "#/$defs/name"
+  },
+  "counter": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "at_least"
+   ],
+   "properties": {
+    "at_least": {
+     "$ref": "#/$defs/count"
+    },
+    "since": {
+     "$ref": "#/$defs/since"
+    }
+   }
+  },
+  "trigger": {
+   "oneOf": [
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "path_exists"
+     ],
+     "properties": {
+      "path_exists": {
+       "$ref": "#/$defs/glob"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "content_matches"
+     ],
+     "properties": {
+      "content_matches": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "path",
+        "regex"
+       ],
+       "properties": {
+        "path": {
+         "$ref": "#/$defs/glob"
+        },
+        "regex": {
+         "type": "string",
+         "minLength": 1
+        }
+       }
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "changes"
+     ],
+     "properties": {
+      "changes": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "path",
+        "at_least"
+       ],
+       "properties": {
+        "path": {
+         "$ref": "#/$defs/glob"
+        },
+        "at_least": {
+         "$ref": "#/$defs/count"
+        },
+        "since": {
+         "$ref": "#/$defs/since"
+        }
+       }
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "metric"
+     ],
+     "properties": {
+      "metric": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "name",
+        "op",
+        "value"
+       ],
+       "properties": {
+        "name": {
+         "type": "string",
+         "minLength": 1
+        },
+        "op": {
+         "enum": [
+          "lt",
+          "le",
+          "gt",
+          "ge",
+          "eq",
+          "ne"
+         ]
+        },
+        "value": {
+         "type": "number"
+        },
+        "reading": {
+         "enum": [
+          "latest",
+          "any"
+         ]
+        },
+        "since": {
+         "$ref": "#/$defs/since"
+        }
+       }
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "turns"
+     ],
+     "properties": {
+      "turns": {
+       "$ref": "#/$defs/counter"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "handbacks"
+     ],
+     "properties": {
+      "handbacks": {
+       "$ref": "#/$defs/counter"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "outputs"
+     ],
+     "properties": {
+      "outputs": {
+       "$ref": "#/$defs/counter"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "elapsed_ms"
+     ],
+     "properties": {
+      "elapsed_ms": {
+       "$ref": "#/$defs/counter"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "verdicts"
+     ],
+     "properties": {
+      "verdicts": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "label",
+        "at_least"
+       ],
+       "properties": {
+        "label": {
+         "enum": [
+          "answerable",
+          "already_given",
+          "unanswerable",
+          "no_request"
+         ]
+        },
+        "at_least": {
+         "$ref": "#/$defs/count"
+        },
+        "since": {
+         "$ref": "#/$defs/since"
+        }
+       }
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "fired"
+     ],
+     "properties": {
+      "fired": {
+       "$ref": "#/$defs/name"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "all"
+     ],
+     "properties": {
+      "all": {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "$ref": "#/$defs/trigger"
+       }
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "any"
+     ],
+     "properties": {
+      "any": {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "$ref": "#/$defs/trigger"
+       }
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "not"
+     ],
+     "properties": {
+      "not": {
+       "$ref": "#/$defs/trigger"
+      }
+     }
+    }
+   ]
+  },
+  "action": {
+   "oneOf": [
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "type"
+     ],
+     "properties": {
+      "type": {
+       "const": "observe"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "type",
+      "text"
+     ],
+     "properties": {
+      "type": {
+       "const": "correction"
+      },
+      "text": {
+       "$ref": "#/$defs/text"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "type",
+      "text"
+     ],
+     "properties": {
+      "type": {
+       "const": "message"
+      },
+      "text": {
+       "$ref": "#/$defs/text"
+      },
+      "override_policy": {
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "type",
+      "notice",
+      "continuation"
+     ],
+     "properties": {
+      "type": {
+       "const": "reset"
+      },
+      "notice": {
+       "$ref": "#/$defs/text"
+      },
+      "continuation": {
+       "$ref": "#/$defs/text"
+      }
+     }
+    }
+   ]
+  },
+  "event": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "name",
+    "trigger",
+    "action",
+    "required"
+   ],
+   "properties": {
+    "name": {
+     "$ref": "#/$defs/name"
+    },
+    "trigger": {
+     "$ref": "#/$defs/trigger"
+    },
+    "action": {
+     "$ref": "#/$defs/action"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "reopen": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/text"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "probe": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "question",
+        "about"
+       ],
+       "properties": {
+        "question": {
+         "$ref": "#/$defs/text"
+        },
+        "expected": {
+         "$ref": "#/$defs/text"
+        },
+        "about": {
+         "enum": [
+          "output",
+          "message",
+          "change",
+          "attempt"
+         ]
+        },
+        "expected_from": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "shown_to_user"
+         ],
+         "properties": {
+          "shown_to_user": {
+           "$ref": "#/$defs/text"
+          }
+         }
+        }
+       },
+       "oneOf": [
+        {
+         "required": [
+          "expected"
+         ]
+        },
+        {
+         "required": [
+          "expected_from"
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  }
+ }
+}

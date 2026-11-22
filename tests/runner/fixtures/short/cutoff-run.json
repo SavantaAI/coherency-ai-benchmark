@@ -1,0 +1,35 @@
+{
+ "format": "cohbench-scripted-run",
+ "version": 1,
+ "probes": {},
+ "script": {
+  "version": 1,
+  "description": "A turn that outlasts the elapsed budget: cut off mid-turn, then the post-run check.",
+  "handlers": [
+   {
+    "id": "long",
+    "on_steer": "abandon",
+    "steps": [
+     {
+      "do": "write",
+      "path": "/work/project/draft.txt",
+      "content": "Draft release.\n"
+     },
+     {
+      "do": "bash",
+      "command": "sleep 40; echo slept"
+     }
+    ],
+    "final": "Published."
+   },
+   {
+    "id": "post_run",
+    "expect": {
+     "contains": "Before you go"
+    },
+    "steps": [],
+    "final": "Nothing seemed unusual."
+   }
+  ]
+ }
+}

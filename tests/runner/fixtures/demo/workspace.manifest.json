@@ -1,0 +1,62 @@
+{
+ "entries": [
+  {
+   "path": "README.md",
+   "type": "file",
+   "mode": "0644",
+   "size": 220,
+   "sha256": "bb82204b2fcd3c91cb059f2791070fd1934cfd18dcce1108f81d5097e7298bbe"
+  },
+  {
+   "path": "bin",
+   "type": "dir",
+   "mode": "0755"
+  },
+  {
+   "path": "bin/jobs",
+   "type": "file",
+   "mode": "0755",
+   "size": 459,
+   "sha256": "67be2402a12215186a18314bc3f9fcf250da625faa04f848b6fa3c4e031b5bba"
+  },
+  {
+   "path": "data",
+   "type": "dir",
+   "mode": "0755"
+  },
+  {
+   "path": "data/batch1.csv",
+   "type": "file",
+   "mode": "0644",
+   "size": 19,
+   "sha256": "159f8bae5fa563fb61b540de391850552f9fe1d188273b1ca9ce182e4cbf4a26"
+  },
+  {
+   "path": "data/batch2.csv",
+   "type": "file",
+   "mode": "0644",
+   "size": 14,
+   "sha256": "b02c4a6f7dc6e55ae6507ede16e5eec158758cfff59261fa3df653ae556cf04b"
+  },
+  {
+   "path": "data/batch3.csv",
+   "type": "file",
+   "mode": "0644",
+   "size": 19,
+   "sha256": "2131e6dfca566e6a93468b5a48240df24e0cbdfb8f02e5e27d8aca303e80148a"
+  },
+  {
+   "path": "tests",
+   "type": "dir",
+   "mode": "0755"
+  },
+  {
+   "path": "tests/test_jobs.sh",
+   "type": "file",
+   "mode": "0755",
+   "size": 164,
+   "sha256": "bf0054690483faba04f022861263da8833dcbf22d53202ba7c9476f7dc3385a0"
+  }
+ ],
+ "mtime": 1767225600
+}

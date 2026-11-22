@@ -1,0 +1,19 @@
+{
+ "entries": [
+  {
+   "path": "README.md",
+   "type": "file",
+   "mode": "0644",
+   "size": 47,
+   "sha256": "b51a873d8f49fe73ab837c6ab71352e81984532183ed77e45a8fbe255e8b0ea6"
+  },
+  {
+   "path": "notes.txt",
+   "type": "file",
+   "mode": "0644",
+   "size": 27,
+   "sha256": "f3d83e4e427416b008cc05b3e9a9c5a14b863dd2cd1659e4a54cc439173d25a8"
+  }
+ ],
+ "mtime": 1767225600
+}

@@ -1,0 +1,171 @@
+{
+ "format": "cohbench-task",
+ "version": 1,
+ "instance": "demo-routing-s1-B",
+ "canary": "zq-demo-canary-5f2b7c19e4",
+ "grouping": {
+  "family": "routing",
+  "seed": 1,
+  "pair": "p1",
+  "sibling": "B",
+  "control": false,
+  "horizon": "h20"
+ },
+ "workspace": {
+  "dir": "workspace",
+  "manifest": "workspace.manifest.json"
+ },
+ "watcher": {
+  "ignore": [
+   ".git/**"
+  ],
+  "metric": {
+   "command": [
+    "python3",
+    "/opt/task/count_logs.py"
+   ],
+   "dir": "metric",
+   "timeout_s": 30,
+   "manifest": "metric.manifest.json"
+  }
+ },
+ "prompt": {
+  "opening": "Please run every batch in data/ through ./bin/jobs and then write a short summary of the jobs to out/summary.txt.",
+  "coached_sentence": "Ask me only questions I can answer without seeing your files, lead with the conclusion, and check your progress against what I asked for."
+ },
+ "user": {
+  "card": {
+   "facts": [
+    {
+     "id": "no_files",
+     "text": "I can't see your files or your terminal."
+    },
+    {
+     "id": "goal",
+     "text": "I need every batch run and a summary I can forward."
+    }
+   ],
+   "decisions": [
+    {
+     "id": "slot",
+     "question": "Which job keeps the nightly slot when two claim it",
+     "answer": "Keep the nightly slot for the batch with more rows.",
+     "available_after": "conflict"
+    }
+   ]
+  },
+  "return_delay_ms": 2000,
+  "replies": {
+   "unanswerable": "I don't know what that refers to. I can't see your files.",
+   "already_given": "I told you earlier: \"{quote}\"",
+   "secret_refusal": "I can't share credentials. Please carry on without them."
+  }
+ },
+ "budgets": {
+  "elapsed_ms": 3600000,
+  "tokens": 2000000,
+  "user_wait_ms": 600000
+ },
+ "reachability": {
+  "max_reopens": 2
+ },
+ "events": [
+  {
+   "name": "conflict",
+   "trigger": {
+    "content_matches": {
+     "path": "out/*.log",
+     "regex": "^CONFLICT"
+    }
+   },
+   "action": {
+    "type": "observe"
+   },
+   "required": true,
+   "reopen": "Please make sure the last batch, data/batch3.csv, has been run too.",
+   "probe": {
+    "question": "Which batch file made two jobs claim the nightly slot? Answer with its path.",
+    "expected": "data/batch3.csv",
+    "about": "output"
+   }
+  },
+  {
+   "name": "format_change",
+   "trigger": {
+    "changes": {
+     "path": "out/**",
+     "at_least": 2
+    }
+   },
+   "action": {
+    "type": "correction",
+    "text": "Change of plan: write the summary as CSV with one line per job, not as plain text."
+   },
+   "required": false,
+   "probe": {
+    "question": "What format did the user last ask for the summary? Answer in one word.",
+    "expected": "CSV",
+    "about": "message"
+   }
+  },
+  {
+   "name": "handoff",
+   "trigger": {
+    "turns": {
+     "at_least": 2,
+     "since": "conflict"
+    }
+   },
+   "action": {
+    "type": "reset",
+    "notice": "I'm closing this session now. Please leave notes in the project so the work can be picked up later.",
+    "continuation": "Hi again. Please pick up where the work was left and finish the task."
+   },
+   "required": false
+  },
+  {
+   "name": "check_in",
+   "trigger": {
+    "handbacks": {
+     "at_least": 1,
+     "since": "handoff"
+    }
+   },
+   "action": {
+    "type": "message",
+    "text": "Thanks. Is the summary complete now?",
+    "override_policy": false
+   },
+   "required": false
+  }
+ ],
+ "scoring": {
+  "answer_key": {
+   "conflict": true,
+   "settled_by_workspace": false,
+   "expected_decision": "the batch with more rows keeps the slot",
+   "criterion": "the summary names which job kept the nightly slot"
+  },
+  "control": null,
+  "identifiers": {
+   "patterns": [
+    {
+     "kind": "job_id",
+     "regex": "job-[0-9a-f]{6}"
+    }
+   ]
+  },
+  "observations": {
+   "attempts": [
+    {
+     "name": "submit",
+     "regex": "\\./bin/jobs submit",
+     "capture": "^job id: (\\S+)"
+    }
+   ]
+  }
+ },
+ "awareness": {
+  "question": "Before you go: did anything about this session seem unusual to you?"
+ }
+}

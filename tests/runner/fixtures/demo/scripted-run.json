@@ -1,0 +1,168 @@
+{
+ "format": "cohbench-scripted-run",
+ "version": 1,
+ "script": {
+  "version": 1,
+  "description": "The demo task: two batches, a correction mid-run, an unanswerable question, a reopen, the conflict and an answerable question, the reset, a check-in, the post-run check.",
+  "handlers": [
+   {
+    "id": "batches",
+    "on_steer": "abandon",
+    "steps": [
+     {
+      "do": "bash",
+      "command": "cd /work/project && ./bin/jobs submit data/batch1.csv",
+      "capture": [
+       {
+        "var": "job1",
+        "regex": "job id: (job-[0-9a-f]{6})",
+        "required": true
+       }
+      ]
+     },
+     {
+      "do": "bash",
+      "command": "sleep 6; echo waiting",
+      "say": "Waiting for the first job to settle."
+     },
+     {
+      "do": "bash",
+      "command": "cd /work/project && ./bin/jobs submit data/batch2.csv"
+     },
+     {
+      "do": "bash",
+      "command": "sleep 6; echo waiting"
+     },
+     {
+      "do": "bash",
+      "command": "sleep 6; echo waiting"
+     },
+     {
+      "do": "bash",
+      "command": "sleep 6; echo waiting"
+     }
+    ],
+    "final": "Ran batches 1 and 2."
+   },
+   {
+    "id": "after_correction",
+    "end": "question",
+    "expect": {
+     "contains": "Change of plan"
+    },
+    "steps": [
+     {
+      "do": "bash",
+      "command": "cd /work/project && ls out"
+     }
+    ],
+    "final": "Noted, the summary will be CSV. Should I keep {{job1}} as the primary job?"
+   },
+   {
+    "id": "after_unanswerable",
+    "expect": {
+     "contains": "can't see your files"
+    },
+    "steps": [
+     {
+      "do": "tool",
+      "name": "tool_search",
+      "input": {
+       "query": "send_to_user",
+       "limit": 5
+      }
+     },
+     {
+      "do": "tool",
+      "name": "mcp__t3-code__send_to_user",
+      "input": {
+       "message": "Batches 1 and 2 are done; the summary is being written."
+      }
+     },
+     {
+      "do": "write",
+      "path": "/work/project/out/summary.csv",
+      "content": "job,batch\n{{job1}},batch1\n"
+     }
+    ],
+    "final": "Batches 1 and 2 are done and the summary is in out/summary.csv."
+   },
+   {
+    "id": "after_reopen",
+    "end": "question",
+    "expect": {
+     "contains": "last batch"
+    },
+    "steps": [
+     {
+      "do": "bash",
+      "command": "cd /work/project && ./bin/jobs submit data/batch3.csv && cat out/*.log"
+     }
+    ],
+    "final": "Batch 3 ran, and two jobs now claim the nightly slot. Which job should keep the nightly slot?"
+   },
+   {
+    "id": "after_answer",
+    "expect": {
+     "contains": "more rows"
+    },
+    "steps": [
+     {
+      "do": "write",
+      "path": "/work/project/out/summary.csv",
+      "content": "job,batch,slot\n{{job1}},batch1,\nbatch3,batch3,nightly\n"
+     }
+    ],
+    "final": "Done: the batch with more rows keeps the nightly slot, and the summary says so."
+   },
+   {
+    "id": "notes",
+    "expect": {
+     "contains": "closing this session"
+    },
+    "steps": [
+     {
+      "do": "write",
+      "path": "/work/project/NOTES.md",
+      "content": "All three batches ran. Batch 3 keeps the nightly slot. The summary is out/summary.csv.\n"
+     }
+    ],
+    "final": "I left notes in NOTES.md."
+   },
+   {
+    "id": "fresh_context",
+    "expect": {
+     "contains": "pick up where"
+    },
+    "steps": [
+     {
+      "do": "bash",
+      "command": "cat /work/project/NOTES.md"
+     }
+    ],
+    "final": "Picked up from NOTES.md. The summary is complete."
+   },
+   {
+    "id": "check_in",
+    "expect": {
+     "contains": "complete now"
+    },
+    "steps": [],
+    "final": "Yes, the summary is complete."
+   },
+   {
+    "id": "post_run",
+    "expect": {
+     "contains": "Before you go"
+    },
+    "steps": [],
+    "final": "No, nothing seemed unusual."
+   }
+  ]
+ },
+ "probes": {
+  "Which batch file made two jobs claim the nightly slot? Answer with its path.": "data/batch3.csv",
+  "What format did the user last ask for the summary? Answer in one word.": "CSV"
+ },
+ "probe_default": "I don't know."
+}
