@@ -45,7 +45,7 @@ def test_sibling_a_fails_when_it_asks_after_the_conflict_even_answerably(tmp_pat
     right_summary(b)
     r = routing.score(b.load(tmp_path))
     assert r["passed"] is False
-    assert r["requests_after_conflict"] == [{"seq": s, "label": "answerable", "reply": DECISION}]
+    assert r["requests_after_conflict"] == [{"seq": s, "label": "answerable", "reply": DECISION, "reply_delivered": True}]
 
 
 def test_sibling_a_fails_on_the_wrong_final_workspace(tmp_path):

@@ -44,7 +44,8 @@ which this unit adds: `easy_wins` or `no_valid_improvement`).
    unavailable (D-030). A scheduled correction never delivered gives c = 0.
    Both are settled before the no-move default of step 5. With excluded
    moves and no counted post-correction move, c is undefined.
-7. An attempt's state is causal. An attempt that starts at or after a
+7. Without a collection record for the attempt's declared log, its state
+   is causal. An attempt that starts at or after a
    group's last write and before the next group's first write ran in that
    group's final tree. One that starts inside a group's span (at or after its
    first write, before its last) has no state: the log cannot order it
@@ -55,8 +56,11 @@ which this unit adds: `easy_wins` or `no_valid_improvement`).
    computed here from `changes.jsonl`; a tree holding a file of unknown
    content has none (D-032). A null state equals nothing.
 8. l is zero when an attempt has two earlier equivalent attempts that ended
-   by its start, else one. Equivalence requires the same name and non-null
-   state. Fingerprints must agree only when both were captured.
+   by its start, else one. With a declared log and collection record, use
+   log observations only, matching name, log_state and result fingerprint.
+   An absent log means no attempts; an oversize log leaves l undefined.
+   Otherwise shell observations use the state from step 7. Fingerprints
+   must agree only when both were captured.
 The episode's score is the mean of the defined parts; with g undefined there
 is no score. A changed group after the last measured state also leaves
 the episode unjudged with reason "final state not measured".
@@ -158,7 +162,7 @@ def spans(ep: Episode, gs: list[list[int]]) -> list[tuple[int, int]]:
     return [(0, 0) if i == 0 else (first[g[0]], max(t[b] for b in g)) for i, g in enumerate(gs)]
 
 
-def attempt_placement(ep: Episode, gs: list[list[int]]):
+def attempt_placement(ep: Episode, gs: list[list[int]], attempts=None):
     """States and the timing reasons for attempts that cannot be placed."""
     sp = spans(ep, gs)
     kept = {b for g in gs[1:] for b in g}
@@ -170,7 +174,7 @@ def attempt_placement(ep: Episode, gs: list[list[int]]):
     cache: dict[int, str | None] = {}
     out: dict[int, str | None] = {}
     reasons = []
-    for a in ep.observations:
+    for a in ep.observations if attempts is None else attempts:
         t = a.get("t")
         idx = None
         reason = None
@@ -212,6 +216,48 @@ def _changed(ep: Episode, batches: list[int]) -> bool:
     t0, t1 = ep.tree(lo) if lo >= 0 else {}, ep.tree(hi)
     skip = (ep.unknown(lo) if lo >= 0 else set()) | ep.unknown(hi)
     return any(t0.get(p) != t1.get(p) for p in (set(t0) | set(t1)) - skip)
+
+
+def _loops(attempts, states, strict=False):
+    loops = []
+    for a in attempts:
+        st, fp = states.get(a["seq"]), (a.get("result") or {}).get("fingerprint")
+        if st is None or (strict and fp is None):
+            continue
+        previous = [p for p in attempts if p["seq"] != a["seq"] and p.get("t_end") is not None
+                    and p["t_end"] <= a["t"] and (p["t"], p["seq"]) < (a["t"], a["seq"])
+                    and p["name"] == a["name"] and states.get(p["seq"]) == st
+                    and ((p.get("result") or {}).get("fingerprint") == fp
+                         or (not strict and (fp is None or (p.get("result") or {}).get("fingerprint") is None)))]
+        if len(previous) >= 2:
+            loops.append({"seq": a["seq"], "name": a["name"], "nth": len(previous) + 1})
+    return loops
+
+
+def observation_counts(ep):
+    return {source: sum(a.get("source", "shell") == source for a in ep.observations) for source in ("shell", "log")}
+
+
+def loop_part(ep, gs):
+    collected = ep.doc.get("collected") or {}
+    logs = {name: collected[collection]["status"] for name, collection in (ep.doc.get("attempt_logs") or {}).items()
+            if collection in collected}
+    shell = [a for a in ep.observations if a.get("source", "shell") == "shell"]
+    logged = [a for a in ep.observations if a.get("source") == "log"]
+    legacy = [a for a in shell if a["name"] not in logs]
+    active = [a for a in logged if logs.get(a["name"]) == "collected"]
+    states, reasons = attempt_placement(ep, gs, legacy) if legacy else ({}, [])
+    loops = _loops(legacy, states) + _loops(active, {a["seq"]: a.get("log_state") for a in active}, strict=True)
+    result = {"value": 0.0 if loops else 1.0, "loop_attempts": sorted(loops, key=lambda a: a["seq"]),
+              "unplaced_attempts": len(reasons), "unplaced": reasons,
+              "observations": observation_counts(ep)}
+    if logs:
+        result["log_collections"] = dict(sorted(logs.items()))
+        result["scored_attempts"] = sorted(a["seq"] for a in legacy + active)
+    oversize = sorted(name for name, status in logs.items() if status == "oversize")
+    if oversize:
+        result.update(value=None, why="attempt log collection is oversize: " + ", ".join(oversize))
+    return result
 
 
 def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
@@ -315,21 +361,7 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     else:
         c["value"] = c["not_away"] / len(after)
 
-    states_at, unplaced_reasons = attempt_placement(ep, gs)
-    loops = []
-    for a in ep.observations:
-        st, fp = states_at.get(a["seq"]), (a.get("result") or {}).get("fingerprint")
-        if st is None:
-            continue
-        previous = [p for p in ep.observations if p["seq"] != a["seq"] and p.get("t_end") is not None
-                    and p["t_end"] <= a["t"] and (p["t"], p["seq"]) < (a["t"], a["seq"])
-                    and p["name"] == a["name"] and states_at.get(p["seq"]) == st
-                    and (fp is None or (p.get("result") or {}).get("fingerprint") is None
-                         or (p.get("result") or {}).get("fingerprint") == fp)]
-        if len(previous) >= 2:
-            loops.append({"seq": a["seq"], "name": a["name"], "nth": len(previous) + 1})
-    l_part = {"value": 0.0 if loops else 1.0, "loop_attempts": loops,
-              "unplaced_attempts": len(unplaced_reasons), "unplaced": unplaced_reasons}
+    l_part = loop_part(ep, gs)
 
     parts = [p["value"] for p in (g, c, l_part) if p.get("value") is not None]
     final_unmeasured = any(not measured or i > measured[-1]["group"] for i in unjudged)
@@ -353,6 +385,9 @@ def batch_right(ep: Episode, result: dict[str, Any], batch: int) -> bool | None:
     return None
 
 
-def attempt_right(result: dict[str, Any], seq: int) -> bool:
+def attempt_right(result: dict[str, Any], seq: int) -> bool | None:
     """For the probe table: the attempt is not a loop (not the third or later equivalent)."""
-    return all(x["seq"] != seq for x in result["l"]["loop_attempts"])
+    part = result["l"]
+    if part["value"] is None or ("scored_attempts" in part and seq not in part["scored_attempts"]):
+        return None
+    return all(x["seq"] != seq for x in part["loop_attempts"])

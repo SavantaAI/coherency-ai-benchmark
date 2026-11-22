@@ -26,13 +26,15 @@ import fnmatch
 import json
 import math
 import re
-from decimal import Decimal
+from decimal import Decimal, DecimalException
 from typing import Any
 
 from .load import Episode
 
 KEYS = {"path", "regex", "absent", "negate", "ignore_case", "json"}
 MISSING = object()
+JSON_MAX_BYTES = 1024 * 1024
+JSON_MAX_DEPTH = 64
 
 
 class CheckError(ValueError):
@@ -44,11 +46,15 @@ def glob_match(pattern: str, path: str) -> bool:
 
 
 def _match(p: list[str], s: list[str]) -> bool:
-    if not p:
-        return not s
-    if p[0] == "**":
-        return any(_match(p[1:], s[i:]) for i in range(len(s) + 1))
-    return bool(s) and fnmatch.fnmatchcase(s[0], p[0]) and _match(p[1:], s[1:])
+    positions = {0}
+    for segment in p:
+        if not positions:
+            return False
+        if segment == "**":
+            positions = set(range(min(positions), len(s) + 1))
+        else:
+            positions = {i + 1 for i in positions if i < len(s) and fnmatch.fnmatchcase(s[i], segment)}
+    return len(s) in positions
 
 
 def parse(spec: Any) -> list[dict[str, Any]]:
@@ -157,10 +163,32 @@ def _invalid_constant(value):
 
 
 def _json_document(data, assertions):
+    if len(data) > JSON_MAX_BYTES:
+        return False, "JSON file exceeds 1 MiB"
     try:
-        document = json.loads(data.decode("utf-8"), parse_float=Decimal, parse_int=Decimal, parse_constant=_invalid_constant)
-    except (ValueError, UnicodeError):
-        return False
+        text = data.decode("utf-8")
+        depth, quoted, escaped = 0, False, False
+        for char in text:
+            if quoted:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    quoted = False
+            elif char == '"':
+                quoted = True
+            elif char in "[{":
+                depth += 1
+                if depth > JSON_MAX_DEPTH:
+                    return False, "JSON nesting exceeds 64"
+            elif char in "]}":
+                depth -= 1
+        document = json.loads(text, parse_float=Decimal, parse_int=Decimal, parse_constant=_invalid_constant)
+    except DecimalException:
+        return False, "JSON number cannot be represented"
+    except Exception as exc:
+        return False, f"JSON parse failed ({type(exc).__name__})"
     for assertion in assertions:
         value = _pointer(document, assertion["pointer"])
         if "absent" in assertion:
@@ -172,23 +200,37 @@ def _json_document(data, assertions):
         else:
             held = _multiset_equal(value, assertion["set_equals"])
         if not held:
-            return False
-    return True
+            return False, f"JSON assertion failed at pointer {assertion['pointer']!r}"
+    return True, None
 
 
 def run_one(ep: Episode, batch: int | None, c: dict[str, Any]) -> tuple[bool | None, str]:
+    # Agent-written paths and content can fail matching or parsing. The
+    # check's shape is validated separately; an evaluation failure is a fail.
+    try:
+        return _run_one(ep, batch, c)
+    except Exception as exc:
+        return False, f"check {c['path']!r} failed during evaluation ({type(exc).__name__})"
+
+
+def _run_one(ep: Episode, batch: int | None, c: dict[str, Any]) -> tuple[bool | None, str]:
     tree, unknown = ep.tree(batch), ep.unknown(batch)
     files = sorted(p for p, v in tree.items() if v[0] == "file" and glob_match(c["path"], p))
     if c.get("absent") is True:
         return (not files), (f"no file matches {c['path']}" if not files else f"{files[0]} matches {c['path']}")
     rx = None if "json" in c else re.compile(c["regex"], re.MULTILINE | (re.IGNORECASE if c.get("ignore_case") else 0))
-    hit, undecided = None, []
+    hit, undecided, failures = None, [], []
     for p in files:
         data = None if p in unknown else ep.content(tree[p][2])
         if data is None:
             undecided.append(p)
             continue
-        matches = _json_document(data, c["json"]) if "json" in c else rx.search(data.decode("utf-8", errors="replace"))
+        if "json" in c:
+            matches, why = _json_document(data, c["json"])
+            if why:
+                failures.append(f"{p}: {why}")
+        else:
+            matches = rx.search(data.decode("utf-8", errors="replace"))
         if matches:
             hit = p
             break
@@ -197,6 +239,8 @@ def run_one(ep: Episode, batch: int | None, c: dict[str, Any]) -> tuple[bool | N
         return (not negate), f"{hit} matches"
     if undecided:
         return None, f"content of {undecided[0]} is not in the bundle"
+    if failures:
+        return False, "; ".join(failures)
     return negate, (f"no file matching {c['path']} matches" if files else f"no file matches {c['path']}")
 
 

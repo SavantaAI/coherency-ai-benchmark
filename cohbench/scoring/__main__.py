@@ -35,7 +35,6 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--plan", type=Path)
     r.add_argument("--require-plan", action="store_true")
     r.add_argument("--allow-mixed-runtimes", action="store_true")
-    r.add_argument("--release-python", default="3.12")
     r.add_argument("--judged-bar", type=float, default=0.9)
     r.add_argument("--bar", type=float, default=0.9)
     r.add_argument("--scripted-reader", action="store_true",
@@ -58,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if not (a.resamples >= 0 and 0 < a.level < 1 and 0 < a.bar <= 1 and 0 < a.judged_bar <= 1 and a.z > 0):
             raise report.ReportError("resamples is at least 0, level and bar lie between 0 and 1, z is positive")
-        rep = report.build(a.results, resamples=a.resamples, seed=a.seed, level=a.level, bar=a.bar, z=a.z, scripted_reader=a.scripted_reader, plan=a.plan, require_plan=a.require_plan, judged_bar=a.judged_bar, allow_mixed_runtimes=a.allow_mixed_runtimes, release_python=a.release_python)
+        rep = report.build(a.results, resamples=a.resamples, seed=a.seed, level=a.level, bar=a.bar, z=a.z, scripted_reader=a.scripted_reader, plan=a.plan, require_plan=a.require_plan, judged_bar=a.judged_bar, allow_mixed_runtimes=a.allow_mixed_runtimes)
         text, _ = report.write(rep, Path(a.out))
         sys.stdout.write(text)
         return 0

@@ -71,10 +71,11 @@ def test_uniform_runtime_must_match_release_pin_to_publish_bands(tmp_path, versi
     assert rep["not_release"] is (version != "3.12")
     assert (row["headline"]["band"] is not None) is (version == "3.12")
     assert row["headline"]["ranked"]
-    assert main(["report", str(root), "--out", str(tmp_path / "out"), "--plan", str(plan), "--require-plan", "--release-python", version, "--resamples", "10"]) == 0
-    override = json.loads((tmp_path / "out" / "report.json").read_text())
-    assert not override["not_release"] and override["sections"][0]["tables"][0]["rows"][0]["headline"]["band"] is not None
-    assert f"Release runtime: Python {version}" in report.render(override, False)
+    assert main(["report", str(root), "--out", str(tmp_path / "out"), "--plan", str(plan), "--require-plan", "--resamples", "10"]) == 0
+    cli = json.loads((tmp_path / "out" / "report.json").read_text())
+    assert cli["not_release"] is (version != "3.12")
+    assert (cli["sections"][0]["tables"][0]["rows"][0]["headline"]["band"] is not None) is (version == "3.12")
+    assert "Release runtime: Python 3.12" in report.render(cli, False)
 
 
 @pytest.mark.parametrize("field", ["model", "harness", "harness_version", "driver_version", "settings"])
@@ -212,12 +213,14 @@ def test_hosted_cli_requires_cache_or_explicit_nonrelease_override(tmp_path, mon
 
 
 def test_uncached_hosted_record_removes_bands_from_complete_report(tmp_path):
-    scores = full_scores()
+    scores = full_scores() + full_scores("ac", mode="coached")
     for score in scores:
         score["python_version"] = "3.12"
-    root = S.write(tmp_path / "before", scores, {"a": full_config()})
-    original = report.build(root, resamples=10)
+    configs = {"a": full_config(), "ac": full_config()}
+    root = S.write(tmp_path / "before", scores, configs)
+    plan = plan_file(tmp_path, scores)
+    original = report.build(root, resamples=10, plan=plan, require_plan=True)
     assert original["sections"][0]["tables"][0]["rows"][0]["headline"]["band"] is not None
     next(s for s in scores if s["family"] == "explanation" and not s["grouping"]["control"])["reader_record"] = False
-    changed = report.build(S.write(tmp_path / "after", scores, {"a": full_config()}), resamples=10)
+    changed = report.build(S.write(tmp_path / "after", scores, configs), resamples=10, plan=plan, require_plan=True)
     assert changed["not_release"] and changed["sections"][0]["tables"][0]["rows"][0]["headline"]["band"] is None

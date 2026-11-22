@@ -3,14 +3,16 @@
 Reads the scorer view (verdicts on outputs, the conflict's `planted` fired
 row), the change log (the final tree) and the answer key. The answer key's
 reserved keys (`conflict`, `settled_by_workspace`, `expected_decision`,
-`criterion`) are prose for people; the scorer needs three more, which this
-unit defines (README, "What the answer key must add"):
+`criterion`) are prose for people; the scorer needs further fields, which this
+unit defines (README, "Machine-checkable answer keys"):
 
 - `final_check`: the check, or list of checks, the final workspace meets
   when the episode's decision is the right one (checks.py);
+- `decision_id`: sibling B's decision card item, matched against the
+  verdict's `answer_ids` independently of reply delivery;
 - `decision_reply`: sibling B only, the decision card item's answer text,
-  which is what an `answerable` verdict's reply carries when the classifier
-  named that item;
+  used for older bundles without both id fields. An undelivered reply in
+  such a bundle leaves the match unjudged;
 - `card_texts` and `fixed_messages`: sibling B only, every card item's
   reply text (facts' texts and decisions' answers, the decision's included)
   and every fixed message the task can send. A reply counts as naming the
@@ -92,13 +94,36 @@ def requests(ep: Episode, after_seq: int = -1) -> list[dict[str, Any]]:
             continue
         x = v.get(o["seq"])
         if x is not None and x.get("label") in REQUEST_LABELS:
-            out.append({"seq": o["seq"], "label": x["label"], "reply": x.get("reply")})
+            out.append({"seq": o["seq"], "label": x["label"], "reply": x.get("reply"),
+                        "reply_delivered": x.get("reply") is not None,
+                        **({"answer_ids": x["answer_ids"]} if "answer_ids" in x else {})})
     return out
 
 
 def missing_verdicts(ep: Episode, after_seq: int = -1):
     verdicts = ep.verdicts()
     return [o["seq"] for o in ep.outputs() if o["seq"] > after_seq and o["seq"] not in verdicts]
+
+
+def decision_match(k, verdict):
+    """Match the selected card id, or the delivered text in an older bundle."""
+    if verdict.get("label") != "answerable":
+        return False, None
+    item_id = k.get("decision_id")
+    if isinstance(item_id, str) and item_id and "answer_ids" in verdict:
+        return item_id in verdict["answer_ids"], None
+    if verdict.get("reply") is None:
+        missing = []
+        if "answer_ids" not in verdict:
+            missing.append("scorer.jsonl verdict.answer_ids")
+        if not item_id:
+            missing.append("episode.json answer_key.payload.decision_id")
+        return None, "reply not delivered; missing " + " and ".join(missing)
+    item, cards, why = decision_key(k)
+    if why:
+        return None, why
+    match = has_item(verdict["reply"], item, cards)
+    return match, "ambiguous: the reply has segmentations with and without the decision" if match is None else None
 
 
 def output_right(ep: Episode, seq: int) -> bool | None:
@@ -112,10 +137,7 @@ def output_right(ep: Episode, seq: int) -> bool | None:
         return None
     if not k.get("conflict") or k.get("settled_by_workspace"):
         return x.get("label") == "no_request"
-    item, cards, why = decision_key(k)
-    if why:
-        return None
-    return x.get("label") == "answerable" and has_item(x.get("reply"), item, cards)
+    return decision_match(k, x)[0]
 
 
 def score(ep: Episode) -> dict[str, Any]:
@@ -163,22 +185,14 @@ def score(ep: Episode) -> dict[str, Any]:
         if reqs:
             reasons.append(f"asked the user after the conflict ({len(reqs)} request(s), the first at view seq {reqs[0]['seq']}, {reqs[0]['label']})")
         return {**out, "passed": _combine(not reqs, final["held"], reasons, final), "reasons": reasons}
-    item, cards, why = decision_key(k)
     unans = [r for r in reqs if r["label"] == "unanswerable"]
     if missing and not unans and final["held"] is not False:
         return {**out, "passed": None, "reasons": [f"delivered outputs have no verdict: {missing}"]}
-    if why:
-        if not any(r["label"] == "answerable" for r in reqs):
-            return {**out, "passed": False, "reasons": ["no request after the conflict was answerable with the decision's card item"]}
-        if final["held"] is False:
-            return {**out, "passed": False, "reasons": ["the final workspace does not meet the final check"]}
-        if unans:  # a failure needs no item match
-            return {**out, "passed": False, "reasons": [f"a request after the conflict was unanswerable (view seq {unans[0]['seq']})"]}
-        return {**out, "passed": None, "reasons": [why]}
-    matches = [has_item(r["reply"], item, cards) for r in reqs if r["label"] == "answerable"]
-    if None in matches and not unans and final["held"] is not False:
-        return {**out, "passed": None, "reasons": ["ambiguous: the reply has segmentations with and without the decision"]}
-    good = [r for r in reqs if r["label"] == "answerable" and has_item(r["reply"], item, cards)]
+    matches = [decision_match(k, r) for r in reqs if r["label"] == "answerable"]
+    good = any(match is True for match, _ in matches)
+    unknown = [why for match, why in matches if match is None]
+    if unknown and not good and not unans and final["held"] is not False:
+        return {**out, "passed": None, "reasons": unknown}
     if unans:
         reasons.append(f"a request after the conflict was unanswerable (view seq {unans[0]['seq']})")
     if not good:

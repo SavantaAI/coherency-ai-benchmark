@@ -80,10 +80,9 @@ def task_identity(ep: Episode) -> dict[str, Any]:
     entry the watcher recorded before the agent started; git state left out).
     Coached and Default runs of one instance share it, so the opening prompt
     (the same for both modes; the coaching sentence goes to the instruction
-    file, which the watcher leaves out) is included too. The runner will
-    later write its own digest of the task instance as `task_sha256` in
-    `episode.json`; when it is there, it is the identity and nothing is
-    derived."""
+    file, which the watcher leaves out) is included too. Current bundles
+    carry the runner's task digest as `task_sha256` in `episode.json`;
+    when it is there, it is the identity and nothing is derived."""
     g = ep.grouping
     instance = {k: g.get(k) for k in INSTANCE_KEYS}
     own = ep.doc.get("task_sha256")
@@ -224,6 +223,8 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
     g = ep.grouping
     head = {"python_version": f"{sys.version_info.major}.{sys.version_info.minor}", "format": FORMAT, "version": VERSION, "episode": ep.doc["episode"], "bundle_sha256": ep.digest,
             "grouping": g, "poll_s": ep.doc.get("poll_s"), "task": task_identity(ep), "family": ep.family}
+    if ep.family == "steering":
+        head["attempt_observations"] = steering.observation_counts(ep)
     end = (ep.doc.get("end") or {}).get("reason")
     if ep.family == "routing" and g.get("horizon") in ("h80", "80"):
         head["conflict_vs_reset"] = None if end in UNUSABLE_ENDS else conflict_vs_reset(ep)

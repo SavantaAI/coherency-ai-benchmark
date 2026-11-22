@@ -45,6 +45,7 @@ WITHHELD = "withheld: reader failed the sanity check"
 SCRIPTED = "scripted reader, not a result"
 SANITY_Z = 2.0
 CHANCE = 1 / 6
+RELEASE_PYTHON = "3.12"
 
 
 class ReportError(ValueError):
@@ -478,12 +479,10 @@ def poll_display(k: str) -> str:
 
 
 def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float = 0.95, bar: float = 0.9, z: float = SANITY_Z,
-          scripted_reader: bool = False, plan: str | Path | None = None, require_plan: bool = False, judged_bar: float = 0.9, allow_mixed_runtimes: bool = False, release_python: str = "3.12") -> dict[str, Any]:
+          scripted_reader: bool = False, plan: str | Path | None = None, require_plan: bool = False, judged_bar: float = 0.9, allow_mixed_runtimes: bool = False) -> dict[str, Any]:
     root = Path(root)
     if require_plan and plan is None:
         raise ReportError("a release report requires a plan")
-    if not isinstance(release_python, str) or not re.fullmatch(r"[0-9]+\.[0-9]+", release_python):
-        raise ReportError("release-python must name a major and minor version")
     index = read_index(root / "index.json", require_plan)
     scores = read_scores(root)
     reader = check_inputs(scores, index, scripted_reader)
@@ -491,17 +490,18 @@ def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float =
     if len(versions) > 1 and not allow_mixed_runtimes:
         raise ReportError("score files use different Python versions: " + ", ".join(versions) + "; pass --allow-mixed-runtimes for a report that is not a release")
     runtime_note = None
-    if versions != [release_python]:
-        runtime_note = f"scoring Python {', '.join(versions) or 'not recorded'} differs from release Python {release_python}: not a release"
+    if versions != [RELEASE_PYTHON]:
+        runtime_note = f"scoring Python {', '.join(versions) or 'not recorded'} differs from release Python {RELEASE_PYTHON}: not a release"
     record_note = "hosted reader without a persistent record: not a release" if any(d.get("reader_record") is False for d in scores) else None
-    nonrelease_note = "; ".join(n for n in (runtime_note, record_note) if n) or None
+    plan_note = "plan was not required: not a release" if not require_plan else None
+    nonrelease_note = "; ".join(n for n in (runtime_note, record_note, plan_note) if n) or None
     if not 0 < judged_bar <= 1:
         raise ReportError("judged_bar must be greater than zero and at most one")
     plan_instances = read_plan(plan, scores) if plan is not None else None
     sanity = reader_sanity(scores, z)
     unscored = sorted(set(index) - {d["episode"] for d in scores})
     scripted = bool(reader and reader.get("kind") == "scripted")
-    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z, "judged_bar": judged_bar, "require_plan": require_plan, "runtime_note": runtime_note, "nonrelease_note": nonrelease_note, "release_python": release_python}
+    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z, "judged_bar": judged_bar, "require_plan": require_plan, "runtime_note": runtime_note, "nonrelease_note": nonrelease_note, "release_python": RELEASE_PYTHON}
     by_poll: dict[str, list[dict[str, Any]]] = {}
     for d in scores:
         by_poll.setdefault(poll_key(d.get("poll_s")), []).append(d)

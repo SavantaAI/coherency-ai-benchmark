@@ -298,7 +298,8 @@ runtime = score.pop('python_version')
 cfg = reader.parse_config({'format': reader.CONFIG_FORMAT, 'version': 1, 'kind': 'scripted', 'rule': 'earliest_statement', 'orders': {'count': 60, 'seed': 2}})
 answers = [explanation.read_items(reader.make(cfg), cfg, 'Why?', text, OPTIONS, 0) for text in ('', OPTIONS[0], OPTIONS[1])]
 scores = S.config_set('a', r_pass=2, pairs=3, e=[0.5, 1], s=[1/3, 1], controls=(1, 1))
-rep = report.build(S.write(Path(sys.argv[1]), scores, {'a': {'model': 'm', 'harness': 'h'}}), resamples=40, release_python=runtime)
+report.RELEASE_PYTHON = runtime
+rep = report.build(S.write(Path(sys.argv[1]), scores, {'a': {'model': 'm', 'harness': 'h'}}), resamples=40)
 rep['parameters']['release_python'] = 'runtime'
 assert rep.pop('python_versions') == [runtime]
 rep['python_versions'] = ['runtime']

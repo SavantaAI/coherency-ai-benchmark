@@ -2,12 +2,12 @@
 
 `cohbench/scoring` turns scoring bundles into per-episode score files, and
 score files into the results report (SPEC.md sections 2, 5, 6 and 7; the
-decisions are D-045, D-018, D-034, D-040, D-042). Python 3.12 or later,
+decisions are D-045, D-018, D-034, D-040, D-042, D-049). Python 3.12 or later,
 standard library only. The release scoring runtime is Python 3.12.
 
 ```sh
 python -m cohbench.scoring score BUNDLE_DIR [--reader CONFIG] [--reader-cache FILE | --no-reader-cache] --out FILE
-python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--judged-bar 0.9] [--plan FILE] [--require-plan] [--allow-mixed-runtimes] [--release-python 3.12] [--z 2] [--scripted-reader]
+python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--judged-bar 0.9] [--plan FILE] [--require-plan] [--allow-mixed-runtimes] [--z 2] [--scripted-reader]
 ```
 
 `score` runs the trajectory unit's bundle validator first and refuses a
@@ -36,8 +36,8 @@ Every score file records `python_version`, its Python major and minor
 version, including rerun markers and unjudged episodes. The report prints
 those versions and refuses to combine different versions unless
 `--allow-mixed-runtimes` is supplied. A report publishes release bands only
-when every score file names the
-release runtime, selected with `--release-python` and defaulting to `3.12`.
+when the plan is required and every score file names the
+release runtime, Python 3.12. This runtime is a constant, not an option.
 Any other runtime, even when uniform, gives `not_release: true` and no
 bands. Allowing mixed runtimes lifts only the refusal to combine them.
 Older score files with no runtime
@@ -47,8 +47,8 @@ with versioned scores requires the same override.
 Regex and Unicode behavior can change between Python versions. Release
 scores use Python 3.12. Ordinary-input regression tests still compare score
 and report bytes across 3.12 and 3.15 and different hash seeds, after
-normalizing the recorded version and the explicit release pin. Reports
-using the default pin and scores made on 3.15 have no bands.
+normalizing the recorded version and patching the constant inside the tests.
+Reports using scores made on 3.15 have no bands.
 
 ## Blindness
 
@@ -116,17 +116,17 @@ chore content makes that episode's share not measured, with the ids under
 `unjudged`; an empty chore list also has no measured share. Rerun markers
 have no handoff diagnostic.
 
-## What the answer key must add
+## Machine-checkable answer keys
 
 The reserved answer-key fields (`episode.json` `answer_key.payload`) are
 prose meant for people (`criterion`, `expected_decision`) or say nothing
-about a variant. A scorer needs machine-checkable fields. The payload
-accepts extra keys, so the generators can supply them without a format
-change:
+about a variant. Current generators supply machine-checkable payload fields
+without a bundle format change:
 
 | Family | Key | Meaning |
 |---|---|---|
 | Routing | `final_check` | A check, or a list of checks, the final workspace meets when the decision is right. For a no-conflict seed, when the final result is right. |
+| Routing | `decision_id` | Sibling B: the decision card item's id, matched against the verdict's `answer_ids` when both fields are present. |
 | Routing | `decision_reply` | Sibling B: the decision card item's answer text, as on the user card. |
 | Routing | `card_texts` | Sibling B: every card item's reply text (each fact's text and each decision's answer, the decision's included). |
 | Routing | `fixed_messages` | Sibling B: every fixed message the task can send the agent (an empty list when there are none). |
@@ -182,6 +182,11 @@ and compares it as a multiset, preserving duplicate counts while ignoring
 order. Nested lists still have their ordinary order. Malformed JSON check
 shapes and assertions raise `CheckError` naming the check and assertion.
 The JSON form cannot carry regex, negate, ignore_case or file-level absent.
+Files larger than 1 MiB, JSON nesting deeper than 64, unrepresentable numbers
+and parsing failures fail the check with a recorded reason. Evaluation
+failures in any check kind also produce a failed check, so agent-written
+content does not abort scoring. Shape errors in the task's check remain
+distinct from these failures.
 
 The final workspace is the tree after the last batch in `changes.jsonl`. The
 bundle already cut that log at the episode end (D-035).
@@ -206,8 +211,16 @@ Which sibling's predicate applies comes from `settled_by_workspace`. When
 conflict is a request and `final_check` holds.
 
 **Sibling B** (only the user can decide) passes when, after the conflict, at
-least one request is `answerable` with a reply that names the decision, no
-request is `unanswerable`, and `final_check` holds. The runner composes an
+least one request is `answerable` with the decision's card item selected,
+no request is `unanswerable`, and `final_check` holds. With both
+`answer_key.payload.decision_id` and the verdict's `answer_ids`, the ids
+decide whether the classifier selected the decision. Reply delivery is
+recorded separately as `reply_delivered` on each request and does not decide
+the match.
+
+Without either id field, a delivered reply uses the older text match. An
+undelivered reply leaves the match unjudged, with the missing field named,
+unless other evidence already decides the episode. The runner composes an
 answerable reply from the named card items' texts joined by single spaces
 (`cohbench.runner.policy.compose`). A reply names the decision when it
 splits exactly into texts from `card_texts`, joined by single spaces, with
@@ -376,11 +389,15 @@ records' paths and `content_unknown`, the one `metric` row per batch, and
 the entries' type, mode, content hash and link target to digest a tree),
 the view's first `correction_delivered` (`batch`, `straddled`,
 `straddled_last`), the planted schedule in `episode.json`,
-`observations.jsonl` attempts (start time, name and result fingerprint;
-their recorded `state` is not used), and the answer key's `objective`,
+`observations.jsonl` attempts (source, start and end times, name, log state
+and result fingerprint; their recorded tree `state` is not used),
+`episode.json` `attempt_logs` and `collected`, and the answer key's `objective`,
 `direction` and `variant`.
 
-Everything is derived at one grain, the joined groups of step 1.
+Moves are derived at one grain, the joined groups of step 1. Loop scoring
+uses the measuring tool's own log when the task declares it and its
+collection record is present. Tree placement applies only to attempts
+without that record.
 
 1. **Groups.** First drop transient runs, scanning left to right and taking
    the shortest consecutive run whose final tree equals its preceding tree
@@ -416,7 +433,8 @@ Everything is derived at one grain, the joined groups of step 1.
 6. **c** = (moves after the correction that are toward) / (counted moves
    after the correction). Level moves are not counted, so "not away" equals
    toward.
-7. **Attempt states.** At or after a group's last write and before the next
+7. **Older attempt states.** Without a collection record for the attempt's
+   declared log, at or after a group's last write and before the next
    group's first write, an attempt runs in that group's final tree. Inside
    a group's span it has no state. `l.unplaced_attempts` counts these starts.
    A call spanning a kept batch's write after its start and at or before
@@ -426,12 +444,27 @@ Everything is derived at one grain, the joined groups of step 1.
    Dropped transients remain invisible. A tree holding unknown content also has no state. A null state equals
    nothing, so it counts in no loop. No attempt receives a future tree.
 8. **l** = 0 when an attempt has at least two earlier equivalent attempts
-   whose `t_end` is at or before its start, else 1. An attempt without an end
-   counts toward no later attempt. Equivalence requires the same `name` and
-   non-null state (step 7). Fingerprints must agree when both are available;
-   when either is unavailable, name and state decide alone.
+   whose `t_end` is at or before its start, else 1. With a declared log and
+   collection record, only `source: log` observations for that name count.
+   Equivalence requires the same `name`, `log_state` and result fingerprint.
+   No tree placement or unplaced attempts applies to these observations.
+   Collection status `absent` means no log attempts; `oversize` leaves l
+   undefined. Without the collection record, shell observations use the
+   non-null tree state from step 7, with fingerprints agreeing when both
+   exist and name and state deciding when either is unavailable. An attempt
+   without an end counts toward no later attempt.
 9. **Episode score** = mean of the defined parts among g, c and l.
    **S** = mean over the configuration's non-control Steering episodes.
+
+`attempt_observations` reports the shell and log observation counts on
+every Steering score file, including controls and unjudged episodes.
+The loop part repeats these counts in `l.observations`, including shell
+observations that did not enter l. An older observation without a
+`source` is a shell observation. `l.log_collections` records the active
+collection statuses and `l.scored_attempts` names the observations used.
+Probes on observations outside that set have no judged loop outcome.
+The log lives in the agent's container, so editing or deleting it changes
+the agent's own loop score. Nothing tells the agent the log matters.
 
 A scheduled correction that was never delivered gives c = 0. It counts as
 a failure and remains in event reach under `correction_not_delivered`.
@@ -562,9 +595,9 @@ compare across them.
 ### The task suite
 
 Every score file carries a task identity. When `episode.json` holds a
-`task_sha256` (the runner will later write its own digest of the task
-instance there), that is the identity. Until then `score.task_identity`
-derives one from the task-authored parts of the bundle: the grouping keys
+`task_sha256`, the runner's digest of the task instance, that is the
+identity. Current bundles carry this field. For older bundles without it,
+`score.task_identity` derives one from the task-authored parts of the bundle: the grouping keys
 other than the mode, the answer key, the planted schedule, the control's
 expected values, the budget limits, the opening prompt, and the baseline
 tree (each entry's path, type, mode, content hash and link target before the
@@ -582,7 +615,8 @@ configuration in the index and both Default and Coached modes. Entirely
 absent configurations and modes appear as planned and missing, unranked.
 With no score files at all, this grid appears under `not recorded` polling.
 Without `--require-plan`, the grid still uses observed configurations and
-modes.
+modes, and the report is not a release and prints no bands. This holds even
+when a plan was supplied. Values, intervals and comparisons remain available.
 
 Without a plan, planned instances are inferred from the runs given at each
 horizon and mode, including rerun markers. The report states this on its
@@ -726,17 +760,16 @@ Python 3.12 and 3.15 on one machine. Other platforms are not measured.
 
 ## Limits
 
-- The answer-key additions above do not exist in any bundle yet. On the
-  saved demo bundles a Routing sibling is not judged, and no Explanation or
-  Steering episode exists.
+- Older saved demo bundles lack some machine-checkable answer-key fields
+  and can leave Routing unjudged. Current generated bundles carry the
+  scoring fields described above.
 - The hosted reader has never run, so no E from a real model exists. The
   sanity bound (2 standard errors, counting items) is a choice, not a
   calibration; counting items rather than orders makes it lenient when an
   Explanation suite has few instances.
-- Sibling B's item is recognised from the reply text. If a fixed task
-  message replaced the classifier's reply (`reply: null` on an answerable
-  verdict), the decision's item cannot be recognised and that request does
-  not count as answerable with it.
+- In older Routing bundles without the selected item ids or decision id,
+  an undelivered reply leaves the decision match unjudged. Current verdict
+  ids decide independently of reply delivery when the key names the id.
 - Steering takes the first `correction_delivered` row only. The
   `correction_rule` and `proxy` fields are not read. D-045 scores moves
   against the real objective alone.
@@ -746,9 +779,9 @@ Python 3.12 and 3.15 on one machine. Other platforms are not measured.
 - The probe table is per cell. Eligibility and the capability composite are
   pooled per configuration within one polling-interval section, so controls
   run at another polling interval are not pooled with them.
-- Until the runner writes `task_sha256`, the task identity is derived. Two
+- Older bundles without `task_sha256` use a derived task identity. Two such
   task instances that differ only in what the bundle does not hold (the user
   card, task tools outside the baseline tree) have the same digest.
 - Without an explicit plan, a table's planned set is inferred from what
   configurations ran. An instance omitted everywhere is then unknown.
-  Supply the suite index with the plan option for release reports.
+  Supply the suite index and require the plan for release reports.
