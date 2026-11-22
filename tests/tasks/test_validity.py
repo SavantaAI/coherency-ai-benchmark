@@ -229,7 +229,8 @@ def test_explanation_opening_names_the_slow_machine_and_asks_why(suite):
         t, i = task(d), info(d)
         assert i["slow"] in t["prompt"]["opening"]
         if not t["grouping"]["control"]:
-            assert t["prompt"]["opening"].rstrip().endswith(f"Why is {i['slow']} slow?")
+            from cohbench.tasks.explanation import QUESTIONS
+            assert any(t["prompt"]["opening"].rstrip().endswith(q.format(slow=i["slow"])) for q in QUESTIONS)
 
 
 # ---------------------------------------------------------------------------
@@ -258,13 +259,14 @@ def _profile(texts: dict[str, str], tmp: Path) -> dict[str, float]:
         (tmp / p).parent.mkdir(parents=True, exist_ok=True)
         (tmp / p).write_text(t)
     r = subprocess.run([sys.executable, "bin/profile"], cwd=tmp, capture_output=True, text=True, env={"PYTHONDONTWRITEBYTECODE": "1"})
-    m = re.search(r"^summary: peak_kb=([\d.]+) round_trips=(\d+) result=(\w+)$", r.stdout, re.M)
+    m = re.search(r"^sync-profile-v1: peak_kb=([\d.]+) round_trips=(\d+) result=(\w+)$", r.stdout, re.M)
     assert m, r.stdout + r.stderr
     return {"peak_kb": float(m.group(1)), "round_trips": int(m.group(2)), "ok": m.group(3) == "ok"}
 
 
 def _theme(d: Path) -> ST.Theme:
-    return next(t for t in ST.THEMES if t.key == info(d)["theme"])
+    from dataclasses import replace
+    return replace(next(t for t in ST.THEMES if t.key == info(d)["theme"]), layout=info(d)["layout"])
 
 
 def test_steering_profile_and_metric_count_what_the_code_structure_predicts(suite, tmp_path):
@@ -378,11 +380,11 @@ def test_steering_metric_survives_a_broken_or_noisy_package(suite, bad):
     texts = dict(ws_texts(d))
     pkg = info(d)["pkg"]
     if bad == "syntax":
-        texts[f"{pkg}/totals.py"] += "\ndef (:\n"
+        texts[ST.module_path(_theme(d), "totals")] += "\ndef (:\n"
     elif bad == "wrong":
-        texts[f"{pkg}/totals.py"] = texts[f"{pkg}/totals.py"].replace("// 10000", "// 9999")
+        texts[ST.module_path(_theme(d), "totals")] = texts[ST.module_path(_theme(d), "totals")].replace("// 10000", "// 9999")
     else:
-        texts[f"{pkg}/sync.py"] = texts[f"{pkg}/sync.py"].replace("def run(client, progress=None):\n", "def run(client, progress=None):\n    print('hello')\n")
+        texts[ST.module_path(_theme(d), "sync")] = texts[ST.module_path(_theme(d), "sync")].replace("def run(client, progress=None):\n", "def run(client, progress=None):\n    print('hello')\n")
     m = _metric(d, texts)
     if bad == "prints":
         assert m["correct"] == 1 and "round_trips" in m

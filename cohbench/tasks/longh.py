@@ -22,13 +22,13 @@ horizon scripts into long-horizon ones:
 from __future__ import annotations
 
 import hashlib
+import re
 from typing import Any
 
 from . import fillers as F
 from .common import NOTES_PATH, RESET_NOTICE, RESET_REOPEN, Options, bash, handler, write
 
 CONTINUATION = "Picking this back up. Continue where you left off."
-FILLER_ROOT = "admin/**"
 NOTES_DONE = f"I've left notes in {NOTES_PATH}: what you asked for, and which of the small jobs are done and which are left."
 GRACE_S = 120  # the runner's default grace after a notice (D-046)
 SLOW_TOTAL_S = 150  # the grace variant spreads its remaining work over at least this long
@@ -36,20 +36,46 @@ SLOW_TOTAL_S = 150  # the grace variant spreads its remaining work over at least
 
 def reset_after(o: Options, n_fillers: int) -> int:
     """How many filler results must exist before the notice: at least half of
-    the chores, and at least one chore left, so the notice falls before the
+    the chores, and at least three chores left, so the notice falls before the
     main job for an agent that works through the list in order."""
-    return o.rng("reset").between((n_fillers + 1) // 2, n_fillers - 1)
+    return o.rng("reset").between((n_fillers + 1) // 2, n_fillers - 3)
 
 
-def reset_event(at_least: int) -> dict[str, Any]:
-    return {"name": "handoff", "trigger": {"changes": {"path": FILLER_ROOT, "at_least": at_least}},
-            "action": {"type": "reset", "notice": RESET_NOTICE, "continuation": CONTINUATION, "grace_ms": GRACE_S * 1000},
-            "required": True, "reopen": RESET_REOPEN}
+def chore_checks(fills):
+    return [{"id": f.key, "check": {"path": path, "regex": r"\A" + re.escape(content) + r"\Z"}}
+            for f in fills for path, content in f.solution.items()]
 
 
-def opening(fills: list[F.Filler], main: str, then: str = "Then the main job.") -> str:
-    return ("Hi! A few things to get through in this project today. First, some small chores:\n\n" + F.listed(fills)
-            + f"\n\n{then} {main}")
+def reset_event(at_least, fills, main_path):
+    return {"name": "handoff", "trigger": {"any": [
+        {"count": {"of": [{"content_matches": c["check"]} for c in chore_checks(fills)], "at_least": at_least}},
+        {"changes": {"path": main_path, "at_least": 1}}]},
+        "action": {"type": "reset", "notice": RESET_NOTICE, "continuation": CONTINUATION, "grace_ms": GRACE_S * 1000},
+        "required": True, "reopen": RESET_REOPEN}
+
+
+OPENERS = (
+    "Hello! Here is today's project work. Start with these chores:",
+    "Hi! Please work through this list today, beginning with the small jobs:",
+    "Good morning! These project chores come first:",
+    "Hello! I have a list for this session. Begin here:",
+    "Hi there! Let's get these items done first:",
+    "Morning! The first part of today's work is this list:",
+)
+
+
+def opening(o, fills, main):
+    transition = o.rng("transition").choice((
+        "Then, ", "After that, ", "Once those are done, ", "Next, ",
+        "Following the chores, ", "For the remaining work, ",
+    ))
+    return o.rng("phrasing").choice(OPENERS) + "\n\n" + F.listed(fills) + "\n\n" + transition + main
+
+
+def paced(fills):
+    # The next tool call waits while the watcher delivers the reset notice.
+    # A delay before every next chore also covers every seeded threshold.
+    return [step for f in fills for step in [*f.steps(), {**bash("true"), "delay": 20}]]
 
 
 # ---------------------------------------------------------------------------
@@ -119,7 +145,7 @@ def ideal(handlers: list[dict[str, Any]], n_look: int, fills: list[F.Filler], jo
     many of its first handler's steps are the opening look round."""
     first = handlers[0]
     look, main = first["steps"][:n_look], first["steps"][n_look:]
-    h0 = {**first, "steps": look + F.steps(fills) + main, "on_steer": "abandon"}
+    h0 = {**first, "steps": look + paced(fills) + main, "on_steer": "abandon"}
     resume = _resume(first, look, resume_main if resume_main is not None else main, fills)
     if grace:
         rest = resume["steps"]
@@ -134,7 +160,7 @@ def ideal(handlers: list[dict[str, Any]], n_look: int, fills: list[F.Filler], jo
 def worst(handlers: list[dict[str, Any]], n_look: int, fills: list[F.Filler], lost: str, lost_expect: str) -> list[dict[str, Any]]:
     first = handlers[0]
     look, main = first["steps"][:n_look], first["steps"][n_look:]
-    h0 = {**first, "steps": look + F.steps(fills) + main, "on_steer": "abandon"}
+    h0 = {**first, "steps": look + paced(fills) + main, "on_steer": "abandon"}
     notes = handler("notes", [write(NOTES_PATH, "Notes\n\nWorking through the list.\n")], "Done.", expect="closing this session")
     ask = handler("lost", [bash(f"cat {NOTES_PATH}")], lost, end="question", expect="Picking this back up")
     cont = {**first, "id": "carry_on", "steps": look + main, "expect": {"contains": lost_expect}}

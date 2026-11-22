@@ -13,8 +13,8 @@ def generate(o: Options) -> Instance:
         raise GenerateError(f"family: one of {list(FAMILIES)}")
     if o.horizon not in HORIZONS:
         raise GenerateError(f"horizon: one of {list(HORIZONS)}")
-    if not isinstance(o.seed, int) or o.seed < 0:
-        raise GenerateError("seed: a non-negative integer")
+    if type(o.seed) is not int or not 0 <= o.seed <= 9007199254740992:
+        raise GenerateError("seed: an integer from 0 to 9007199254740992")
     if o.sibling is not None and o.family != "routing":
         raise GenerateError("only Routing has siblings")
     if o.family == "routing":

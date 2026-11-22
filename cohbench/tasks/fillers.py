@@ -11,6 +11,7 @@ long horizon's reset trigger one count over `admin/**`."""
 from __future__ import annotations
 
 import json
+from datetime import date as Date
 from dataclasses import dataclass, field
 
 from .common import Files, bash, write
@@ -73,13 +74,13 @@ def meetings(r: Rng) -> Filler:
         d, m = r.between(1, 28), r.between(1, 12)
         rows.append((d, m, t))
     planted = "".join(f"{d:02d}/{m:02d}/2026 {t}\n" for d, m, t in rows)
-    done = "".join(f"2026-{m:02d}-{d:02d} {t}\n" for d, m, t in rows)
+    done = "".join(f"{Date(2026, m, d).isoformat()} {t}\n" for d, m, t in rows)
     return Filler("meetings", "In admin/meetings.txt, write the dates as year-month-day (like 2026-03-14) instead of day/month/year.",
                   {"admin/meetings.txt": planted}, {"admin/meetings.txt": done}, ["admin/meetings.txt"])
 
 
 def holidays(r: Rng) -> Filler:
-    rows = [{"date": f"2026-{md}", "name": n} for md, n in HOLIDAYS if r.chance(3, 4)] or [{"date": "2026-01-01", "name": "New Year"}]
+    rows = [{"date": Date.fromisoformat(f"2026-{md}").isoformat(), "name": n} for md, n in HOLIDAYS if r.chance(3, 4)] or [{"date": "2026-01-01", "name": "New Year"}]
     planted = json.dumps(rows, indent=2) + "\n"
     done = "date,name\n" + "".join(f"{x['date']},{x['name']}\n" for x in rows)
     return Filler("holidays", "Make admin/holidays.csv from admin/holidays.json, with the columns date,name in the same order as the JSON.",
@@ -112,7 +113,7 @@ def todo(r: Rng) -> Filler:
 
 
 def changelog(r: Rng) -> Filler:
-    date = f"2026-{r.between(3, 9):02d}-{r.between(10, 28):02d}"
+    date = Date(2026, r.between(3, 9), r.between(10, 28)).isoformat()
     text = f"Moved the {r.choice(['shared folder', 'contact list', 'rota', 'supplier list'])} to the new drive"
     planted = "# Changelog\n\n## 2026-02-02\n- Added the setup guide\n\n## 2026-01-15\n- First version\n"
     done = f"# Changelog\n\n## {date}\n- {text}\n\n## 2026-02-02\n- Added the setup guide\n\n## 2026-01-15\n- First version\n"
@@ -185,7 +186,11 @@ def choose(r: Rng, n: int) -> list[Filler]:
     """n fillers, each of a different kind, in a seeded order."""
     if n > len(KINDS):
         raise ValueError(f"at most {len(KINDS)} fillers")
-    return [k(r.child(k.__name__)) for k in r.sample(KINDS, n)]
+    out = [k(r.child(k.__name__)) for k in r.sample(KINDS, n)]
+    for f in out:
+        lead = r.child("phrasing", f.key).choice(("For this item, ", "As a small cleanup, ", "For the project files, ", "While you are here, ", "As part of the file work, ", "For this pass, "))
+        f.instruction = lead + f.instruction[0].lower() + f.instruction[1:]
+    return out
 
 
 def plant(files: Files, fillers: list[Filler]) -> None:

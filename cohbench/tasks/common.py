@@ -81,8 +81,8 @@ def return_delay_ms(o: Options) -> int:
 
 
 def workspace_mtime(o: Options) -> int:
-    """One modification time for the whole workspace, whole seconds in 2026."""
-    return 1767225600 + o.rng("mtime").below(300 * 86400)
+    """One fixed modification time for every workspace: 2026-01-01 UTC."""
+    return 1767225600
 
 
 def canary(o: Options) -> str:
@@ -185,6 +185,21 @@ def write_instance(inst: Instance, out: Path) -> None:
     for who in sorted(inst.scripts):
         (sd / f"{who}-run.json").write_text(dumps(inst.scripts[who]["run"]), encoding="utf-8")
         (sd / f"{who}-policy.json").write_text(dumps(inst.scripts[who]["policy"]), encoding="utf-8")
+    expected = {}
+    for who in inst.scripts:
+        good = who != "worst"
+        if inst.options.control or inst.options.family == "routing":
+            value = {"pass": good}
+            if inst.options.sibling:
+                value["R"] = int(good)
+        elif inst.options.family == "explanation":
+            value = {"answers": [int(good), int(good)]}
+        else:
+            value = {"g": int(good), "c": int(good), "l": int(good), "score": int(good)}
+        if inst.options.horizon == "h80":
+            value["reset"] = "grace" if who == "ideal-grace" else "hand_back"
+        expected[who] = value
+    inst.info["expected"] = expected
     (sd / "info.json").write_text(dumps(inst.info), encoding="utf-8")
     for p in out.rglob("*"):
         if p.is_file() and not p.is_relative_to(out / "workspace") and not p.is_relative_to(out / "metric"):

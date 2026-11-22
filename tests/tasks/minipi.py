@@ -159,6 +159,7 @@ class ScriptedEpisode(FakeEpisode):
         self.metric_cmd = metric
         self.readings: list[tuple[float, dict[str, Any]]] = []  # (episode clock, reading) after each changing step
         self.turn_texts: list[str] = []
+        self.notice_indices: list[int] = []
         super().__init__([], out, clock, tree=dict(pi.tree), metric=metric is not None, **kw)
         self._wrap(self.watchers[-1])
 
@@ -219,6 +220,8 @@ class ScriptedEpisode(FakeEpisode):
             at = self.next_t
             steer = self.steers.pop(0) if self.steers else None
             changed, reply = self.pi.step(steer)
+            if steer and steer.startswith("I'm closing this session"):
+                self.notice_indices.append(len(self.pi.log))
             for p, t in sorted(changed.items()):
                 self.cur.writes.append((at - self.cur_started, p, t))
             if changed and self.metric_cmd is not None:

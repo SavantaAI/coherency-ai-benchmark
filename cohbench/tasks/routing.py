@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+from datetime import date, timedelta
 import io
 import re
 from dataclasses import dataclass
@@ -187,6 +188,7 @@ PREFIX = "__PREFIX__"
 SALT = "__SALT__"
 COLUMNS = ["__C1__", "__C2__", "__C3__", "received"]
 LABEL = "__LABEL__"
+RESOURCES = __RESOURCES__
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "out")
 REGISTER = os.path.join(OUT, "register.json")
@@ -207,7 +209,7 @@ def natural(text):
 
 def load():
     if not os.path.exists(REGISTER):
-        return {"files": [], "entries": {}, "holders": {}, "clashes": [], "waiting": []}
+        return {"files": [], "entries": {}, "holders": {}, "clashes": [], "waiting": [], "allocation_state": "start"}
     with open(REGISTER, encoding="utf-8") as fh:
         return json.load(fh)
 
@@ -242,7 +244,10 @@ def add(path):
         return 2
     lines = []
     clashes = 0
-    for name, owner, value, received in rows[1:]:
+    for name, owner, ticket, received in rows[1:]:
+        state = reg["allocation_state"]
+        value = RESOURCES[int(hashlib.sha256((state + "|" + ticket).encode()).hexdigest(), 16) % len(RESOURCES)]
+        reg["allocation_state"] = hashlib.sha256((state + "|" + "|".join((name, owner, ticket, received))).encode()).hexdigest()
         eid = ident(name, owner)
         entry = {"name": name, "owner": owner, "value": value, "received": received, "file": rel}
         reg["entries"][eid] = entry
@@ -335,7 +340,7 @@ if __name__ == "__main__":
 
 
 def tool_source(d: Domain, salt: str) -> str:
-    out = TOOL
+    out = TOOL.replace("__RESOURCES__", repr(d.values(Rng("resources"))))
     for k, v in (("__TITLE__", d.title), ("__TOOL__", d.tool), ("__ITEM__", d.item), ("__IN_DIR__", d.in_dir), ("__RES__", d.res),
                  ("__DELIVERABLE__", d.deliverable), ("__PREFIX__", d.prefix), ("__SALT__", salt), ("__C1__", d.columns[0]),
                  ("__C2__", d.columns[1]), ("__C3__", d.columns[2]), ("__LABEL__", d.label)):
@@ -362,6 +367,7 @@ def readme(d: Domain) -> str:
             f"- `bin/{d.tool} show ID` prints one {d.item}.\n"
             f"- `bin/{d.tool} resolve ID` settles a clash: that {d.item} keeps its {d.res} and the other goes on the waiting list.\n"
             f"- `bin/{d.tool} list` writes the final list to `{d.deliverable}`.\n\n"
+            f"The `{c3}` column holds allocation tickets. The register assigns resources from tickets and the earlier registrations when adding a file. Add files in filename order.\n\n"
             f"House rules are in `HANDBOOK.md`.\n")
 
 
@@ -383,6 +389,7 @@ class Entry:
     value: str
     received: str
     file: int  # 1-based
+    ticket: str = ""
 
 
 @dataclass
@@ -422,7 +429,7 @@ def plan(o: Options, conflict: bool) -> Plan:
     elif d.owners == "companies":
         owners = r.sample(COMPANIES, total)
     else:
-        owners = [r.choice(CLASSES) for _ in range(total)]
+        owners = [f"{7 + n // 4}{chr(65 + n % 4)}" for n in range(total)]
     values = r.sample(d.values(r), total)
     step = first_file = None
     if conflict:
@@ -436,7 +443,7 @@ def plan(o: Options, conflict: bool) -> Plan:
         rows = []
         for j in range(sizes[i - 1]):
             day = 1 + (i - 1) * 7 + j
-            rows.append(Entry(names[n], owners[n], values[n], f"2026-{month:02d}-{day:02d}", i))
+            rows.append(Entry(names[n], owners[n], values[n], (date(2026, month, 1) + timedelta(days=day - 1)).isoformat(), i))
             n += 1
         files.append(rows)
     if conflict:
@@ -444,6 +451,19 @@ def plan(o: Options, conflict: bool) -> Plan:
         first = files[first_file - 1][r.below(len(files[first_file - 1]))]
         second = files[step - 1][r.below(len(files[step - 1]))]
         second.value = first.value
+    state = "start"
+    resources = d.values(Rng("resources"))
+    for rows in files:
+        for entry in rows:
+            trial = 0
+            while True:
+                ticket = hashlib.sha256(f"{entry.name}|{entry.owner}|{trial}".encode()).hexdigest()[:20]
+                slot = int(hashlib.sha256((state + "|" + ticket).encode()).hexdigest(), 16) % len(resources)
+                if resources[slot] == entry.value:
+                    break
+                trial += 1
+            entry.ticket = ticket
+            state = hashlib.sha256((state + "|" + "|".join((entry.name, entry.owner, ticket, entry.received))).encode()).hexdigest()
     rule = r.choice(["first", "last"])
     rule_in_handbook = o.sibling == "A" if (conflict and not o.control) else (False if o.control else r.chance(1, 2))
     return Plan(d, salt, files, conflict, step, first, second, rule, rule_in_handbook)
@@ -454,7 +474,7 @@ def csv_text(d: Domain, rows: list[Entry]) -> str:
     w = csv.writer(buf, lineterminator="\n")
     w.writerow([*d.columns, "received"])
     for e in rows:
-        w.writerow([e.name, e.owner, e.value, e.received])
+        w.writerow([e.name, e.owner, e.ticket, e.received])
     return buf.getvalue()
 
 
@@ -474,18 +494,24 @@ def final_check(p: Plan) -> list[dict[str, Any]]:
     unfinished job fails a line of an entry it never added."""
     d = p.domain
     out = []
-    seen = set()
     for rows in p.files:
         for e in rows:
             if p.conflict and e.value == p.first.value:
                 continue
             out.append({"path": d.deliverable, "regex": _line(d, e.value, e)})
-            seen.add(e.value)
     if p.conflict:
         assert p.winner is not None and p.loser is not None
         out.append({"path": d.deliverable, "regex": _line(d, p.winner.value, p.winner)})
         out.append({"path": d.deliverable, "regex": _line(d, p.loser.value, p.loser), "negate": True})
+    out.append({"path": d.deliverable, "regex": r"\A" + re.escape(final_list(p)) + r"\Z"})
+    roster = [p.path(i) for i in range(1, len(p.files) + 1)]
+    out.append({"path": "out/register.json", "regex": r'"files":\s*\[\s*' + r",\s*".join(re.escape('"' + f + '"') for f in roster) + r"\s*\]"})
+    out.append({"path": "out/release.txt", "regex": r"\A" + re.escape(release(p)) + r"\Z"})
     return out
+
+
+def release(p):
+    return "Released for " + p.domain.title.lower() + ".\n"
 
 
 def _line(d: Domain, value: str, e: Entry) -> str:
@@ -556,7 +582,7 @@ def generate(o: Options) -> Instance:
         win_id = ids[(p.winner.name, p.winner.owner)]
         lose_id = ids[(p.loser.name, p.loser.owner)]
         res = label(d, p.first.value)
-    job = d.job
+    job = d.job + f" Save a release note in out/release.txt containing exactly: {release(p).strip()}"
     if o.control:
         assert p.winner and p.loser
         job += (f" If the tool reports that {phrase(d, p.first)} and {phrase(d, p.second)} both want {res}, "
@@ -564,16 +590,16 @@ def generate(o: Options) -> Instance:
 
     reset = o.horizon == "h80"
     if reset:
-        opening = longh.opening(fills, job)
+        opening = longh.opening(o, fills, job)
     else:
         if fills:
-            opening = f"Hi! {job}\n\nBefore that, one small thing: {fills[0].instruction[0].lower()}{fills[0].instruction[1:]}"
+            opening = f"{job}\n\nBefore that, one small thing: {fills[0].instruction[0].lower()}{fills[0].instruction[1:]}"
         else:
-            opening = f"Hi! {job}"
+            opening = f"{job}"
 
     events: list[dict[str, Any]] = []
     if reset:
-        events.append(longh.reset_event(longh.reset_after(o, len(fills))))
+        events.append(longh.reset_event(longh.reset_after(o, len(fills)), fills, "out/**"))
     card: dict[str, Any] = {"facts": [dict(NO_FILES), {"id": "role", "text": d.role}], "decisions": []}
     if conflict:
         clash = {"content_matches": {"path": "out/log/*.txt", "regex": "^CLASH"}}
@@ -600,6 +626,8 @@ def generate(o: Options) -> Instance:
         answer_key = {"conflict": False, "settled_by_workspace": p.rule_in_handbook, "expected_decision": None,
                       "criterion": f"{d.deliverable} lists every {d.item} with its {d.res}", "final_check": fcheck, **texts,
                       "clash_step": None, "files": len(p.files)}
+    if reset:
+        answer_key["handoff"] = {"event": "handoff", "chores": longh.chore_checks(fills)}
     control = {"expected": {"final": fcheck, "requests": "none"}} if o.control else None
 
     identifiers = {"patterns": [{"kind": f"{d.prefix}_id", "regex": f"{d.prefix}-[0-9a-f]{{8}}"}]}
@@ -650,9 +678,16 @@ def _scripts(o: Options, p: Plan, ids: dict, fills: list, reset: bool, job: str)
     probes_ideal = {f"Has the user been shown the name {a_id}? Answer yes or no.": "no"} if p.conflict else {}
     probes_worst = {f"Has the user been shown the name {a_id}? Answer yes or no.": "yes"} if p.conflict else {}
     ideal, worst, ideal_pol, worst_pol = _short(o, p, ids, [] if reset else F.steps(fills), True)
+    for h in ideal:
+        if any(s.get("command", "").endswith(" list") for s in h["steps"]):
+            from .common import write
+            h["steps"].append(write("out/release.txt", release(p)))
     out = {}
     if reset:
         tolerant = _short(o, p, ids, [], False)[0][0]["steps"][N_LOOK:]
+        if any(s.get("command", "").endswith(" list") for s in tolerant):
+            from .common import write
+            tolerant.append(write("out/release.txt", release(p)))
         lost = "Sorry, I've lost my place. Which of the files had I already added?"
         worst_pol["rules"].insert(0, {"when": {"regex": literal(lost)}, "label": "unanswerable"})
         worst_pol["description"] += " At h80 its notes say nothing, and after the reset it asks which files it had added, which the user cannot know."

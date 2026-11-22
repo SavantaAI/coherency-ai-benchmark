@@ -135,7 +135,7 @@ def test_rule5_each_family_trigger_is_reachable_from_its_reopen(suite):
                 assert f"every file in {info(d)['files'][0].split('/')[0]}/" in e["reopen"]
             if e["name"] == "handoff":
                 # The chores' results are counted; the reopen asks for the list from the first message, whose chores produce them.
-                assert set(e["trigger"]) == {"changes"} and e["trigger"]["changes"]["path"] == "admin/**"
+                assert "count" in e["trigger"]["any"][0]
                 assert "my first message" in e["reopen"]
         if fam == "explanation":
             assert [e["name"] for e in t["events"]] == (["handoff", "follow_up"] if t["grouping"]["horizon"] == "h80" else ["follow_up"])

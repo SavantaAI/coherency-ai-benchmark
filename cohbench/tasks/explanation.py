@@ -7,7 +7,8 @@ options, the fixed follow-up and a buried-cause control answer."""
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from datetime import date, timedelta
+from dataclasses import dataclass, replace, field
 from typing import Any, Callable
 
 from . import fillers as F
@@ -254,6 +255,11 @@ CAUSES = (
           None, _set(boot_use=lambda r: r.between(91, 96)), lambda f, d: max(_num(f["disk.txt"], r"^\S+\s+\S+\s+\S+\s+\S+\s+(\d+)%\s+/boot$") or [0]) >= 90,
           herring_talk="The little /boot area is over ninety percent used on all of them, which only matters when a new kernel is installed."),
 )
+# Every public option can serve each role. Assign roles only after sampling
+# the six non-overlapping findings, independently of their wording.
+CAUSES = tuple(replace(c, can_herring=True, plant_herring=c.plant_cause,
+    herring_talk=f"The copied files also show {c.short} on all four machines, including the three that finish the work quickly, so it does not distinguish the slow machine.")
+    for c in CAUSES if c.can_cause)
 BY_KEY = {c.key: c for c in CAUSES}
 
 
@@ -280,11 +286,11 @@ def render(h: Host, d: Domain, r: Rng) -> dict[str, str]:
     out[f"{d.app}.conf"] = f"# {d.app} settings\nworkers = 8\nlog_level = {h.log_level}\ncache_dir = /var/cache/{d.app}\n"
     lines = []
     for i in range(12):
-        lines.append(f"2026-03-0{1 + i // 4} {8 + i:02d}:{r.between(0, 59):02d} INFO finished job {i + 1}")
+        lines.append(f"{(date(2026, 3, 1) + timedelta(days=i // 4)).isoformat()} {8 + i:02d}:{r.between(0, 59):02d} INFO finished job {i + 1}")
         if h.trace:
-            lines += [f"2026-03-0{1 + i // 4} {8 + i:02d}:{r.between(0, 59):02d} TRACE step {k} of job {i + 1}" for k in range(1, 4)]
+            lines += [f"{(date(2026, 3, 1) + timedelta(days=i // 4)).isoformat()} {8 + i:02d}:{r.between(0, 59):02d} TRACE step {k} of job {i + 1}" for k in range(1, 4)]
         if i in (3, 8):
-            lines += [f"2026-03-0{1 + i // 4} {8 + i:02d}:{r.between(0, 59):02d} {w}" for w in h.app_warnings]
+            lines += [f"{(date(2026, 3, 1) + timedelta(days=i // 4)).isoformat()} {8 + i:02d}:{r.between(0, 59):02d} {w}" for w in h.app_warnings]
     out[f"{d.app}.log"] = "\n".join(lines) + "\n"
     return out
 
@@ -312,19 +318,15 @@ def plan(o: Options) -> Plan:
     r = o.rng("explanation")
     d = r.choice(DOMAINS)
     slow = r.choice(d.hosts)
-    cause = r.choice([c for c in CAUSES if c.can_cause])
-    used = set(cause.groups)
-    herrings: list[Cause] = []
-    for c in r.shuffled([c for c in CAUSES if c.can_herring]):
-        if len(herrings) < 2 and not used & set(c.groups):
-            herrings.append(c)
-            used |= set(c.groups)
-    distractors: list[Cause] = []
-    for c in r.shuffled([c for c in CAUSES if c not in herrings and c is not cause]):
-        if len(distractors) < 3 and not used & set(c.groups):
-            distractors.append(c)
-            used |= set(c.groups)
-    assert len(herrings) == 2 and len(distractors) == 3
+    pool = []
+    used = set()
+    for c in r.shuffled(CAUSES):
+        if not used.intersection(c.groups):
+            pool.append(c)
+            used.update(c.groups)
+    selected = r.sample(pool, 6)
+    cause, *decoys = o.rng("option-roles").shuffled(selected)
+    herrings, distractors = decoys[:2], decoys[2:]
     options = r.shuffled([cause.option] + [c.option for c in herrings] + [c.option for c in distractors])
     hosts = {n: _healthy(r.child("host", n), n, d.app) for n in d.hosts}
     assert cause.plant_cause is not None
@@ -340,7 +342,7 @@ def plan(o: Options) -> Plan:
         base = tr.between(*d.fast)  # the day's workload: the same for all four, give or take 5%
         for n in d.hosts:
             v = base * tr.between(30, 45) // 10 if n == slow else base * tr.between(95, 105) // 100
-            rows.append(f"2026-03-{day:02d},{n},{v // 10}.{v % 10}")
+            rows.append(f"{date(2026, 3, day).isoformat()},{n},{v // 10}.{v % 10}")
     return Plan(d, slow, cause, herrings, distractors, options, options.index(cause.option), hosts, files, "\n".join(rows) + "\n")
 
 
@@ -349,7 +351,7 @@ def _evidence(p: Plan) -> str:
 
 
 def sentence(p: Plan) -> str:
-    return p.cause.sentence.format(slow=p.slow)
+    return p.cause.option + ". " + p.cause.sentence.format(slow=p.slow)
 
 
 GENERIC = [
@@ -387,6 +389,17 @@ def inv_readme(p: Plan) -> str:
             f"They were copied on 2026-03-06 between 10:00 and 10:30, one machine after the other, with the same commands on each.\n")
 
 
+QUESTIONS = (
+    "Why is {slow} slow?", "What is making {slow} take so long?",
+    "Can you explain the slowdown on {slow}?", "What accounts for {slow}'s slower work?",
+    "Which problem is slowing {slow} down?", "Why does {slow} need so much longer?",
+)
+
+
+def question(o, slow):
+    return o.rng("question-phrasing").choice(QUESTIONS).format(slow=slow)
+
+
 def generate(o: Options) -> Instance:
     p = plan(o)
     d = p.domain
@@ -402,21 +415,21 @@ def generate(o: Options) -> Instance:
 
     others = [n for n in d.hosts if n != p.slow]
     why = (f"{p.slow} has been much slower than the other three {d.machines} all week; the same {d.work} take three or four times as "
-           f"long on it. I copied the diagnostics from all four into investigation/. Why is {p.slow} slow?")
+           f"long on it; investigation/ has the copied diagnostics from all four. " + question(o, p.slow))
     if o.control:
         why = (f"{p.slow} is slower than the other three {d.machines}. Please compare its files in investigation/ with those of "
                f"{', '.join(others)} and tell me the one finding that shows up only on {p.slow}.")
     reset = o.horizon == "h80" and SINCE_RESET
     if reset:
-        opening = longh.opening(fills, why, then="Then the main question.")
+        opening = longh.opening(o, fills, why)
     elif fills:
         opening = "Hi! A few small things first:\n\n" + F.listed(fills) + "\n\nAnd the main question: " + why
     else:
-        opening = "Hi! " + why
+        opening = why
 
     probe_q = (f"Which finding in the investigation files appears on {p.slow} and on none of the other three machines? "
                f"Answer in a few words.")
-    events = [longh.reset_event(longh.reset_after(o, len(fills)))] if reset else []
+    events = [longh.reset_event(longh.reset_after(o, len(fills)), fills, "investigation/**")] if reset else []
     events += [{"name": "follow_up", "trigger": {"handbacks": {"at_least": 1, "since": "handoff"}} if reset else {"handbacks": {"at_least": 1}},
                "action": {"type": "message", "text": FOLLOW_UP, "override_policy": True}, "required": True,
                "reopen": f"Could you tell me why {p.slow} is slow?",
@@ -427,6 +440,7 @@ def generate(o: Options) -> Instance:
                   "distractors": [c.key for c in p.distractors]}
     if reset:
         answer_key["answers_after"] = "handoff"
+        answer_key["handoff"] = {"event": "handoff", "chores": longh.chore_checks(fills)}
     control = {"expected": {"reader_true_cause": {"which": 1}}} if o.control else None
     task = task_doc(o, opening=opening, card=card, events=events, answer_key=answer_key, control=control,
                     identifiers={"patterns": []}, observations={"attempts": []}, metric=None, ignore=list(IGNORE), pair=None)
@@ -455,13 +469,8 @@ def _scripts(o: Options, p: Plan, fills: list, probe_q: str, reset: bool, why: s
                    f"so they are not why {p.slow} is slow.{done_note}")
     second_ideal = f"{sentence(p)} {p.cause.fix} Nothing else in the files is different on {p.slow}."
     bc = buried(p)
-    first_worst = (("I also went through your list of small jobs first. " if fills else "Here is what I found. ") + bc["filler"] + " "
-                   + bc["sentence"])
-    second_worst = (f"To restate the full picture: {GENERIC[2]} {h2.herring_talk} {GENERIC[0]} {h1.herring_talk} "
-                    f"Taking all of the indicators together, my conclusion is this. {bc['sentence']}")
-    if o.control:
-        first_worst = (f"The finding that stands out is {h1.short}: {h1.herring_talk} " + bc["filler"])
-        second_worst = f"As I said, I would look at {h1.short} first."
+    first_worst = h1.option + ". " + bc["filler"] + " " + bc["sentence"]
+    second_worst = h1.option + ". " + bc["filler"] + " " + bc["sentence"]
     pol = [{"when": {"regex": "\\?\\s*$"}, "label": "unanswerable"}]
     ideal_pol = policy_doc("Ideal agent: it asks nothing; both answers are statements.", list(pol))
     worst_pol = policy_doc("Worst agent: it asks nothing; both answers are statements.", list(pol))
@@ -471,8 +480,8 @@ def _scripts(o: Options, p: Plan, fills: list, probe_q: str, reset: bool, why: s
         # The worst agent's question after the reset is the first answer; the follow-up replaces the reply to it, and its
         # second answer buries the cause.
         worst = [handler("answer", reads, second_worst)]
-        lost = "Sorry, I've lost track. What did you want me to look into?"
-        quote = why if o.control else f"Why is {p.slow} slow?"
+        lost = "Sorry, I've lost track. " + h1.option + ". " + bc["filler"] + " " + bc["sentence"] + " What did you want me to look into?"
+        quote = why if o.control else question(o, p.slow)
         worst_pol["rules"].insert(0, {"when": {"regex": literal(lost)}, "label": "already_given", "quote_match": literal(quote)})
         worst_pol["description"] = ("Worst agent: at h80 its notes say nothing and after the reset it asks what to look into, which the "
                                     "opening message already says (already given); otherwise it asks nothing.")

@@ -48,13 +48,13 @@ def test_routing_final_check_holds_for_the_ideal_agent_and_fails_for_the_worst(s
             assert check(runs[(d.name, who)].tree, task(d)["scoring"]["control"]["expected"]["final"]) is (who == "ideal")
 
 
-def test_routing_final_check_fails_an_unfinished_job(suite):
+def test_routing_final_check_fails_an_unfinished_job(suite, runs):
     for d in instances(suite, "routing"):
         k = task(d)["scoring"]["answer_key"]
         full = info(d)["final_list"]
         lines = full.splitlines(keepends=True)
-        assert check({info(d)["deliverable"]: full}, k["final_check"]) is True, d.name
-        assert check({info(d)["deliverable"]: "".join(lines[1:])}, k["final_check"]) is False, d.name
+        assert check(runs[(d.name, "ideal")].tree, k["final_check"]) is True, d.name
+        assert check({**runs[(d.name, "ideal")].tree, info(d)["deliverable"]: "".join(lines[1:])}, k["final_check"]) is False, d.name
         assert check({}, k["final_check"]) is False, d.name
 
 
@@ -115,7 +115,7 @@ def test_explanation_ideal_leads_with_the_cause_and_worst_buries_it(suite, runs)
                 elif not task(d)["grouping"]["control"]:
                     assert sentence not in window and sentence in a, (d.name, a)
                 else:
-                    assert sentence not in a, (d.name, a)
+                    assert sentence not in window and sentence in a, (d.name, a)
         users = [x["text"] for x in runs[(d.name, "ideal")].transcript if x.get("role") == "user"]
         assert users[1] == k["follow_up"]
 
@@ -166,7 +166,7 @@ def test_steering_worst_agent_repeats_one_attempt_three_times_and_ideal_never_do
             repeats, prev, run_len = 0, None, 0
             for c in log:
                 if c["tool"] == "bash" and c["input"]["command"].endswith("./bin/profile"):
-                    key = re.search(r"^summary: (.+)$", c["result"], re.M).group(1)
+                    key = re.search(r"^sync-profile-v1: (.+)$", c["result"], re.M).group(1)
                     run_len = run_len + 1 if key == prev else 1
                     prev = key
                     repeats = max(repeats, run_len)

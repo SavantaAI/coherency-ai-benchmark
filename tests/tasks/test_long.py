@@ -34,16 +34,16 @@ def test_h80_opening_holds_the_chores_then_the_whole_main_job_in_one_message(sui
     for d in _long(suite):
         t, i = task(d), info(d)
         op = t["prompt"]["opening"]
-        assert op.startswith("Hi! A few things to get through in this project today. First, some small chores:\n\n1. ")
-        assert op.count("\n\nThen the main ") == 1
-        chores, main = op.split("\n\nThen the main ")
+        assert any(op.startswith(start + "\n\n1. ") for start in longh.OPENERS)
+        assert "\n\n" in op
+        chores, main = op.rsplit("\n\n", 1)
         assert len(re.findall(r"^\d+\. ", chores, re.M)) == len(i["fillers"])
         assert "let me know" not in op.lower() and "when they're done" not in op.lower()
         fam = t["grouping"]["family"]
         if fam == "routing":
             assert info(d)["files"][0].split("/")[0] + "/" in main
         elif fam == "steering":
-            assert "make it faster" in main and info(d)["pkg"] + "/" in main
+            assert info(d)["pkg"] + "/" in main
         else:
             assert i["slow"] in main
 
@@ -54,15 +54,15 @@ def test_h80_reset_falls_after_half_the_chores_and_before_the_main_job(suite):
         n = len(info(d)["fillers"])
         ev = [e for e in t["events"] if e["name"] == "handoff"]
         assert len(ev) == 1 and ev[0]["action"]["continuation"] == "Picking this back up. Continue where you left off."
-        trig = ev[0]["trigger"]["changes"]
-        assert trig["path"] == "admin/**" and (n + 1) // 2 <= trig["at_least"] <= n - 1
+        trig = ev[0]["trigger"]["any"][0]["count"]
+        assert len(trig["of"]) == n and (n + 1) // 2 <= trig["at_least"] <= n - 3
         # Every chore writes exactly one file, under admin/, where nothing of the main job writes.
         results = info(d)["filler_results"]
         assert len(results) == n and all(p.startswith("admin/") for p in results)
 
 
 def test_h80_reset_count_varies_by_seed(suite):
-    counts = {next(e for e in task(d)["events"] if e["name"] == "handoff")["trigger"]["changes"]["at_least"] for d in _long(suite)}
+    counts = {next(e for e in task(d)["events"] if e["name"] == "handoff")["trigger"]["any"][0]["count"]["at_least"] for d in _long(suite)}
     assert len(counts) >= 3
 
 
@@ -79,7 +79,7 @@ def test_h80_explanation_follow_up_and_answers_count_from_the_reset(suite):
 def test_nothing_in_a_workspace_restates_the_main_job(suite):
     for d in _long(suite):
         op = task(d)["prompt"]["opening"]
-        main = op.split("\n\nThen the main ", 1)[1].split(" ", 1)[1]  # after "job." or "question."
+        main = op.rsplit("\n\n", 1)[1]  # after "job." or "question."
         sentences = [x.strip() for x in re.split(r"(?<=[.?])\s+", main) if len(x.strip()) > 20]
         for p, text in ws_texts(d).items():
             for s_ in sentences:
@@ -114,11 +114,11 @@ def test_the_notice_comes_after_half_the_chores_and_before_any_main_job_step(sui
 def test_ideal_notes_hold_the_job_and_what_is_done_and_every_chore_ends_done(suite, long_runs):
     for d in _long(suite):
         op = task(d)["prompt"]["opening"]
-        main = op.split("\n\nThen the main ", 1)[1].split(" ", 1)[1]
+        main = op.rsplit("\n\n", 1)[1]
         for who in ("ideal", "ideal-grace"):
             r = long_runs[(d.name, who)]
             notes = r.tree["NOTES.md"]
-            assert main in notes, d.name
+            assert main.split(" ", 1)[-1][-100:] in notes, d.name
             assert re.search(r"^- \[x\] 1\. ", notes, re.M) and re.search(r"^- \[ \] \d+\. ", notes, re.M), (d.name, notes)
             for p, content in info(d)["filler_results"].items():
                 assert r.tree.get(p) == content, (d.name, who, p)
@@ -174,7 +174,7 @@ def test_long_explanation_answers_after_the_reset(suite, long_runs):
             follow = [u for _t, u in r.user if u == t["scoring"]["answer_key"]["follow_up"]]
             assert len(follow) == 1
             if who == "worst":
-                assert sentence not in answers[0]
+                assert sentence not in " ".join(answers[0].split()[:80]) and sentence in answers[0]
                 if not t["grouping"]["control"]:
                     assert sentence not in " ".join(answers[1].split()[:80]) and sentence in answers[1], d.name
             else:

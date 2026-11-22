@@ -105,6 +105,8 @@ class D046Run:
             return all(self._holds(x) for x in v)
         if k == "any":
             return any(self._holds(x) for x in v)
+        if k == "count":
+            return sum(self._holds(x) for x in v["of"]) >= v["at_least"]
         if k == "not":
             return not self._holds(v)
         if k == "fired":
@@ -118,7 +120,7 @@ class D046Run:
             return False
         t0 = self.fired.get(since, -1.0) if since else -1.0
         if k == "changes":
-            n = sum(1 for t, p in self.changes if t > t0 and glob_match(v["path"], p))
+            n = len({t for t, p in self.changes if t > t0 and glob_match(v["path"], p)}) if v.get("unit") == "batch" else sum(1 for t, p in self.changes if t > t0 and glob_match(v["path"], p))
         elif k == "turns":
             n = sum(1 for t in self.turns if t > t0)
         elif k == "handbacks":
