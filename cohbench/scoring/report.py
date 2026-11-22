@@ -494,7 +494,10 @@ def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float =
         runtime_note = f"scoring Python {', '.join(versions) or 'not recorded'} differs from release Python {RELEASE_PYTHON}: not a release"
     record_note = "hosted reader without a persistent record: not a release" if any(d.get("reader_record") is False for d in scores) else None
     plan_note = "plan was not required: not a release" if not require_plan else None
-    nonrelease_note = "; ".join(n for n in (runtime_note, record_note, plan_note) if n) or None
+    changed = [name for name, value, default in (("bar", bar, 0.9), ("judged-bar", judged_bar, 0.9),
+               ("level", level, 0.95), ("z", z, SANITY_Z), ("resamples", resamples, 2000), ("seed", seed, 0)) if value != default]
+    options_note = "non-default " + ", ".join(changed) + ": not a release" if changed else None
+    nonrelease_note = "; ".join(n for n in (runtime_note, record_note, plan_note, options_note) if n) or None
     if not 0 < judged_bar <= 1:
         raise ReportError("judged_bar must be greater than zero and at most one")
     plan_instances = read_plan(plan, scores) if plan is not None else None
@@ -664,7 +667,7 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
 
     # Spec section 2, rule 3: for a model run in two or more harnesses, the
     # spread of its headline across them, taken here as the range.
-    effect, settings_notes = [], []
+    effect, settings_notes, version_notes, effect_unmeasured = [], [], [], []
     for model in sorted({c["model"] for c in configs.values()}):
         for hz, mode in sorted({(k[1], k[2]) for k in built if configs[k[0]]["model"] == model}):
             matching, same = {}, {}
@@ -681,6 +684,21 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
                                            "configurations": [configs[k[0]] for k in keys]})
             for settings, members in sorted(matching.items()):
                 if len(members) < 2:
+                    continue
+                by_name = {}
+                for k in members:
+                    by_name.setdefault(configs[k[0]]["harness"], []).append(k)
+                ambiguous = sorted(name for name, keys in by_name.items() if len(keys) > 1)
+                for name in ambiguous:
+                    version_notes.append({"model": model, "horizon": hz, "mode": mode, "harness": name,
+                                          "values": [{"configuration": configs[k[0]], **{m: built[k][m]["value"] for m in ("R", "E", "S", "headline")}}
+                                                     for k in by_name[name]]})
+                if len(by_name) < 2:
+                    continue
+                if ambiguous:
+                    effect_unmeasured.append({"model": model, "horizon": hz, "mode": mode,
+                                              "configurations": [configs[k[0]] for k in members], "ambiguous_harnesses": ambiguous,
+                                              "reason": "cannot choose a version for " + ", ".join(ambiguous)})
                     continue
                 included = [k for k in members if any(row["value"] is not None for f in FAMILIES for row in built[k]["_measures"][f].values())]
                 if len(included) < 2:
@@ -706,6 +724,7 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
             "withheld": WITHHELD if withheld else None,
             "eligibility": {ck: {**pooled[ck], "configuration": configs[ck]} for ck in sorted(pooled)},
             "tables": tables, "horizon_drop": drops, "harness_effect": effect, "same_harness_different_settings": settings_notes, "coached_gap": gaps,
+            "same_harness_different_versions": version_notes, "harness_effect_not_measured": effect_unmeasured,
             "rerun_required": sorted(d["episode"] for d in scores if rerun(d))}
 
 
@@ -886,8 +905,15 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
                 L.append(f"{spread['model']} at {spread['horizon']} {spread['mode']}: {harness_label(omitted['configuration'])} not included in harness spread: {omitted['reason']}.")
         for entry in sec["same_harness_different_settings"]:
             L.append("Same harness, different settings: " + config_key(entry) + ". Spread not measured.")
+        for entry in sec.get("same_harness_different_versions", []):
+            L.append(f"Same harness, different versions: {entry['model']}, {entry['harness']}, {entry['horizon']} {entry['mode']}. Spread not measured.")
+            L += _cmp_table("Values by version:", ["configuration", "headline", "R", "E", "S"],
+                            [[harness_label(v["configuration"]), _f(v["headline"], 1), *(_f(v[m]) for m in ("R", "E", "S"))]
+                             for v in entry["values"]], grid)
+        for entry in sec.get("harness_effect_not_measured", []):
+            L.append(f"Harness effect for {entry['model']} at {entry['horizon']} {entry['mode']}: not measured; {entry['reason']}.")
         if not sec["harness_effect"]:
-            L += ["Harness effect: no qualifying set with distinct harness identities and equal remaining settings.", ""]
+            L += ["Harness effect: no qualifying set with distinct harness names, one version per name and equal remaining settings.", ""]
         for kind in ("coached_gap", "horizon_drop", "harness_effect"):
             for entry in sec[kind]:
                 for metric in ("R", "E", "S"):

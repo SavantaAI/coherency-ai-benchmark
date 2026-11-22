@@ -63,8 +63,8 @@ def test_report_without_required_plan_has_values_but_no_release_bands(tmp_path, 
         score["python_version"] = "3.12"
     root = S.write(tmp_path / "results", scores, {"a": full_config(), "ac": full_config()})
     plan = plan_file(tmp_path, scores)
-    ordinary = report.build(root, resamples=10, plan=plan if supplied_plan else None)
-    release = report.build(root, resamples=10, plan=plan, require_plan=True)
+    ordinary = report.build(root, plan=plan if supplied_plan else None)
+    release = report.build(root, plan=plan, require_plan=True)
     assert ordinary["not_release"] and not release["not_release"]
     assert "plan was not required" in report.render(ordinary, False)
     for unplanned, planned in zip(ordinary["sections"][0]["tables"], release["sections"][0]["tables"]):
@@ -150,7 +150,7 @@ def log_episode(tmp_path, *, status="collected", records=None, shell=True, shell
         for start, end, name, state, result in records:
             b.attempt(name, None, hashlib.sha256(result.encode()).hexdigest(), t=start)
             b.attempts[-1].update(source="log", log_state=state, t_end=end, batch_start=None, batch_end=None, state_unknown=False)
-            lines.append({"start_ms": start, "end_ms": end, "state": state, "result": result})
+            lines.append((name, {"start_ms": start, "end_ms": end, "state": state, "result": result}))
     if change:
         b.batch(1050, 1150, {"code.py": "v1"}, {"ops": 90})
     b.t = 1500
@@ -166,16 +166,22 @@ def log_episode(tmp_path, *, status="collected", records=None, shell=True, shell
         a["seq"] = seq
     path = b.write(tmp_path)
     doc = json.loads((path / "episode.json").read_text())
+    bindings = {name: "attempts" if name == "measure" else name + "_attempts" for name in sorted({"measure"} | {name for name, _ in lines})}
     if declaration:
-        doc["attempt_logs"] = {"measure": "attempts"}
+        doc["attempt_logs"] = bindings
     if collection:
-        data = ("".join(json.dumps(line) + "\n" for line in lines)).encode()
-        digest = hashlib.sha256(data).hexdigest() if status == "collected" else None
-        doc["collected"] = {"attempts": {"status": status, "bytes": len(data) if status == "collected" else 0 if status == "absent" else 1024 * 1024 + 1, "sha256": digest}}
-        if digest:
-            blob = path / "blobs" / digest[:2] / digest
-            blob.parent.mkdir(exist_ok=True)
-            blob.write_bytes(data)
+        doc["collected"] = {}
+        for name, collection_name in bindings.items():
+            data = ("".join(json.dumps(line) + "\n" for attempt_name, line in lines if attempt_name == name)).encode()
+            digest = hashlib.sha256(data).hexdigest() if status == "collected" else None
+            doc["collected"][collection_name] = {"status": status, "bytes": len(data) if status == "collected" else 0 if status == "absent" else 1024 * 1024 + 1, "sha256": digest}
+            if digest:
+                blob = path / "blobs" / digest[:2] / digest
+                blob.parent.mkdir(exist_ok=True)
+                blob.write_bytes(data)
+        rows = [json.loads(line) for line in (path / "observations.jsonl").read_text().splitlines()]
+        rows[0]["malformed_logs"] = {name: 0 for name in bindings.values()} if declaration else {}
+        (path / "observations.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
     (path / "episode.json").write_text(json.dumps(doc))
     return load(path, validate=True)
 
@@ -185,7 +191,7 @@ def test_logged_profiles_count_loops_despite_one_shell_interval_and_tree_changes
     assert result["l"]["value"] == 0
     assert result["l"]["loop_attempts"] == [{"seq": 6, "name": "measure", "nth": 3}]
     assert result["l"]["unplaced_attempts"] == 0 and result["l"]["unplaced"] == []
-    assert result["l"]["observations"] == {"shell": 3, "log": 3}
+    assert result["l"]["observations"] == {"shell": 3, "log": 3, "log_state_unknown": 0}
 
 
 @pytest.mark.parametrize("status, expected", [("absent", 1), ("oversize", None)])
@@ -207,7 +213,7 @@ def test_log_equivalence_requires_matching_evidence_and_prior_completion(tmp_pat
     record[index] = 1201 if different == "unfinished_prior" else "b" * 64 if different == "state" else "other"
     records[0] = tuple(record)
     result = steering.score(log_episode(tmp_path, records=records))
-    assert result["l"]["value"] == 1 and result["l"]["observations"] == {"shell": 3, "log": 3}
+    assert result["l"]["value"] == 1 and result["l"]["observations"] == {"shell": 3, "log": 3, "log_state_unknown": 0}
 
 
 def test_no_collection_record_keeps_legacy_attempt_placement(tmp_path):
@@ -221,20 +227,20 @@ def test_no_collection_record_keeps_legacy_attempt_placement(tmp_path):
     ep.doc["attempt_logs"] = {"measure": "attempts"}
     result = steering.score(ep)
     assert result["l"]["value"] == 1 and result["l"]["unplaced_attempts"] == 3
-    assert result["l"]["observations"] == {"shell": 3, "log": 0}
+    assert result["l"]["observations"] == {"shell": 3, "log": 0, "log_state_unknown": 0}
 
 
 @pytest.mark.parametrize("shell_mode", ["one", "split", "labels", "clipped"])
 def test_log_loop_is_independent_of_shell_capture(tmp_path, shell_mode):
     result = steering.score(log_episode(tmp_path, shell=shell_mode != "clipped", shell_mode=shell_mode))
     assert result["l"]["value"] == 0 and len(result["l"]["loop_attempts"]) == 1
-    assert result["l"]["observations"] == {"shell": 0 if shell_mode == "clipped" else 3, "log": 3}
+    assert result["l"]["observations"] == {"shell": 0 if shell_mode == "clipped" else 3, "log": 3, "log_state_unknown": 0}
 
 
 def test_shell_file_reads_do_not_become_logged_runs(tmp_path):
     record = [(1200, 1210, "measure", "a" * 64, "same")]
     result = steering.score(log_episode(tmp_path, shell_mode="split", records=record))
-    assert result["l"]["value"] == 1 and result["l"]["observations"] == {"shell": 3, "log": 1}
+    assert result["l"]["value"] == 1 and result["l"]["observations"] == {"shell": 3, "log": 1, "log_state_unknown": 0}
     assert steering.attempt_right(result, 1) is None
 
 
@@ -285,7 +291,7 @@ def test_every_steering_score_records_shell_and_log_counts(tmp_path, kind):
     elif kind == "rerun":
         ep.doc["end"]["reason"] = "runner_abort"
     result = score_episode(ep)
-    assert result["attempt_observations"] == {"shell": 3, "log": 3}
+    assert result["attempt_observations"] == {"shell": 3, "log": 3, "log_state_unknown": 0}
 
 
 @pytest.mark.parametrize("ends, expected", [((1100, 1200, 1210), 0), ((1201, 1200, 1210), 1)])

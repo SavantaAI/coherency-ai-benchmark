@@ -50,6 +50,33 @@ and report bytes across 3.12 and 3.15 and different hash seeds, after
 normalizing the recorded version and patching the constant inside the tests.
 Reports using scores made on 3.15 have no bands.
 
+## Release conditions
+
+These conditions distinguish a release report from a diagnostic report and
+decide which rows can receive bands. A release report can contain unranked
+rows. Diagnostic options still compute values, intervals and comparisons;
+they publish no bands.
+
+| Scope | Condition | Otherwise |
+|---|---|---|
+| Report | A valid suite plan is supplied and `--require-plan` is set. Every indexed configuration names model, harness, harness version, driver version and an explicit settings object. | A missing or malformed required input is refused. Without a required plan the report is not a release. |
+| Report | Score inputs pass the identity, duplicate-run and reader-consistency checks described below. | Refused. Input paths and output paths do not change these checks or band calculations. |
+| Report | Every score file records Python 3.12. | Not a release. `--allow-mixed-runtimes` only permits combining other runtimes; with uniform 3.12 inputs the flag changes no bands. |
+| Report | `--bar 0.90` and `--judged-bar 0.90`. | Either higher or lower values make the report not a release. |
+| Report | `--level 0.95` and `--z 2`. | Other interval levels or reader sanity bounds make the report not a release. |
+| Report | `--resamples 2000` and `--seed 0`. | Other counts or seeds can change intervals and bands, so the report is not a release. Zero resamples also means no intervals. |
+| Report | The reader is not scripted, and no score carries `reader_record: false`. | Not a release. `--scripted-reader` only permits scripted inputs; with hosted inputs the flag changes no bands. Older score files without `reader_record` retain their accepted behavior. |
+| Row | The polling interval is recorded; comparisons stay within its section. | Raw values only, with no bands or comparisons for that section. |
+| Row | The report-wide reader sanity checks pass. | E and headlines that need E are withheld. |
+| Row | Every planned eligibility control is judged, and each family's pooled pass rate is at least 90%. | The row is unranked. |
+| Row | At least 90% of planned instances are judged in each family, and the headline and interval are measured. | The row receives no band. Missing and unjudged instances remain in coverage. |
+
+These are all report options that affect official values or bands. The
+plan chooses the population and is checked against task digests; its path
+has no numerical meaning. Other path arguments only select inputs or the
+output directory. Score-command options affect the saved inputs rather
+than overriding a report's release conditions.
+
 ## Blindness
 
 A scorer reads one bundle: the five files and `blobs/` (D-018). It never
@@ -462,6 +489,10 @@ The loop part repeats these counts in `l.observations`, including shell
 observations that did not enter l. An older observation without a
 `source` is a shell observation. `l.log_collections` records the active
 collection statuses and `l.scored_attempts` names the observations used.
+A log attempt with null `log_state` enters no loop, either as the later
+attempt or as an earlier equivalent. `l.unknown_log_states` counts these
+attempts in the active logs; `attempt_observations.log_state_unknown` counts
+them across all log observations, including on controls and unjudged episodes.
 Probes on observations outside that set have no judged loop outcome.
 The log lives in the agent's container, so editing or deleting it changes
 the agent's own loop score. Nothing tells the agent the log matters.
@@ -646,8 +677,9 @@ control episodes.
   named by the seed, the polling interval and the cell, so adding a
   configuration changes no other cell's interval. The quantile rule is
   linear interpolation between order statistics. With zero resamples there
-  are no intervals and no bands; an eligible cell says "eligible; no
-  interval, so no band" in text and has `ranked: true`, `band: null` in JSON.
+  are no intervals and no bands; the report is marked not a release because
+  its resample count differs from 2000. An eligible cell retains
+  `ranked: true` with `band: null` in JSON.
 - **Eligibility** is a property of a model in a harness (one configuration
   of the index), not of a horizon or a mode. A family's controls are pooled
   over every horizon and mode of the configuration within the section, and
@@ -690,11 +722,17 @@ and all omitted planned ids. Below the judged bar it says `not comparable:
 judged on both sides k of n`. When a cell has more judged instances than
 the common set, the common-set values are printed alongside the gap.
 
-Harness effects require distinct harness name/version identities and equal
-remaining settings. Only harnesses with judged values in the cell enter a
+Harness effects require different harness names and equal remaining
+settings, including the driver version. Only harnesses with judged values in the cell enter a
 spread. Planned harnesses with no judged values remain in the matrix and
 are named beside the spread under `not_included`. Same-harness settings changes appear in a separate note
-without a spread. Matrix columns, ranks, and lookups use canonical structured
+without a spread. Versions of one harness appear under "Same harness,
+different versions", with their values and no spread. When otherwise
+matching configurations contain more than one version of any harness name,
+no cross-harness spread is computed for that group, including when a version
+is planned but has no judged values. The report names the ambiguous harness
+and says it cannot choose a version. Other settings groups are independent.
+Matrix columns, ranks, and lookups use canonical structured
 configuration keys excluding model. Colliding display labels receive a
 short key digest; labels are used only for display.
 

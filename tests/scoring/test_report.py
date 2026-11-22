@@ -198,7 +198,7 @@ def test_bands_never_cross_harnesses(tmp_path):
               for s in S.config_set(prefix + ("c" if mode == "coached" else ""), mode=mode,
                                     r_pass=2, pairs=4, e=[0.5] * 4, s=[0.5] * 4)]
     configs = {p: {**c, "harness_version": "1", "driver_version": "1", "settings": {}} for p, c in CONFIGS.items()}
-    rep = report.build(S.write(tmp_path / "results", scores, configs), plan=plan_file(tmp_path, scores), require_plan=True, resamples=30)
+    rep = report.build(S.write(tmp_path / "results", scores, configs), plan=plan_file(tmp_path, scores), require_plan=True)
     rs, _ = rows(rep)
     for config in (configs["a"], configs["b"]):
         assert rs[("m1", report.harness_label(config))]["headline"]["band"] == ({"band": 1, "ranks": "1", "members": 1} if sys.version_info[:2] == (3, 12) else None)
@@ -311,8 +311,7 @@ def test_zero_resamples_text_and_json_agree(tmp_path):
     rep = report.build(S.write(tmp_path / "results", scores, configs), plan=plan_file(tmp_path, scores), require_plan=True, resamples=0)
     cell = rows(rep)[0][("m1", report.harness_label(configs["a"]))]
     assert cell["headline"]["ranked"] is True and cell["headline"]["interval"] is None and cell["headline"]["band"] is None
-    assert (cell["headline"]["band_note"] == "no interval, so no band (zero resamples)" if sys.version_info[:2] == (3, 12)
-            else "not a release" in cell["headline"]["band_note"])
+    assert rep["not_release"] and "resamples" in cell["headline"]["band_note"]
     text = report.render(rep, False)
     assert f"100.0 judged 3 of 3 (eligible; {cell['headline']['band_note']})" in text and "100.0 unranked" not in text
 

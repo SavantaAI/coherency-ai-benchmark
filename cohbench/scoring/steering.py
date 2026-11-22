@@ -235,7 +235,8 @@ def _loops(attempts, states, strict=False):
 
 
 def observation_counts(ep):
-    return {source: sum(a.get("source", "shell") == source for a in ep.observations) for source in ("shell", "log")}
+    return {**{source: sum(a.get("source", "shell") == source for a in ep.observations) for source in ("shell", "log")},
+            "log_state_unknown": sum(a.get("source") == "log" and a.get("log_state") is None for a in ep.observations)}
 
 
 def loop_part(ep, gs):
@@ -250,10 +251,11 @@ def loop_part(ep, gs):
     loops = _loops(legacy, states) + _loops(active, {a["seq"]: a.get("log_state") for a in active}, strict=True)
     result = {"value": 0.0 if loops else 1.0, "loop_attempts": sorted(loops, key=lambda a: a["seq"]),
               "unplaced_attempts": len(reasons), "unplaced": reasons,
+              "unknown_log_states": sum(a.get("log_state") is None for a in active),
               "observations": observation_counts(ep)}
     if logs:
         result["log_collections"] = dict(sorted(logs.items()))
-        result["scored_attempts"] = sorted(a["seq"] for a in legacy + active)
+        result["scored_attempts"] = sorted(a["seq"] for a in legacy + [a for a in active if a.get("log_state") is not None])
     oversize = sorted(name for name, status in logs.items() if status == "oversize")
     if oversize:
         result.update(value=None, why="attempt log collection is oversize: " + ", ".join(oversize))

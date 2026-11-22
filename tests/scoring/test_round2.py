@@ -126,7 +126,7 @@ def test_column_keys_keep_json_types_distinct(tmp_path):
                "b": {"model": "m", "harness": "pi", "threads": "1"}}
     configs = {q: {**c, "harness_version": "1", "driver_version": "1", "settings": {}} for p, c in configs.items() for q in (p, p + "c")}
     scores = [d for p in configs for d in S.config_set(p, r_pass=1, pairs=1, e=[1], s=[1], controls=(1, 1), mode="coached" if p.endswith("c") else "default")]
-    rep = build(tmp_path, scores, configs, plan=plan_file(tmp_path, scores), require_plan=True)
+    rep = report.build(S.write(tmp_path, scores, configs), plan=plan_file(tmp_path, scores), require_plan=True)
     rs = rep["sections"][0]["tables"][0]["rows"]
     assert len({r["column_key"] for r in rs}) == len({r["harness"] for r in rs}) == 2
     assert all((r["headline"]["band"]["ranks"] == "1" if sys.version_info[:2] == (3, 12) else r["headline"]["band"] is None) for r in rs)
