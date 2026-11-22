@@ -212,3 +212,22 @@ def test_direction_max(tmp_path):
     b = Bundle("steering", {**STEERING_KEY, "direction": "max"}, baseline={"pkg/core.py": "v0"}, baseline_metric={"ops": 100})
     b.batch(2000, 2000, {"pkg/core.py": "v1"}, {"ops": 110})
     assert steering.score(b.load(tmp_path))["moves"][0]["side"] == "toward"
+
+
+def test_a_scheduled_correction_never_delivered_leaves_c_undefined(tmp_path):
+    b = sb()
+    b.planted.append({"name": "correction", "scheduled": {"action": "correction", "required": True}})
+    b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
+    r = steering.score(b.load(tmp_path))
+    assert r["correction"] == {"delivered": False, "scheduled": True}
+    assert r["c"]["value"] is None and r["parts_defined"] == ["g", "l"] and r["score"] == 1.0
+
+
+def test_no_move_in_the_no_valid_variant_with_no_correction_delivered(tmp_path):
+    # The ruling wins over D-045's "c equal to one": the event did not happen.
+    b = sb("no_valid_improvement")
+    b.planted.append({"name": "correction", "scheduled": {"action": "correction", "required": True}})
+    for _ in range(3):
+        b.attempt("measure", "s0", "f0")
+    r = steering.score(b.load(tmp_path))
+    assert (r["g"]["value"], r["c"]["value"], r["l"]["value"], r["score"]) == (1.0, None, 0.0, 0.5)

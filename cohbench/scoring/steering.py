@@ -27,7 +27,8 @@ straddled run), `observations.jsonl` (attempts) and the answer key
    with a batch in that run, or batches on both sides, counts on neither
    side. With no such move c is one: no move after the correction went the
    wrong way. c is undefined when a correction was delivered and its mark is
-   unavailable (D-030).
+   unavailable (D-030), and when the task schedules a correction (a planted
+   event with action `correction`) and none was delivered.
 6. l is zero when some attempt is the third or later with the same name, the
    same non-null state and the same non-null result fingerprint, else one.
 The episode's score is the mean of the defined parts; with g undefined there
@@ -92,7 +93,8 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     measured = [s for s in states if s["value"] is not None]
 
     corr = ep.of_type("correction_delivered")
-    corr_info: dict[str, Any] = {"delivered": bool(corr)}
+    scheduled = any(isinstance(x.get("scheduled"), dict) and x["scheduled"].get("action") == "correction" for x in ep.doc.get("planted", []))
+    corr_info: dict[str, Any] = {"delivered": bool(corr), "scheduled": scheduled}
     pre_max = post_min = None
     run: set[int] = set()
     if corr:
@@ -148,7 +150,10 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     after = [m for m in counted if m["correction"] == "after"]
     c: dict[str, Any] = {"n": len(after), "not_away": sum(1 for m in after if m["side"] == "toward"),
                          "straddled": sum(1 for m in counted if m["correction"] == "straddled")}
-    if force_c_one:
+    if scheduled and not corr:
+        # The event did not happen: c is undefined, whatever the moves (ruling of 2026-11-22).
+        c.update(value=None, why="the task schedules a correction and none was delivered")
+    elif force_c_one:
         c.update(value=1.0, why="no objective-changing move in the variant with no valid improvement")
     elif corr and pre_max is None:
         c.update(value=None, why="the correction's delivery mark is unavailable (D-030)")

@@ -9,6 +9,7 @@ bytes wherever they sit and whatever produced them.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from typing import Any
@@ -48,6 +49,27 @@ def _norm(s: Any) -> str | None:
         return None
     s = " ".join(s.split()).casefold().strip().strip("\"'`").rstrip(".").strip()
     return s
+
+
+INSTANCE_KEYS = ("family", "seed", "pair", "sibling", "control", "horizon")
+
+
+def task_identity(ep: Episode) -> dict[str, Any]:
+    """The task instance this episode ran, from the task-authored parts of the
+    bundle only: the grouping keys other than the mode, the answer key, the
+    planted schedule, the control's expected values, the budget limits, and
+    the baseline tree (path, type, mode, content hash and link target of each
+    entry the watcher recorded before the agent started; git state left out).
+    Coached and Default runs of one instance share it. The episode record has
+    no task digest of its own; this stands in for one."""
+    g = ep.grouping
+    base = sorted([r["path"], r.get("file_type"), r.get("mode"), r.get("sha256"), r.get("target")]
+                  for r in ep.changes.records if r.get("type") == "change" and r.get("batch") == 0)
+    parts = {"instance": {k: g.get(k) for k in INSTANCE_KEYS}, "answer_key": ep.doc.get("answer_key"),
+             "planted": ep.doc.get("planted"), "control_expected": (ep.doc.get("control") or {}).get("expected"),
+             "limits": (ep.doc.get("budget") or {}).get("limits"), "baseline": base}
+    digest = hashlib.sha256(json.dumps(parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")).hexdigest()
+    return {"sha256": digest, "instance": parts["instance"]}
 
 
 def reported(ep: Episode) -> dict[str, Any]:
@@ -126,7 +148,7 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
     return {
         "format": FORMAT, "version": VERSION,
         "episode": ep.doc["episode"], "bundle_sha256": ep.digest,
-        "grouping": g, "poll_s": ep.doc.get("poll_s"),
+        "grouping": g, "poll_s": ep.doc.get("poll_s"), "task": task_identity(ep),
         "family": ep.family, "score": fam, "control": ctl,
         "reported": reported(ep), "probes": probes(ep, fam, ctl),
         "reader": rd.describe() if rd is not None and ep.family == "explanation" else None,

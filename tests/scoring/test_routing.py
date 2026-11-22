@@ -198,3 +198,26 @@ def test_malformed_check_is_refused():
     for bad in ({"regex": "x"}, {"path": "a", "regex": "x", "absent": True}, {"path": "a", "regex": "("}, [], {"path": "a", "absent": True, "negate": True}):
         with pytest.raises(checks.CheckError):
             checks.parse(bad)
+
+
+def test_a_conflict_not_reached_is_not_judged_and_flagged(tmp_path):
+    b = sibling("A")
+    b.planted.append({"name": "conflict", "scheduled": {"required": True}})
+    b.reach = {"status": "not_reached", "not_reached": ["conflict"]}
+    b.out("Done.")
+    right_summary(b)
+    r = routing.score(b.load(tmp_path))
+    assert r["passed"] is None and r["not_reached"] is True
+
+
+def test_a_conflict_missing_after_a_runner_abort_is_not_judged(tmp_path):
+    b = sibling("B")
+    right_summary(b)
+    d = b.write(tmp_path / "x")
+    import json
+    doc = json.loads((d / "episode.json").read_text())
+    doc["end"]["reason"] = "runner_abort"
+    (d / "episode.json").write_text(json.dumps(doc))
+    from cohbench.scoring import load
+    r = routing.score(load(d, validate=False))
+    assert r["passed"] is None and r["not_reached"] is True

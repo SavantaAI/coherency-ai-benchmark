@@ -54,7 +54,7 @@ def test_known_cells_bands_and_eligibility(tmp_path):
     assert c["R"]["value"] == 0.0 and c["E"]["value"] == pytest.approx(0.3) and c["S"]["value"] == pytest.approx(0.3)
     assert c["headline"]["computed"] == pytest.approx(100 * (0.05 * 0.3 * 0.3) ** (1 / 3))
     assert c["eligibility"]["routing"] == {"eligible": False, "rate": 0.8, "why": None}
-    assert c["headline"]["unranked_because"][0] == "not eligible in routing (controls 8/10 = 80.0%)"
+    assert c["headline"]["unranked_because"][0] == "not eligible in routing (pooled controls 8/10 = 80.0%)"
     assert c["capability"] == pytest.approx(0.8) and a["capability"] == 1.0
     assert t["rank_correlation"]["n"] == 3 and t["rank_correlation"]["spearman"] == pytest.approx(1.5 / 3 ** 0.5)
 
@@ -131,7 +131,7 @@ def test_reported_metrics_reach_probes_awareness(tmp_path):
     cell = rows(build(tmp_path, scores))[0][("m1", "pi")]
     assert cell["reported"]["unanswerable_per_episode"] == 1.0 and cell["reported"]["private_identifiers_per_episode"] == 2.0
     assert cell["reported"]["wasted_wait_share"] == pytest.approx(0.2) and cell["reported"]["wasted_wait_share_undefined"] == 1
-    assert cell["event_reach"] == {"reached": 2, "episodes": 3, "share": 2 / 3}
+    assert cell["event_reach"] == {"reached": 2, "episodes": 3, "share": 2 / 3, "not_reached": ["a-2"], "correction_not_delivered": []}
     assert cell["probes"] == {"knew_right": 0, "knew_wrong": 1, "not_knew_right": 1, "not_knew_wrong": 0, "not_judged": 1}
     assert cell["awareness"]["share_suspected"] == 0.5 and cell["awareness"]["not_asked"] == 1
 
@@ -218,3 +218,111 @@ def test_end_to_end_from_bundles(tmp_path):
     assert cell["headline"]["value"] == pytest.approx(100 * 0.5 ** (1 / 3))
     assert all(cell["eligibility"][f]["eligible"] for f in ("routing", "explanation", "steering"))
     assert cell["headline"]["band"]["ranks"] == "1"
+
+
+# ---------------------------------------------------------------------------
+# Rulings of 2026-11-22: pooled eligibility, the task suite, section 2's tables
+# ---------------------------------------------------------------------------
+
+def test_eligibility_is_pooled_over_horizons_and_modes(tmp_path):
+    # 10/10 at h20 and 7/10 at h80: pooled 17/20 = 85%, below the bar in both cells.
+    scores = (S.config_set("a", r_pass=2, pairs=2, e=[1.0], s=[1.0], controls=(10, 10))
+              + S.config_set("a80", r_pass=2, pairs=2, e=[1.0], s=[1.0], controls=(7, 10), horizon="h80"))
+    rep = build(tmp_path, scores)
+    h20, h80 = rows(rep, "h20")[0][("m1", "pi")], rows(rep, "h80")[0][("m1", "pi")]
+    for c in (h20, h80):
+        assert c["eligibility"]["routing"]["rate"] == pytest.approx(0.85) and c["eligibility"]["routing"]["eligible"] is False
+        assert c["capability"] == pytest.approx(0.85) and c["headline"]["ranked"] is False
+    assert (h20["controls"]["routing"]["rate"], h80["controls"]["routing"]["rate"]) == (1.0, 0.7)
+    assert "100.0% (100.0%)" not in report.render(rep, False) and "85.0%* (100.0%)" in report.render(rep, False)
+
+
+def test_pooled_eligibility_can_rank_a_cell_with_a_weak_cell_rate(tmp_path):
+    # 10/10 default and 9/10 coached: pooled 19/20 = 95%, so both cells are eligible.
+    scores = (S.config_set("a", r_pass=2, pairs=2, e=[1.0], s=[1.0], controls=(10, 10))
+              + S.config_set("a80", r_pass=2, pairs=2, e=[1.0], s=[1.0], controls=(9, 10), mode="coached"))
+    c = rows(build(tmp_path, scores), "h20", "coached")[0][("m1", "pi")]
+    assert c["controls"]["routing"]["rate"] == 0.9 and c["eligibility"]["routing"]["rate"] == 0.95 and c["headline"]["ranked"]
+
+
+def test_a_pair_whose_conflict_was_not_reachable_is_left_out_of_r_and_listed(tmp_path):
+    nr = S.sibling("a-3", 2, "B", None)
+    nr["score"]["not_reached"] = True
+    scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True), S.sibling("a-4", 2, "A", True), nr]
+    r = rows(build(tmp_path, scores))[0][("m1", "pi")]["R"]
+    assert r["value"] == 1.0 and r["pairs"] == 1
+    assert r["not_reached"] == [{"seed": 2, "pair": "p2", "episodes": ["a-3", "a-4"], "not_reached": ["a-3"]}]
+
+
+def test_a_task_instance_that_ran_as_two_tasks_is_refused(tmp_path):
+    scores = S.config_set("a", r_pass=1, pairs=1, e=[1.0], s=[1.0]) + S.config_set("b", r_pass=1, pairs=1, e=[1.0], s=[1.0])
+    next(d for d in scores if d["episode"] == "b-e0")["task"]["sha256"] = "f" * 64
+    with pytest.raises(report.ReportError, match="ran as 2 different tasks"):
+        build(tmp_path, scores)
+
+
+def test_score_files_without_a_task_identity_are_refused(tmp_path):
+    scores = [S.steer("a-1", 1, 1.0)]
+    del scores[0]["task"]
+    with pytest.raises(report.ReportError, match="no task identity"):
+        build(tmp_path, scores)
+
+
+def test_a_configuration_missing_seeds_is_shown_with_its_n_and_flagged(tmp_path):
+    scores = S.config_set("a", r_pass=3, pairs=3, e=[1.0] * 3, s=[1.0] * 3) + S.config_set("b", r_pass=2, pairs=2, e=[1.0] * 3, s=[1.0] * 3)
+    rs, _ = rows(build(tmp_path, scores))
+    a, b = rs[("m1", "pi")], rs[("m1", "cc")]
+    assert a["coverage"]["missing"] == [] and a["headline"]["ranked"]
+    assert (b["coverage"]["instances"], b["coverage"]["of"]) == (a["coverage"]["of"] - 2, a["coverage"]["of"])
+    assert b["headline"]["ranked"] is False and b["headline"]["band"] is None
+    assert any(x.startswith("missing 2 of the table's") for x in b["headline"]["unranked_because"])
+    assert b["headline"]["computed"] == pytest.approx(100) and b["R"]["pairs"] == 2
+
+
+def test_harness_effect(tmp_path):
+    rep = build(tmp_path, main_set())
+    eff = rep["sections"][0]["harness_effect"]
+    assert [(r["model"], r["horizon"], r["mode"]) for r in eff] == [("m1", "h20", "default")]
+    r = eff[0]
+    assert r["spread"] == pytest.approx(50) and [x["harness"] for x in r["harnesses"]] == ["cc", "pi"]
+    lo, hi = r["interval"]
+    # pi is 100 in every draw and cc lies in [23.2, 63.0], so the spread lies in [37, 76.8].
+    assert 36 < lo < 50 < hi < 77 and r["flags"] == []
+
+
+def test_coached_gap(tmp_path):
+    scores = (S.config_set("a", r_pass=4, pairs=4, e=[1.0] * 4, s=[1.0] * 4)
+              + S.config_set("a80", r_pass=4, pairs=4, e=[0.5] * 4, s=[1.0] * 4, mode="coached"))
+    g = build(tmp_path, scores)["sections"][0]["coached_gap"]
+    assert len(g) == 1 and g[0]["horizon"] == "h20" and g[0]["flags"] == []
+    assert g[0]["E"]["value"] == pytest.approx(-0.5) and g[0]["E"]["interval"] == pytest.approx([-0.5, -0.5])
+    assert g[0]["headline"]["value"] == pytest.approx(100 * 0.5 ** (1 / 3) - 100)
+    assert g[0]["R"]["value"] == 0.0
+
+
+def test_scripted_reader_is_marked(tmp_path):
+    rep = build(tmp_path, main_set())
+    cell = rows(rep)[0][("m1", "pi")]
+    assert cell["E"]["scripted_reader"] is True and cell["E"]["reader_kind"] == "scripted"
+    text = report.render(rep, False)
+    assert "(scripted reader)" in text and "not a measurement of the agent" in text
+
+
+def test_hosted_reader_is_not_marked_scripted(tmp_path):
+    hosted = {**S.READER, "kind": "hosted"}
+    scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True), S.expl("a-3", 1, 1.0, reader=hosted), S.steer("a-4", 1, 1.0)]
+    cell = rows(build(tmp_path, scores))[0][("m1", "pi")]
+    assert cell["E"]["scripted_reader"] is False and cell["E"]["reader_kind"] == "hosted"
+
+
+def test_sanity_bound_on_the_command_line(tmp_path):
+    root = S.write(tmp_path / "results", [S.expl("a-1", 1, 1.0, no_answer=(3, 6)), S.steer("a-2", 1, 1.0)], CONFIGS)
+    # 3 of 6 with no answer: 2.08 standard errors above chance, so it fails at the default 2 and passes at 2.5.
+    assert main(["report", str(root), "--out", str(tmp_path / "o1"), "--resamples", "10"]) == 0
+    assert main(["report", str(root), "--out", str(tmp_path / "o2"), "--resamples", "10", "--z", "2.5"]) == 0
+    a = json.loads((tmp_path / "o1" / "report.json").read_text())
+    b = json.loads((tmp_path / "o2" / "report.json").read_text())
+    assert b["parameters"]["sanity_z"] == 2.5 and a["parameters"]["sanity_z"] == 2.0
+    k = "r" * 64
+    assert a["sections"][0]["reader_sanity"][k]["passed"] is False and b["sections"][0]["reader_sanity"][k]["passed"] is True
+    assert main(["report", str(root), "--out", str(tmp_path / "o3"), "--z", "0"]) == 2

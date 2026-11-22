@@ -23,6 +23,8 @@ from . import checks
 from .load import REQUEST_LABELS, Episode
 
 DEFAULT_CONFLICT_EVENT = "conflict"
+# Ends caused outside the agent (D-034: such an episode is rerun, not scored).
+UNUSABLE_ENDS = ("driver_failure", "runner_abort")
 
 
 def _final(ep: Episode) -> dict[str, Any]:
@@ -101,7 +103,18 @@ def score(ep: Episode) -> dict[str, Any]:
         return {**out, "passed": None, "requests_after_conflict": [],
                 "reasons": [f"grouping says sibling {sib} and the answer key says sibling {side} (settled_by_workspace)"]}
     if fired is None:
-        # The scored event never happened: the trial counts, and fails.
+        # The scored event never happened. In a usable episode where the
+        # event was reachable the trial counts, and fails. An episode the
+        # runner marked `not_reached` for a required event, or one ended by
+        # the driver or the runner, is reported and left out of R.
+        reach = ep.doc.get("reach") or {}
+        end = (ep.doc.get("end") or {}).get("reason")
+        if reach.get("status") == "not_reached":
+            return {**out, "passed": None, "requests_after_conflict": [], "not_reached": True,
+                    "reasons": [f"the conflict ({name}) never fired, and the runner marked required events not reached: {reach.get('not_reached')}"]}
+        if end in UNUSABLE_ENDS:
+            return {**out, "passed": None, "requests_after_conflict": [], "not_reached": True,
+                    "reasons": [f"the conflict ({name}) never fired in an episode that ended by {end}"]}
         return {**out, "passed": False, "requests_after_conflict": [], "reasons": [f"the conflict ({name}) never fired"]}
     reqs = requests(ep, fired["seq"])
     out["requests_after_conflict"] = reqs

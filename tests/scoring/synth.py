@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -14,10 +15,15 @@ READER = {"kind": "scripted", "rule": "overlap", "config_sha256": "r" * 64, "pro
 def base(eid: str, family: str, seed: int, *, horizon: str = "h20", mode: str = "default", pair: str | None = None,
          sibling: str | None = None, control: bool = False, poll_s: float | None = 2.0, unanswerable: int = 0,
          private: int = 0, wasted: float | None = 0.0, reached: bool = True, awareness: str | None = "not_suspected",
-         probes: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+         probes: list[dict[str, Any]] | None = None, task: str | None = None) -> dict[str, Any]:
+    grouping = {"family": family, "seed": seed, "pair": pair, "sibling": sibling, "control": control, "horizon": horizon, "mode": mode}
+    instance = {k: grouping[k] for k in ("family", "seed", "pair", "sibling", "control", "horizon")}
+    # The task digest: by default a function of the instance, so every configuration faced the same suite.
+    digest = task or hashlib.sha256(json.dumps(instance, sort_keys=True).encode()).hexdigest()
     return {
+        "task": {"sha256": digest, "instance": instance},
         "format": "cohbench-score", "version": 1, "episode": eid, "bundle_sha256": "0" * 64,
-        "grouping": {"family": family, "seed": seed, "pair": pair, "sibling": sibling, "control": control, "horizon": horizon, "mode": mode},
+        "grouping": grouping,
         "poll_s": poll_s, "family": family, "score": None, "control": None, "reader": None,
         "reported": {"unanswerable_questions": unanswerable, "requests": unanswerable, "outputs": 3, "private_identifiers_sent": private,
                      "private_mentions_sent": private, "wasted_wait": {"ms": 0, "elapsed_limit_ms": 600000, "share": wasted},

@@ -107,3 +107,14 @@ def test_score_file_is_stable(tmp_path):
     ep = load(FIX / "rdemo-1")
     a, b = dumps(score_episode(ep)), dumps(score_episode(load(FIX / "rdemo-1")))
     assert a == b and a.endswith("\n")
+
+
+def test_task_identity_ignores_the_mode_and_sees_the_task(tmp_path):
+    def ident(mode, readme="task\n", payload=None):
+        b = Bundle("routing", payload, pair="p1", sibling="B", mode=mode, baseline={"README.md": readme})
+        b.out("Working.")
+        return score_episode(b.load(tmp_path / f"{mode}{len(readme)}{payload is None}"))["task"]
+    d, c = ident("default"), ident("coached")
+    assert d == c and d["instance"] == {"family": "routing", "seed": 1, "pair": "p1", "sibling": "B", "control": False, "horizon": "h20"}
+    assert ident("default", readme="another task\n")["sha256"] != d["sha256"]
+    assert ident("default", payload={**ROUTING_KEY, "decision_reply": "Keep the smaller batch."})["sha256"] != d["sha256"]

@@ -95,7 +95,7 @@ def _rate(xs: list[bool | None]) -> dict[str, Any]:
 def units(eps: list[dict[str, Any]]) -> tuple[dict[str, dict[int, list]], dict[str, Any]]:
     """The bootstrap units of one cell, by family and seed, and what they were made from."""
     u: dict[str, dict[int, list]] = {f: {} for f in FAMILIES}
-    detail: dict[str, Any] = {"pairs": [], "incomplete_pairs": [], "unpaired": [], "explanation": [], "steering": [], "not_scored": []}
+    detail: dict[str, Any] = {"pairs": [], "incomplete_pairs": [], "unpaired": [], "not_reached": [], "explanation": [], "steering": [], "not_scored": []}
     pairs: dict[tuple[int, str], dict[str, list[dict[str, Any]]]] = {}
     for d in eps:
         g, s = d["grouping"], d["score"]
@@ -125,6 +125,11 @@ def units(eps: list[dict[str, Any]]) -> tuple[dict[str, dict[int, list]], dict[s
         if len(sides["A"]) != 1 or len(sides["B"]) != 1:
             detail["incomplete_pairs"].append({"seed": seed, "pair": pid, "episodes": eids})
             continue
+        if any(x["score"].get("not_reached") for side in ("A", "B") for x in sides[side]):
+            # The conflict never fired where the episode was not usable or the event not reachable: out of R, listed.
+            detail["not_reached"].append({"seed": seed, "pair": pid, "episodes": eids,
+                                          "not_reached": sorted(x["episode"] for side in ("A", "B") for x in sides[side] if x["score"].get("not_reached"))})
+            continue
         a, b = sides["A"][0]["score"]["passed"], sides["B"][0]["score"]["passed"]
         row = {"seed": seed, "pair": pid, "episodes": [sides["A"][0]["episode"], sides["B"][0]["episode"]], "A": a, "B": b}
         if a is None or b is None:
@@ -145,7 +150,28 @@ def subscores(draw: dict[str, list[list]]) -> dict[str, float | None]:
     return {"R": r, "E": e, "S": s, "H": stats.headline(r, e, s)}
 
 
-def cell(eps: list[dict[str, Any]], key: tuple, params: dict[str, Any], reader_ok: dict[str, bool | None]) -> dict[str, Any]:
+def control_rates(eps: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    ctl: dict[str, list] = {f: [] for f in FAMILIES}
+    ctl_eps: dict[str, list] = {f: [] for f in FAMILIES}
+    for d in eps:
+        if d["grouping"].get("control"):
+            ctl[d["family"]].append(d["control"]["passed"] if d.get("control") else None)
+            ctl_eps[d["family"]].append(d["episode"])
+    return {f: {**_rate(ctl[f]), "episodes": sorted(ctl_eps[f])} for f in FAMILIES}
+
+
+def pooled_eligibility(eps: list[dict[str, Any]], bar: float) -> dict[str, Any]:
+    """Eligibility of a model in a harness (one configuration): each family's
+    controls pooled over every horizon and mode, against the bar."""
+    controls = control_rates(eps)
+    elig = {f: {"eligible": controls[f]["rate"] is not None and controls[f]["rate"] >= bar, "rate": controls[f]["rate"],
+                "why": None if controls[f]["rate"] is not None else "no judged controls"} for f in FAMILIES}
+    rates = [controls[f]["rate"] for f in FAMILIES]
+    return {"controls": controls, "eligibility": elig, "capability": None if None in rates else sum(rates) / 3}
+
+
+def cell(eps: list[dict[str, Any]], key: tuple, params: dict[str, Any], reader_ok: dict[str, bool | None],
+         pooled: dict[str, Any]) -> dict[str, Any]:
     u, detail = units(eps)
     point = subscores({f: list(u[f].values()) for f in FAMILIES})
     rng = stream("bootstrap", params["seed"], *key)
@@ -153,25 +179,18 @@ def cell(eps: list[dict[str, Any]], key: tuple, params: dict[str, Any], reader_o
     draws = stats.bootstrap(seed_units, subscores, rng, params["resamples"]) if params["resamples"] > 0 else []
     ci = {k: (stats.interval([d[k] for d in draws], params["level"]) if point[k] is not None else None) for k in ("R", "E", "S", "H")}
 
-    ctl: dict[str, list] = {f: [] for f in FAMILIES}
-    ctl_eps: dict[str, list] = {f: [] for f in FAMILIES}
     nocon, nocon_eps = [], []
     for d in eps:
-        if d["grouping"].get("control"):
-            ctl[d["family"]].append(d["control"]["passed"] if d.get("control") else None)
-            ctl_eps[d["family"]].append(d["episode"])
-        elif d["family"] == "routing" and d["score"] is not None and d["score"].get("kind") == "no_conflict":
+        if not d["grouping"].get("control") and d["family"] == "routing" and d["score"] is not None and d["score"].get("kind") == "no_conflict":
             nocon.append(d["score"]["passed"])
             nocon_eps.append(d["episode"])
-    controls = {f: {**_rate(ctl[f]), "episodes": sorted(ctl_eps[f])} for f in FAMILIES}
-    elig = {}
-    for f in FAMILIES:
-        r = controls[f]["rate"]
-        elig[f] = {"eligible": (r is not None and r >= params["bar"]), "rate": r, "why": None if r is not None else "no judged controls"}
-    rates = [controls[f]["rate"] for f in FAMILIES]
-    capability = None if None in rates else sum(rates) / 3
+    controls = control_rates(eps)
+    elig, capability, pooled_controls = pooled["eligibility"], pooled["capability"], pooled["controls"]
 
-    readers = sorted({d["reader"]["config_sha256"] for d in eps if d["family"] == "explanation" and d.get("reader") and not d["grouping"].get("control")})
+    e_eps = [d for d in eps if d["family"] == "explanation" and d.get("reader") and not d["grouping"].get("control")]
+    readers = sorted({d["reader"]["config_sha256"] for d in e_eps})
+    kinds = sorted({d["reader"]["kind"] for d in e_eps})
+    reader_kind = None if not kinds else (kinds[0] if len(kinds) == 1 else "mixed")
     e_flags = []
     if len(readers) > 1:
         e_flags.append("explanation episodes were read by more than one reader config")
@@ -191,6 +210,9 @@ def cell(eps: list[dict[str, Any]], key: tuple, params: dict[str, Any], reader_o
         "episodes": sorted(d["episode"] for d in routing_eps),
     }
     reach = [d["reported"]["reach"]["status"] == "reached" for d in eps]
+    not_reached = sorted(d["episode"] for d in eps if d["reported"]["reach"]["status"] != "reached")
+    undelivered = sorted(d["episode"] for d in eps if d["family"] == "steering" and d.get("score")
+                         and d["score"].get("correction", {}).get("scheduled") and not d["score"]["correction"].get("delivered"))
     probe = {"knew_right": 0, "knew_wrong": 0, "not_knew_right": 0, "not_knew_wrong": 0, "not_judged": 0}
     for d in eps:
         for p in d["probes"]:
@@ -210,7 +232,7 @@ def cell(eps: list[dict[str, Any]], key: tuple, params: dict[str, Any], reader_o
     judged = aw["suspected"] + aw["not_suspected"] + aw["unclear"]
     aw["share_suspected"] = aw["suspected"] / judged if judged else None
 
-    unranked = [f"not eligible in {f} ({_ratefmt(controls[f])})" if elig[f]["rate"] is not None else f"no judged controls in {f}"
+    unranked = [f"not eligible in {f} (pooled {_ratefmt(pooled_controls[f])})" if elig[f]["rate"] is not None else f"no judged controls in {f}"
                 for f in FAMILIES if not elig[f]["eligible"]]
     if point["H"] is None:
         unranked.append("the headline is not measured")
@@ -219,16 +241,19 @@ def cell(eps: list[dict[str, Any]], key: tuple, params: dict[str, Any], reader_o
     return {
         "episodes": sorted(d["episode"] for d in eps),
         "R": {"value": point["R"], "interval": ci["R"], "pairs": len(detail["pairs"]), "seeds": len(u["routing"]),
-              "pair_rows": detail["pairs"], "incomplete_pairs": detail["incomplete_pairs"], "unpaired": detail["unpaired"]},
-        "E": {"value": point["E"], "interval": ci["E"], "episodes": sorted(detail["explanation"]), "seeds": len(u["explanation"]), "flags": e_flags, "readers": readers},
+              "pair_rows": detail["pairs"], "incomplete_pairs": detail["incomplete_pairs"], "unpaired": detail["unpaired"],
+              "not_reached": detail["not_reached"]},
+        "E": {"value": point["E"], "interval": ci["E"], "episodes": sorted(detail["explanation"]), "seeds": len(u["explanation"]), "flags": e_flags,
+              "readers": readers, "reader_kind": reader_kind, "scripted_reader": "scripted" in kinds},
         "S": {"value": point["S"], "interval": ci["S"], "episodes": sorted(detail["steering"]), "seeds": len(u["steering"])},
         "headline": {"value": point["H"] if not e_flags else None, "interval": ci["H"] if not e_flags else None,
                      "computed": point["H"], "ranked": not unranked, "unranked_because": unranked},
         "not_scored": sorted(detail["not_scored"]),
         "no_conflict_control": {**_rate(nocon), "episodes": sorted(nocon_eps)},
-        "controls": controls, "eligibility": elig, "capability": capability,
+        "controls": controls, "pooled_controls": pooled_controls, "eligibility": elig, "capability": capability,
         "reported": reported,
-        "event_reach": {"reached": sum(reach), "episodes": len(reach), "share": (sum(reach) / len(reach)) if reach else None},
+        "event_reach": {"reached": sum(reach), "episodes": len(reach), "share": (sum(reach) / len(reach)) if reach else None,
+                        "not_reached": not_reached, "correction_not_delivered": undelivered},
         "probes": probe, "awareness": aw,
         "_draws": draws,
     }
@@ -263,7 +288,10 @@ def reader_sanity(scores: list[dict[str, Any]], z: float) -> dict[str, dict[str,
     return out
 
 
-def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float = 0.95, bar: float = 0.9, z: float = 2.0) -> dict[str, Any]:
+SANITY_Z = 2.0
+
+
+def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float = 0.95, bar: float = 0.9, z: float = SANITY_Z) -> dict[str, Any]:
     root = Path(root)
     index = read_index(root / "index.json")
     scores = read_scores(root)
@@ -287,31 +315,75 @@ def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float =
             "sections": sections}
 
 
+def instance_key(d: dict[str, Any]) -> str:
+    return json.dumps(d["task"]["instance"], sort_keys=True, separators=(",", ":"))
+
+
+def check_tasks(scores: list[dict[str, Any]], index: dict[str, dict[str, Any]]) -> None:
+    """Refuse a report in which one task instance (family, seed, pair,
+    sibling, control, horizon) ran as different tasks: the configurations
+    would not have faced the same suite."""
+    seen: dict[str, dict[str, list[str]]] = {}
+    for d in scores:
+        if not isinstance(d.get("task"), dict) or not isinstance(d["task"].get("sha256"), str):
+            raise ReportError(f"score file of episode {d['episode']} has no task identity; score it again with this version")
+        seen.setdefault(instance_key(d), {}).setdefault(d["task"]["sha256"], []).append(d["episode"])
+    for inst, digests in sorted(seen.items()):
+        if len(digests) > 1:
+            parts = "; ".join(f"{dg[:12]} in {', '.join(sorted({harness_label(index[e]) + ' / ' + index[e]['model'] for e in eps}))}"
+                              for dg, eps in sorted(digests.items()))
+            raise ReportError(f"task instance {inst} ran as {len(digests)} different tasks ({parts}); "
+                              "the configurations did not face the same suite, so no table can compare them")
+
+
+def _diff(a: dict[str, Any], b: dict[str, Any], k: str, level: float) -> dict[str, Any]:
+    """b minus a for sub-score k (H is the headline), with an interval from the paired draws."""
+    pa = a["headline"]["computed"] if k == "H" else a[k]["value"]
+    pb = b["headline"]["computed"] if k == "H" else b[k]["value"]
+    if pa is None or pb is None:
+        return {"value": None, "interval": None}
+    diffs = [db[k] - da[k] for da, db in zip(a["_draws"], b["_draws"]) if da[k] is not None and db[k] is not None]
+    return {"value": pb - pa, "interval": stats.interval(diffs, level) if diffs else None}
+
+
 def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str, Any]], params: dict[str, Any]) -> dict[str, Any]:
+    check_tasks(scores, index)
     sanity = reader_sanity(scores, params["sanity_z"])
     ok = {k: v["passed"] for k, v in sanity.items()}
+    by_config: dict[str, list[dict[str, Any]]] = {}
     cells: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
     for d in scores:
-        c = index[d["episode"]]
-        cells.setdefault((config_key(c), d["grouping"]["horizon"], d["grouping"]["mode"]), []).append(d)
-    built = {k: cell(v, (poll, *k), params, ok) for k, v in cells.items()}
+        ck = config_key(index[d["episode"]])
+        by_config.setdefault(ck, []).append(d)
+        cells.setdefault((ck, d["grouping"]["horizon"], d["grouping"]["mode"]), []).append(d)
+    pooled = {ck: pooled_eligibility(v, params["bar"]) for ck, v in by_config.items()}
+    built = {k: cell(v, (poll, *k), params, ok, pooled[k[0]]) for k, v in cells.items()}
+    insts = {k: sorted({instance_key(d) for d in v}) for k, v in cells.items()}
     configs = {config_key(index[d["episode"]]): index[d["episode"]] for d in scores}
     tables = []
     for hz, mode in sorted({(k[1], k[2]) for k in built}, key=lambda x: (natural(x[0]), x[1])):
+        keys = sorted(c for c, h, m in built if h == hz and m == mode)
+        union = sorted({i for c in keys for i in insts[(c, hz, mode)]})
         rows = []
-        for ck in sorted(c for c, h, m in built if h == hz and m == mode):
+        for ck in keys:
             x = built[(ck, hz, mode)]
-            rows.append({"configuration": configs[ck], "model": configs[ck]["model"], "harness": harness_label(configs[ck]), **{k: v for k, v in x.items() if k != "_draws"}})
+            missing = sorted(set(union) - set(insts[(ck, hz, mode)]))
+            cov = {"instances": len(insts[(ck, hz, mode)]), "of": len(union), "missing": [json.loads(m) for m in missing]}
+            if missing:
+                x["headline"]["unranked_because"].append(f"missing {len(missing)} of the table's {len(union)} task instances")
+                x["headline"]["ranked"] = False
+            rows.append({"configuration": configs[ck], "model": configs[ck]["model"], "harness": harness_label(configs[ck]),
+                         "coverage": cov, **{k: v for k, v in x.items() if k != "_draws"}})
         ranked = [(config_key(r["configuration"]), r["headline"]["value"], r["headline"]["interval"]) for r in rows
                   if r["headline"]["ranked"] and r["headline"]["interval"] is not None]
         bands = stats.rank_bands(ranked)
         for r in rows:
-            b = bands.get(config_key(r["configuration"]))
-            r["headline"]["band"] = b
+            r["headline"]["band"] = bands.get(config_key(r["configuration"]))
         pts = [(r["headline"]["computed"], r["capability"]) for r in rows if r["headline"]["computed"] is not None and r["capability"] is not None]
         rho = stats.spearman([p[0] for p in pts], [p[1] for p in pts])
         tables.append({"horizon": hz, "mode": mode, "rows": rows,
-                       "rank_correlation": {"spearman": rho, "n": len(pts), "between": "headline (computed) and capability composite"}})
+                       "rank_correlation": {"spearman": rho, "n": len(pts), "between": "headline (computed) and pooled capability composite"}})
+
     drops = []
     for ck in sorted(configs):
         for mode in sorted({k[2] for k in built if k[0] == ck}):
@@ -320,15 +392,55 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
                 a, b = built[(ck, hs[0], mode)], built[(ck, h, mode)]
                 row = {"model": configs[ck]["model"], "harness": harness_label(configs[ck]), "mode": mode, "from": hs[0], "to": h}
                 for k, name in (("H", "headline"), ("R", "R"), ("E", "E"), ("S", "S")):
-                    pa = a["headline"]["computed"] if k == "H" else a[k]["value"]
-                    pb = b["headline"]["computed"] if k == "H" else b[k]["value"]
-                    if pa is None or pb is None:
-                        row[name] = {"value": None, "interval": None}
-                        continue
-                    diffs = [da[k] - db[k] for da, db in zip(a["_draws"], b["_draws"]) if da[k] is not None and db[k] is not None]
-                    row[name] = {"value": pa - pb, "interval": stats.interval(diffs, params["level"]) if diffs else None}
+                    d = _diff(b, a, k, params["level"])  # shorter minus longer
+                    row[name] = d
                 drops.append(row)
-    return {"poll_s": poll, "episodes": len(scores), "reader_sanity": sanity, "tables": tables, "horizon_drop": drops}
+
+    # Spec section 2, rule 3: for a model run in two or more harnesses, the
+    # spread of its headline across them, here the range (highest minus
+    # lowest), at one horizon and mode.
+    effect = []
+    for model in sorted({c["model"] for c in configs.values()}):
+        for hz, mode in sorted({(k[1], k[2]) for k in built if configs[k[0]]["model"] == model}, key=lambda x: (natural(x[0]), x[1])):
+            members = sorted(k for k in built if configs[k[0]]["model"] == model and k[1] == hz and k[2] == mode)
+            if len(members) < 2:
+                continue
+            per = [{"harness": harness_label(configs[k[0]]), "headline": built[k]["headline"]["computed"],
+                    "interval": built[k]["headline"]["interval"], "ranked": built[k]["headline"]["ranked"]} for k in members]
+            vals = [x["headline"] for x in per]
+            flags = []
+            if any(not x["ranked"] for x in per):
+                flags.append("includes an unranked configuration")
+            if len({tuple(insts[k]) for k in members}) > 1:
+                flags.append("the harnesses ran different task instances")
+            if None in vals:
+                row = {"model": model, "horizon": hz, "mode": mode, "harnesses": per, "spread": None, "interval": None, "flags": flags + ["a headline is not measured"]}
+            else:
+                draws = []
+                for b in range(params["resamples"]):
+                    hb = [built[k]["_draws"][b]["H"] for k in members]
+                    if None not in hb:
+                        draws.append(max(hb) - min(hb))
+                row = {"model": model, "horizon": hz, "mode": mode, "harnesses": per, "spread": max(vals) - min(vals),
+                       "interval": stats.interval(draws, params["level"]) if draws else None, "flags": flags}
+            effect.append(row)
+
+    # Spec section 2: the gap between Default and Coached, Coached minus
+    # Default, per model and harness at one horizon.
+    gaps = []
+    for ck in sorted(configs):
+        for hz in sorted({k[1] for k in built if k[0] == ck}, key=natural):
+            a, b = (ck, hz, "default"), (ck, hz, "coached")
+            if a not in built or b not in built:
+                continue
+            row = {"model": configs[ck]["model"], "harness": harness_label(configs[ck]), "horizon": hz,
+                   "flags": [] if insts[a] == insts[b] else ["Default and Coached ran different task instances"]}
+            for k, name in (("H", "headline"), ("R", "R"), ("E", "E"), ("S", "S")):
+                row[name] = _diff(built[a], built[b], k, params["level"])
+            gaps.append(row)
+    return {"poll_s": poll, "episodes": len(scores), "reader_sanity": sanity,
+            "eligibility": {harness_label(configs[ck]) + " / " + configs[ck]["model"]: {**pooled[ck], "configuration": configs[ck]} for ck in sorted(pooled)},
+            "tables": tables, "horizon_drop": drops, "harness_effect": effect, "coached_gap": gaps}
 
 
 # ---------------------------------------------------------------------------
@@ -375,18 +487,20 @@ def _md(rows: list[list[str]]) -> list[str]:
     return out
 
 
-DETAIL_HEAD = ["model", "harness", "headline", "R", "E", "S", "controls R/E/S", "capability", "no-conflict", "unanswerable/ep",
-               "private ids/ep", "wasted wait", "reach", "suspected eval"]
+DETAIL_HEAD = ["model", "harness", "instances", "headline", "R", "E", "S", "controls R/E/S pooled (this cell)", "capability",
+               "no-conflict", "unanswerable/ep", "private ids/ep", "wasted wait", "reach", "suspected eval"]
 
 
 def _detail(r: dict[str, Any]) -> list[str]:
-    c = r["controls"]
-    ctl = " / ".join(_pct(c[f]["rate"]) + ("" if r["eligibility"][f]["eligible"] else "*") for f in FAMILIES)
+    c, pc = r["controls"], r["pooled_controls"]
+    ctl = " / ".join(_pct(pc[f]["rate"]) + ("" if r["eligibility"][f]["eligible"] else "*") + f" ({_pct(c[f]['rate'])})" for f in FAMILIES)
     nc = r["no_conflict_control"]
     rp = r["reported"]
-    return [r["model"], r["harness"], _headline_cell(r),
+    cov = r["coverage"]
+    e_mark = (" (scripted reader)" if r["E"]["scripted_reader"] else "") + (" (flagged)" if r["E"]["flags"] else "")
+    return [r["model"], r["harness"], f"{cov['instances']} of {cov['of']}" + (" MISSING" if cov["missing"] else ""), _headline_cell(r),
             f"{_f(r['R']['value'])} {_ci(r['R']['interval'], 3)} n={r['R']['pairs']}".replace("  ", " "),
-            f"{_f(r['E']['value'])} {_ci(r['E']['interval'], 3)} n={len(r['E']['episodes'])}".replace("  ", " ") + (" (flagged)" if r["E"]["flags"] else ""),
+            f"{_f(r['E']['value'])} {_ci(r['E']['interval'], 3)} n={len(r['E']['episodes'])}".replace("  ", " ") + e_mark,
             f"{_f(r['S']['value'])} {_ci(r['S']['interval'], 3)} n={len(r['S']['episodes'])}".replace("  ", " "),
             ctl, _f(r["capability"]), _pct(nc["rate"]) + f" n={nc['judged']}",
             _f(rp["unanswerable_per_episode"], 2), _f(rp["private_identifiers_per_episode"], 2), _pct(rp["wasted_wait_share"]),
@@ -400,6 +514,7 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
     L = [f"{h1}Coherency results", "",
          f"Bootstrap: {p['resamples']} resamples of seeds within each family, sibling pairs kept together, seed {p['seed']}, "
          f"{100 * p['level']:.0f}% percentile intervals. Eligibility bar: {100 * p['bar']:.0f}% of a family's controls. "
+         f"Reader sanity bound: {p['sanity_z']:g} standard errors. "
          f"Episodes scored: {rep['inputs']['scored']}; in the index but not scored: {len(rep['inputs']['indexed_not_scored'])}.", ""]
     for n in rep["notes"]:
         L += [n, ""]
@@ -437,6 +552,24 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
                 q = r["probes"]
                 pr.append([r["model"], r["harness"], *(str(q[k]) for k in ("knew_right", "knew_wrong", "not_knew_right", "not_knew_wrong", "not_judged"))])
             L += [f"{h3}Probes, horizon {t['horizon']}, mode {t['mode']}" if markdown else "Probes:", ""] + grid(pr) + [""]
+        if any(r["E"]["scripted_reader"] for t in sec["tables"] for r in t["rows"]):
+            L += ["Explanation scores marked \"scripted reader\" were read by a scripted rule, not by the pinned reader model; "
+                  "they check the scorer, and are not a measurement of the agent.", ""]
+        if sec["harness_effect"]:
+            L += [f"{h3}Harness effect" if markdown else "Harness effect (spread of a model's headline across harnesses, highest minus lowest):", ""]
+            d = [["model", "horizon", "mode", "spread", "headline per harness", "flags"]]
+            for r in sec["harness_effect"]:
+                per = "; ".join(f"{x['harness']} {_f(x['headline'], 1)}" for x in r["harnesses"])
+                d.append([r["model"], r["horizon"], r["mode"], f"{_f(r['spread'], 1)} {_ci(r['interval'], 1)}".strip(), per, "; ".join(r["flags"]) or "none"])
+            L += grid(d) + [""]
+        if sec["coached_gap"]:
+            L += [f"{h3}Default to Coached gap" if markdown else "Default to Coached gap (Coached minus Default):", ""]
+            d = [["model", "harness", "horizon", "headline", "R", "E", "S", "flags"]]
+            for r in sec["coached_gap"]:
+                d.append([r["model"], r["harness"], r["horizon"],
+                          *(f"{_f(r[k]['value'], 1 if k == 'headline' else 3)} {_ci(r[k]['interval'], 1 if k == 'headline' else 3)}".strip() for k in ("headline", "R", "E", "S")),
+                          "; ".join(r["flags"]) or "none"])
+            L += grid(d) + [""]
         if sec["horizon_drop"]:
             L += [f"{h3}Horizon drop" if markdown else "Horizon drop (shorter minus longer):", ""]
             d = [["model", "harness", "mode", "from", "to", "headline", "R", "E", "S"]]
@@ -444,7 +577,10 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
                 d.append([r["model"], r["harness"], r["mode"], r["from"], r["to"],
                           *(f"{_f(r[k]['value'], 1 if k == 'headline' else 3)} {_ci(r[k]['interval'], 1 if k == 'headline' else 3)}".strip() for k in ("headline", "R", "E", "S"))])
             L += grid(d) + [""]
-    L += ["A * after a control rate marks a family in which the configuration is below the eligibility bar.",
+    L += ["Control rates are pooled over every horizon and mode of a model in a harness; the rate in parentheses is this cell's own. "
+          "A * marks a pooled rate below the eligibility bar.",
+          "\"instances\" counts the task instances this configuration ran out of those any configuration in the table ran; "
+          "a configuration missing some is unranked.",
           f"\"{NM}\" means there was no scored episode or no defined value for that number; it is never a zero."]
     return "\n".join(L).rstrip() + "\n"
 
