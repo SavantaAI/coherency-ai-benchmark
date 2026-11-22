@@ -185,6 +185,16 @@ def missing_reset(ep: Episode):
     return reset_reason(ep) is not None
 
 
+def conflict_vs_reset(ep: Episode):
+    """Order the conflict and the first performed reset in the scorer view."""
+    conflict = ep.fired(ep.payload.get("conflict_event", routing.DEFAULT_CONFLICT_EVENT))
+    resets = ep.of_type("controlled_reset")
+    if conflict is None or not resets:
+        return None
+    reset = resets[0]
+    return "before" if conflict["seq"] < reset["seq"] else "after"
+
+
 def handoff_diagnostic(ep: Episode):
     spec = ep.payload.get("handoff")
     if spec is None:
@@ -215,6 +225,8 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
     head = {"python_version": f"{sys.version_info.major}.{sys.version_info.minor}", "format": FORMAT, "version": VERSION, "episode": ep.doc["episode"], "bundle_sha256": ep.digest,
             "grouping": g, "poll_s": ep.doc.get("poll_s"), "task": task_identity(ep), "family": ep.family}
     end = (ep.doc.get("end") or {}).get("reason")
+    if ep.family == "routing" and g.get("horizon") in ("h80", "80"):
+        head["conflict_vs_reset"] = None if end in UNUSABLE_ENDS else conflict_vs_reset(ep)
     if end in UNUSABLE_ENDS:
         return {**head, "rerun_required": True, "reason": f"rerun required: the episode ended by {end}, outside the agent (D-034)",
                 "score": None, "control": None, "reported": None, "probes": [], "reader": None}
@@ -223,6 +235,8 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
     if no_reset is not None:
         return {**head, "rerun_required": False, "unjudged_reason": no_reset, "score": None, "control": None,
                 "reported": reported(ep), "probes": probes(ep, None, None), "reader": None, "reader_requests": []}
+    if rd is not None and uses_reader(ep) and rd.describe().get("kind") == "hosted":
+        head["reader_record"] = isinstance(rd, R.RecordedReader) and rd.path is not None
     recorded = R.RecordedReader(rd) if rd is not None and uses_reader(ep) else None
     if recorded is not None:
         rd = recorded
@@ -236,6 +250,8 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
         fam = explanation.score(ep, rd, cfg)
     elif ep.family == "steering":
         fam = steering.score(ep)
+    if fam and fam.get("unjudged_reason"):
+        head["unjudged_reason"] = fam["unjudged_reason"]
     return {**head, "rerun_required": False, "score": fam, "control": ctl,
             "reported": reported(ep), "probes": probes(ep, fam, ctl),
             "reader": rd.describe() if rd is not None and uses_reader(ep) else None,

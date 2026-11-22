@@ -1,5 +1,6 @@
 """Regression cases from the second scoring review."""
 import json
+import sys
 
 import pytest
 
@@ -127,7 +128,7 @@ def test_column_keys_keep_json_types_distinct(tmp_path):
     rep = build(tmp_path, scores, configs)
     rs = rep["sections"][0]["tables"][0]["rows"]
     assert len({r["column_key"] for r in rs}) == len({r["harness"] for r in rs}) == 2
-    assert all(r["headline"]["band"]["ranks"] == "1" for r in rs)
+    assert all((r["headline"]["band"]["ranks"] == "1" if sys.version_info[:2] == (3, 12) else r["headline"]["band"] is None) for r in rs)
     assert len(rep["sections"][0]["eligibility"]) == 2
     assert all(r["harness"] in report.render(rep, False) for r in rs)
 
@@ -164,6 +165,11 @@ def test_explicit_plan_counts_instances_everyone_omitted(tmp_path):
     c = rows(rep)[0][("m1", "pi")]
     assert c["coverage"]["planned"] == len(scores) + 1 and c["S"]["partial"]
     assert c["S"]["unjudged_instances"][0]["reasons"][0]["reason"] == "missing"
+    index_path = root / "index.json"
+    index = json.loads(index_path.read_text())
+    for config in index["episodes"].values():
+        config.update(harness_version="1", driver_version="1", settings={})
+    index_path.write_text(json.dumps(index))
     assert main(["report", str(root), "--plan", str(plan), "--require-plan", "--judged-bar", "0.5", "--resamples", "0", "--out", str(tmp_path / "out")]) == 0
     assert main(["report", str(root), "--require-plan", "--out", str(tmp_path / "out")]) == 2
     plan = plan_file(tmp_path, scores[1:])

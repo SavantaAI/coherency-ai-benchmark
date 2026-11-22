@@ -27,7 +27,7 @@ from typing import Any
 
 from cohbench.trajectory import episode as TE
 
-from . import checks, explanation
+from . import checks, explanation, routing
 from . import reader as R
 from .load import REQUEST_LABELS, Episode
 
@@ -48,6 +48,10 @@ def _part(ep: Episode, key: str, v: Any, rd: R.Reader | None, cfg: R.Config | No
         return r["held"], "; ".join(x["why"] for x in r["results"])
     if key == "requests":
         labels = [e.get("label") for e in ep.of_type("verdict")]
+        missing = routing.missing_verdicts(ep)
+        known_failure = any(x in REQUEST_LABELS for x in labels) if v == "none" else "unanswerable" in labels
+        if v in ("none", "no_unanswerable", "answerable") and missing and not known_failure:
+            return None, f"delivered outputs have no verdict: {missing}"
         if v == "none":
             n = sum(1 for x in labels if x in REQUEST_LABELS)
             return n == 0, f"{n} request(s)"

@@ -48,7 +48,9 @@ which this unit adds: `easy_wins` or `no_valid_improvement`).
    group's last write and before the next group's first write ran in that
    group's final tree. One that starts inside a group's span (at or after its
    first write, before its last) has no state: the log cannot order it
-   against writes less than a second apart. No attempt gets a tree from
+   against writes less than a second apart. A call spanning a kept write
+   after its start and at or before its end also has no state. Calls with
+   no end retain the start-only rule. No attempt gets a tree from
    after its start. The state is the digest `observations.jsonl` uses,
    computed here from `changes.jsonl`; a tree holding a file of unknown
    content has none (D-032). A null state equals nothing.
@@ -56,7 +58,8 @@ which this unit adds: `easy_wins` or `no_valid_improvement`).
    by its start, else one. Equivalence requires the same name and non-null
    state. Fingerprints must agree only when both were captured.
 The episode's score is the mean of the defined parts; with g undefined there
-is no score.
+is no score. A changed group after the last measured state also leaves
+the episode unjudged with reason "final state not measured".
 
 What is invariant, and what is not, is in README.md under "Sub-second grain".
 """
@@ -155,34 +158,52 @@ def spans(ep: Episode, gs: list[list[int]]) -> list[tuple[int, int]]:
     return [(0, 0) if i == 0 else (first[g[0]], max(t[b] for b in g)) for i, g in enumerate(gs)]
 
 
-def attempt_states(ep: Episode, gs: list[list[int]]) -> dict[int, str | None]:
-    """Attempt seq -> the digest of the tree it ran in, or None (step 7 above)."""
+def attempt_placement(ep: Episode, gs: list[list[int]]):
+    """States and the timing reasons for attempts that cannot be placed."""
     sp = spans(ep, gs)
+    kept = {b for g in gs[1:] for b in g}
+    first = first_writes(ep)
+    writes = {first[b] for b in kept}
+    writes.update(br["t"] for br in ep.batch_records() if br["batch"] in kept)
+    writes.update(r["t"] for r in ep.changes.records if r.get("type") in ("change", "git") and r["batch"] in kept)
+    writes = sorted(writes)
     cache: dict[int, str | None] = {}
     out: dict[int, str | None] = {}
+    reasons = []
     for a in ep.observations:
         t = a.get("t")
         idx = None
+        reason = None
         if isinstance(t, int):
             for i, (lo, hi) in enumerate(sp):
                 if lo <= t < hi:          # inside a group's span: no state
                     idx = None
+                    reason = "starts_inside_group"
                     break
                 if t >= hi:               # at or after its last write
                     idx = i
+            if reason is None and a.get("t_end") is not None and any(t < w <= a["t_end"] for w in writes):
+                idx = None
+                reason = "spans_change"
+        if reason is not None:
+            reasons.append({"seq": a["seq"], "reason": reason})
         if idx is None:
             out[a["seq"]] = None
             continue
         if idx not in cache:
             cache[idx] = tree_digest(ep.changes, gs[idx][-1])
         out[a["seq"]] = cache[idx]
-    return out
+    return out, reasons
+
+
+def attempt_states(ep: Episode, gs: list[list[int]]) -> dict[int, str | None]:
+    """Attempt seq -> the digest of the tree it ran in, or None (step 7 above)."""
+    return attempt_placement(ep, gs)[0]
 
 
 def unplaced(ep: Episode, gs: list[list[int]]) -> int:
-    """Attempts that start inside a group's span."""
-    sp = spans(ep, gs)
-    return sum(1 for a in ep.observations if isinstance(a.get("t"), int) and any(lo <= a["t"] < hi for lo, hi in sp))
+    """Attempts unplaced because of their start or a write during their call."""
+    return len(attempt_placement(ep, gs)[1])
 
 
 def _changed(ep: Episode, batches: list[int]) -> bool:
@@ -294,7 +315,7 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     else:
         c["value"] = c["not_away"] / len(after)
 
-    states_at = attempt_states(ep, gs)
+    states_at, unplaced_reasons = attempt_placement(ep, gs)
     loops = []
     for a in ep.observations:
         st, fp = states_at.get(a["seq"]), (a.get("result") or {}).get("fingerprint")
@@ -307,11 +328,14 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
                          or (p.get("result") or {}).get("fingerprint") == fp)]
         if len(previous) >= 2:
             loops.append({"seq": a["seq"], "name": a["name"], "nth": len(previous) + 1})
-    l_part = {"value": 0.0 if loops else 1.0, "loop_attempts": loops, "unplaced_attempts": unplaced(ep, gs)}
+    l_part = {"value": 0.0 if loops else 1.0, "loop_attempts": loops,
+              "unplaced_attempts": len(unplaced_reasons), "unplaced": unplaced_reasons}
 
     parts = [p["value"] for p in (g, c, l_part) if p.get("value") is not None]
-    value = None if g.get("value") is None else sum(parts) / len(parts)
+    final_unmeasured = any(not measured or i > measured[-1]["group"] for i in unjudged)
+    value = None if final_unmeasured or g.get("value") is None else sum(parts) / len(parts)
     return {"objective": objective, "direction": direction, "variant": variant, "join_ms": join_ms,
+            **({"unjudged_reason": "final state not measured"} if final_unmeasured else {}),
             "transient_batches": transient, "states": states, "moves": moves, "unjudged_groups": unjudged, "correction": corr_info,
             "g": g, "c": c, "l": l_part, "score": value,
             "parts_defined": [n for n, p in (("g", g), ("c", c), ("l", l_part)) if p.get("value") is not None]}

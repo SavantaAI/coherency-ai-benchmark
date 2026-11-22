@@ -55,7 +55,7 @@ class ReportError(ValueError):
 # Inputs
 # ---------------------------------------------------------------------------
 
-def read_index(path: Path) -> dict[str, dict[str, Any]]:
+def read_index(path: Path, require_plan: bool = False) -> dict[str, dict[str, Any]]:
     try:
         doc = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -64,8 +64,12 @@ def read_index(path: Path) -> dict[str, dict[str, Any]]:
         raise ReportError(f"the results index is {{format: {INDEX_FORMAT}, version: 1, episodes: {{id: configuration}}}}")
     for eid, c in doc["episodes"].items():
         if not (isinstance(c, dict) and isinstance(c.get("model"), str) and c["model"] and isinstance(c.get("harness"), str) and c["harness"]
-                and all(isinstance(v, (str, int, float)) and not isinstance(v, bool) for v in c.values())):
-            raise ReportError(f"index entry {eid}: a configuration names model and harness, and every value is a string or number")
+                and all((k == "settings" and isinstance(v, dict)) or (isinstance(v, (str, int, float)) and not isinstance(v, bool)) for k, v in c.items())):
+            raise ReportError(f"index entry {eid}: a configuration names model and harness; settings is an object, and other values are strings or numbers")
+        if require_plan:
+            missing = [k for k in ("model", "harness", "harness_version", "driver_version", "settings") if k not in c or c[k] == "" or (k == "settings" and not isinstance(c[k], dict))]
+            if missing:
+                raise ReportError(f"index entry {eid} ({c['model']} in {c['harness']}): required plan configuration lacks {', '.join(missing)}")
     return doc["episodes"]
 
 
@@ -95,7 +99,7 @@ def config_key(c: dict[str, Any]) -> str:
 
 
 def harness_label(c: dict[str, Any]) -> str:
-    extra = [f"{k}={c[k]}" for k in sorted(c) if k not in ("model", "harness")]
+    extra = [f"{k}={config_key(c[k]) if isinstance(c[k], dict) else c[k]}" for k in sorted(c) if k not in ("model", "harness")]
     return c["harness"] + (f" ({', '.join(extra)})" if extra else "")
 
 
@@ -422,6 +426,10 @@ def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], key: tuple, pa
     chores_judged = [d for d in chores if d["handoff"]["chores_right"] is not None and d["handoff"]["chores"] > 0]
     handoff = {"mean_share": _mean([d["handoff"]["chores_right"] / d["handoff"]["chores"] for d in chores_judged]),
                "episodes": sorted(d["episode"] for d in chores_judged), "not_measured": sorted(d["episode"] for d in chores if d not in chores_judged)} if chores else None
+    long_routing = [d for d in eps if d["family"] == "routing" and d["grouping"]["horizon"] in ("h80", "80")]
+    ordering = {side: sorted(d["episode"] for d in long_routing if (d.get("conflict_vs_reset") or "not_measured") == side)
+                for side in ("before", "after", "not_measured")}
+    conflict_reset = {**{side: len(ids) for side, ids in ordering.items()}, "episodes": ordering} if long_routing else None
     return {
         "episodes": sorted(d["episode"] for d in eps),
         "rerun_required": sorted(d["episode"] for d in reruns),
@@ -436,6 +444,7 @@ def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], key: tuple, pa
         "headline": {"value": None if withheld else point["H"], "interval": None if withheld else ci["H"], "withheld": WITHHELD if withheld else None,
                      "ranked": not unranked, "unranked_because": unranked, "band": None, "band_note": None},
         "not_scored": sorted(detail["not_scored"]), "no_reset": sorted(detail["no_reset"]), "handoff": handoff,
+        "conflict_vs_reset": conflict_reset,
         "no_conflict_control": {**_rate(nocon), "episodes": sorted(nocon_eps)},
         "controls": control_rates(eps), "pooled_controls": pooled_controls, "eligibility": elig, "capability": capability,
         "reported": reported,
@@ -469,24 +478,30 @@ def poll_display(k: str) -> str:
 
 
 def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float = 0.95, bar: float = 0.9, z: float = SANITY_Z,
-          scripted_reader: bool = False, plan: str | Path | None = None, require_plan: bool = False, judged_bar: float = 0.9, allow_mixed_runtimes: bool = False) -> dict[str, Any]:
+          scripted_reader: bool = False, plan: str | Path | None = None, require_plan: bool = False, judged_bar: float = 0.9, allow_mixed_runtimes: bool = False, release_python: str = "3.12") -> dict[str, Any]:
     root = Path(root)
-    index = read_index(root / "index.json")
+    if require_plan and plan is None:
+        raise ReportError("a release report requires a plan")
+    if not isinstance(release_python, str) or not re.fullmatch(r"[0-9]+\.[0-9]+", release_python):
+        raise ReportError("release-python must name a major and minor version")
+    index = read_index(root / "index.json", require_plan)
     scores = read_scores(root)
     reader = check_inputs(scores, index, scripted_reader)
     versions = sorted({d.get("python_version") or "not recorded" for d in scores})
     if len(versions) > 1 and not allow_mixed_runtimes:
         raise ReportError("score files use different Python versions: " + ", ".join(versions) + "; pass --allow-mixed-runtimes for a report that is not a release")
-    runtime_note = "mixed Python runtimes: not a release" if len(versions) > 1 else "Python runtime not recorded: not a release" if "not recorded" in versions else None
-    if require_plan and plan is None:
-        raise ReportError("a release report requires a plan")
+    runtime_note = None
+    if versions != [release_python]:
+        runtime_note = f"scoring Python {', '.join(versions) or 'not recorded'} differs from release Python {release_python}: not a release"
+    record_note = "hosted reader without a persistent record: not a release" if any(d.get("reader_record") is False for d in scores) else None
+    nonrelease_note = "; ".join(n for n in (runtime_note, record_note) if n) or None
     if not 0 < judged_bar <= 1:
         raise ReportError("judged_bar must be greater than zero and at most one")
     plan_instances = read_plan(plan, scores) if plan is not None else None
     sanity = reader_sanity(scores, z)
     unscored = sorted(set(index) - {d["episode"] for d in scores})
     scripted = bool(reader and reader.get("kind") == "scripted")
-    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z, "judged_bar": judged_bar, "require_plan": require_plan, "runtime_note": runtime_note}
+    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z, "judged_bar": judged_bar, "require_plan": require_plan, "runtime_note": runtime_note, "nonrelease_note": nonrelease_note, "release_python": release_python}
     by_poll: dict[str, list[dict[str, Any]]] = {}
     for d in scores:
         by_poll.setdefault(poll_key(d.get("poll_s")), []).append(d)
@@ -496,11 +511,11 @@ def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float =
     if len(by_poll) > 1:
         notes.append("Episodes ran with different polling intervals (" + ", ".join(poll_display(k) for k in sorted(by_poll, key=natural)) + "). "
                      "Each interval has its own tables, and no table compares runs across them (D-040).")
-    if runtime_note:
-        notes.append(runtime_note + ". No rank bands are published.")
+    if nonrelease_note:
+        notes.append(nonrelease_note + ". No rank bands are published.")
     sections = [_section(poll, by_poll[poll], index, params, reader, scripted, sanity, plan_instances) for poll in sorted(by_poll, key=natural)]
     return {"format": FORMAT, "version": VERSION, "parameters": params, "notes": notes,
-            "python_versions": versions, "not_release": bool(runtime_note) or scripted,
+            "python_versions": versions, "not_release": bool(nonrelease_note) or scripted,
             "reader": reader, "scripted_reader": scripted, "label": SCRIPTED if scripted else None,
             "inputs": {"scored": len(scores), "score_files_read": len(scores), "usable_scores": sum(not rerun(d) for d in scores), "rerun_markers": sum(rerun(d) for d in scores), "indexed": len(index), "indexed_not_scored": unscored,
                        "rerun_required": sorted(d["episode"] for d in scores if rerun(d))},
@@ -619,9 +634,9 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
         correlation = {}
         for ha, rs in sorted(by_harness.items()):
             # Spec section 2: models are compared within one harness, so bands and correlations are per harness.
-            if scripted or params["runtime_note"] or poll == "not recorded":
+            if scripted or params["nonrelease_note"] or poll == "not recorded":
                 for r in rs:
-                    r["headline"]["band_note"] = "no bands: " + (SCRIPTED if scripted else params["runtime_note"] or "polling interval not recorded")
+                    r["headline"]["band_note"] = "no bands: " + (SCRIPTED if scripted else params["nonrelease_note"] or "polling interval not recorded")
             else:
                 ranked = [(config_key(r["configuration"]), r["headline"]["value"], r["headline"]["interval"]) for r in rs
                           if r["headline"]["ranked"] and r["headline"]["interval"] is not None]
@@ -667,9 +682,13 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
             for settings, members in sorted(matching.items()):
                 if len(members) < 2:
                     continue
-                cmp = _compare([built[k] for k in members], ("effect", poll, model, hz, mode, settings), params, withheld, lambda v: max(v) - min(v))
-                effect.append({"model": model, "horizon": hz, "mode": mode,
-                               "harnesses": [labels[column_key(configs[k[0]])] for k in members], **cmp})
+                included = [k for k in members if any(row["value"] is not None for f in FAMILIES for row in built[k]["_measures"][f].values())]
+                if len(included) < 2:
+                    continue
+                omitted = [{"configuration": configs[k[0]], "reason": "no judged values"} for k in members if k not in included]
+                cmp = _compare([built[k] for k in included], ("effect", poll, model, hz, mode, settings), params, withheld, lambda v: max(v) - min(v))
+                effect.append({"model": model, "horizon": hz, "mode": mode, "not_included": omitted,
+                               "harnesses": [labels[column_key(configs[k[0]])] for k in included], **cmp})
 
     # Spec section 2: the gap between Default and Coached, Coached minus Default.
     gaps = []
@@ -790,7 +809,7 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
          f"Reader sanity bound: {p['sanity_z']:g} standard errors. "
          f"Score files read: {rep['inputs']['score_files_read']}; usable scores: {rep['inputs']['usable_scores']}; rerun markers: {rep['inputs']['rerun_markers']}; "
          f"in the index but not scored: {len(rep['inputs']['indexed_not_scored'])}.", ""]
-    L += ["Scoring Python versions: " + (", ".join(rep["python_versions"]) or NM) + ". Release runtime: Python 3.12.", ""]
+    L += ["Scoring Python versions: " + (", ".join(rep["python_versions"]) or NM) + f". Release runtime: Python {p['release_python']}.", ""]
     if rep["scripted_reader"]:
         L += ["Every Explanation score here was read by a scripted rule, not by the pinned reader model. This report checks the scorer. "
               "It is not a result, and it prints no rank bands.", ""]
@@ -830,6 +849,10 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
                     handoff = r["handoff"]
                     L.append(f"{r['model']} in {r['harness']}: chores right mean share {_pct(handoff['mean_share'])}, "
                              f"{len(handoff['episodes'])} measured episodes, {len(handoff['not_measured'])} not measured. Diagnostic only.")
+                if r.get("conflict_vs_reset") is not None:
+                    order = r["conflict_vs_reset"]
+                    L.append(f"{r['model']} in {r['harness']}: conflict before reset {order['before']}, "
+                             f"after reset {order['after']}, not measured {order['not_measured']}. Diagnostic only.")
                 for name, value in [(k, r[k]) for k in ("R", "E", "S")] + [(f + " controls", r["pooled_controls"][f]) for f in FAMILIES]:
                     for item in value["unjudged_instances"]:
                         why = "; ".join(x["reason"] + " " + ", ".join(x["episodes"]) for x in item["reasons"])
@@ -858,6 +881,9 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
         def cells_of(r: dict[str, Any]) -> list[str]:
             return [*(_cmp_cell(r[k], 1 if k == "headline" else 3) for k in ("headline", "R", "E", "S")), r["headline"].get("not_comparable") or ""]
 
+        for spread in sec["harness_effect"]:
+            for omitted in spread.get("not_included", []):
+                L.append(f"{spread['model']} at {spread['horizon']} {spread['mode']}: {harness_label(omitted['configuration'])} not included in harness spread: {omitted['reason']}.")
         for entry in sec["same_harness_different_settings"]:
             L.append("Same harness, different settings: " + config_key(entry) + ". Spread not measured.")
         if not sec["harness_effect"]:

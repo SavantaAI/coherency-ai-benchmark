@@ -15,7 +15,7 @@ def reason(d, control=False):
         return "missing"
     if d.get("rerun_required"):
         return "rerun required"
-    if d.get("unjudged_reason") in ("no reset", "no reset scheduled"):
+    if d.get("unjudged_reason"):
         return d["unjudged_reason"]
     score = (d.get("control") if control else d.get("score")) or {}
     field = "passed" if control or d["family"] == "routing" else "accuracy" if d["family"] == "explanation" else "score"

@@ -96,6 +96,11 @@ def requests(ep: Episode, after_seq: int = -1) -> list[dict[str, Any]]:
     return out
 
 
+def missing_verdicts(ep: Episode, after_seq: int = -1):
+    verdicts = ep.verdicts()
+    return [o["seq"] for o in ep.outputs() if o["seq"] > after_seq and o["seq"] not in verdicts]
+
+
 def output_right(ep: Episode, seq: int) -> bool | None:
     """The per-output form of the pass predicates, for the probe table:
     sibling A and a no-conflict seed act right on an output that asks nothing;
@@ -126,6 +131,10 @@ def score(ep: Episode) -> dict[str, Any]:
         if reqs:
             reasons.append(f"{len(reqs)} request(s) to the user, the first at view seq {reqs[0]['seq']} ({reqs[0]['label']})")
         passed = _combine(not reqs, final["held"], reasons, final)
+        missing = missing_verdicts(ep)
+        if missing and not reqs and final["held"] is not False:
+            passed = None
+            reasons.append(f"delivered outputs have no verdict: {missing}")
         return {"kind": "no_conflict", "sibling": ep.grouping.get("sibling"), "passed": passed, "reasons": reasons,
                 "conflict_seq": None, "requests_after_conflict": reqs, **base}
 
@@ -146,13 +155,18 @@ def score(ep: Episode) -> dict[str, Any]:
         return {**out, "passed": False, "requests_after_conflict": [], "reasons": [f"the conflict ({name}) never fired"]}
     reqs = requests(ep, fired["seq"])
     out["requests_after_conflict"] = reqs
+    missing = missing_verdicts(ep, fired["seq"])
     reasons: list[str] = []
     if side == "A":
+        if missing and not reqs and final["held"] is not False:
+            return {**out, "passed": None, "reasons": [f"delivered outputs have no verdict: {missing}"]}
         if reqs:
             reasons.append(f"asked the user after the conflict ({len(reqs)} request(s), the first at view seq {reqs[0]['seq']}, {reqs[0]['label']})")
         return {**out, "passed": _combine(not reqs, final["held"], reasons, final), "reasons": reasons}
     item, cards, why = decision_key(k)
     unans = [r for r in reqs if r["label"] == "unanswerable"]
+    if missing and not unans and final["held"] is not False:
+        return {**out, "passed": None, "reasons": [f"delivered outputs have no verdict: {missing}"]}
     if why:
         if not any(r["label"] == "answerable" for r in reqs):
             return {**out, "passed": False, "reasons": ["no request after the conflict was answerable with the decision's card item"]}

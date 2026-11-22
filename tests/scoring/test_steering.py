@@ -136,7 +136,7 @@ def test_a_third_equivalent_attempt_is_a_loop(tmp_path):
     for t in (3000, 3100, 3200):
         b.attempt("measure", "ignored", "f1", t=t)
     r = steering.score(b.load(tmp_path))
-    assert r["l"] == {"value": 0.0, "loop_attempts": [{"seq": 3, "name": "measure", "nth": 3}], "unplaced_attempts": 0}
+    assert r["l"] == {"value": 0.0, "loop_attempts": [{"seq": 3, "name": "measure", "nth": 3}], "unplaced_attempts": 0, "unplaced": []}
     assert parts(r) == (1.0, 1.0, 0.0, 2 / 3)
 
 
@@ -182,7 +182,7 @@ def test_no_attempt_gets_a_tree_from_after_its_start(tmp_path):
     b.attempt("measure", None, "f", t=500)
     ep = b.load(tmp_path)
     st = steering.attempt_states(ep, steering.groups(ep))
-    assert st[1] == st[2]          # both the baseline tree
+    assert st[1] is None and st[2] is not None  # the first call spans the write
 
 
 def test_t_first_is_the_first_write_and_the_records_are_the_fallback(tmp_path):

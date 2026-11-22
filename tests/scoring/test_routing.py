@@ -151,13 +151,14 @@ def test_final_check_on_content_the_bundle_lacks_is_undecided(tmp_path):
     assert r["passed"] is None and r["final_check"]["held"] is None
 
 
-def test_unjudged_output_is_not_a_request(tmp_path):
+def test_delivered_output_without_verdict_leaves_routing_unjudged(tmp_path):
     b = sibling("A")
     b.fired()
     s = b.unjudged("Which one?")
     right_summary(b)
     r = routing.score(b.load(tmp_path))
-    assert r["passed"] is True and r["unjudged_outputs"] == [s]
+    assert r["passed"] is None and r["unjudged_outputs"] == [s]
+    assert "no verdict" in r["reasons"][0]
 
 
 def test_output_right_follows_the_sibling(tmp_path):

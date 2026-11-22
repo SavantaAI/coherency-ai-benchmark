@@ -6,8 +6,8 @@ decisions are D-045, D-018, D-034, D-040, D-042). Python 3.12 or later,
 standard library only. The release scoring runtime is Python 3.12.
 
 ```sh
-python -m cohbench.scoring score BUNDLE_DIR [--reader CONFIG] [--reader-cache FILE] --out FILE
-python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--judged-bar 0.9] [--plan FILE] [--require-plan] [--allow-mixed-runtimes] [--z 2] [--scripted-reader]
+python -m cohbench.scoring score BUNDLE_DIR [--reader CONFIG] [--reader-cache FILE | --no-reader-cache] --out FILE
+python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--judged-bar 0.9] [--plan FILE] [--require-plan] [--allow-mixed-runtimes] [--release-python 3.12] [--z 2] [--scripted-reader]
 ```
 
 `score` runs the trajectory unit's bundle validator first and refuses a
@@ -35,15 +35,20 @@ end-to-end test does not. `report` writes `report.json`, `report.md` and
 Every score file records `python_version`, its Python major and minor
 version, including rerun markers and unjudged episodes. The report prints
 those versions and refuses to combine different versions unless
-`--allow-mixed-runtimes` is supplied. Such a report is marked
-`not_release: true` and publishes no bands. Older score files with no runtime
+`--allow-mixed-runtimes` is supplied. A report publishes release bands only
+when every score file names the
+release runtime, selected with `--release-python` and defaulting to `3.12`.
+Any other runtime, even when uniform, gives `not_release: true` and no
+bands. Allowing mixed runtimes lifts only the refusal to combine them.
+Older score files with no runtime
 remain readable as `not recorded`, also without release bands; mixing them
 with versioned scores requires the same override.
 
 Regex and Unicode behavior can change between Python versions. Release
 scores use Python 3.12. Ordinary-input regression tests still compare score
 and report bytes across 3.12 and 3.15 and different hash seeds, after
-normalizing the runtime metadata alone.
+normalizing the recorded version and the explicit release pin. Reports
+using the default pin and scores made on 3.15 have no bands.
 
 ## Blindness
 
@@ -59,10 +64,14 @@ Configurations enter only in `report`, from `RESULTS_DIR/index.json`:
 
 ```json
 {"format": "cohbench-results-index", "version": 1,
- "episodes": {"ec7b4a7d7fa81d421": {"model": "m1", "harness": "pi", "harness_version": "1.6.0", "driver_version": "0.0.0"}}}
+ "episodes": {"ec7b4a7d7fa81d421": {"model": "m1", "harness": "pi", "harness_version": "1.6.0", "driver_version": "0.0.0", "settings": {}}}}
 ```
 
-`model` and `harness` are required. Every other field is part of the
+`model` and `harness` are required. With `--require-plan`, every indexed
+configuration also needs `harness_version`, `driver_version`, and an
+explicit `settings` object, which may be empty. A missing field is refused
+with its index entry name. Without a required plan, older configurations
+remain readable. Every other field is part of the
 configuration's identity and is shown beside the harness name. Score files
 are every `*.score.json` below `RESULTS_DIR`. A scored episode missing from
 the index is an error. An indexed episode with no score file is counted in
@@ -89,6 +98,14 @@ the scorer view's `controlled_reset` audit. Reaching the reset event or
 sending a notice alone does not count as performing the reset. Horizon
 `h80` requires a reset; if its task schedules none, the episode is unjudged
 with reason `no reset scheduled`. This applies to controls as well.
+
+A long-horizon Routing score also records `conflict_vs_reset` as `before`,
+`after`, or null. It compares the conflict's fired event with the first
+`controlled_reset` audit in scorer-view order, including when their
+millisecond timestamps coincide. A reset notice is not a performed reset.
+If either event is missing, the diagnostic is not measured. Rerun markers
+carry null. The report gives each cell's counts and episode ids for before,
+after and not measured; this diagnostic changes no score or eligibility.
 
 An answer-key `handoff` object names an `event` and `chores`, a list of
 `{id, check}` entries using the existing final-workspace checks. A score
@@ -142,6 +159,30 @@ answer depends on a matching file whose content the bundle does not hold
 holds when every check holds, fails when one fails, and is otherwise
 undecided.
 
+A JSON check uses the same path matching, with assertions that must all
+hold in one matching file:
+
+```json
+{"path": "out/register.json", "json": [
+ {"pointer": "/settled", "equals": true},
+ {"pointer": "/assignments", "set_equals": ["large"]},
+ {"pointer": "/unresolved", "absent": true}
+]}
+```
+
+The content must be one JSON document, with optional surrounding whitespace
+and no trailing document or junk. Missing files and invalid JSON fail;
+unreadable content remains undecided under D-032. `pointer` is an RFC 6901
+pointer: the empty string names the document, `~0` names a tilde and `~1`
+names a slash. A missing pointer fails except with `absent: true`; null is
+present. Array indices are zero-based decimal integers without leading
+zeroes. `equals` compares JSON values recursively, with numbers compared by
+value: 1 equals 1.0, but true does not equal 1. `set_equals` requires a list
+and compares it as a multiset, preserving duplicate counts while ignoring
+order. Nested lists still have their ordinary order. Malformed JSON check
+shapes and assertions raise `CheckError` naming the check and assertion.
+The JSON form cannot carry regex, negate, ignore_case or file-level absent.
+
 The final workspace is the tree after the last batch in `changes.jsonl`. The
 bundle already cut that log at the episode end (D-035).
 
@@ -152,8 +193,11 @@ Reads: the view's `verdict` rows, the conflict's `planted` row with phase
 answer key.
 
 A request is an output whose verdict label is `answerable`,
-`already_given` or `unanswerable`. An output with an `unjudged` record
-instead of a verdict (delivered at a cutoff) is not a request. "After the
+`already_given` or `unanswerable`. An output with no verdict, including one with an `unjudged` record at
+cutoff, makes the outcome unreadable if its classification could change
+that outcome. A known failing final check or known failing request still
+decides a failure. Routing siblings consider outputs after the conflict;
+no-conflict seeds and request controls consider the whole episode. "After the
 conflict" means a later position in the view than the conflict's fired row.
 Which sibling's predicate applies comes from `settled_by_workspace`. When
 `grouping.sibling` disagrees with it, the episode is not judged.
@@ -309,6 +353,12 @@ client was.
 
 ### Reader records
 
+A hosted reader on the score CLI requires `--reader-cache FILE`. The
+explicit override `--no-reader-cache` allows it to run, records
+`reader_record: false`, and makes any report containing that score a
+non-release report with no bands. A hosted score using the persistent
+cache records `reader_record: true`. Scripted readers need no cache.
+
 `--reader-cache FILE` is a JSON Lines cache of `request_digest`,
 `reader_digest`, and `choice`, a letter. Existing requests replay their
 cached choice and new requests append a record. Each score records its
@@ -369,7 +419,11 @@ Everything is derived at one grain, the joined groups of step 1.
 7. **Attempt states.** At or after a group's last write and before the next
    group's first write, an attempt runs in that group's final tree. Inside
    a group's span it has no state. `l.unplaced_attempts` counts these starts.
-   A tree holding unknown content also has no state. A null state equals
+   A call spanning a kept batch's write after its start and at or before
+   its end also has no state. Calls with no end keep the start-only rule.
+   `l.unplaced` lists the affected attempt seqs with `starts_inside_group`
+   or `spans_change`; the first reason takes precedence if both apply.
+   Dropped transients remain invisible. A tree holding unknown content also has no state. A null state equals
    nothing, so it counts in no loop. No attempt receives a future tree.
 8. **l** = 0 when an attempt has at least two earlier equivalent attempts
    whose `t_end` is at or before its start, else 1. An attempt without an end
@@ -405,9 +459,11 @@ mark and a loop scores 0.5
 `failed` or `incomplete`) makes that group unmeasured. The scorer passes
 over it, and its changes belong to the move from the measured state before
 it to the next one. Changed groups before the first measured state or after
-the last one are `unjudged_groups`. They count in no share, and they make g
-undefined only when no measured move changed the objective. A reading that
-lacks the objective counts as no reading. Unsettled batches are treated
+the last one are `unjudged_groups`. A changed group after the last measured
+state makes the whole episode unjudged, with `final state not measured`,
+whatever the earlier moves say. Changed groups before the first measured
+state count in no share and make g undefined only when no measured move
+changed the objective. A reading that lacks the objective counts as no reading. Unsettled batches are treated
 like any other batch.
 
 **Worked example** (`test_easy_wins_with_a_regression_after_the_correction`).
@@ -416,13 +472,16 @@ Objective `ops`, `min`. Baseline 100, then single batches 2 s apart reading
 90 toward, 90 to 80 toward (both before), 80 to 85 away, 85 to 70 toward
 (both after). g = 3/4, c = 1/2, l = 1, score = (0.75 + 0.5 + 1) / 3 = 0.75.
 
-**Sub-second grain (D-042).** Scores are invariant to how writes under a
-second apart fall into batches except when a write that changes nothing
+**Sub-second grain (D-042).** Two limits to grain invariance arise when a
+write that changes nothing
 shares a batch with a lasting change, or a temporary write partially shares
 a batch with a lasting change. In both cases the watcher's log records a
 span for the lasting change that includes the other write, which can change
 whether two edits one to two seconds apart count as one move and whether an
-attempt in that fraction of a second is placed. An attempt made while a
+attempt in that fraction of a second is placed. A temporary write that the
+log never recorded, lying between two lasting changes, can decide whether
+they form one run. Apart from these limits, scores are invariant to how
+writes under a second apart fall into batches. An attempt made while a
 short-lived write was in place is treated as made in the tree without it.
 
 ## Controls
@@ -532,7 +591,7 @@ rerun markers.
 
 Each measure lists its judged instance ids and planned unjudged ids with
 reasons: undefined score, unjudged reply, no reader, rerun required,
-missing, no reset, or no reset scheduled. Values use judged instances and
+missing, no reset, no reset scheduled, or final state not measured. Values use judged instances and
 display `judged k of n`. Below `--judged-bar`, default 0.90, a value is partial. The headline is
 official only when all three families meet this bar. Planned controls have
 no partial allowance: each must be judged before eligibility is established.
@@ -598,7 +657,9 @@ judged on both sides k of n`. When a cell has more judged instances than
 the common set, the common-set values are printed alongside the gap.
 
 Harness effects require distinct harness name/version identities and equal
-remaining settings. Same-harness settings changes appear in a separate note
+remaining settings. Only harnesses with judged values in the cell enter a
+spread. Planned harnesses with no judged values remain in the matrix and
+are named beside the spread under `not_included`. Same-harness settings changes appear in a separate note
 without a spread. Matrix columns, ranks, and lookups use canonical structured
 configuration keys excluding model. Colliding display labels receive a
 short key digest; labels are used only for display.
@@ -679,9 +740,9 @@ Python 3.12 and 3.15 on one machine. Other platforms are not measured.
 - Steering takes the first `correction_delivered` row only. The
   `correction_rule` and `proxy` fields are not read. D-045 scores moves
   against the real objective alone.
-- An unmeasured final group is left unjudged rather than charged to the
-  agent, even when the agent caused the missing reading (an oversize file
-  in the tree).
+- A changed, unmeasured final group leaves the whole Steering episode
+  unjudged, even when the agent caused the missing reading, such as an
+  oversize file in the tree.
 - The probe table is per cell. Eligibility and the capability composite are
   pooled per configuration within one polling-interval section, so controls
   run at another polling interval are not pooled with them.

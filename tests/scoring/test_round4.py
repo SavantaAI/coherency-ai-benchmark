@@ -99,6 +99,8 @@ def test_release_plan_includes_missing_mode_and_indexed_configuration(tmp_path, 
     index_path = root / "index.json"
     index = json.loads(index_path.read_text())
     index["episodes"].update({"a-pending": {"model": "m1", "harness": "h"}, "b-pending": {"model": "m2", "harness": "h"}})
+    for config in index["episodes"].values():
+        config.update(harness_version="1", driver_version="1", settings={})
     index_path.write_text(json.dumps(index))
     rep = report.build(root, plan=plan, require_plan=True, resamples=10)
     tables = rep["sections"][0]["tables"]
@@ -296,7 +298,8 @@ runtime = score.pop('python_version')
 cfg = reader.parse_config({'format': reader.CONFIG_FORMAT, 'version': 1, 'kind': 'scripted', 'rule': 'earliest_statement', 'orders': {'count': 60, 'seed': 2}})
 answers = [explanation.read_items(reader.make(cfg), cfg, 'Why?', text, OPTIONS, 0) for text in ('', OPTIONS[0], OPTIONS[1])]
 scores = S.config_set('a', r_pass=2, pairs=3, e=[0.5, 1], s=[1/3, 1], controls=(1, 1))
-rep = report.build(S.write(Path(sys.argv[1]), scores, {'a': {'model': 'm', 'harness': 'h'}}), resamples=40)
+rep = report.build(S.write(Path(sys.argv[1]), scores, {'a': {'model': 'm', 'harness': 'h'}}), resamples=40, release_python=runtime)
+rep['parameters']['release_python'] = 'runtime'
 assert rep.pop('python_versions') == [runtime]
 rep['python_versions'] = ['runtime']
 print(dumps({'score': score, 'report': rep, 'readings': answers, 'markdown': report.render(rep, True), 'text': report.render(rep, False)}))

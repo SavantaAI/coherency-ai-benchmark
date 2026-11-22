@@ -1,6 +1,7 @@
-"""Grain invariance within the log's stated limits, and the two exceptions."""
+"""Grain invariance within the log's stated limits, and the three exceptions."""
 from cohbench.scoring import steering
 from .timeline import generate, render, no_mixed_unchanged_writes, no_mixed_transient_runs
+from .test_round4 import validated
 
 
 def test_seeded_grain_property_200_timelines(tmp_path):
@@ -63,3 +64,15 @@ def test_seed271_omitted_transient_run_does_not_change_attempt_placement(tmp_pat
     assert states[0] == states[1] and states[0][1] is not None
     a, b = [steering.score(ep) for ep in episodes]
     assert all(a[part] == b[part] for part in ("g", "c", "l", "score"))
+
+
+def test_omitted_empty_batch_breaks_the_link_between_lasting_changes(tmp_path):
+    timeline = [
+        {"t": 1000, "kind": "write", "path": "pkg/core.py", "content": "v1"},
+        {"t": 1800, "kind": "write", "path": "tmp", "content": "x"},
+        {"t": 2000, "kind": "write", "path": "tmp", "content": None},
+        {"t": 2800, "kind": "write", "path": "pkg/core.py", "content": "v0"},
+    ]
+    split, merged = [steering.score(validated(render(timeline, merge), tmp_path / str(merge))) for merge in (False, True)]
+    assert split["transient_batches"] == [1, 2, 3, 4] and split["score"] == 2 / 3
+    assert merged["transient_batches"] == [] and merged["score"] == 5 / 6
