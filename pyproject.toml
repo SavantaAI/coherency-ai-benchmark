@@ -16,3 +16,4 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = ["integration: needs Docker and builds images; runs only when selected with -m integration"]

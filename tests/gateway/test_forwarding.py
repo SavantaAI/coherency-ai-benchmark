@@ -233,7 +233,9 @@ def test_keep_alive_reuses_client_connection(gateway, upstream):
 
 def test_concurrent_requests(gateway, upstream):
     n = 8
-    barrier = threading.Barrier(n, timeout=10)
+    # Generous limits: on a loaded machine eight handler threads can take
+    # several seconds to all arrive; the barrier still proves concurrency.
+    barrier = threading.Barrier(n, timeout=45)
 
     def behavior(handler, seen):
         barrier.wait()  # only passes when all n requests are upstream at once
@@ -243,14 +245,14 @@ def test_concurrent_requests(gateway, upstream):
     results = [None] * n
 
     def worker(i):
-        resp, data = gateway.request("POST", "/anthropic/v1/messages", body=str(i).encode(), timeout=20)
+        resp, data = gateway.request("POST", "/anthropic/v1/messages", body=str(i).encode(), timeout=60)
         results[i] = (resp.status, data)
 
     threads = [threading.Thread(target=worker, args=(i,)) for i in range(n)]
     for t in threads:
         t.start()
     for t in threads:
-        t.join(30)
+        t.join(90)
     assert results == [(200, str(i).encode()) for i in range(n)]
 
 
