@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import os
+import pwd
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
@@ -10,12 +13,26 @@ import pytest
 from cohbench.tasks.suite import write_suite
 
 
+def real_profile_files():
+    root = Path(pwd.getpwuid(os.getuid()).pw_dir) / ".local/state/profile"
+    return {str(path.relative_to(root)): (path.stat().st_mtime_ns, hashlib.sha256(path.read_bytes()).hexdigest())
+            for path in root.rglob("*") if path.is_file()}
+
+
+@pytest.fixture(scope="session", autouse=True)
+def real_home_guard():
+    before = real_profile_files()
+    yield before
+    assert real_profile_files() == before, "Task tests wrote profile state under the real account home"
+
+
 @pytest.fixture(autouse=True)
 def tool_home(tmp_path, monkeypatch):
     """Local tools must not append run history under the developer's home."""
     home = tmp_path / "home"
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("XDG_STATE_HOME", str(home / ".local/state"))
     return home
 
 

@@ -179,11 +179,13 @@ MAX_IDS = 50
 
 
 class __CLS__:
-    def __init__(self, data_dir):
-        with open(os.path.join(data_dir, "records.json"), encoding="utf-8") as fh:
-            self._records = json.load(fh)
-        with open(os.path.join(data_dir, "rates.json"), encoding="utf-8") as fh:
-            self._rates = json.load(fh)
+    def __init__(self, data_dir, read_json=None):
+        if read_json is None:
+            def read_json(path):
+                with open(path, encoding="utf-8") as fh:
+                    return json.load(fh)
+        self._records = read_json(os.path.join(data_dir, "records.json"))
+        self._rates = read_json(os.path.join(data_dir, "rates.json"))
         self._by_id = {}
         for rec in self._records:
             self._by_id[rec["id"]] = rec

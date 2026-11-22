@@ -4,9 +4,12 @@ PROFILE = r'''#!/usr/bin/env python3
 """Run the sync against the sample data and show what it costs."""
 
 import hashlib
+import importlib.abc
+import importlib.machinery
 import json
 import os
 from pathlib import Path
+import pwd
 import sys
 import time
 
@@ -17,7 +20,60 @@ START_MS = time.time_ns() // 1_000_000
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 READ_PATHS = set()
-READING_INPUTS = True
+CONSUMED = {}
+READING_INPUTS = False
+UNCERTAIN = False
+
+
+def workspace_files():
+    return {path.resolve() for path in ROOT.rglob("*") if path.is_file()
+            and not {"__pycache__", ".git"}.intersection(path.relative_to(ROOT).parts)
+            and path.suffix not in (".pyc", ".pyo")}
+
+
+def signature(path):
+    try:
+        return hashlib.sha256(path.read_bytes()).digest()
+    except OSError:
+        return None
+
+
+# Capture the baseline before imports, including potential lazy dependencies.
+BEFORE = {path: signature(path) for path in workspace_files()}
+
+
+def input_bytes(path):
+    global UNCERTAIN
+    path = Path(path).resolve()
+    data = path.read_bytes()
+    value = hashlib.sha256(data).digest()
+    if path in CONSUMED and CONSUMED[path] != value:
+        UNCERTAIN = True
+    CONSUMED[path] = value
+    return data
+
+
+def read_json(path):
+    return json.loads(input_bytes(path))
+
+
+class SourceInputs(importlib.machinery.SourceFileLoader):
+    def get_code(self, fullname):
+        data = input_bytes(self.path)
+        return self.source_to_code(data, self.path)
+
+
+class ProjectImports(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        spec = importlib.machinery.PathFinder.find_spec(fullname, path, target)
+        if (spec is not None and isinstance(spec.loader, importlib.machinery.SourceFileLoader)
+                and Path(spec.origin).resolve().is_relative_to(ROOT)):
+            spec.loader = SourceInputs(fullname, spec.origin)
+            return spec
+        return None
+
+
+sys.meta_path.insert(0, ProjectImports())
 
 
 def track_reads(event, args):
@@ -34,23 +90,23 @@ sys.addaudithook(track_reads)
 
 
 def state_digest():
-    paths = set(READ_PATHS)
+    if UNCERTAIN:
+        return None
+    paths = set(READ_PATHS) | set(CONSUMED)
     paths.update(ROOT / "sample" / name for name in ("records.json", "rates.json", "expected.json"))
-    paths.update(path for path in (ROOT / "__PKG__").rglob("*")
-                 if "__pycache__" not in path.parts and path.suffix not in (".pyc", ".pyo"))
-    # Include local imported helpers, including lazy imports and vendor code.
-    for module in list(sys.modules.values()):
-        filename = getattr(module, "__file__", None)
-        if filename:
-            path = Path(filename).resolve()
-            if path.is_relative_to(ROOT) and path != Path(__file__).resolve():
-                paths.add(path)
+    package = ROOT / "__PKG__"
+    paths.update(path for path in BEFORE if path.is_relative_to(package))
+    paths.update(path for path in workspace_files() if path.is_relative_to(package))
     digest = hashlib.sha256()
     for path in sorted(paths):
-        if not path.is_file():
-            continue
+        try:
+            data = path.read_bytes()
+        except OSError:
+            return None
+        value = hashlib.sha256(data).digest()
+        if BEFORE.get(path) != value or CONSUMED.get(path, value) != value:
+            return None
         name = path.relative_to(ROOT).as_posix().encode("utf-8")
-        data = path.read_bytes()
         digest.update(len(name).to_bytes(8, "big") + name)
         digest.update(len(data).to_bytes(8, "big") + data)
     return digest.hexdigest()
@@ -60,7 +116,9 @@ def remember(result):
     try:
         row = {"start_ms": START_MS, "end_ms": time.time_ns() // 1_000_000,
                "state": state_digest(), "result": result}
-        path = Path.home() / ".local/state/profile/runs.jsonl"
+        base = os.environ.get("XDG_STATE_HOME")
+        state_home = Path(base) if base else Path(pwd.getpwuid(os.getuid()).pw_dir) / ".local/state"
+        path = state_home / "profile/runs.jsonl"
         path.parent.mkdir(parents=True, exist_ok=True)
         line = (json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
         with path.open("ab", buffering=0) as stream:
@@ -73,10 +131,9 @@ def main():
     from vendor.__MODULE__ import __CLS__
     import __PKG__
 
-    client = __CLS__(os.path.join(ROOT, "sample"))
+    client = __CLS__(os.path.join(ROOT, "sample"), read_json=read_json)
     result = __PKG__.run(client)
-    with open(os.path.join(ROOT, "sample", "expected.json"), encoding="utf-8") as fh:
-        expected = json.load(fh)
+    expected = read_json(ROOT / "sample/expected.json")
     ok = result == expected
     peak_kb = client.largest_response / 1024
     canonical = "peak_kb=%.1f round_trips=%d result=%s" % (peak_kb, client.round_trips, "ok" if ok else "wrong")
@@ -92,6 +149,7 @@ def main():
 
 outcome = "error"
 try:
+    READING_INPUTS = True
     outcome = main()
 except BaseException as error:
     outcome = "error:" + type(error).__name__

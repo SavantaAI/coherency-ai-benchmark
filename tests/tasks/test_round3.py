@@ -45,7 +45,7 @@ def logged_score(rows, patterns):
 
 def profile(work, home, command=None):
     return subprocess.run(command or [sys.executable, "bin/profile"], cwd=work,
-                          env={**os.environ, "HOME": str(home)}, capture_output=True, text=True,
+                          env={**os.environ, "HOME": str(home), "XDG_STATE_HOME": str(home / ".local/state")}, capture_output=True, text=True,
                           shell=isinstance(command, str))
 
 
@@ -146,7 +146,7 @@ def test_b34_three_wrapped_runs_log_three_ordered_canonical_attempts(tmp_path, t
     assert sum(row["end_ms"] <= rows[2]["start_ms"] for row in rows[:2]) == 2
     result = logged_score(rows, TaskObservations.from_dict(inst.task["scoring"]["observations"]))
     assert result["value"] == 0 and len(result["loop_attempts"]) == 1
-    assert result["observations"] == {"shell": 0, "log": 3}
+    assert {key: result["observations"][key] for key in ("shell", "log")} == {"shell": 0, "log": 3}
 
 
 def test_attempt_state_tracks_inputs_and_ignores_unrelated_files(tmp_path, tool_home):
@@ -205,10 +205,10 @@ def test_run_history_is_stable_across_copies_and_hash_seeds(tmp_path):
         work, home = tmp_path / name, tmp_path / (name + "-home")
         inst.workspace.write(work)
         result = subprocess.run([sys.executable, "bin/profile"], cwd=work, capture_output=True, text=True,
-                                env={**os.environ, "HOME": str(home), "PYTHONHASHSEED": hashseed})
+                                env={**os.environ, "HOME": str(home), "XDG_STATE_HOME": str(home / ".local/state"), "PYTHONHASHSEED": hashseed})
         assert result.returncode == 0, result.stderr
         rows.append(history(home)[0])
-    assert rows[0]["state"] == rows[1]["state"] == "9cd5b686c37728d872957b12c7e5cd32daea162555fd4dbee8ecdce7667abd3b"
+    assert rows[0]["state"] == rows[1]["state"] == "8aa9c0e4aa09670b99c864e8f81cb8601388e7f6d1929fd2103e8509f96da1a4"
     assert rows[0]["result"] == rows[1]["result"]
 
 

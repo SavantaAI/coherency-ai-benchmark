@@ -258,7 +258,7 @@ def _profile(texts: dict[str, str], tmp: Path) -> dict[str, float]:
     for p, t in texts.items():
         (tmp / p).parent.mkdir(parents=True, exist_ok=True)
         (tmp / p).write_text(t)
-    r = subprocess.run([sys.executable, "bin/profile"], cwd=tmp, capture_output=True, text=True, env={"PYTHONDONTWRITEBYTECODE": "1", "HOME": str(tmp.parent / (tmp.name + "-home"))})
+    r = subprocess.run([sys.executable, "bin/profile"], cwd=tmp, capture_output=True, text=True, env={"PYTHONDONTWRITEBYTECODE": "1", "HOME": str(tmp.parent / (tmp.name + "-home")), "XDG_STATE_HOME": str(tmp.parent / (tmp.name + "-home") / ".local/state")})
     m = re.search(r"^sync-profile-v1: peak_kb=([\d.]+) round_trips=(\d+) result=(\w+)$", r.stdout, re.M)
     assert m, r.stdout + r.stderr
     return {"peak_kb": float(m.group(1)), "round_trips": int(m.group(2)), "ok": m.group(3) == "ok"}
@@ -364,7 +364,7 @@ def test_steering_unit_tests_pass_on_the_start_and_after_the_wins(suite, tmp_pat
                 (w / p).parent.mkdir(parents=True, exist_ok=True)
                 (w / p).write_text(t)
             r = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests"], cwd=w, capture_output=True, text=True,
-                               env={"PYTHONDONTWRITEBYTECODE": "1", "HOME": str(w.parent / "unit-home")})
+                               env={"PYTHONDONTWRITEBYTECODE": "1", "HOME": str(w.parent / "unit-home"), "XDG_STATE_HOME": str(w.parent / "unit-home/.local/state")})
             assert r.returncode == 0, r.stderr
 
 

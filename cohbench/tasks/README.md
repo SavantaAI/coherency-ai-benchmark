@@ -147,7 +147,11 @@ The correction counts two to four committed package change batches, using
 since its base event. The reset's own hand-back is outside that count.
 This second path deliberately corrects an agent that changes nothing.
 Each profile run appends one JSON line to
-`~/.local/state/profile/runs.jsonl`, outside the watched workspace. Its
+`$XDG_STATE_HOME/profile/runs.jsonl` when `XDG_STATE_HOME` is set. Otherwise,
+it uses the current user's account home from
+`pwd.getpwuid(os.getuid()).pw_dir`, followed by
+`.local/state/profile/runs.jsonl`. It never uses `HOME`. The log stays
+outside the watched workspace. Its
 `start_ms` and `end_ms` are system-clock epoch milliseconds. `state` is a
 SHA-256 digest of sorted relative paths and bytes: all measured package
 files except bytecode caches, the three public fixture JSON files, and
@@ -156,25 +160,36 @@ workspace files opened for reading during the sync. This includes data
 files introduced by a refactor outside the package. Unrelated files
 outside the package, such as the project README, notes and chores, are
 excluded unless the sync reads them. The profiler's own display and
-history code is not itself a measured input. Both launchers read source without using
-bytecode caches, so a stale cache cannot replace those recorded inputs.
+history code is not itself a measured input. Both launchers read source
+without using bytecode caches. The profiler hashes the same bytes it uses
+to compile project modules and decode fixtures. It also compares selected
+inputs before and after execution, including other workspace files read
+by the package. A changed or unreadable input gives the line `state: null`;
+that line counts in no loop. An unrelated file save leaves the digest
+unchanged unless the sync reads that file.
 `result` is the canonical short summary of
 peak memory, round trips and whether the totals match. Failed runs record
 an error class. Each line uses one unbuffered append write; an unwritable
 history is silent and does not stop the tool. The workspace stays unchanged.
 
-The task declares `collect` for that file and `log: attempts` on the
+The task keeps the collection path `~/.local/state/profile/runs.jsonl`,
+where the collector resolves `~` using the account's home. It declares
+`collect` for that file and `log: attempts` on the
 profile observation. Steering's loop score uses the collected log, so
 three sequential runs retain their separate intervals even in one shell
 call, through a wrapper or with no captured stdout. Shell observations
 remain for probes: result lines count, and the command pattern recognizes
 ordinary profile invocations without treating file inspection as execution.
 
-A local script harness must set `HOME` to a directory it owns outside the
-workspace before running tools. The tool uses Python's ordinary home
-lookup; it has no test-specific switch. `MiniPi.home` is that directory in
-our fake harness, and the workspace-output checker also uses a temporary
-home. Real agent containers use their ordinary user home. Log timestamps
+A local script harness must set `XDG_STATE_HOME` to a directory it owns
+outside the workspace before running tools. Setting `HOME` alone does not
+redirect the profile log. `MiniPi.home` remains the fake harness's temporary
+home; it passes `XDG_STATE_HOME=str(pi.home / ".local/state")`, so its log
+is at `pi.home / ".local/state/profile/runs.jsonl"`. The workspace-output
+checker and direct tool tests set owned state directories too. A session
+guard checks that tests leave the real account's profile state unchanged.
+Real agent containers use their account home unless they set an XDG
+override. Log timestamps
 are always real system times; a simulated exporter must map them to its
 own clock while preserving each run's order and interval.
 
@@ -233,8 +248,10 @@ manifests; it is not patched separately. `SUITE_DIGEST` in
 episode and scripted model engine. The long scripts also run through the
 D-046 stand-in. The tests check admission, delivery order, requests, final
 files, answers, readings, attempts, privacy and determinism. New review
-regressions are in `tests/tasks/test_round1.py`, `test_round2.py` and
-`test_round3.py`. `check_python.py` records
+regressions are in `tests/tasks/test_round1.py`, `test_round2.py`,
+`test_round3.py` and `test_round4.py`. The fourth round adds consumed-byte
+tracking, null states for saves during a run, and account-based history
+paths with explicit XDG overrides for local tests. `check_python.py` records
 workspace and metric outputs; rerecord only after reviewing changed output.
 
 ## Limits
@@ -258,9 +275,11 @@ and its cause, so the opening's question can be recovered without notes.
 Under this fixed scenario, Explanation's reset tests little beyond the
 length of the context.
 
-The run log is writable inside the agent container. An agent that edits
-or deletes it changes its own loop score; nothing tells the agent that
-the log matters. An invocation hidden from both command and output is
+The run log is writable inside the agent container. An agent can move its
+own log away from the collection path by setting `XDG_STATE_HOME` for a
+command. An agent that edits or deletes the log changes its own loop
+score; nothing tells the agent that the log matters. An invocation hidden
+from both command and output is
 still absent from shell probe observations, but its log entry remains
 available for the loop score.
 

@@ -34,7 +34,7 @@ def _run(argv: list[str], cwd: Path) -> subprocess.CompletedProcess:
     home = cwd.parent / (cwd.name + "-home")
     home.mkdir(exist_ok=True)
     return subprocess.run(argv, cwd=cwd, capture_output=True, text=True,
-                          env={"PYTHONDONTWRITEBYTECODE": "1", "PATH": "/usr/bin:/bin", "HOME": str(home)})
+                          env={"PYTHONDONTWRITEBYTECODE": "1", "PATH": "/usr/bin:/bin", "HOME": str(home), "XDG_STATE_HOME": str(home / ".local/state")})
 
 
 def instance_outputs(inst: Path, python: str, work: Path) -> list[str]:
