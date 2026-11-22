@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import sys
 from typing import Any
 
@@ -20,10 +19,10 @@ from cohbench.trajectory import episode as TE
 from . import checks, controls, explanation, routing, steering
 from . import reader as R
 from .load import REQUEST_LABELS, Episode
+from .stats import DIGITS, published
 
 FORMAT = "cohbench-score"
 VERSION = 1
-DIGITS = 6
 
 
 EXACT = frozenset({"poll_s"})  # carried as recorded, never rounded (D-040)
@@ -34,10 +33,7 @@ def tidy(obj: Any) -> Any:
     platform's arithmetic cannot change a written file. Values under a key
     in EXACT are recorded parameters and pass through as they are."""
     if isinstance(obj, float):
-        if not math.isfinite(obj):
-            raise ValueError("a score is never infinite or NaN")
-        r = round(obj, DIGITS)
-        return 0.0 if r == 0 else r
+        return published(obj)
     if isinstance(obj, dict):
         return {k: (v if k in EXACT else tidy(v)) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):

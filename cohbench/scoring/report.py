@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 import hashlib
 import re
+from fractions import Fraction
 from pathlib import Path
 from typing import Any, Callable
 
@@ -177,6 +178,9 @@ def check_inputs(scores: list[dict[str, Any]], index: dict[str, dict[str, Any]],
         trial[k] = d["episode"]
     choices = {}
     for d in scores:
+        reader = d.get("reader")
+        if reader is not None and (not isinstance(reader, dict) or not isinstance(reader.get("config_sha256"), str) or not reader["config_sha256"]):
+            raise ReportError(f"episode {d['episode']}: reader config_sha256 not recorded")
         for item in d.get("reader_requests", []):
             digest = (d.get("reader") or {}).get("config_sha256")
             if item.get("reader_digest") != digest:
@@ -277,16 +281,21 @@ def subscores(draw: dict[str, list[list]]) -> dict[str, float | None]:
     return {"R": r, "E": e, "S": s, "H": stats.headline(r, e, s)}
 
 
-def paired(us: list[dict[str, dict[int, list]]], tag: tuple, params: dict[str, Any]) -> tuple[list[dict[str, Any]], list[list[dict[str, Any]]]]:
+def sampling_streams(seed, population):
+    """One independent stream per family, named only by its planned instances."""
+    return {f: stream("bootstrap", seed, f, config_key(sorted(population[f]))) for f in FAMILIES}
+
+
+def paired(us: list[dict[str, dict[int, list]]], population, params: dict[str, Any]) -> tuple[list[dict[str, Any]], list[list[dict[str, Any]]]]:
     """Point values and bootstrap draws for several cells on the seeds all of
     them ran: each draw resamples those seeds once per family (a seed carries
     its sibling pairs whole) and evaluates every member on the same draw."""
     seeds = {f: sorted(set.intersection(*(set(u[f]) for u in us))) for f in FAMILIES}
     points = [subscores({f: [u[f][s] for s in seeds[f]] for f in FAMILIES}) for u in us]
-    rng = stream("paired", params["seed"], *tag)
+    rng = sampling_streams(params["seed"], population)
     draws = []
     for _ in range(params["resamples"]):
-        drawn = {f: (stats.resample(rng, seeds[f]) if seeds[f] else []) for f in FAMILIES}
+        drawn = {f: (stats.resample(rng[f], seeds[f]) if seeds[f] else []) for f in FAMILIES}
         draws.append([subscores({f: [u[f][s] for s in drawn[f]] for f in FAMILIES}) for u in us])
     return points, draws
 
@@ -305,17 +314,24 @@ def control_rates(eps: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {f: {**_rate(ctl[f]), "episodes": sorted(ctl_eps[f])} for f in FAMILIES}
 
 
+def capability_fraction(controls):
+    """Keep count ratios exact until the composite is published or ranked."""
+    if not all(controls[f]["official"] for f in FAMILIES):
+        return None
+    return sum(Fraction(controls[f]["passed"], controls[f]["judged"]) for f in FAMILIES) / len(FAMILIES)
+
+
 def pooled_eligibility(eps: list[dict[str, Any]], bar: float, planned) -> dict[str, Any]:
     """Eligibility of a model in a harness (one configuration): each family's
     controls pooled over every horizon and mode, against the bar."""
     controls = measures.control_rates(measures.collect(eps, planned, control=True, pooled=True))
-    elig = {f: {"eligible": controls[f]["official"] and controls[f]["rate"] >= bar,
+    elig = {f: {"eligible": controls[f]["official"] and Fraction(controls[f]["passed"], controls[f]["judged"]) >= Fraction(str(bar)),
                 "rate": controls[f]["rate"], "status": "established" if controls[f]["official"] else "not established",
                 "why": None if controls[f]["official"] else "not established: planned controls are unjudged",
                 "unjudged_controls": controls[f]["unjudged_instances"]} for f in FAMILIES}
     complete = all(controls[f]["official"] for f in FAMILIES)
     return {"controls": controls, "eligibility": elig,
-            "capability": sum(controls[f]["rate"] for f in FAMILIES) / 3 if complete else None,
+            "capability": float(capability_fraction(controls)) if complete else None,
             "capability_status": "complete" if complete else "incomplete"}
 
 
@@ -329,12 +345,15 @@ def reader_sanity(scores: list[dict[str, Any]], z: float) -> dict[str, dict[str,
     acc: dict[str, dict[str, Any]] = {}
     for d in sorted(scores, key=lambda x: x["episode"]):
         s = d.get("score")
-        if rerun(d) or d["family"] != "explanation" or not s or not s.get("sanity") or not d.get("reader"):
+        if rerun(d) or d["family"] != "explanation" or not s or not d.get("reader"):
             continue
         k = d["reader"]["config_sha256"]
-        a = acc.setdefault(k, {"reader": d["reader"], "no_answer": {}, "buried": {}, "episodes": []})
+        a = acc.setdefault(k, {"reader": d["reader"], "no_answer": {}, "buried": {}, "episodes": [], "missing": []})
         for part in ("no_answer", "buried"):
-            item = s["sanity"][part]
+            item = (s.get("sanity") or {}).get(part)
+            if not item or item.get("correct") is None or not item.get("n"):
+                a["missing"].append({"episode": d["episode"], "check": part})
+                continue
             a[part].setdefault(item.get("key") or d["task"]["sha256"], (item["correct"], item["n"]))
         a["episodes"].append(d["episode"])
     out = {}
@@ -344,7 +363,8 @@ def reader_sanity(scores: list[dict[str, Any]], z: float) -> dict[str, dict[str,
             items = a[part]
             correct, n = sum(c for c, _ in items.values()), sum(n for _, n in items.values())
             res[part] = {**stats.near_chance(correct, n, CHANCE, z, two_sided=two, clusters=len(items)), "items": len(items), "correct": correct}
-        out[k] = {"reader": a["reader"], **res, "passed": bool(res["no_answer"]["passed"] and res["buried"]["passed"]), "episodes": sorted(a["episodes"])}
+        out[k] = {"reader": a["reader"], **res, "passed": bool(not a["missing"] and res["no_answer"]["passed"] and res["buried"]["passed"]),
+                  "episodes": sorted(a["episodes"]), "missing": a["missing"]}
     return out
 
 
@@ -352,11 +372,11 @@ def reader_sanity(scores: list[dict[str, Any]], z: float) -> dict[str, dict[str,
 # One cell: a configuration at one horizon and one mode
 # ---------------------------------------------------------------------------
 
-def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], key: tuple, params: dict[str, Any], pooled: dict[str, Any],
+def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], population, params: dict[str, Any], pooled: dict[str, Any],
          withheld: bool, reader: dict[str, Any] | None) -> dict[str, Any]:
     u, detail = units(eps)
     point = subscores({f: list(u[f].values()) for f in FAMILIES})
-    rng = stream("bootstrap", params["seed"], *key)
+    rng = sampling_streams(params["seed"], population)
     seed_units = {f: [u[f][s] for s in sorted(u[f])] for f in FAMILIES}
     draws = stats.bootstrap(seed_units, subscores, rng, params["resamples"]) if params["resamples"] > 0 else []
     ci = {k: (stats.interval([d[k] for d in draws], params["level"]) if point[k] is not None and draws else None) for k in ("R", "E", "S", "H")}
@@ -492,12 +512,19 @@ def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float =
     runtime_note = None
     if versions != [RELEASE_PYTHON]:
         runtime_note = f"scoring Python {', '.join(versions) or 'not recorded'} differs from release Python {RELEASE_PYTHON}: not a release"
-    record_note = "hosted reader without a persistent record: not a release" if any(d.get("reader_record") is False for d in scores) else None
+    read_scores_used = [d for d in scores if d.get("reader") or (d["family"] == "explanation" and (d.get("score") or {}).get("accuracy") is not None)]
+    record_note = "hosted reader without a persistent record: not a release" if any(
+        (d.get("reader") or {}).get("kind") != "scripted" and d.get("reader_record") is not True for d in read_scores_used) else None
+    reader_note = "hosted reader identity not recorded: not a release" if any(
+        (d.get("reader") or {}).get("kind") not in ("hosted", "scripted") or
+        (d.get("reader", {}).get("kind") == "hosted" and any(not isinstance(d["reader"].get(k), str) or not d["reader"][k]
+                                                           for k in ("model", "provider", "prompt_version")))
+        for d in read_scores_used) else None
     plan_note = "plan was not required: not a release" if not require_plan else None
     changed = [name for name, value, default in (("bar", bar, 0.9), ("judged-bar", judged_bar, 0.9),
                ("level", level, 0.95), ("z", z, SANITY_Z), ("resamples", resamples, 2000), ("seed", seed, 0)) if value != default]
     options_note = "non-default " + ", ".join(changed) + ": not a release" if changed else None
-    nonrelease_note = "; ".join(n for n in (runtime_note, record_note, plan_note, options_note) if n) or None
+    nonrelease_note = "; ".join(n for n in (runtime_note, record_note, reader_note, plan_note, options_note) if n) or None
     if not 0 < judged_bar <= 1:
         raise ReportError("judged_bar must be greater than zero and at most one")
     plan_instances = read_plan(plan, scores) if plan is not None else None
@@ -525,7 +552,7 @@ def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float =
             "sections": sections}
 
 
-def _compare(members: list[dict[str, Any]], tag: tuple, params: dict[str, Any], withheld: bool, fn: Callable[[list[float]], float],
+def _compare(members: list[dict[str, Any]], params: dict[str, Any], withheld: bool, fn: Callable[[list[float]], float],
              drop: tuple[str, ...] = ()) -> dict[str, Any]:
     """One paired comparison over `members` (built cells), for the headline and each sub-score."""
     normalized = []
@@ -546,7 +573,7 @@ def _compare(members: list[dict[str, Any]], tag: tuple, params: dict[str, Any], 
                 row = m[f][i]
                 u[f].setdefault(row["seed"], []).append(row["value"])
         us.append(u)
-    points, draws = paired(us, tag, params)
+    points, draws = paired(us, common, params)
     out = {}
     for k, name, families in (("H", "headline", FAMILIES), ("R", "R", ("routing",)), ("E", "E", ("explanation",)), ("S", "S", ("steering",))):
         n = sum(len(planned[f]) for f in families)
@@ -558,7 +585,7 @@ def _compare(members: list[dict[str, Any]], tag: tuple, params: dict[str, Any], 
         if withheld and k in ("H", "E"):
             out[name] = {"value": None, "interval": None, "withheld": WITHHELD, **meta}
             continue
-        if any(not planned[f] or len(common[f]) / len(planned[f]) < params["judged_bar"] for f in families):
+        if any(not planned[f] or Fraction(len(common[f]), len(planned[f])) < Fraction(str(params["judged_bar"])) for f in families):
             out[name] = {"value": None, "interval": None, "not_comparable": f"judged on both sides {judged} of {n}", **meta}
             continue
         pv = [p[k] for p in points]
@@ -570,7 +597,7 @@ def _compare(members: list[dict[str, Any]], tag: tuple, params: dict[str, Any], 
 
 def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str, Any]], params: dict[str, Any],
              reader: dict[str, Any] | None, scripted: bool, sanity, plan_instances) -> dict[str, Any]:
-    withheld = any(not v["passed"] for v in sanity.values())
+    withheld = bool(reader) and (not sanity or any(v["passed"] is not True for v in sanity.values()))
     by_config: dict[str, list[dict[str, Any]]] = {}
     cells: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
     reruns: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
@@ -599,13 +626,14 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
     pooled = {ck: pooled_eligibility(by_config.get(ck, []), params["bar"], pooled_plan) for ck in configs}
     built = {}
     for k in cells:
-        x = cell(cells[k], reruns[k], (poll, *k), params, pooled[k[0]], withheld, reader)
+        population = measures.collect(cells[k] + reruns[k], planned[(k[1], k[2])])
+        x = cell(cells[k], reruns[k], population, params, pooled[k[0]], withheld, reader)
         ran = sorted({instance_key(d) for d in cells[k] if complete(d)})
         missing = sorted(planned[(k[1], k[2])] - set(ran))
         x["coverage"] = {"ran": len(ran), "planned": len(planned[(k[1], k[2])]), "missing": [json.loads(m) for m in missing]}
         x["instances"] = ran
         x["label"] = f"{configs[k[0]]['model']} in {harness_label(configs[k[0]])} at {k[1]} {k[2]}"
-        x["_measures"] = measures.collect(cells[k] + reruns[k], planned[(k[1], k[2])])
+        x["_measures"] = population
         for f, metric in zip(FAMILIES, ("R", "E", "S")):
             x[metric].update(measures.coverage(x["_measures"][f], params["judged_bar"]))
             if not x[metric]["official"]:
@@ -648,7 +676,7 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
                     r["headline"]["band"] = bands.get(config_key(r["configuration"]))
                     if r["headline"]["ranked"] and r["headline"]["interval"] is None:
                         r["headline"]["band_note"] = "no interval, so no band (zero resamples)"
-            pts = [(r["headline"]["value"], r["capability"]) for r in rs
+            pts = [(r["headline"]["value"], capability_fraction(r["pooled_controls"])) for r in rs
                    if r["headline"]["value"] is not None and r["capability"] is not None and r["headline"]["official"]]
             rho = None if poll == "not recorded" else stats.spearman([p[0] for p in pts], [p[1] for p in pts])
             correlation[ha] = {"spearman": rho, "n": len(pts), "withheld": "polling interval not recorded" if poll == "not recorded" else WITHHELD if withheld else None,
@@ -662,7 +690,7 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
             hs = sorted({k[1] for k in built if k[0] == ck and k[2] == mode}, key=natural)
             for h in hs[1:]:
                 a, b = built[(ck, hs[0], mode)], built[(ck, h, mode)]
-                cmp = _compare([a, b], ("drop", poll, ck, mode, hs[0], h), params, withheld, lambda v: v[0] - v[1], drop=("horizon",))
+                cmp = _compare([a, b], params, withheld, lambda v: v[0] - v[1], drop=("horizon",))
                 drops.append({"model": configs[ck]["model"], "harness": labels[column_key(configs[ck])], "mode": mode, "from": hs[0], "to": h, **cmp})
 
     # Spec section 2, rule 3: for a model run in two or more harnesses, the
@@ -704,7 +732,7 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
                 if len(included) < 2:
                     continue
                 omitted = [{"configuration": configs[k[0]], "reason": "no judged values"} for k in members if k not in included]
-                cmp = _compare([built[k] for k in included], ("effect", poll, model, hz, mode, settings), params, withheld, lambda v: max(v) - min(v))
+                cmp = _compare([built[k] for k in included], params, withheld, lambda v: max(v) - min(v))
                 effect.append({"model": model, "horizon": hz, "mode": mode, "not_included": omitted,
                                "harnesses": [labels[column_key(configs[k[0]])] for k in included], **cmp})
 
@@ -715,7 +743,7 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
             a, b = (ck, hz, "default"), (ck, hz, "coached")
             if a not in built or b not in built:
                 continue
-            cmp = _compare([built[a], built[b]], ("gap", poll, ck, hz), params, withheld, lambda v: v[1] - v[0])
+            cmp = _compare([built[a], built[b]], params, withheld, lambda v: v[1] - v[0])
             gaps.append({"model": configs[ck]["model"], "harness": labels[column_key(configs[ck])], "horizon": hz, **cmp})
 
     if poll == "not recorded":
@@ -840,7 +868,7 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
             L += ["Polling interval not recorded: raw values only; no bands or comparisons.", ""]
         for k, s in sec["reader_sanity"].items():
             na, bu = s["no_answer"], s["buried"]
-            L.append(f"Reader {s['reader']['kind']} {k[:12]}: no answer {_pct(na['accuracy'])} over {na['items']} distinct items "
+            L.append(f"Reader {s['reader'].get('kind', 'not recorded')} {k[:12]}: no answer {_pct(na['accuracy'])} over {na['items']} distinct items "
                      f"(chance 16.7%), buried cause {_pct(bu['accuracy'])} over {bu['items']} distinct items: "
                      + ("both sanity checks pass." if s["passed"] else "a sanity check FAILS, so E and every headline and comparison that needs it are withheld."))
         if sec["reader_sanity"]:

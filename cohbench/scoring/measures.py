@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from fractions import Fraction
 
 FAMILIES = ("routing", "explanation", "steering")
 
@@ -72,7 +73,7 @@ def collect(eps, planned, *, control=False, pooled=False, no_conflict=False):
 def coverage(items, bar):
     judged = sorted(k for k, v in items.items() if v["value"] is not None)
     missing = [{"id": k, **items[k]} for k in sorted(items) if items[k]["value"] is None]
-    official = bool(items) and len(judged) / len(items) >= bar
+    official = bool(items) and Fraction(len(judged), len(items)) >= Fraction(str(bar))
     return {"judged": len(judged), "planned": len(items), "judged_instances": judged,
             "unjudged_instances": missing, "official": official, "partial": not official}
 
@@ -82,7 +83,7 @@ def control_rates(items):
     for f, rows in items.items():
         cov = coverage(rows, 1)
         vals = [v["value"] for v in rows.values() if v["value"] is not None]
-        out[f] = {**cov, "passed": sum(vals), "not_judged": len(rows) - len(vals),
+        out[f] = {**cov, "passed": sum(int(v) for v in vals), "not_judged": len(rows) - len(vals),
                   "rate": sum(vals) / len(vals) if vals else None,
                   "episodes": sorted(e for v in rows.values() for e in v["episodes"])}
     return out

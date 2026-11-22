@@ -5,11 +5,21 @@ order, so the results are the same in every process."""
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 from typing import Any, Callable
 
 from .rng import Rng
 
 FLOOR = 0.05
+DIGITS = 6
+
+
+def published(value):
+    """The numeric precision of score and report files, also used for ranking."""
+    if not math.isfinite(value):
+        raise ValueError("a score is never infinite or NaN")
+    result = round(value, DIGITS)
+    return 0.0 if result == 0 else result
 
 
 def headline(r: float | None, e: float | None, s: float | None) -> float | None:
@@ -43,20 +53,20 @@ def resample(rng: Rng, units: list[Any]) -> list[Any]:
     return [units[rng.below(n)] for _ in range(n)]
 
 
-def bootstrap(units: dict[str, list[Any]], stat: Callable[[dict[str, list[Any]]], dict[str, float | None]], rng: Rng, resamples: int) -> list[dict[str, float | None]]:
+def bootstrap(units: dict[str, list[Any]], stat: Callable[[dict[str, list[Any]]], dict[str, float | None]], rng: Rng | dict[str, Rng], resamples: int) -> list[dict[str, float | None]]:
     """`units` maps each family to its resampling units (one per seed, holding
     everything of that seed, sibling pairs whole). Each draw resamples every
     family's seeds independently and applies `stat`. A family with no units
     is passed through empty."""
     out = []
     for _ in range(resamples):
-        draw = {f: (resample(rng, us) if us else []) for f, us in sorted(units.items())}
+        draw = {f: (resample(rng[f] if isinstance(rng, dict) else rng, us) if us else []) for f, us in sorted(units.items())}
         out.append(stat(draw))
     return out
 
 
 def overlaps(a: list[float], b: list[float]) -> bool:
-    return a[0] <= b[1] and b[0] <= a[1]
+    return published(a[0]) <= published(b[1]) and published(b[0]) <= published(a[1])
 
 
 def rank_bands(rows: list[tuple[str, float, list[float]]]) -> dict[str, dict[str, Any]]:
@@ -67,7 +77,8 @@ def rank_bands(rows: list[tuple[str, float, list[float]]]) -> dict[str, dict[str
     highest upper bound in them, and a band covers the ranks its members would
     take in order of their point values: a band of three after a band of one
     is ranks 2 to 4."""
-    order = sorted(rows, key=lambda r: (-r[1], r[0]))
+    order = sorted(((key, published(point), [published(v) for v in iv]) for key, point, iv in rows),
+                   key=lambda r: (-r[1], r[0]))
     parent = {r[0]: r[0] for r in order}
 
     def find(x: str) -> str:
@@ -97,8 +108,9 @@ def rank_bands(rows: list[tuple[str, float, list[float]]]) -> dict[str, dict[str
     return out
 
 
-def ranks(xs: list[float]) -> list[float]:
-    """Ranks from 1, ties sharing their mean rank."""
+def ranks(xs: list[float | Fraction]) -> list[float]:
+    """Ranks from exact counts or published values, ties sharing their mean rank."""
+    xs = [published(x) if isinstance(x, float) else x for x in xs]
     order = sorted(range(len(xs)), key=lambda i: xs[i])
     r = [0.0] * len(xs)
     i = 0
@@ -112,7 +124,7 @@ def ranks(xs: list[float]) -> list[float]:
     return r
 
 
-def spearman(xs: list[float], ys: list[float]) -> float | None:
+def spearman(xs: list[float | Fraction], ys: list[float | Fraction]) -> float | None:
     """Spearman's rho, Pearson's correlation of the ranks; None for fewer than
     three pairs or a constant side."""
     if len(xs) != len(ys) or len(xs) < 3:

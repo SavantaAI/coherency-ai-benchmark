@@ -60,6 +60,7 @@ def expl(eid: str, seed: int, acc: float | None, no_answer: tuple[int, int] = (1
     d["score"] = {"accuracy": acc, "answers": [], "sanity": {"no_answer": {"key": na, "correct": no_answer[0], "n": no_answer[1]},
                                                              "buried": {"key": bu, "correct": buried[0], "n": buried[1]}}}
     d["reader"] = reader or READER
+    d["reader_record"] = True
     return d
 
 

@@ -65,9 +65,9 @@ they publish no bands.
 | Report | `--bar 0.90` and `--judged-bar 0.90`. | Either higher or lower values make the report not a release. |
 | Report | `--level 0.95` and `--z 2`. | Other interval levels or reader sanity bounds make the report not a release. |
 | Report | `--resamples 2000` and `--seed 0`. | Other counts or seeds can change intervals and bands, so the report is not a release. Zero resamples also means no intervals. |
-| Report | The reader is not scripted, and no score carries `reader_record: false`. | Not a release. `--scripted-reader` only permits scripted inputs; with hosted inputs the flag changes no bands. Older score files without `reader_record` retain their accepted behavior. |
+| Report | Each measured Explanation score names a hosted reader, its model, provider, config digest and prompt version, and explicitly carries `reader_record: true`. | Not a release. Missing recording evidence does not count as a persistent record. A missing reader config digest is refused. `--scripted-reader` only permits scripted inputs; with hosted inputs the flag changes no bands. |
 | Row | The polling interval is recorded; comparisons stay within its section. | Raw values only, with no bands or comparisons for that section. |
-| Row | The report-wide reader sanity checks pass. | E and headlines that need E are withheld. |
+| Row | Both report-wide reader sanity checks have recorded outcomes and pass. | E and headlines that need E are withheld. Missing checks do not count as passes. |
 | Row | Every planned eligibility control is judged, and each family's pooled pass rate is at least 90%. | The row is unranked. |
 | Row | At least 90% of planned instances are judged in each family, and the headline and interval are measured. | The row receives no band. Missing and unjudged instances remain in coverage. |
 
@@ -673,9 +673,13 @@ control episodes.
 - **Intervals**: percentile intervals from `--resamples` bootstrap draws.
   Each draw resamples, independently per family, the seeds of that family
   with replacement. A seed carries every scored item of that seed, so a
-  sibling pair is always drawn whole. A cell's draws come from a stream
-  named by the seed, the polling interval and the cell, so adding a
-  configuration changes no other cell's interval. The quantile rule is
+  sibling pair is always drawn whole. Each family's stream is named only
+  by the release seed, family and sorted planned instance ids. Cells over
+  the same planned population use the same draws. Paired comparisons use
+  the common judged instance ids, after matching horizons when needed.
+  Model names, harness names, index order and score file paths do not enter
+  these streams. Changing another family's population does not change a
+  family's draws. The quantile rule is
   linear interpolation between order statistics. With zero resamples there
   are no intervals and no bands; the report is marked not a release because
   its resample count differs from 2000. An eligible cell retains
@@ -697,6 +701,8 @@ control episodes.
   ranks their members would take: a band of two after a band of one is
   `2-3`. Overlap is not transitive, so a chain a~b~c is one band even when
   a and c do not overlap. Each column of the matrix carries its own bands.
+  Interval endpoints and points are compared at the six decimal places
+  published in JSON. Text tables abbreviate those values for display.
   Harnesses for one model are compared in the harness effect table, never
   by a shared band. A scripted-reader report prints no bands.
 - **Capability composite**: the mean of the three families' pooled control
@@ -705,8 +711,20 @@ control episodes.
   configurations with official family values and a complete capability
   composite. The correlation is not measured with fewer than three
   configurations and always prints its n. It is withheld when E is. The
-  headline is never
-  adjusted for it.
+  control pass ratios and their mean are exact fractions for correlation
+  ranks; equal fractions tie even if floating-point summation would differ.
+  Headline ranks use the published six-place values. The headline is never
+  adjusted for the capability composite.
+
+The comparison audit covers interval overlap, band ordering, point ties
+and Spearman ranks. All use the same publication precision function in
+`stats.py`; exact count fractions keep their exact ordering. Eligibility,
+judged coverage and paired-comparison coverage compare integer count ratios
+to the declared threshold as exact fractions. Matrix rows and columns use
+configuration names for display order only. Bootstrap quantile sorting,
+headline floors, reader sanity bounds and the range used for harness
+effects are arithmetic steps, not rank or tie assignments; their final
+values go through publication precision before a rank uses them.
 
 ### Comparisons
 
