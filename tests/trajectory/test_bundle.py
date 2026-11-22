@@ -1862,6 +1862,7 @@ def test_an_elapsed_cutoff_ends_at_its_deadline(tmp_path):
         bundle.make(res, wat, IDS, OBS, end_mark="end-1")
 
 
+@pytest.mark.skipif(not rdemo.available(rdemo.RDEMO_021448), reason="the kept episode runs/runner-integration/2026-11-22T021448/rdemo-1 is not here (runs/ is not in the repository)")
 def test_the_earlier_kept_episode_replays(tmp_path):
     """R1 of round 9: `021448/rdemo-1`, recorded before D-035. Its reopen
     wait ran from 02:15:29.185118Z to 02:15:31.193731Z, charged 2,009 ms by
