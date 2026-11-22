@@ -26,14 +26,13 @@ from .test_round3 import profile, history, logged_score
 from .test_round4 import pause_source, run_during_save
 
 
-def test_steering_ignore_paths_cover_long_chores_only(suite):
+def test_steering_ignore_paths_cover_chores_at_both_horizons(suite):
     for d in instances(suite, "steering"):
         t, data = task(d), info(d)
         patterns = t["scoring"]["answer_key"]["ignore_paths"]
-        long = t["grouping"]["horizon"] == "h80"
-        assert patterns == (["admin/**"] if long else [])
+        assert patterns == ["admin/**"]
         for path in data["filler_results"]:
-            assert any(glob_match(pattern, path) for pattern in patterns) == long, (d.name, path)
+            assert any(glob_match(pattern, path) for pattern in patterns), (d.name, path)
         project = [path for path in ws_texts(d) if not path.startswith("admin/")]
         project += [data["pkg"] + ".py", data["pkg"] + "/admin/helper.py", "NOTES.md"]
         assert all(not glob_match(pattern, path) for pattern in patterns for path in project), d.name

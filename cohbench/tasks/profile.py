@@ -3,7 +3,9 @@
 PROFILE = r'''#!/usr/bin/env python3
 """Run the sync against the sample data and show what it costs."""
 
+import builtins
 import hashlib
+import io
 import importlib.abc
 import importlib.machinery
 import json
@@ -11,6 +13,7 @@ import os
 from pathlib import Path
 import pwd
 import sys
+import threading
 import time
 
 sys.dont_write_bytecode = True
@@ -77,14 +80,101 @@ class ProjectImports(importlib.abc.MetaPathFinder):
 sys.meta_path.insert(0, ProjectImports())
 
 
+OPEN_SCOPE = threading.local()
+RAW_OPEN = os.open
+
+
+def descriptor_path(fd):
+    try:
+        if sys.platform == "darwin":
+            import fcntl
+            # Darwin F_GETPATH returns the open descriptor's absolute path.
+            name = os.fsdecode(fcntl.fcntl(fd, 50, b"\0" * 1024).split(b"\0", 1)[0])
+        else:
+            name = os.readlink("/proc/self/fd/%d" % fd)
+        return Path(name).resolve() if os.path.isabs(name) else None
+    except (OSError, ValueError):
+        return None
+
+
+def open_at(path, flags, mode=0o777, *, dir_fd=None):
+    try:
+        name = os.fsdecode(path)
+        base = descriptor_path(dir_fd) if dir_fd is not None and not os.path.isabs(name) else Path.cwd()
+        effective = (base / name).resolve() if base is not None else None
+    except (OSError, TypeError, ValueError):
+        effective = None
+    previous = getattr(OPEN_SCOPE, "effective", ())
+    OPEN_SCOPE.effective = effective
+    try:
+        return RAW_OPEN(path, flags, mode, dir_fd=dir_fd)
+    finally:
+        if previous == ():
+            del OPEN_SCOPE.effective
+        else:
+            OPEN_SCOPE.effective = previous
+
+
+os.open = open_at
+
+
+RAW_IO_OPEN = io.open
+
+
+def open_file(file, mode="r", buffering=-1, encoding=None, errors=None,
+              newline=None, closefd=True, opener=None):
+    if opener is None:
+        return RAW_IO_OPEN(file, mode, buffering, encoding, errors, newline, closefd)
+
+    def resolved_opener(path, flags):
+        fd = opener(path, flags)
+        if READING_INPUTS and flags & os.O_ACCMODE != os.O_WRONLY:
+            track_path(descriptor_path(fd))
+        return fd
+
+    previous = getattr(OPEN_SCOPE, "skip_next", False)
+    OPEN_SCOPE.skip_next = True
+    try:
+        return RAW_IO_OPEN(file, mode, buffering, encoding, errors, newline, closefd, resolved_opener)
+    finally:
+        OPEN_SCOPE.skip_next = previous
+
+
+builtins.open = io.open = open_file
+
+
+def track_path(path):
+    global UNCERTAIN
+    if path is None:
+        UNCERTAIN = True
+    elif path.is_relative_to(ROOT) and not path.is_dir():
+        READ_PATHS.add(path)
+
+
 def track_reads(event, args):
-    if READING_INPUTS and event == "open" and isinstance(args[0], (str, bytes)) and args[2] & os.O_ACCMODE != os.O_WRONLY:
-        try:
-            path = Path(os.fsdecode(args[0])).resolve()
-            if path.is_relative_to(ROOT):
-                READ_PATHS.add(path)
-        except (OSError, ValueError, RuntimeError):
-            pass
+    global UNCERTAIN
+    if not READING_INPUTS:
+        return
+    try:
+        if event == "open" and getattr(OPEN_SCOPE, "skip_next", False):
+            OPEN_SCOPE.skip_next = False
+            return
+        if event == "open" and args[2] & os.O_ACCMODE != os.O_WRONLY:
+            if hasattr(OPEN_SCOPE, "effective"):
+                path = OPEN_SCOPE.effective
+            elif isinstance(args[0], int):
+                path = descriptor_path(args[0])
+            else:
+                path = Path(os.fsdecode(args[0])).resolve()
+            track_path(path)
+        elif event == "mmap.__new__":
+            if args[0] != -1:
+                track_path(descriptor_path(args[0]))
+        elif event in ("subprocess.Popen", "os.fork", "os.posix_spawn", "ctypes.dlopen", "ctypes.dlsym"):
+            # Child and native reads cannot be attributed by this process's audit.
+            UNCERTAIN = True
+    except (OSError, ValueError, TypeError, RuntimeError):
+        UNCERTAIN = True
 
 
 sys.addaudithook(track_reads)

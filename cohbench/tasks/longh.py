@@ -45,9 +45,10 @@ def chore_checks(fills):
 
 
 def reset_event(at_least, fills, main_path):
+    scope = {"path": main_path} if isinstance(main_path, str) else dict(main_path)
     return {"name": "handoff", "trigger": {"any": [
         {"count": {"of": [{"content_matches": c["check"]} for c in chore_checks(fills)], "at_least": at_least}},
-        {"changes": {"path": main_path, "at_least": 1}}]},
+        {"changes": {**scope, "at_least": 1}}]},
         "action": {"type": "reset", "notice": RESET_NOTICE, "continuation": CONTINUATION, "grace_ms": GRACE_S * 1000},
         "required": True, "reopen": RESET_REOPEN}
 

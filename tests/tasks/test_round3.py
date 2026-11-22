@@ -208,7 +208,7 @@ def test_run_history_is_stable_across_copies_and_hash_seeds(tmp_path):
                                 env={**os.environ, "HOME": str(home), "XDG_STATE_HOME": str(home / ".local/state"), "PYTHONHASHSEED": hashseed})
         assert result.returncode == 0, result.stderr
         rows.append(history(home)[0])
-    assert rows[0]["state"] == rows[1]["state"] == "fd242bb3a7563fbbf3c2bbe809db5aa5b2c36f7538e1fe78a5bc3ef5895e57f6"
+    assert rows[0]["state"] == rows[1]["state"] == "e14b7a345524b8a33dc4b891a33b3eda5c473120f86b9f91b154ae2dd9093fd1"
     assert rows[0]["result"] == rows[1]["result"]
 
 

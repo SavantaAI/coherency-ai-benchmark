@@ -1,5 +1,7 @@
 """Host service and a separate package process connected by a counted protocol."""
 
+from .client_protocol import NORMALIZE
+
 CLIENT_RUN = r'''
 import importlib
 import json
@@ -17,7 +19,8 @@ def exchange(message):
     wire.flush()
     reply = json.loads(wire.readline())
     if "error" in reply:
-        raise ValueError(reply["error"])
+        kind = {"ValueError": ValueError, "KeyError": KeyError, "TypeError": TypeError}[reply["error"]]
+        raise kind(*reply["args"])
     return reply["value"]
 
 
@@ -32,10 +35,10 @@ class Client:
         return exchange({"op": "get_rates"})
 
     def get(self, record_id):
-        return exchange({"op": "get", "id": record_id})
+        return exchange({"op": "get", "id": normalize_id(record_id)})
 
     def get_many(self, ids):
-        return exchange({"op": "get_many", "ids": ids})
+        return exchange({"op": "get_many", "ids": normalize_ids(ids)})
 
 
 try:
@@ -48,6 +51,8 @@ try:
 except BaseException:
     pass
 '''
+
+CLIENT_RUN = CLIENT_RUN.replace("class Client:", NORMALIZE + "\n\nclass Client:")
 
 SERVICE = r'''
 """Own the service data and counter outside the measured package process."""
@@ -131,7 +136,6 @@ def main():
             if "result" in request:
                 correct = int(request["result"] == expected and allowed)
                 break
-            calls += 1
             try:
                 op = request["op"]
                 if op == "get_snapshot":
@@ -150,10 +154,11 @@ def main():
                     value = [index[i] for i in ids]
                 else:
                     raise ValueError("unknown operation")
+                calls += 1
                 largest = max(largest, len(json.dumps(value, sort_keys=True)))
                 response = {"value": value}
-            except (ValueError, KeyError, TypeError):
-                response = {"error": "invalid service request"}
+            except (ValueError, KeyError, TypeError) as error:
+                response = {"error": type(error).__name__, "args": error.args}
             wire.write((json.dumps(response) + "\n").encode())
             wire.flush()
     except (OSError, ValueError, TypeError):

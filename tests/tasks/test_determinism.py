@@ -69,7 +69,7 @@ def test_no_generated_file_names_its_output_path_or_the_machine(tmp_path, suite)
 # The digest of the whole development suite: names, modes and contents. The
 # same value on every interpreter the tests run on (3.12 and 3.15) is the
 # cross-version check; a deliberate change to a generator changes it here.
-SUITE_DIGEST = "cf59537b68814940494d00a3ad6b151dc089d51e7f5fa4673c736e449f23d184"
+SUITE_DIGEST = "af357629623472de65b3cf3668c44526d162b391e2a93561ea5978c6dfec4213"
 
 
 def suite_digest(root: Path) -> str:

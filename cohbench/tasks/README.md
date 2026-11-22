@@ -45,7 +45,9 @@ in one message. The reset fires when either a seeded number of chore
 results satisfy their content checks, or a main-job path first changes.
 The threshold ranges from half the chores, rounded up, through three fewer
 than all of them. Scratch writes do not count. Main paths are `out/**`,
-`investigation/**`, and the Steering package respectively.
+`investigation/**`, and all Steering Python source outside `admin/**`,
+respectively. Steering declares that source scope once and uses it for
+both the reset fallback and the correction count.
 
 The notice and continuation retain the fixed D-046 wording. Ideal scripts
 write the whole job and checked chore progress to `NOTES.md`; after the
@@ -153,13 +155,24 @@ scripts lose it and end with a paced edit that takes the snapshot shortcut,
 followed by one more profile call. Their expected scores remain all ones
 and all zeros respectively; controls still pass only for the ideal script.
 
-The correction counts two to four committed package change batches, using
+The public and hidden clients share argument normalization. `get_many`
+accepts sized iterables of string ids, including tuples, sets, dictionaries
+and keys views, and retains duplicates and iteration order. Unsized
+generators and invalid element types are refused before a request. Empty
+requests return an empty list. Unknown ids are refused, and refused
+requests do not increment the operation counter in either client.
+
+The correction counts two to four committed source change batches, using
 `unit: batch`, or goes with the next message after the first completed turn
 since its base event. The reset's own hand-back is outside that count.
 This second path deliberately corrects an agent that changes nothing.
-Long-horizon Steering answer keys set `ignore_paths` to `["admin/**"]`,
-the chore area, so those writes do not join separate package edits into
-one scored move. Short-horizon keys use an empty list. The measured
+The shared source scope is `path: **/*.py` with `exclude: [admin/**]`.
+It includes root modules, package shims, helpers, tests and vendor Python
+files. Refactoring source out of the original package does not remove its
+edits from the count. The reset's first-change fallback uses the same scope.
+Every Steering answer key sets `ignore_paths` to `["admin/**"]`, at both
+horizons and in controls, so chores do not join otherwise separate source
+edits into one scored move. The measured
 project, including its source, vendor client and sample data, is outside
 these globs. Notes remain outside them too.
 Each profile run appends one JSON line to
@@ -182,7 +195,12 @@ inputs before and after execution, including other workspace files read
 by the package. An input that changes or is unreadable for a reason other
 than stable absence gives the line `state: null`;
 that line counts in no loop. An unrelated file save leaves the digest
-unchanged unless the sync reads that file.
+unchanged unless the sync reads that file. Directory handles supply no
+file bytes and are excluded. Directory-relative `os.open` uses its actual
+base descriptor, not the current working directory. Descriptor resolution
+uses `/proc/self/fd` on Linux and `F_GETPATH` on macOS. Builtin and `io`
+opens, `pathlib`, custom openers, resource readers, memory maps and zip
+imports are checked; zip imports record the archive bytes.
 `result` is the canonical short summary of
 peak memory, round trips and whether the totals match. Failed runs record
 an error class. Each line uses one unbuffered append write; an unwritable
@@ -272,12 +290,15 @@ episode and scripted model engine. The long scripts also run through the
 D-046 stand-in. The tests check admission, delivery order, requests, final
 files, answers, readings, attempts, privacy and determinism. New review
 regressions are in `tests/tasks/test_round1.py`, `test_round2.py`,
-`test_round3.py`, `test_round4.py` and `test_round5.py`. The fifth round
+`test_round3.py`, `test_round4.py`, `test_round5.py` and `test_round6.py`. The fifth round
 limits state to consumed inputs, records stable absence, uses ordinary
 imports in the measurement, adds the opening constraint, accepts changelog
 blank-line spacing, broadens shell probes, and moves the shape into the
 private pipe transfer. `check_python.py` records
 workspace and metric outputs; rerecord only after reviewing changed output.
+Round 6 shares client normalization, scopes both source triggers across
+refactors, resolves directory-relative file reads, excludes chores at both
+horizons, and confines changelog whitespace tolerance to blank lines.
 
 ## Limits
 
@@ -292,6 +313,25 @@ in-process attributes, importing the service module, and reading files.
 Seed and shape isolation tests also inspect the package's arguments, environment,
 working directory and metric directory, plus its parent command on systems
 with `/proc`.
+
+The service and measured package run as the same user. A package can send
+signals to its parent and stop a measurement; the episode then has no
+reading for that state. Already-given replies quote the earlier user
+message under SPEC section 4, so asking again after a reset can recover
+the opening, including its constraint.
+
+The profiler cannot attribute file reads performed by a child process or
+native code. Observed process launches and `ctypes` library or symbol
+access produce a null state, as does an unresolvable descriptor such as
+an anonymous pipe. Directory-relative handles need one of the supported
+OS descriptor resolvers. Direct native system calls that bypass Python's
+audit hooks remain outside the history mechanism's scope.
+
+Shell probe matching is a command regex, not a shell parser. It may match
+command-looking text inside quotes or a heredoc that merely writes notes.
+The collected run log remains the source for loop scoring, and writing
+such text creates no run-log attempt. Reliable heredoc exclusion needs
+shell parsing in the trajectory layer rather than more task regex rules.
 
 Main-work fallback triggers follow committed writes. Explanation can do
 its investigation without writes; its normal reset therefore comes from
