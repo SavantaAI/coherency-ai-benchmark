@@ -11,6 +11,7 @@ from cohbench.scoring.load import load
 from cohbench.scoring.score import score_episode
 from . import synth as S
 from .build import Bundle, ROUTING_KEY
+from .runtimes import runtime_interpreters
 from .test_round4 import validated
 
 
@@ -240,13 +241,13 @@ def test_conflict_reset_split_is_only_a_per_cell_diagnostic(tmp_path):
 
 
 def test_json_and_diagnostics_match_across_runtimes_and_hash_seeds(tmp_path):
+    executables = runtime_interpreters()
     code = '''
 import json, sys
 from pathlib import Path
 from cohbench.scoring import checks, steering, report
 from cohbench.scoring.load import load
 from cohbench.scoring.score import score_episode, dumps
-from tests.scoring import synth as S
 root = Path(sys.argv[1])
 a = load(root / 'document')
 b = load(root / 'attempts')
@@ -266,10 +267,9 @@ print(dumps({'checks': [checks.run(a, a.final_batch(), check) for check in json.
         {"path": "data.json", "json": [{"pointer": "/a~1b/~0x", "equals": 1}]},
     ]))
     outputs = []
-    for version in ("3.12", "3.15"):
-        executable = subprocess.check_output(["uv", "python", "find", "--offline", version], text=True).strip()
+    for executable in executables:
         for seed in ("1", "777"):
-            outputs.append(subprocess.check_output([executable, "-c", code, str(tmp_path)], cwd=Path(__file__).resolve().parents[2],
+            outputs.append(subprocess.check_output([executable, "-S", "-c", code, str(tmp_path)], cwd=Path(__file__).resolve().parents[2],
                            env={**os.environ, "PYTHONHASHSEED": seed}))
     assert len(set(outputs)) == 1
 

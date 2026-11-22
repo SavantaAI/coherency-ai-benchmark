@@ -14,6 +14,7 @@ from cohbench.scoring.score import score_episode
 from cohbench.trajectory.observations import tree_digest
 from . import synth as S
 from .build import Bundle, ROUTING_KEY
+from .runtimes import runtime_interpreters
 from .test_review4 import full_config
 from .test_round2 import plan_file
 from .test_round4 import full_scores, validated
@@ -250,6 +251,7 @@ def test_collection_without_declared_log_uses_shell_rule(tmp_path):
 
 
 def test_log_scoring_and_check_failures_match_across_runtimes_and_hash_seeds(tmp_path):
+    executables = runtime_interpreters()
     log_episode(tmp_path / "bundle", change=True)
     code = '''
 import sys
@@ -264,10 +266,9 @@ bad = [b'{"x":1e9999999999999999999999}', b'[' * 10000 + b'0' + b']' * 10000, b'
 print(dumps({'score': score, 'checks': [checks._json_document(data, [{'pointer': '/unused', 'absent': True}]) for data in bad]}))
 '''
     outputs = []
-    for version in ("3.12", "3.15"):
-        executable = subprocess.check_output(["uv", "python", "find", "--offline", version], text=True).strip()
+    for executable in executables:
         for seed in ("1", "777"):
-            outputs.append(subprocess.check_output([executable, "-c", code, str(tmp_path)],
+            outputs.append(subprocess.check_output([executable, "-S", "-c", code, str(tmp_path)],
                            cwd=Path(__file__).resolve().parents[2], env={**os.environ, "PYTHONHASHSEED": seed}))
     assert len(set(outputs)) == 1
 

@@ -436,6 +436,11 @@ and ignored to ignored is nothing. Apply the same rule to each entry in a
 directory move. Leave out batches containing only ignored changes, listing
 their ids in `ignored_batches`.
 
+For timing, classify each original change record once. A move is measured
+when any end or directory entry is measured, and does not also count as an
+ignored write. A batch is mixed only when it contains a wholly ignored
+record beside a measured record.
+
 A mixed batch keeps its recorded span because the log has no per-path
 write times. Compare each join with its neighbours using both endpoints
 of that span for its measured writes. A definite join proceeds as usual;

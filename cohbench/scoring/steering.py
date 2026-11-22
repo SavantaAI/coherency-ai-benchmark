@@ -96,7 +96,7 @@ def measured_episode(ep):
         raise ScoreError("Steering ignore_paths must be a list of nonempty glob strings")
     if not patterns:
         return ep, [], set()
-    removed_batches, kept = set(), []
+    removed_batches, retained_batches, kept = set(), set(), []
 
     def ignored_path(path):
         return any(glob_match(pattern, path) for pattern in patterns)
@@ -115,23 +115,25 @@ def measured_episode(ep):
             source, destination = r["from"], r["path"]
             removed = sorted(p for p in before if p == source or p.startswith(source + "/"))
             added = sorted(p for p in after if p == destination or p.startswith(destination + "/"))
+            # Timing classifies this original record once, before projection.
+            # An ignored end of a measured move is not a second, ignored write.
+            if all(ignored_path(p) for p in (source, destination, *removed, *added)):
+                removed_batches.add(r["batch"])
+            else:
+                retained_batches.add(r["batch"])
             for p in removed:
-                if ignored_path(p):
-                    removed_batches.add(r["batch"])
-                else:
+                if not ignored_path(p):
                     kept.append({**r, "kind": "deleted", "path": p, "from": None})
             for p in added:
-                if ignored_path(p):
-                    removed_batches.add(r["batch"])
-                else:
+                if not ignored_path(p):
                     typ, mode, sha, target = after[p]
                     kept.append({**r, "kind": "created", "path": p, "from": None, "file_type": typ,
                                  "mode": mode, "sha256": sha, "target": target, "content_unknown": p in unknown})
         elif ignored_path(r["path"]):
             removed_batches.add(r["batch"])
         else:
+            retained_batches.add(r["batch"])
             kept.append(r)
-    retained_batches = {r["batch"] for r in kept if r.get("type") == "change"}
     ignored = [br["batch"] for br in ep.batch_records()[1:] if br["batch"] in removed_batches and br["batch"] not in retained_batches]
     mixed = (removed_batches & retained_batches) - {0}
     records = []

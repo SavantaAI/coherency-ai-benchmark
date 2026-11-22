@@ -293,23 +293,27 @@ from pathlib import Path
 from cohbench.scoring import explanation, reader, report
 from cohbench.scoring.load import load
 from cohbench.scoring.score import score_episode, dumps
-from tests.scoring.build import OPTIONS
-from tests.scoring import synth as S
+options = json.loads(Path(sys.argv[2]).read_text())
 score = score_episode(load('tests/scoring/fixtures/rdemo-1'))
 runtime = score.pop('python_version')
 cfg = reader.parse_config({'format': reader.CONFIG_FORMAT, 'version': 1, 'kind': 'scripted', 'rule': 'earliest_statement', 'orders': {'count': 60, 'seed': 2}})
-answers = [explanation.read_items(reader.make(cfg), cfg, 'Why?', text, OPTIONS, 0) for text in ('', OPTIONS[0], OPTIONS[1])]
-scores = S.config_set('a', r_pass=2, pairs=3, e=[0.5, 1], s=[1/3, 1], controls=(1, 1))
+answers = [explanation.read_items(reader.make(cfg), cfg, 'Why?', text, options, 0) for text in ('', options[0], options[1])]
 report.RELEASE_PYTHON = runtime
-rep = report.build(S.write(Path(sys.argv[1]), scores, {'a': {'model': 'm', 'harness': 'h'}}), resamples=40)
+rep = report.build(sys.argv[1], resamples=40)
 rep['parameters']['release_python'] = 'runtime'
 assert rep.pop('python_versions') == [runtime]
 rep['python_versions'] = ['runtime']
 print(dumps({'score': score, 'report': rep, 'readings': answers, 'markdown': report.render(rep, True), 'text': report.render(rep, False)}))
 '''
+    options = tmp_path / "options.json"
+    options.write_text(json.dumps(OPTIONS))
     outputs = []
     for version, executable in zip(("3.12", "3.15"), executables):
+        scores = S.config_set("a", r_pass=2, pairs=3, e=[0.5, 1], s=[1/3, 1], controls=(1, 1))
+        for score in scores:
+            score["python_version"] = version
+        root = S.write(tmp_path / version, scores, {"a": {"model": "m", "harness": "h"}})
         for seed in ("1", "777"):
-            outputs.append(subprocess.check_output([executable, "-S", "-c", code, str(tmp_path / f"{version}-{seed}")],
+            outputs.append(subprocess.check_output([executable, "-S", "-c", code, str(root), str(options)],
                            cwd=Path(__file__).resolve().parents[2], env={**os.environ, "PYTHONHASHSEED": seed}))
     assert len(set(outputs)) == 1
