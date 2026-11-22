@@ -13,20 +13,37 @@ from tests.tasks.minipi import MiniPi, ScriptedEpisode, run_metric
 
 
 class RecordingPi(MiniPi):
+    def _run(self, name, inp):
+        paths = {s["path"]: self.home / s["path"][2:] for s in self.collect_specs}
+        before = {key: path.read_bytes() if path.exists() else b"" for key, path in paths.items()}
+        result = super()._run(name, inp)
+        added = {}
+        for key, path in paths.items():
+            after = path.read_bytes() if path.exists() else b""
+            assert after.startswith(before[key]), "the tool log must be append only"
+            added[key] = [json.loads(line) for line in after[len(before[key]):].splitlines()]
+        self.call_logs.append(added)
+        return result
+
     def step(self, steer=None):
         start = len(self.log)
+        self.call_logs = []
         result = super().step(steer)
-        for call in self.log[start:]:
-            self.recorder(call)
+        for call, logs in zip(self.log[start:], self.call_logs, strict=True):
+            self.recorder(call, logs)
         return result
 
 
 class ExportingEpisode(ScriptedEpisode):
     def __init__(self, *args, probes, **kwargs):
         self.raw = {}
+        self.segment_logs = {}
+        self.log_mapping = []
         self.probe_answers = probes
         super().__init__(*args, **kwargs)
         self.pi.recorder = self.record_call
+        self.pi.collect_specs = self.collector.specs
+        assert all(s["path"].startswith("~/") for s in self.collector.specs)
 
     def _wrap(self, watcher):
         super()._wrap(watcher)
@@ -99,8 +116,28 @@ class ExportingEpisode(ScriptedEpisode):
     def correct(self, text, **kwargs):
         return self.record_sent(super().correct(text, **kwargs), text, "steer")
 
-    def record_call(self, call):
-        at = iso_us(self.c.wall + timedelta(seconds=self.next_t - self.c.clock))
+    def record_call(self, call, logs):
+        end = self.c.wall + timedelta(seconds=self.next_t - self.c.clock)
+        start = end - timedelta(seconds=1)
+        at = iso_us(end)
+        for path, lines in logs.items():
+            if not lines:
+                continue
+            mapped = self.segment_logs.setdefault(self.segment, {}).setdefault(path, [])
+            base = round(start.timestamp() * 1000)
+            assert len(lines) < 500, "too many runs for the simulated call interval"
+            for i, line in enumerate(lines):
+                assert line["start_ms"] <= line["end_ms"]
+                if i:
+                    assert lines[i - 1]["end_ms"] <= line["start_ms"]
+                # Fixed ordered slots remove real execution speed from the fake
+                # clock. The original log remains in MiniPi.home for inspection.
+                translated = {**line, "start_ms": base + i * 1000 // len(lines),
+                              "end_ms": base + (i + 1) * 1000 // len(lines) - 1}
+                mapped.append(translated)
+                self.log_mapping.append({"segment": self.segment, "path": path,
+                                         "call_start": iso_us(start), "call_end": at,
+                                         "original": line, "mapped": translated})
         if call["tool"] == "bash":
             self.item(
                 "command_execution",
@@ -109,6 +146,7 @@ class ExportingEpisode(ScriptedEpisode):
                 input=call["input"]["command"],
                 output=call["result"],
                 exitCode=1 if call["is_error"] else 0,
+                startedAt=iso_us(start),
             )
         else:
             self.item(
@@ -119,6 +157,15 @@ class ExportingEpisode(ScriptedEpisode):
                 input=call["input"],
                 output=call["result"],
             )
+
+    def collect(self):
+        rows = self.segment_logs.get(self.segment, {})
+        self.collected_files = {
+            s["path"]: ("".join(json.dumps(line, sort_keys=True) + "\n" for line in rows[s["path"]]).encode()
+                        if s["path"] in rows else None)
+            for s in self.collector.specs
+        }
+        return super().collect()
 
     def wait(self, timeout_s):
         turn = super().wait(timeout_s)
@@ -146,6 +193,7 @@ class ExportingEpisode(ScriptedEpisode):
     def export(self, dest, handoff):
         self.handoff = handoff
         try:
+            collected = self.collect()
             events = [
                 RunnerEvent(
                     row["type"], row["utc"], row.get("ref"),
@@ -169,6 +217,8 @@ class ExportingEpisode(ScriptedEpisode):
             dest.mkdir(parents=True, exist_ok=True)
             (dest / "raw.json").write_text(json.dumps(self.raw, sort_keys=True))
             (dest / "hints.json").write_text(json.dumps(asdict(hints), sort_keys=True))
+            (dest / "log-mapping.json").write_text(json.dumps(self.log_mapping, sort_keys=True))
+            collected.write(dest / "collected" / "blobs")
             result = normalise(segments, PiProfile(), hints)
             check = validate(result.trajectory)
             if not check.ok:
@@ -179,6 +229,7 @@ class ExportingEpisode(ScriptedEpisode):
                 handoff.identifiers,
                 handoff.observations,
                 episode_record=handoff.episode_record,
+                collected=collected,
                 probe_targets=handoff.probe_targets,
                 end_mark=handoff.end_mark,
             )

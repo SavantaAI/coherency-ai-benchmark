@@ -15,6 +15,7 @@ from tests.runner.fake import FakeClock
 from tests.tasks.minipi import copy_workspace
 
 from .episode import ExportingEpisode, RecordingPi
+from .variants import profile_runs, transform
 
 
 def read(path):
@@ -26,12 +27,16 @@ def write(path, value):
     path.write_text(json.dumps(value, sort_keys=True, indent=2) + "\n")
 
 
-def run_one(instance, who, output):
+def run_one(instance, who, output, variant=None):
     started = time.perf_counter()
     script = instance / "scripted" / f"{who}-run.json"
     policy = instance / "scripted" / f"{who}-policy.json"
     task = load(instance, {"user policy": policy, "model script": script})
     doc = read(script)
+    if variant:
+        doc = transform(doc, variant)
+        script = output / "script.json"
+        write(script, doc)
     pi = RecordingPi(doc["script"], copy_workspace(instance, output / "work"))
     clock = FakeClock()
     metric = (
@@ -43,6 +48,7 @@ def run_one(instance, who, output):
         return ExportingEpisode(
             pi, output / "driver", clock, metric=metric,
             commit_delay_s=0.1, probes=doc["probes"],
+            collect=spec.collect,
         )
 
     identity = {
@@ -67,6 +73,8 @@ def run_one(instance, who, output):
     )
     return {
         "instance": instance.name, "agent": who, "episode": opaque,
+        "script_variant": variant,
+        "profile_runs": sum(profile_runs(call["input"]["command"]) for call in pi.log if call["tool"] == "bash"),
         "status": outcome.status, "end_reason": outcome.end_reason,
         "wall_seconds": round(time.perf_counter() - started, 3),
         "detail": outcome.detail, "errors": pi.ep.state()["errors"],
@@ -80,11 +88,13 @@ def run_suite(suite, output, workers=8):
     output.mkdir(parents=True, exist_ok=False)
     plan = read(suite / "suite.json")
     jobs = [
-        (suite / item["dir"], who)
+        (suite / item["dir"], who, None)
         for item in plan["instances"]
         for who in ("ideal", "worst", "ideal-grace")
         if (suite / item["dir"] / "scripted" / f"{who}-run.json").exists()
     ]
+    jobs += [(suite / item["dir"], "worst", variant) for item in plan["instances"]
+             if item["family"] == "steering" for variant in ("batched", "cut")]
     reader = output / "reader.json"
     write(reader, {
         "format": "cohbench-reader-config", "version": 1,
@@ -92,10 +102,11 @@ def run_suite(suite, output, workers=8):
     })
 
     def execute(job):
-        instance, who = job
-        row = run_one(instance, who, output / "runs" / instance.name / who)
+        instance, who, variant = job
+        name = f"{who}-{variant}" if variant else who
+        row = run_one(instance, who, output / "runs" / instance.name / name, variant)
         if row["status"] == "usable":
-            scores = output / ("grace" if who == "ideal-grace" else "results")
+            scores = output / ("variants" if variant else "grace" if who == "ideal-grace" else "results")
             scores.mkdir(exist_ok=True)
             score_path = scores / f"{row['episode']}.score.json"
             code = scoring_main([
@@ -116,7 +127,7 @@ def run_suite(suite, output, workers=8):
     reports = {}
     for label in ("results", "grace"):
         folder = output / label
-        selected = [r for r in rows if (r["agent"] == "ideal-grace") == (label == "grace")]
+        selected = [r for r in rows if not r["script_variant"] and (r["agent"] == "ideal-grace") == (label == "grace")]
         write(folder / "index.json", {
             "format": "cohbench-results-index", "version": 1,
             "episodes": {

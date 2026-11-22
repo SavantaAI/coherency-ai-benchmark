@@ -2,16 +2,17 @@
 
 `run.py` takes a freshly generated suite and a new output directory. It runs
 all 88 instances with the ideal and worst scripts, plus the 44 long horizon
-grace scripts. Each run uses the real runner, scripted engine, generated
+grace scripts and 48 Steering variants. Each run uses the real runner, scripted engine, generated
 tools and metric. `episode.py` records the simulated harness's messages and
 tool results, then calls the production trajectory normalizer, bundle maker,
 writer, readback validator and scoring CLI entry. Validation is never skipped.
 
 The clock advances without waiting for user delays. The scripts still run
-local shell commands and metric subprocesses. A single full pass took
-93.635 seconds on 2026-11-22. The slow pytest checks execute the suite twice
+local shell commands and metric subprocesses. The slow pytest checks execute the suite twice
 per interpreter and compare every score and report file byte for byte.
-Runtime varies with load.
+Runtime varies with load. On 2026-11-22, the two-pass tests took 285.42
+seconds on Python 3.12 and 260.06 seconds on Python 3.15. Detailed measured
+times are in `FINDINGS.md`.
 
 ```sh
 uv run --isolated --python 3.15 python -m cohbench.tasks suite --out runs/self-check-suite
@@ -27,6 +28,29 @@ original `suite.json` plan. The grace variants use `grace/`, `grace-report/`
 and the h80 subset of that plan because a cell permits one run per instance.
 The self check runs Default mode only. It supplies a plan without the
 require-plan flag, which also plans Coached mode for a release report.
+The report explicitly says it is not a release. The check does not supply
+the full configuration details for release ranking; Python 3.15 also differs
+from the release runtime of Python 3.12. Zero bootstrap resamples is also
+a non-release option. Scripted reader reports publish no
+rank bands. Tests assert the non-release status as well as the numeric values.
+
+Steering logs come from `MiniPi.home`, outside the workspace. Each shell
+call's newly appended lines are read after it executes. Only their real
+epoch timestamps are translated into ordered slots within that call's
+simulated one-second interval. The original log and an export mapping are
+retained. The fake collection port captures each segment and concatenates
+them across resets. The real bundle maker receives those records and blobs.
+Tests require one log observation per executed profile run and require the
+loop score's selected observations to be exactly the log observations.
+Controls have attempt-count diagnostics but no loop sub-score, so their
+loop source is recorded as not measured.
+
+`variants.py` derives two scripts from the worst script for each of the 24
+Steering instances. One combines its three identical profile steps into one
+shell call. The other filters out the result line from every profile output,
+retaining the human-readable captures needed by the script. Each must keep
+all eight profile log attempts and match its unmodified script exactly.
+These 48 runs have scores in `variants/` and stay out of the two-model report.
 
 `checks.json` compares exact values from `scripted/info.json.expected` with
 real scores, Routing pairs and recorded resets. Explanation's episode
@@ -50,10 +74,14 @@ the scripted model API. It runs one short ideal script from each family and
 one long Routing ideal script. It validates each export, rebuilds the saved
 episode through the trajectory CLI on Python 3.12 with stderr discarded,
 then compares each sub-score with Part A for that exact task digest. The
-four live episodes took 82.546, 96.022, 101.163 and 216.346 seconds on
-2026-11-22, and all four passed validation, rebuild and score comparison. The
-long episode also checks the performed reset. Results are written after
-each episode to `results.json`.
+five live cases include the four original ideal episodes and a long Steering
+worst episode. Both live Steering cases require collected log observations
+to decide the loop score. Long episodes also check the performed reset.
+Results are written after each episode to `results.json`.
+On 2026-11-22 all five passed, taking 82.799, 96.124, 108.471, 223.963
+and 300.652 seconds in the module's case order. The live Steering ideal and
+worst bundles held four and eight log attempts respectively; both loop
+scores selected those log observations.
 
 ```sh
 uv run --isolated --python 3.12 python -m tests.pipeline.real runs/self-check-ROOT/suite runs/self-check-ROOT/first runs/self-check-live
