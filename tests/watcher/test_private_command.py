@@ -38,7 +38,7 @@ def metric_command():
     # Like the task's service: consume the seed and re-exec before importing
     # measured code. The package can inspect this process and its ancestors.
     wrapper = 'import os,sys; os.execv(sys.executable, [sys.executable, "-c", ' + repr(SCAN) + '])'
-    return [sys.executable, '-c', wrapper, 'r3-private-seed-4267']
+    return [sys.executable, '-c', wrapper, 'r3-private-seed-4267', json.dumps({'shape': 'r3-private-workload-4267'})]
 
 
 @pytest.mark.linux_inotify

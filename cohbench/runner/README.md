@@ -449,8 +449,13 @@ digest covers both manifests as validated. The driver packs from the
 manifest the same way (the coordinator has told its worker). The metric
 directory is staged from its validated manifest into the episode's own
 directory (`metric/`), each file checked against its hash again, and that
-copy is what the watcher mounts. A
-link's `target` is relative. Links are followed
+copy is what the watcher mounts. The measured process can read the same
+files in that mount as the service. Keep private workload data in the metric
+command's private handoff, consumed before the service starts the package.
+Generated Steering tasks stage only `measure.py`; the workload shape is
+part of that handoff. The task document, manifests, policy and model script
+are not copied into the metric mount.
+A link's `target` is relative. Links are followed
 component by component through the manifest's own link entries, chains and
 cycles included, and every link must stay inside its directory. No special
 files (devices, FIFOs, sockets). D-026's instruction file names (`CLAUDE.md`,

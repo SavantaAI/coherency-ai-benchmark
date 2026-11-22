@@ -2,11 +2,13 @@
 
 import hashlib
 import json
+import subprocess
+import sys
 from datetime import datetime
 
 import pytest
 
-from cohbench.trajectory import bundle, observations, replay
+from cohbench.trajectory import bundle, io, observations, replay
 from cohbench.trajectory.collection import Collected, Collector, LIMIT, captured
 from cohbench.trajectory.io import Trajectory
 from . import mini
@@ -180,3 +182,39 @@ def test_legacy_log_without_indexes_accepts_order_from_excluded_ties():
     assert bundle._collected_observations(b) == []
     obs.records.append(obs.records[0])
     assert bundle._collected_observations(b)
+
+
+@pytest.mark.parametrize('relocated', [False, True])
+def test_bundle_command_reads_collected_log_from_saved_record(tmp_path, relocated):
+    root, expected = logged_bundle(tmp_path)
+    res, _ = replay.rebuild(root)
+    ex = root / 'export'
+    io.write(res.trajectory, ex / 'trajectory.jsonl')
+    io.write_manifest(res.manifest, ex / 'normalised-manifest.json')
+    record = json.loads((root / 'episode-record.json').read_text())
+    record['collected'] = expected.episode['collected']
+    record_path = root / 'episode-record.json'
+    record_path.write_text(json.dumps(record))
+    scoring = tmp_path / 'scoring.json'
+    scoring.write_text(json.dumps(json.loads((tmp_path / 'task/task.json').read_text())['scoring']))
+    out = tmp_path / 'standalone'
+    args = [sys.executable, '-m', 'cohbench.trajectory', 'bundle', '--trajectory', str(ex / 'trajectory.jsonl'),
+            '--manifest', str(ex / 'normalised-manifest.json'), '--watcher', str(ex / 'watcher/segment-1'),
+            '--task', str(scoring), '--record', str(record_path), '--end-mark', 'end-1', '--out', str(out)]
+    if relocated:
+        moved = tmp_path / 'saved-blobs'
+        (ex / 'collected/blobs').rename(moved)
+        args += ['--collected-blobs', str(moved)]
+    result = subprocess.run(args, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert bundle.validate(bundle.read(out))['ok']
+    expected_dir = tmp_path / 'expected'
+    bundle.write(expected, expected_dir)
+    assert replay.compare(expected_dir, out) == []
+    sha = record['collected']['attempts']['sha256']
+    blob = (moved if relocated else ex / 'collected/blobs') / sha[:2] / sha
+    blob.write_bytes(b'corrupt')
+    args[args.index('--out') + 1] = str(tmp_path / 'rejected')
+    rejected = subprocess.run(args, capture_output=True, text=True)
+    assert rejected.returncode == 2 and 'collected blob size or digest mismatch' in rejected.stderr
+    assert not (tmp_path / 'rejected').exists()

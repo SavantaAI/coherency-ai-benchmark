@@ -78,6 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     bd.add_argument("--task", help="JSON: {identifiers: {...}, observations: {attempts: [{name, regex}]}}")
     bd.add_argument("--episode", help="JSON of an EpisodeInput (episode, grouping, limits, user_wait_ms, planted, answer_key, control, probes, awareness)")
     bd.add_argument("--record", help="JSON of the runner's episode record (cohbench/runner/record.py)")
+    bd.add_argument("--collected-blobs", help="collected blob directory; defaults to export/collected/blobs beside --record")
     bd.add_argument("--probe-targets", help="JSON: {probe id: {about, ref, coincides?}}, beside --record")
     bd.add_argument("--end-mark", help="the runner's watcher mark at the episode end")
     bd.add_argument("--out", required=True)
@@ -150,9 +151,19 @@ def main(argv: list[str] | None = None) -> int:
             d["probes"] = [ProbeInput(**p) for p in d.get("probes", [])]
             ep = EpisodeInput(**d)
         record = json.loads(Path(a.record).read_text()) if a.record else None
+        collected = None
+        if record is not None and "collected" in record:
+            from .collection import Collected
+
+            directory = Path(a.collected_blobs) if a.collected_blobs else Path(a.record).parent / "export" / "collected" / "blobs"
+            try:
+                collected = Collected.read(record["collected"], directory)
+            except (OSError, ValueError) as exc:
+                print(f"bundle: cannot read collected blobs: {exc}", file=sys.stderr)
+                return 2
         targets = json.loads(Path(a.probe_targets).read_text()) if a.probe_targets else None
         b_ = bundle.make(res, [bundle.WatcherInput.from_dir(d) for d in a.watcher], TaskIdentifiers.from_dict(t.get("identifiers", {})),
-                         TaskObservations.from_dict(t.get("observations", {})), ep, episode_record=record, probe_targets=targets, end_mark=a.end_mark)
+                         TaskObservations.from_dict(t.get("observations", {})), ep, episode_record=record, probe_targets=targets, end_mark=a.end_mark, collected=collected)
         # Validated before it is published: a bundle that fails is not written.
         pre = bundle.validate(b_, require_episode=bool(a.episode or a.record))
         if not pre["ok"]:

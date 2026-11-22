@@ -421,6 +421,14 @@ invocations, but is not the environment's route. A measurement service
 that imports agent code must also consume its private arguments and clear
 its own argv before that import.
 
+The same channel carries Steering's workload shape. The service puts the
+seed and shape in a pipe and re-executes without them in argv. It consumes
+and closes the pipe before the measured package runs. No shape file remains
+in the readable `/opt/task` mount. That mount contains only the task's
+manifest entries, `measure.py`
+for generated Steering tasks. The private watcher output still records
+the command for replay; the metric user cannot reach it.
+
 A reading is a reading of the tree only when it is `complete`: the command
 ran and the copy held every readable tracked file. A file left out because
 it is larger than `max_blob_bytes` (5 MiB by default), or whose blob is

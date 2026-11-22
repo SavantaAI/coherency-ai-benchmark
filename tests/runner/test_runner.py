@@ -1169,6 +1169,30 @@ def test_the_metric_directory_is_staged_from_its_manifest(run_factory) -> None:
     assert sorted(x.name for x in staged.iterdir()) == ["count_logs.py"]
 
 
+@pytest.mark.parametrize('seed', [0, 1, 2])
+def test_generated_metric_staging_exposes_only_manifest_files(tmp_path, seed):
+    import os
+    import subprocess
+    import sys
+    from cohbench.runner import load
+    from cohbench.runner.run import stage_metric
+    from cohbench.tasks import Options, generate_to
+
+    source = tmp_path / 'task'
+    generate_to(Options('steering', seed, 'h80'), source)
+    task = load(source)
+    manifest = task.watcher.metric.manifest_doc
+    assert [e['path'] for e in manifest['entries']] == ['measure.py']
+    # Even a file added beside the validated source is not copied by staging.
+    (task.watcher.metric.dir / 'unlisted.json').write_text('{"private": true}')
+    staged = stage_metric(task, tmp_path / 'staged')
+    script = 'import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.dumps({str(f.relative_to(p)): f.read_text() for f in p.rglob("*") if f.is_file()}))'
+    got = json.loads(subprocess.check_output([sys.executable, '-c', script, str(staged)], text=True))
+    assert set(got) == {e['path'] for e in manifest['entries']}
+    assert got['measure.py'] == (task.watcher.metric.dir / 'measure.py').read_text()
+    assert os.stat(staged / 'measure.py').st_mode & 0o004
+
+
 def test_a_metric_file_changed_after_loading_stops_the_run(run_factory, tmp_path) -> None:
     from cohbench.runner import TaskError
 
