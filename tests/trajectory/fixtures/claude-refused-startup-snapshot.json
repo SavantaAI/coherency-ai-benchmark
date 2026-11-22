@@ -1,0 +1,215 @@
+{
+ "projection": {
+  "thread": {
+   "createdBy": "user",
+   "creationSource": "web",
+   "id": "thread:project:2f401d8a-897f-4691-8f09-ce9a4e3bdd64:3d2ba836-9840-46a7-a55a-f0f10219f55f",
+   "projectId": "2f401d8a-897f-4691-8f09-ce9a4e3bdd64",
+   "title": "session",
+   "providerInstanceId": "claudeAgent",
+   "modelSelection": {
+    "instanceId": "claudeAgent",
+    "model": "claude-haiku-5-5",
+    "options": [
+     {
+      "id": "effort",
+      "value": "low"
+     }
+    ]
+   },
+   "runtimeMode": "full-access",
+   "interactionMode": "default",
+   "branch": "main",
+   "worktreePath": null,
+   "pullRequests": [],
+   "activeProviderThreadId": "provider-thread:provider:claudeAgent:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1",
+   "lineage": {
+    "parentThreadId": null,
+    "relationshipToParent": null,
+    "rootThreadId": "thread:project:2f401d8a-897f-4691-8f09-ce9a4e3bdd64:3d2ba836-9840-46a7-a55a-f0f10219f55f"
+   },
+   "forkedFrom": null,
+   "createdAt": "2026-11-21T21:18:25.144Z",
+   "updatedAt": "2026-11-21T21:18:25.857Z",
+   "archivedAt": null,
+   "settledOverride": null,
+   "settledAt": null,
+   "snoozedUntil": null,
+   "snoozedAt": null,
+   "lastVisitedAt": "2026-11-21T21:18:25.145Z",
+   "deletedAt": null
+  },
+  "runs": [
+   {
+    "id": "run:thread:thread%3Aproject%3A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%3A3d2ba836-9840-46a7-a55a-f0f10219f55f:ordinal:1",
+    "threadId": "thread:project:2f401d8a-897f-4691-8f09-ce9a4e3bdd64:3d2ba836-9840-46a7-a55a-f0f10219f55f",
+    "ordinal": 1,
+    "providerInstanceId": "claudeAgent",
+    "modelSelection": {
+     "instanceId": "claudeAgent",
+     "model": "claude-haiku-5-5",
+     "options": [
+      {
+       "id": "effort",
+       "value": "low"
+      }
+     ]
+    },
+    "providerThreadId": "provider-thread:provider:claudeAgent:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1",
+    "userMessageId": "c63f5377-190b-49dd-833b-047db64bf348",
+    "rootNodeId": "node:run:run%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1:root",
+    "activeAttemptId": "run-attempt:run:run%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1:attempt:1",
+    "status": "failed",
+    "queuePosition": null,
+    "requestedAt": "2026-11-21T21:18:25.148Z",
+    "startedAt": "2026-11-21T21:18:25.205Z",
+    "completedAt": "2026-11-21T21:18:25.857Z",
+    "checkpointId": null,
+    "contextHandoffId": null,
+    "workspacePreparation": {
+     "type": "root"
+    }
+   }
+  ],
+  "attempts": [
+   {
+    "id": "run-attempt:run:run%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1:attempt:1",
+    "nativeThreadId": "99e1044a-cde8-400a-bcfb-b80f498decf4",
+    "runId": "run:thread:thread%3Aproject%3A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%3A3d2ba836-9840-46a7-a55a-f0f10219f55f:ordinal:1",
+    "attemptOrdinal": 1,
+    "rootNodeId": "node:run:run%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1:root",
+    "providerInstanceId": "claudeAgent",
+    "providerThreadId": "provider-thread:provider:claudeAgent:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1",
+    "providerTurnId": null,
+    "reason": "initial",
+    "status": "failed",
+    "startedAt": "2026-11-21T21:18:25.205Z",
+    "completedAt": "2026-11-21T21:18:25.857Z"
+   }
+  ],
+  "messages": [
+   {
+    "createdBy": "user",
+    "creationSource": "web",
+    "id": "c63f5377-190b-49dd-833b-047db64bf348",
+    "threadId": "thread:project:2f401d8a-897f-4691-8f09-ce9a4e3bdd64:3d2ba836-9840-46a7-a55a-f0f10219f55f",
+    "runId": "run:thread:thread%3Aproject%3A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%3A3d2ba836-9840-46a7-a55a-f0f10219f55f:ordinal:1",
+    "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1:root",
+    "role": "user",
+    "text": "Reply with exactly one word: ready",
+    "attachments": [],
+    "streaming": false,
+    "createdAt": "2026-11-21T21:18:25.148Z",
+    "updatedAt": "2026-11-21T21:18:25.148Z"
+   },
+   {
+    "createdBy": "agent",
+    "creationSource": "provider",
+    "id": "message:provider:claudeAgent:native-item:6199a758-e33e-4063-a397-aa0a21dbfe2a",
+    "threadId": "thread:project:2f401d8a-897f-4691-8f09-ce9a4e3bdd64:3d2ba836-9840-46a7-a55a-f0f10219f55f",
+    "runId": "run:thread:thread%3Aproject%3A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%3A3d2ba836-9840-46a7-a55a-f0f10219f55f:ordinal:1",
+    "nodeId": "node:provider:claudeAgent:native-item:6199a758-e33e-4063-a397-aa0a21dbfe2a",
+    "role": "assistant",
+    "text": "Credit balance is too low",
+    "attachments": [],
+    "streaming": false,
+    "createdAt": "2026-11-21T21:18:25.837Z",
+    "updatedAt": "2026-11-21T21:18:25.837Z"
+   }
+  ],
+  "subagents": [],
+  "turnItems": [
+   {
+    "id": "turn-item:message:c63f5377-190b-49dd-833b-047db64bf348",
+    "threadId": "thread:project:2f401d8a-897f-4691-8f09-ce9a4e3bdd64:3d2ba836-9840-46a7-a55a-f0f10219f55f",
+    "runId": "run:thread:thread%3Aproject%3A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%3A3d2ba836-9840-46a7-a55a-f0f10219f55f:ordinal:1",
+    "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1:root",
+    "providerThreadId": "provider-thread:provider:claudeAgent:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1",
+    "providerTurnId": null,
+    "nativeItemRef": null,
+    "parentItemId": null,
+    "ordinal": 1000001,
+    "status": "completed",
+    "title": null,
+    "startedAt": "2026-11-21T21:18:25.148Z",
+    "completedAt": "2026-11-21T21:18:25.148Z",
+    "updatedAt": "2026-11-21T21:18:25.148Z",
+    "createdBy": "user",
+    "creationSource": "web",
+    "type": "user_message",
+    "messageId": "c63f5377-190b-49dd-833b-047db64bf348",
+    "inputIntent": "turn_start",
+    "text": "Reply with exactly one word: ready",
+    "attachments": []
+   },
+   {
+    "id": "turn-item:provider:claudeAgent:native-item:workspace-preparation%3Arun%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1",
+    "threadId": "thread:project:2f401d8a-897f-4691-8f09-ce9a4e3bdd64:3d2ba836-9840-46a7-a55a-f0f10219f55f",
+    "runId": "run:thread:thread%3Aproject%3A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%3A3d2ba836-9840-46a7-a55a-f0f10219f55f:ordinal:1",
+    "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1:root",
+    "providerThreadId": "provider-thread:provider:claudeAgent:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1",
+    "providerTurnId": null,
+    "nativeItemRef": null,
+    "parentItemId": null,
+    "ordinal": 1000002,
+    "status": "completed",
+    "title": "Workspace ready",
+    "startedAt": "2026-11-21T21:18:25.148Z",
+    "completedAt": "2026-11-21T21:18:25.182Z",
+    "updatedAt": "2026-11-21T21:18:25.182Z",
+    "type": "command_execution",
+    "input": "Preparing workspace",
+    "outputOmitted": true,
+    "exitCode": 0
+   },
+   {
+    "id": "turn-item:provider:claudeAgent:native-item:6199a758-e33e-4063-a397-aa0a21dbfe2a",
+    "threadId": "thread:project:2f401d8a-897f-4691-8f09-ce9a4e3bdd64:3d2ba836-9840-46a7-a55a-f0f10219f55f",
+    "runId": "run:thread:thread%3Aproject%3A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%3A3d2ba836-9840-46a7-a55a-f0f10219f55f:ordinal:1",
+    "nodeId": "node:provider:claudeAgent:native-item:6199a758-e33e-4063-a397-aa0a21dbfe2a",
+    "providerThreadId": "provider-thread:provider:claudeAgent:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1",
+    "providerTurnId": "provider-turn:provider:claudeAgent:native-turn:turn%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%25253A3d2ba836-9840-46a7-a55a-f0f10219f55f%253Aordinal%253A1%3Aattempt%3A1",
+    "nativeItemRef": {
+     "driver": "claudeAgent",
+     "nativeId": "6199a758-e33e-4063-a397-aa0a21dbfe2a",
+     "strength": "strong"
+    },
+    "parentItemId": null,
+    "ordinal": 1000003,
+    "status": "completed",
+    "title": null,
+    "startedAt": "2026-11-21T21:18:25.837Z",
+    "completedAt": "2026-11-21T21:18:25.837Z",
+    "updatedAt": "2026-11-21T21:18:25.837Z",
+    "type": "assistant_message",
+    "messageId": "message:provider:claudeAgent:native-item:6199a758-e33e-4063-a397-aa0a21dbfe2a",
+    "text": "Credit balance is too low",
+    "streaming": false
+   },
+   {
+    "id": "turn-item:provider:claudeAgent:native-item:terminal-failure%3Aprovider-turn%3Aprovider%3AclaudeAgent%3Anative-turn%3Aturn%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%2525253A3d2ba836-9840-46a7-a55a-f0f10219f55f%25253Aordinal%25253A1%253Aattempt%253A1",
+    "threadId": "thread:project:2f401d8a-897f-4691-8f09-ce9a4e3bdd64:3d2ba836-9840-46a7-a55a-f0f10219f55f",
+    "runId": "run:thread:thread%3Aproject%3A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%3A3d2ba836-9840-46a7-a55a-f0f10219f55f:ordinal:1",
+    "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1:root",
+    "providerThreadId": "provider-thread:provider:claudeAgent:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%253A3d2ba836-9840-46a7-a55a-f0f10219f55f%3Aordinal%3A1",
+    "providerTurnId": "provider-turn:provider:claudeAgent:native-turn:turn%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253A2f401d8a-897f-4691-8f09-ce9a4e3bdd64%25253A3d2ba836-9840-46a7-a55a-f0f10219f55f%253Aordinal%253A1%3Aattempt%3A1",
+    "nativeItemRef": null,
+    "parentItemId": null,
+    "ordinal": 1000004,
+    "status": "failed",
+    "title": "Provider error",
+    "startedAt": "2026-11-21T21:18:25.855Z",
+    "completedAt": "2026-11-21T21:18:25.855Z",
+    "updatedAt": "2026-11-21T21:18:25.855Z",
+    "type": "error",
+    "failure": {
+     "class": "provider_error",
+     "message": "Claude gave up after repeated API errors.",
+     "code": "api_error_400",
+     "retryable": null
+    }
+   }
+  ],
+  "runtimeRequests": []
+ }
+}

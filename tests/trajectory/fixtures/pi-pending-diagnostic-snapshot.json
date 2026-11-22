@@ -1,0 +1,369 @@
+{
+ "projection": {
+  "thread": {
+   "createdBy": "user",
+   "creationSource": "web",
+   "id": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+   "projectId": "ebfa874c-2a94-4196-9261-f14f33414e6e",
+   "title": "colors-2",
+   "providerInstanceId": "pi",
+   "modelSelection": {
+    "instanceId": "pi",
+    "model": "anthropic/claude-haiku-5-5",
+    "options": [
+     {
+      "id": "thinking",
+      "value": "off"
+     }
+    ]
+   },
+   "runtimeMode": "full-access",
+   "interactionMode": "default",
+   "branch": "main",
+   "worktreePath": null,
+   "pullRequests": [],
+   "activeProviderThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+   "lineage": {
+    "parentThreadId": null,
+    "relationshipToParent": null,
+    "rootThreadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9"
+   },
+   "forkedFrom": null,
+   "createdAt": "2026-11-21T21:10:57.706Z",
+   "updatedAt": "2026-11-21T21:11:02.916Z",
+   "archivedAt": null,
+   "settledOverride": null,
+   "settledAt": null,
+   "snoozedUntil": null,
+   "snoozedAt": null,
+   "lastVisitedAt": "2026-11-21T21:10:57.705Z",
+   "deletedAt": null
+  },
+  "runs": [
+   {
+    "id": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "ordinal": 1,
+    "providerInstanceId": "pi",
+    "modelSelection": {
+     "instanceId": "pi",
+     "model": "anthropic/claude-haiku-5-5",
+     "options": [
+      {
+       "id": "thinking",
+       "value": "off"
+      }
+     ]
+    },
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "userMessageId": "dd534baf-44d2-4a26-9ed1-c24b2a939e0d",
+    "rootNodeId": "node:run:run%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1:root",
+    "activeAttemptId": "run-attempt:run:run%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1:attempt:1",
+    "status": "completed",
+    "queuePosition": null,
+    "requestedAt": "2026-11-21T21:10:57.707Z",
+    "startedAt": "2026-11-21T21:10:58.042Z",
+    "completedAt": "2026-11-21T21:11:02.916Z",
+    "checkpointId": "checkpoint:scope:checkpoint-scope%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aname%3Aroot:name:1",
+    "contextHandoffId": null,
+    "workspacePreparation": {
+     "type": "root"
+    }
+   }
+  ],
+  "attempts": [
+   {
+    "id": "run-attempt:run:run%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1:attempt:1",
+    "nativeThreadId": "/home/node/.pi/agent/sessions/--work-project--/2026-11-21T21-10-57-901Z_01a1fff2-b26c-7503-a41c-e9874d8d0c94.jsonl",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "attemptOrdinal": 1,
+    "rootNodeId": "node:run:run%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1:root",
+    "providerInstanceId": "pi",
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "providerTurnId": null,
+    "reason": "initial",
+    "status": "completed",
+    "startedAt": "2026-11-21T21:10:58.042Z",
+    "completedAt": "2026-11-21T21:11:02.903Z"
+   }
+  ],
+  "messages": [
+   {
+    "createdBy": "user",
+    "creationSource": "web",
+    "id": "dd534baf-44d2-4a26-9ed1-c24b2a939e0d",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1:root",
+    "role": "user",
+    "text": "I want a file named color.txt in the project. Before you create it, ask me which color I prefer, red or blue. If you have a tool that puts a question to me directly, use it. Wait for my answer, then write exactly my answer into color.txt and reply with one short sentence naming the color.",
+    "attachments": [],
+    "streaming": false,
+    "createdAt": "2026-11-21T21:10:57.707Z",
+    "updatedAt": "2026-11-21T21:10:57.707Z"
+   },
+   {
+    "createdBy": "agent",
+    "creationSource": "provider",
+    "id": "message:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am1%3Ac0",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am1%3Ac0",
+    "role": "assistant",
+    "text": "I'll ask you directly.",
+    "attachments": [],
+    "streaming": false,
+    "createdAt": "2026-11-21T21:10:59.625Z",
+    "updatedAt": "2026-11-21T21:10:59.905Z"
+   },
+   {
+    "createdBy": "agent",
+    "creationSource": "provider",
+    "id": "message:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am3%3Ac0",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am3%3Ac0",
+    "role": "assistant",
+    "text": "You prefer blue, so I wrote \"blue\" to `/work/project/color.txt`.",
+    "attachments": [],
+    "streaming": false,
+    "createdAt": "2026-11-21T21:11:02.830Z",
+    "updatedAt": "2026-11-21T21:11:02.881Z"
+   }
+  ],
+  "subagents": [],
+  "turnItems": [
+   {
+    "id": "turn-item:message:dd534baf-44d2-4a26-9ed1-c24b2a939e0d",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1:root",
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "providerTurnId": null,
+    "nativeItemRef": null,
+    "parentItemId": null,
+    "ordinal": 1000001,
+    "status": "completed",
+    "title": null,
+    "startedAt": "2026-11-21T21:10:57.707Z",
+    "completedAt": "2026-11-21T21:10:57.707Z",
+    "updatedAt": "2026-11-21T21:10:57.707Z",
+    "createdBy": "user",
+    "creationSource": "web",
+    "type": "user_message",
+    "messageId": "dd534baf-44d2-4a26-9ed1-c24b2a939e0d",
+    "inputIntent": "turn_start",
+    "text": "I want a file named color.txt in the project. Before you create it, ask me which color I prefer, red or blue. If you have a tool that puts a question to me directly, use it. Wait for my answer, then write exactly my answer into color.txt and reply with one short sentence naming the color.",
+    "attachments": []
+   },
+   {
+    "id": "turn-item:provider:pi:native-item:workspace-preparation%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1:root",
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "providerTurnId": null,
+    "nativeItemRef": null,
+    "parentItemId": null,
+    "ordinal": 1000002,
+    "status": "completed",
+    "title": "Workspace ready",
+    "startedAt": "2026-11-21T21:10:57.707Z",
+    "completedAt": "2026-11-21T21:10:57.733Z",
+    "updatedAt": "2026-11-21T21:10:57.733Z",
+    "type": "command_execution",
+    "input": "Preparing workspace",
+    "outputOmitted": true,
+    "exitCode": 0
+   },
+   {
+    "id": "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am1%3Ac0",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am1%3Ac0",
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3A1",
+    "nativeItemRef": {
+     "driver": "pi",
+     "nativeId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3A1:m1:c0",
+     "strength": "strong"
+    },
+    "parentItemId": null,
+    "ordinal": 1000003,
+    "status": "completed",
+    "title": null,
+    "startedAt": "2026-11-21T21:10:59.625Z",
+    "completedAt": "2026-11-21T21:10:59.905Z",
+    "updatedAt": "2026-11-21T21:10:59.905Z",
+    "type": "assistant_message",
+    "messageId": "message:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am1%3Ac0",
+    "text": "I'll ask you directly.",
+    "streaming": false
+   },
+   {
+    "id": "turn-item:provider:pi:native-item:toolu_01NZ7vqD3zHwJmK1mpKJ5rux",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:provider:pi:native-item:toolu_01NZ7vqD3zHwJmK1mpKJ5rux",
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3A1",
+    "nativeItemRef": {
+     "driver": "pi",
+     "nativeId": "toolu_01NZ7vqD3zHwJmK1mpKJ5rux",
+     "strength": "strong"
+    },
+    "parentItemId": null,
+    "ordinal": 1000004,
+    "status": "completed",
+    "title": "ask_user",
+    "startedAt": "2026-11-21T21:10:59.917Z",
+    "completedAt": "2026-11-21T21:11:01.660Z",
+    "updatedAt": "2026-11-21T21:11:01.660Z",
+    "type": "dynamic_tool",
+    "toolName": "ask_user",
+    "input": {
+     "question": "Which color do you prefer: red or blue?",
+     "options": [
+      "red",
+      "blue"
+     ]
+    },
+    "outputOmitted": true
+   },
+   {
+    "id": "turn-item:runtime-request:runtime-request%3Aprovider%3Api%3Aprovider-turn%3Aprovider-turn%253Aprovider%253Api%253Anative-turn%253Aprovider-thread%25253Aprovider%25253Api%25253Anative-thread%25253Apending%2525253Arun%2525253Athread%2525253Athread%252525253Aproject%252525253Aebfa874c-2a94-4196-9261-f14f33414e6e%252525253A23842f46-6684-45e2-884d-b28590ab97b9%2525253Aordinal%2525253A1%25253Aattempt%25253Arun-attempt%25253Arun%25253Arun%2525253Athread%2525253Athread%252525253Aproject%252525253Aebfa874c-2a94-4196-9261-f14f33414e6e%252525253A23842f46-6684-45e2-884d-b28590ab97b9%2525253Aordinal%2525253A1%25253Aattempt%25253A1%3Anative-request%3A9d4cee55-5978-4338-80e1-79da7f9b9911%3A9b4a077a-1a67-4ad6-88be-adbf5f243260",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:runtime-request:runtime-request%3Aprovider%3Api%3Aprovider-turn%3Aprovider-turn%253Aprovider%253Api%253Anative-turn%253Aprovider-thread%25253Aprovider%25253Api%25253Anative-thread%25253Apending%2525253Arun%2525253Athread%2525253Athread%252525253Aproject%252525253Aebfa874c-2a94-4196-9261-f14f33414e6e%252525253A23842f46-6684-45e2-884d-b28590ab97b9%2525253Aordinal%2525253A1%25253Aattempt%25253Arun-attempt%25253Arun%25253Arun%2525253Athread%2525253Athread%252525253Aproject%252525253Aebfa874c-2a94-4196-9261-f14f33414e6e%252525253A23842f46-6684-45e2-884d-b28590ab97b9%2525253Aordinal%2525253A1%25253Aattempt%25253A1%3Anative-request%3A9d4cee55-5978-4338-80e1-79da7f9b9911%3A9b4a077a-1a67-4ad6-88be-adbf5f243260",
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3A1",
+    "nativeItemRef": {
+     "driver": "pi",
+     "nativeId": "9d4cee55-5978-4338-80e1-79da7f9b9911",
+     "strength": "strong"
+    },
+    "parentItemId": null,
+    "ordinal": 1000005,
+    "status": "completed",
+    "title": "Which color do you prefer: red or blue?",
+    "startedAt": "2026-11-21T21:10:59.921Z",
+    "completedAt": "2026-11-21T21:11:01.659Z",
+    "updatedAt": "2026-11-21T21:11:01.659Z",
+    "type": "user_input_request",
+    "requestId": "runtime-request:provider:pi:provider-turn:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1:native-request:9d4cee55-5978-4338-80e1-79da7f9b9911:9b4a077a-1a67-4ad6-88be-adbf5f243260",
+    "questions": [
+     {
+      "id": "9d4cee55-5978-4338-80e1-79da7f9b9911",
+      "header": "Question",
+      "question": "Which color do you prefer: red or blue?",
+      "options": [
+       {
+        "label": "red",
+        "description": "red",
+        "value": "red"
+       },
+       {
+        "label": "blue",
+        "description": "blue",
+        "value": "blue"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "turn-item:provider:pi:native-item:toolu_01Hur5LJGkEre7iodUeYzjSG",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:provider:pi:native-item:toolu_01Hur5LJGkEre7iodUeYzjSG",
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3A1",
+    "nativeItemRef": {
+     "driver": "pi",
+     "nativeId": "toolu_01Hur5LJGkEre7iodUeYzjSG",
+     "strength": "strong"
+    },
+    "parentItemId": null,
+    "ordinal": 1000006,
+    "status": "completed",
+    "title": "write",
+    "startedAt": "2026-11-21T21:11:02.335Z",
+    "completedAt": "2026-11-21T21:11:02.337Z",
+    "updatedAt": "2026-11-21T21:11:02.337Z",
+    "type": "file_change",
+    "fileName": "/work/project/color.txt"
+   },
+   {
+    "id": "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am3%3Ac0",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am3%3Ac0",
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3A1",
+    "nativeItemRef": {
+     "driver": "pi",
+     "nativeId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3A1:m3:c0",
+     "strength": "strong"
+    },
+    "parentItemId": null,
+    "ordinal": 1000007,
+    "status": "completed",
+    "title": null,
+    "startedAt": "2026-11-21T21:11:02.830Z",
+    "completedAt": "2026-11-21T21:11:02.881Z",
+    "updatedAt": "2026-11-21T21:11:02.881Z",
+    "type": "assistant_message",
+    "messageId": "message:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1%3Am3%3Ac0",
+    "text": "You prefer blue, so I wrote \"blue\" to `/work/project/color.txt`.",
+    "streaming": false
+   },
+   {
+    "id": "turn-item:provider:pi:native-item:checkpoint%3Acheckpoint%3Ascope%3Acheckpoint-scope%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aname%253Aroot%3Aname%3A1",
+    "threadId": "thread:project:ebfa874c-2a94-4196-9261-f14f33414e6e:23842f46-6684-45e2-884d-b28590ab97b9",
+    "runId": "run:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:ordinal:1",
+    "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1:root",
+    "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aordinal%3A1",
+    "providerTurnId": null,
+    "nativeItemRef": null,
+    "parentItemId": null,
+    "ordinal": 1000008,
+    "status": "completed",
+    "title": null,
+    "startedAt": "2026-11-21T21:11:02.916Z",
+    "completedAt": "2026-11-21T21:11:02.916Z",
+    "updatedAt": "2026-11-21T21:11:02.916Z",
+    "type": "checkpoint",
+    "checkpointId": "checkpoint:scope:checkpoint-scope%3Athread%3Athread%253Aproject%253Aebfa874c-2a94-4196-9261-f14f33414e6e%253A23842f46-6684-45e2-884d-b28590ab97b9%3Aname%3Aroot:name:1",
+    "scopeId": "checkpoint-scope:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:name:root",
+    "files": [
+     {
+      "path": "color.txt",
+      "kind": "modified",
+      "additions": 1,
+      "deletions": 0
+     }
+    ]
+   }
+  ],
+  "runtimeRequests": [
+   {
+    "id": "runtime-request:provider:pi:provider-turn:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253Aebfa874c-2a94-4196-9261-f14f33414e6e%2525253A23842f46-6684-45e2-884d-b28590ab97b9%25253Aordinal%25253A1%253Aattempt%253A1:native-request:9d4cee55-5978-4338-80e1-79da7f9b9911:9b4a077a-1a67-4ad6-88be-adbf5f243260",
+    "nodeId": "node:runtime-request:runtime-request%3Aprovider%3Api%3Aprovider-turn%3Aprovider-turn%253Aprovider%253Api%253Anative-turn%253Aprovider-thread%25253Aprovider%25253Api%25253Anative-thread%25253Apending%2525253Arun%2525253Athread%2525253Athread%252525253Aproject%252525253Aebfa874c-2a94-4196-9261-f14f33414e6e%252525253A23842f46-6684-45e2-884d-b28590ab97b9%2525253Aordinal%2525253A1%25253Aattempt%25253Arun-attempt%25253Arun%25253Arun%2525253Athread%2525253Athread%252525253Aproject%252525253Aebfa874c-2a94-4196-9261-f14f33414e6e%252525253A23842f46-6684-45e2-884d-b28590ab97b9%2525253Aordinal%2525253A1%25253Aattempt%25253A1%3Anative-request%3A9d4cee55-5978-4338-80e1-79da7f9b9911%3A9b4a077a-1a67-4ad6-88be-adbf5f243260",
+    "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253Aebfa874c-2a94-4196-9261-f14f33414e6e%25253A23842f46-6684-45e2-884d-b28590ab97b9%253Aordinal%253A1%3Aattempt%3A1",
+    "nativeRequestRef": {
+     "driver": "pi",
+     "nativeId": "9d4cee55-5978-4338-80e1-79da7f9b9911",
+     "strength": "strong"
+    },
+    "kind": "user_input",
+    "status": "resolved",
+    "responseCapability": {
+     "type": "live",
+     "providerSessionId": "provider-session:provider-instance:pi:thread:thread%3Aproject%3Aebfa874c-2a94-4196-9261-f14f33414e6e%3A23842f46-6684-45e2-884d-b28590ab97b9:b404dc06-6d01-4b1a-b989-dadf1b2a8094"
+    },
+    "createdAt": "2026-11-21T21:10:59.921Z",
+    "resolvedAt": "2026-11-21T21:11:01.659Z"
+   }
+  ]
+ }
+}

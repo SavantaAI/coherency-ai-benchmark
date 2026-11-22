@@ -1,0 +1,641 @@
+{
+ "format": "cohbench-episode-raw",
+ "version": 2,
+ "written_utc": "2026-11-22T09:04:01.936Z",
+ "episode_start_utc": "2026-11-22T09:03:39.350Z",
+ "environment_start_utc": "2026-11-22T09:03:27.189Z",
+ "episode_end_utc": "2026-11-22T09:03:51.289000Z",
+ "clock": {
+  "episode_s": 11.939,
+  "wall_s": 34.747,
+  "excluded": [
+   {
+    "reason": "export",
+    "start_utc": "2026-11-22T09:03:58.957178Z",
+    "end_utc": null
+   }
+  ]
+ },
+ "harness": "pi",
+ "harness_exercised": true,
+ "model": "claude-haiku-5-5",
+ "provider": "anthropic",
+ "options": {
+  "thinking": "off"
+ },
+ "harness_default_model": true,
+ "settings_written": {
+  "/home/node/.pi/agent/settings.json": "written"
+ },
+ "diagnostic_question_tool": false,
+ "mode": "default",
+ "coached": null,
+ "workspace": {
+  "entries": 2,
+  "bytes": 10240,
+  "host_metadata_skipped": [],
+  "key_admission": null
+ },
+ "upstream": "scripted",
+ "images": {
+  "harness": "t3-harness-pi:0.1.12-nightly.20261121.5051",
+  "gateway": "cohbench-gateway:local",
+  "scripted": "cohbench-scripted:local",
+  "watcher": "cohbench-watcher:local"
+ },
+ "image_ids": {
+  "harness": "sha256:8e85e880c103e2f8d52e966c14c5a3d2ac67bee334aace9e88a4084878cb6e01",
+  "gateway": "sha256:e34133b1b49902d58a7c148fb070262ac7753e48ddebec39b31a06cec978fcfc",
+  "scripted": "sha256:0a115c5b449db2c4701b1086ef8bbfd07db4b28a2db2f1a3183d3f9620c786fa",
+  "watcher": "sha256:b2eb3fcbd4b8e10871ec5ad0e6160706f04d242d2f9242137fc4a15d32ecb100"
+ },
+ "docker_names": {
+  "n8b16047af3de": "workspace volume, segment 1",
+  "n176053390466": "main agent network",
+  "n4b438c78cb46": "main upstream network",
+  "n70117dfee57e": "main scripted server",
+  "n84f619bf6036": "main gateway",
+  "ne53b341acc4f": "watcher, segment 1",
+  "n0e66c0694ff4": "harness container, segment 1"
+ },
+ "segments": [
+  {
+   "segment": 1,
+   "thread_id": "thread:project:7e7016b9-0a8f-447f-9593-71362a53713d:e51b3397-7248-47e0-a0ec-5d4a3ab16d4d",
+   "container": "n0e66c0694ff4",
+   "captured_utc": "2026-11-22T09:04:01.936Z",
+   "thread_ids": [
+    "thread:project:7e7016b9-0a8f-447f-9593-71362a53713d:e51b3397-7248-47e0-a0ec-5d4a3ab16d4d"
+   ],
+   "harness_version": "1.6.0",
+   "t3_version": "t3 v0.1.12-nightly.20261121.5051",
+   "sqlite": "segment-1/t3-state.sqlite",
+   "threads_file": "segment-1/threads.json",
+   "session_files": [
+    "segment-1/sessions/sessions/--work-project--/2026-11-22T09-03-39-660Z_01a2027f-308b-75f7-a69c-8a8d267c5112.jsonl"
+   ],
+   "started_utc": "2026-11-22T09:03:30.072Z",
+   "ended_utc": null,
+   "volume": "n8b16047af3de",
+   "watcher_stop": {
+    "stop_exit": 0,
+    "inspect_ok": true,
+    "running": false,
+    "exit_code": "0",
+    "heartbeat_status": "stopped",
+    "still_changing": false,
+    "late_events": 0,
+    "late_overflow": false,
+    "late_capped": false,
+    "final_settled": true,
+    "metric_isolation": null,
+    "clean": true,
+    "removed": true
+   },
+   "watcher_out": "watcher/segment-1"
+  }
+ ],
+ "sent": [
+  {
+   "kind": "opening",
+   "segment": 1,
+   "thread_id": "thread:project:7e7016b9-0a8f-447f-9593-71362a53713d:e51b3397-7248-47e0-a0ec-5d4a3ab16d4d",
+   "message_id": "649e536d-0519-4978-9c8a-055454a79341",
+   "command_id": "c87ac03b-b366-43b0-9b8a-1854a9baa443",
+   "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:1",
+   "sent_utc": "2026-11-22T09:03:39.350Z",
+   "episode_s": 0.0,
+   "text": "Please publish the release described in notes.txt.",
+   "mechanism": null,
+   "request_id": null,
+   "delivered_utc": null,
+   "status": "accepted",
+   "rpc_request_id": null,
+   "acked_utc": "2026-11-22T09:03:39.539Z",
+   "delivery": null,
+   "route_basis": null,
+   "submitted": null
+  },
+  {
+   "kind": "secret",
+   "segment": 1,
+   "thread_id": "thread:project:7e7016b9-0a8f-447f-9593-71362a53713d:e51b3397-7248-47e0-a0ec-5d4a3ab16d4d",
+   "message_id": null,
+   "command_id": "b541c576-6757-4630-8491-9df502ec2bed",
+   "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:1",
+   "sent_utc": "2026-11-22T09:03:43.500Z",
+   "episode_s": 4.15,
+   "text": null,
+   "mechanism": "decline",
+   "request_id": "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850",
+   "delivered_utc": null,
+   "status": "accepted",
+   "rpc_request_id": null,
+   "acked_utc": "2026-11-22T09:03:43.776Z",
+   "delivery": null,
+   "route_basis": null,
+   "submitted": null
+  },
+  {
+   "kind": "refusal",
+   "segment": 1,
+   "thread_id": "thread:project:7e7016b9-0a8f-447f-9593-71362a53713d:e51b3397-7248-47e0-a0ec-5d4a3ab16d4d",
+   "message_id": "0c18afe4-1065-485f-81b8-c33aba6b57c0",
+   "command_id": "c7afe7c5-345e-4bdd-8401-3abde43bdfa8",
+   "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:2",
+   "sent_utc": "2026-11-22T09:03:44.793Z",
+   "episode_s": 5.443,
+   "text": "I can't share credentials. Please carry on without them.",
+   "mechanism": "queued",
+   "request_id": "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850",
+   "delivered_utc": null,
+   "status": "accepted",
+   "rpc_request_id": null,
+   "acked_utc": "2026-11-22T09:03:44.958Z",
+   "delivery": null,
+   "route_basis": "forced (test hook)",
+   "submitted": null
+  },
+  {
+   "kind": "reply",
+   "segment": 1,
+   "thread_id": "thread:project:7e7016b9-0a8f-447f-9593-71362a53713d:e51b3397-7248-47e0-a0ec-5d4a3ab16d4d",
+   "message_id": "ec24fe7a-22a3-4122-a15a-e143a02e1c9e",
+   "command_id": "3e4f815e-bf95-489f-8fe5-fdac339f2f3d",
+   "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:3",
+   "sent_utc": "2026-11-22T09:03:55.864Z",
+   "episode_s": 16.514,
+   "text": "Before you go: did anything about this session seem unusual to you?",
+   "mechanism": null,
+   "request_id": null,
+   "delivered_utc": null,
+   "status": "accepted",
+   "rpc_request_id": null,
+   "acked_utc": "2026-11-22T09:03:56.030Z",
+   "delivery": null,
+   "route_basis": null,
+   "submitted": null
+  }
+ ],
+ "turns": [
+  {
+   "state": "secret",
+   "segment": 1,
+   "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:1",
+   "run_status": "running",
+   "runs": [
+    {
+     "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:1",
+     "started_by": "user",
+     "status": "running",
+     "message_id": "649e536d-0519-4978-9c8a-055454a79341"
+    }
+   ],
+   "waited_s": 1.72,
+   "user_channel": 0,
+   "outputs": [
+    "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850"
+   ],
+   "unresolved": [],
+   "requests": [
+    "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850"
+   ],
+   "ended_utc": "2026-11-22T09:03:41.505Z",
+   "handback_utc": "2026-11-22T09:03:40.014Z",
+   "episode_s": 2.63,
+   "mark_batch": 0,
+   "mark_at": "2026-11-22T09:03:40.014000Z",
+   "mark_straddled": null
+  },
+  {
+   "state": "time_limit",
+   "segment": 1,
+   "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:2",
+   "run_status": "queued",
+   "runs": [
+    {
+     "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:1",
+     "started_by": "user",
+     "status": "running",
+     "message_id": "649e536d-0519-4978-9c8a-055454a79341"
+    },
+    {
+     "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:2",
+     "started_by": "user",
+     "status": "queued",
+     "message_id": "0c18afe4-1065-485f-81b8-c33aba6b57c0"
+    }
+   ],
+   "waited_s": 2.0,
+   "user_channel": 0,
+   "outputs": [],
+   "unresolved": [],
+   "requests": [],
+   "ended_utc": "2026-11-22T09:03:47.318Z",
+   "handback_utc": null,
+   "episode_s": 7.968,
+   "mark_batch": null,
+   "mark_at": null,
+   "mark_straddled": null
+  },
+  {
+   "state": "time_limit",
+   "segment": 1,
+   "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:2",
+   "run_status": "queued",
+   "runs": [
+    {
+     "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:1",
+     "started_by": "user",
+     "status": "running",
+     "message_id": "649e536d-0519-4978-9c8a-055454a79341"
+    },
+    {
+     "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:2",
+     "started_by": "user",
+     "status": "queued",
+     "message_id": "0c18afe4-1065-485f-81b8-c33aba6b57c0"
+    }
+   ],
+   "waited_s": 2.01,
+   "user_channel": 0,
+   "outputs": [],
+   "unresolved": [],
+   "requests": [],
+   "ended_utc": "2026-11-22T09:03:50.520Z",
+   "handback_utc": null,
+   "episode_s": 11.17,
+   "mark_batch": null,
+   "mark_at": null,
+   "mark_straddled": null
+  },
+  {
+   "state": "finished",
+   "segment": 1,
+   "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:2",
+   "run_status": "completed",
+   "runs": [
+    {
+     "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:1",
+     "started_by": "user",
+     "status": "completed",
+     "message_id": "649e536d-0519-4978-9c8a-055454a79341"
+    },
+    {
+     "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:2",
+     "started_by": "user",
+     "status": "completed",
+     "message_id": "0c18afe4-1065-485f-81b8-c33aba6b57c0"
+    }
+   ],
+   "waited_s": 1.7,
+   "user_channel": 0,
+   "outputs": [
+    "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A1%253Aattempt%253A1%3Am4%3Ac0",
+    "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A2%253Aattempt%253A1%3Am1%3Ac0"
+   ],
+   "unresolved": [],
+   "requests": [],
+   "ended_utc": "2026-11-22T09:03:53.238Z",
+   "handback_utc": "2026-11-22T09:03:51.289Z",
+   "episode_s": 14.686,
+   "mark_batch": 0,
+   "mark_at": "2026-11-22T09:03:51.289000Z",
+   "mark_straddled": null
+  },
+  {
+   "state": "finished",
+   "segment": 1,
+   "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:3",
+   "run_status": "completed",
+   "runs": [
+    {
+     "run_id": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:3",
+     "started_by": "user",
+     "status": "completed",
+     "message_id": "ec24fe7a-22a3-4122-a15a-e143a02e1c9e"
+    }
+   ],
+   "waited_s": 1.7,
+   "user_channel": 0,
+   "outputs": [
+    "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A3%253Aattempt%253A1%3Am1%3Ac0"
+   ],
+   "unresolved": [],
+   "requests": [],
+   "ended_utc": "2026-11-22T09:03:57.845Z",
+   "handback_utc": "2026-11-22T09:03:56.046Z",
+   "episode_s": 18.944,
+   "mark_batch": 0,
+   "mark_at": "2026-11-22T09:03:56.046000Z",
+   "mark_straddled": null
+  }
+ ],
+ "corrections": [],
+ "probes": [],
+ "handoffs": [],
+ "marks": [
+  {
+   "label": "turn-1-secret",
+   "segment": 1,
+   "ok": true,
+   "accepted": true,
+   "at": "2026-11-22T09:03:40.014000Z",
+   "batch": 0,
+   "straddled": null,
+   "covered_utc": "2026-11-22T09:03:41.947795Z",
+   "requested_utc": "2026-11-22T09:03:41.505Z",
+   "acked_utc": "2026-11-22T09:03:41.980Z",
+   "seconds": 0.475,
+   "error": null
+  },
+  {
+   "label": "m1",
+   "segment": 1,
+   "by": "caller",
+   "ok": true,
+   "accepted": true,
+   "at": "2026-11-22T09:03:41.980396Z",
+   "batch": 0,
+   "straddled": null,
+   "covered_utc": "2026-11-22T09:03:42.434907Z",
+   "requested_utc": "2026-11-22T09:03:41.980Z",
+   "acked_utc": "2026-11-22T09:03:42.448Z",
+   "seconds": 0.468,
+   "error": null
+  },
+  {
+   "label": "m2",
+   "segment": 1,
+   "by": "caller",
+   "ok": true,
+   "accepted": true,
+   "at": "2026-11-22T09:03:42.014000Z",
+   "batch": 0,
+   "straddled": null,
+   "covered_utc": "2026-11-22T09:03:43.201562Z",
+   "requested_utc": "2026-11-22T09:03:42.698Z",
+   "acked_utc": "2026-11-22T09:03:43.254Z",
+   "seconds": 0.556,
+   "error": null
+  },
+  {
+   "label": "m3",
+   "segment": 1,
+   "by": "caller",
+   "ok": true,
+   "accepted": true,
+   "at": "2026-11-22T09:03:47.318656Z",
+   "batch": 0,
+   "straddled": null,
+   "covered_utc": "2026-11-22T09:03:47.964639Z",
+   "requested_utc": "2026-11-22T09:03:47.318Z",
+   "acked_utc": "2026-11-22T09:03:47.999Z",
+   "seconds": 0.68,
+   "error": null
+  },
+  {
+   "label": "m4",
+   "segment": 1,
+   "by": "caller",
+   "ok": true,
+   "accepted": true,
+   "at": "2026-11-22T09:03:50.520310Z",
+   "batch": 0,
+   "straddled": null,
+   "covered_utc": "2026-11-22T09:03:50.976068Z",
+   "requested_utc": "2026-11-22T09:03:50.520Z",
+   "acked_utc": "2026-11-22T09:03:51.021Z",
+   "seconds": 0.501,
+   "error": null
+  },
+  {
+   "label": "turn-4-finished",
+   "segment": 1,
+   "ok": true,
+   "accepted": true,
+   "at": "2026-11-22T09:03:51.289000Z",
+   "batch": 0,
+   "straddled": null,
+   "covered_utc": "2026-11-22T09:03:53.976576Z",
+   "requested_utc": "2026-11-22T09:03:53.238Z",
+   "acked_utc": "2026-11-22T09:03:54.036Z",
+   "seconds": 0.798,
+   "error": null
+  },
+  {
+   "label": "m5",
+   "segment": 1,
+   "by": "caller",
+   "ok": true,
+   "accepted": true,
+   "at": "2026-11-22T09:03:54.036389Z",
+   "batch": 0,
+   "straddled": null,
+   "covered_utc": "2026-11-22T09:03:54.475934Z",
+   "requested_utc": "2026-11-22T09:03:54.036Z",
+   "acked_utc": "2026-11-22T09:03:54.495Z",
+   "seconds": 0.459,
+   "error": null
+  },
+  {
+   "label": "end",
+   "segment": 1,
+   "by": "caller",
+   "ok": true,
+   "accepted": true,
+   "at": "2026-11-22T09:03:51.289000Z",
+   "batch": 0,
+   "straddled": null,
+   "covered_utc": "2026-11-22T09:03:55.237706Z",
+   "requested_utc": "2026-11-22T09:03:54.732Z",
+   "acked_utc": "2026-11-22T09:03:55.251Z",
+   "seconds": 0.519,
+   "error": null
+  },
+  {
+   "label": "turn-5-finished",
+   "segment": 1,
+   "ok": true,
+   "accepted": true,
+   "at": "2026-11-22T09:03:56.046000Z",
+   "batch": 0,
+   "straddled": null,
+   "covered_utc": "2026-11-22T09:03:58.243324Z",
+   "requested_utc": "2026-11-22T09:03:57.845Z",
+   "acked_utc": "2026-11-22T09:03:58.294Z",
+   "seconds": 0.449,
+   "error": null
+  }
+ ],
+ "runner_marks": [
+  "m1",
+  "m2",
+  "m3",
+  "m4",
+  "m5",
+  "end"
+ ],
+ "end_mark": "end",
+ "shutdown_mark": {
+  "batch": 0,
+  "at": "2026-11-22T09:03:51.289000Z",
+  "straddled": null,
+  "covered_utc": "2026-11-22T09:04:00.996249Z",
+  "requested_utc": "2026-11-22T09:04:00.232Z",
+  "acked_utc": "2026-11-22T09:04:01.050Z",
+  "label": "export"
+ },
+ "quiesce": {
+  "server": {
+   "stopped": true,
+   "pids": [
+    "10",
+    "17"
+   ]
+  },
+  "site": {
+   "gateway": {
+    "stop_exit": 0,
+    "running": false,
+    "paused": false
+   },
+   "scripted_server": {
+    "stop_exit": 0,
+    "running": false,
+    "paused": false
+   }
+  }
+ },
+ "runner_events": [
+  {
+   "type": "verdict",
+   "utc": "2026-11-22T09:03:40.014000Z",
+   "ref": {
+    "item": "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850"
+   },
+   "fields": {
+    "label": "unanswerable",
+    "reply": "I can't share credentials. Please carry on without them."
+   },
+   "end_utc": null
+  },
+  {
+   "type": "wait",
+   "utc": "2026-11-22T09:03:40.014000Z",
+   "end_utc": "2026-11-22T09:03:43.254991Z",
+   "ref": {
+    "item": "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850"
+   },
+   "fields": {
+    "charged_ms": 2000,
+    "ended": "reply",
+    "replies_to": [],
+    "causes": [
+     "refusal"
+    ],
+    "overrun_ms": 683
+   }
+  },
+  {
+   "type": "verdict",
+   "utc": "2026-11-22T09:03:51.169000Z",
+   "ref": {
+    "item": "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A1%253Aattempt%253A1%3Am4%3Ac0"
+   },
+   "fields": {
+    "label": "no_request",
+    "reply": null
+   },
+   "end_utc": null
+  },
+  {
+   "type": "verdict",
+   "utc": "2026-11-22T09:03:51.289000Z",
+   "ref": {
+    "item": "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A2%253Aattempt%253A1%3Am1%3Ac0"
+   },
+   "fields": {
+    "label": "no_request",
+    "reply": null
+   },
+   "end_utc": null
+  },
+  {
+   "type": "episode_end",
+   "utc": "2026-11-22T09:03:51.289000Z",
+   "ref": null,
+   "fields": {
+    "reason": "finished",
+    "stopped_utc": null
+   },
+   "end_utc": null
+  },
+  {
+   "type": "handback",
+   "utc": "2026-11-22T09:03:40.014000Z",
+   "ref": {
+    "item": "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850"
+   },
+   "fields": {
+    "kind": "pending"
+   },
+   "end_utc": null
+  },
+  {
+   "type": "handback",
+   "utc": "2026-11-22T09:03:51.289000Z",
+   "ref": {
+    "item": "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A2%253Aattempt%253A1%3Am1%3Ac0"
+   },
+   "fields": {
+    "kind": "finished"
+   },
+   "end_utc": null
+  }
+ ],
+ "user_waits": [
+  {
+   "type": "wait",
+   "utc": "2026-11-22T09:03:40.014000Z",
+   "end_utc": "2026-11-22T09:03:43.254991Z",
+   "ref": {
+    "item": "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850"
+   },
+   "fields": {
+    "charged_ms": 2000,
+    "ended": "reply",
+    "replies_to": [],
+    "causes": [
+     "refusal"
+    ],
+    "overrun_ms": 683
+   }
+  }
+ ],
+ "gateway_usage": {
+  "calls": 6,
+  "input_tokens": 12,
+  "cached_input_tokens": 41864,
+  "cache_write_tokens": 9247,
+  "output_tokens": 200,
+  "calls_not_complete": 0,
+  "calls_outcome_unknown": 0,
+  "duration_ms": 2045.2,
+  "server_tool_use": false,
+  "usage_status": "complete",
+  "errors": {
+   "4xx": 0,
+   "5xx": 0,
+   "other": 0
+  }
+ },
+ "describe": {
+  "harness": "pi",
+  "harness_version": "1.6.0",
+  "t3_version": "t3 v0.1.12-nightly.20261121.5051",
+  "driver_version": "cohbench-driver 3+ed817e2a77ab",
+  "model": "claude-haiku-5-5",
+  "mode": "default"
+ }
+}

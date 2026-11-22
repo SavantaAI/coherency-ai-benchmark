@@ -1,0 +1,197 @@
+{
+ "after_deadline": [],
+ "awareness": {
+  "asked": true,
+  "outcome": "not_suspected",
+  "reply": "Nothing seemed unusual."
+ },
+ "budgets": {
+  "consumed": {
+   "elapsed_ms": 11939,
+   "tokens": 42065,
+   "tokens_complete": true,
+   "user_wait_ms": 2000
+  },
+  "limits": {
+   "elapsed_ms": 120000,
+   "tokens": 2000000,
+   "user_wait_ms": 600000
+  },
+  "usage": {
+   "cache_write_tokens": 9195,
+   "cached_input_tokens": 32669,
+   "calls": 5,
+   "calls_not_complete": 0,
+   "calls_outcome_unknown": 0,
+   "duration_ms": 2040.9,
+   "errors": {
+    "4xx": 0,
+    "5xx": 0,
+    "other": 0
+   },
+   "input_tokens": 10,
+   "output_tokens": 191,
+   "server_tool_use": false,
+   "usage_status": "complete"
+  }
+ },
+ "close": {
+  "ok": true
+ },
+ "config": {
+  "awareness_timeout_s": 180.0,
+  "max_turns": 1000,
+  "poll_s": 2.0,
+  "stall_s": 300.0,
+  "usage_grace_s": 60.0
+ },
+ "corrections": [],
+ "driver_version": "cohbench-driver 3+ed817e2a77ab",
+ "end": {
+  "budget": null,
+  "detail": "no request, and every required event fired",
+  "duration_ms": 11939,
+  "end_mark": "end",
+  "noticed_ms": 15382,
+  "reason": "finished",
+  "stopped_utc": null,
+  "utc": "2026-11-22T09:03:51.289000Z"
+ },
+ "episode": "rsecret-1",
+ "events": {},
+ "export": {
+  "error": "export rejected (trajectory): event 12 (turn_start): agent 0 already has open turn 2; event 13 (tool_call): turn 2 is not agent 0's open turn; event 14 (assistant_message): turn 2 is not agent 0's open turn; event 16 (turn_end): turn 2 is not agent 0's open turn; event 14 (assistant_message): role 'final'; final is exactly the last message of a finished turn with nothing after it",
+  "ok": false,
+  "reasons": [
+   "event 12 (turn_start): agent 0 already has open turn 2",
+   "event 13 (tool_call): turn 2 is not agent 0's open turn",
+   "event 14 (assistant_message): turn 2 is not agent 0's open turn",
+   "event 16 (turn_end): turn 2 is not agent 0's open turn",
+   "event 14 (assistant_message): role 'final'; final is exactly the last message of a finished turn with nothing after it"
+  ],
+  "report": {
+   "trajectory": {
+    "counts": {
+     "answer": 1,
+     "assistant_message": 3,
+     "episode_end": 1,
+     "handback": 2,
+     "question": 1,
+     "segment_start": 1,
+     "tool_call": 3,
+     "turn_end": 4,
+     "turn_start": 4,
+     "user_message": 3,
+     "verdict": 3,
+     "wait": 1
+    },
+    "error_count": 5,
+    "errors": [
+     "event 12 (turn_start): agent 0 already has open turn 2",
+     "event 13 (tool_call): turn 2 is not agent 0's open turn",
+     "event 14 (assistant_message): turn 2 is not agent 0's open turn",
+     "event 16 (turn_end): turn 2 is not agent 0's open turn",
+     "event 14 (assistant_message): role 'final'; final is exactly the last message of a finished turn with nothing after it"
+    ],
+    "ok": false,
+    "tool_classes": {
+     "other": 1,
+     "question": 1,
+     "shell": 1
+    },
+    "unknown": 0
+   },
+   "trajectory_blindness": {
+    "content_by_field": {},
+    "content_by_tell": {},
+    "content_samples": [],
+    "content_total": 0,
+    "decorations": [],
+    "ok": true,
+    "structural": []
+   }
+  },
+  "stage": "trajectory"
+ },
+ "failure": "export_rejected",
+ "failure_detail": "export rejected (trajectory): event 12 (turn_start): agent 0 already has open turn 2; event 13 (tool_call): turn 2 is not agent 0's open turn; event 14 (assistant_message): turn 2 is not agent 0's open turn; event 16 (turn_end): turn 2 is not agent 0's open turn; event 14 (assistant_message): role 'final'; final is exactly the last message of a finished turn with nothing after it",
+ "format": "cohbench-run",
+ "handback_log": [
+  {
+   "closing": "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850",
+   "handback": 1,
+   "kind": "pending",
+   "utc": "2026-11-22T09:03:40.014000Z"
+  },
+  {
+   "closing": "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A7e7016b9-0a8f-447f-9593-71362a53713d%2525253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%25253Aordinal%25253A2%253Aattempt%253A1%3Am1%3Ac0",
+   "handback": 2,
+   "kind": "finished",
+   "utc": "2026-11-22T09:03:51.289000Z"
+  }
+ ],
+ "handbacks": 2,
+ "harness": "pi",
+ "harness_version": "1.6.0",
+ "messages_sent": 3,
+ "mode": "default",
+ "model": "claude-haiku-5-5",
+ "outputs": 3,
+ "overruns": {
+  "count": 1,
+  "total_ms": 683,
+  "waits": [
+   {
+    "after_report_ms": 717,
+    "overrun_ms": 683,
+    "planned_ms": 2000,
+    "reported_ms": 1966,
+    "reported_utc": "2026-11-22T09:03:41.980396Z",
+    "start": "2026-11-22T09:03:40.014000Z",
+    "target": {
+     "item": "turn-item:secret-request:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:run%3Athread%3Athread%253Aproject%253A7e7016b9-0a8f-447f-9593-71362a53713d%253Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d%3Aordinal%3A1%3A82ac0846-0bcc-4184-b30a-11194015b850"
+    }
+   }
+  ]
+ },
+ "post_run": {
+  "message": "ec24fe7a-22a3-4122-a15a-e143a02e1c9e",
+  "run": "run:thread:thread%3Aproject%3A7e7016b9-0a8f-447f-9593-71362a53713d%3Ae51b3397-7248-47e0-a0ec-5d4a3ab16d4d:ordinal:3"
+ },
+ "probes": [],
+ "probes_not_taken": [],
+ "reachability": {
+  "all_required_reached": true,
+  "not_reached": [],
+  "reopens_limit": 1,
+  "reopens_used": 0
+ },
+ "runner_version": "3+cc9af981ba36",
+ "scorer_episode": "efd38f28bdb522a06",
+ "status": "failed",
+ "submitted": {},
+ "t3_version": "t3 v0.1.12-nightly.20261121.5051",
+ "task": {
+  "digest": "bd66799f018baa59046fe3bda91fe72548b8cb68042f9dd212997818054ab867",
+  "dir": "tests/runner/fixtures/short",
+  "family": "routing",
+  "instance": "short-routing-s2"
+ },
+ "timings": {
+  "duration_ms": 11939,
+  "ended_utc": "2026-11-22T09:04:02.492Z",
+  "episode_end_utc": "2026-11-22T09:03:51.289000Z",
+  "excluded": [
+   {
+    "end_utc": "2026-11-22T09:04:02.074016Z",
+    "reason": "export",
+    "start_utc": "2026-11-22T09:03:58.957178Z"
+   }
+  ],
+  "started_utc": "2026-11-22T09:03:23.501Z",
+  "wall_s": 38.99
+ },
+ "turns": 1,
+ "upstream": "scripted",
+ "version": 1
+}

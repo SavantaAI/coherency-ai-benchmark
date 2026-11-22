@@ -1,0 +1,173 @@
+{
+ "end_mark": "end-1",
+ "end_utc": "2026-11-22T08:14:46.650231Z",
+ "excluded": [
+  {
+   "end_utc": "2026-11-22T08:14:36.118576Z",
+   "reason": "handoff",
+   "start_utc": "2026-11-22T08:14:35.837553Z"
+  }
+ ],
+ "kernel": "6.10.14-linuxkit",
+ "marks": [
+  "m-1",
+  "reset-1",
+  "end-1"
+ ],
+ "python": "3.12.16",
+ "start_utc": "2026-11-22T08:14:13.238108Z",
+ "steps": [
+  {
+   "step": "tmp/c0ffee12ab.bin created",
+   "utc": "2026-11-22T08:14:16.739196Z"
+  },
+  {
+   "step": "out/summary.txt created",
+   "utc": "2026-11-22T08:14:19.339892Z"
+  },
+  {
+   "step": "out/.report.txt.tmp written",
+   "utc": "2026-11-22T08:14:20.240822Z"
+  },
+  {
+   "step": "out/.report.txt.tmp renamed to out/report.txt; a driver ref added",
+   "utc": "2026-11-22T08:14:20.348597Z"
+  },
+  {
+   "ack": {
+    "accepted": true,
+    "at": "2026-11-22T08:14:22.503785Z",
+    "batch": 4,
+    "covered_utc": "2026-11-22T08:14:22.754304Z",
+    "id": "1795335262406-f42b6492",
+    "label": "m-1",
+    "mark_seq": 16,
+    "metric": {
+     "batch": 4,
+     "complete": true,
+     "error": null,
+     "logged": true,
+     "measured": true,
+     "metrics": {
+      "bytes": 111,
+      "files": 5
+     },
+     "ok": true,
+     "reused_from": null,
+     "run": 5
+    },
+    "ok": true,
+    "settled": true,
+    "straddled": null,
+    "straddled_last": null,
+    "wall": "2026-11-22T08:14:22.754375Z"
+   },
+   "step": "mark m-1 requested",
+   "utc": "2026-11-22T08:14:22.249202Z"
+  },
+  {
+   "step": "data/a.csv appended in place",
+   "utc": "2026-11-22T08:14:24.239623Z"
+  },
+  {
+   "step": "out/summary.txt rewritten with the same bytes",
+   "utc": "2026-11-22T08:14:26.239821Z"
+  },
+  {
+   "step": "out/report.txt replaced through out/.report.txt.tmp within one batch",
+   "utc": "2026-11-22T08:14:28.241822Z"
+  },
+  {
+   "step": "out/report.txt replaced through out/.report.txt.tmp across two batches",
+   "utc": "2026-11-22T08:14:30.358402Z"
+  },
+  {
+   "step": "tmp/c0ffee12ab.bin deleted, out/summary.txt moved to out/final.txt, big.bin created, CLAUDE.md modified, then rewritten through .CLAUDE.md.tmp, with a CLAUDE.md~ backup",
+   "utc": "2026-11-22T08:14:33.244049Z"
+  },
+  {
+   "ack": {
+    "accepted": true,
+    "at": "2026-11-22T08:14:35.555493Z",
+    "batch": 10,
+    "covered_utc": "2026-11-22T08:14:35.810171Z",
+    "id": "1795335275421-02f1efe1",
+    "label": "reset-1",
+    "mark_seq": 32,
+    "metric": {
+     "batch": 10,
+     "complete": false,
+     "error": null,
+     "logged": true,
+     "measured": true,
+     "metrics": {
+      "bytes": 52,
+      "files": 4
+     },
+     "ok": true,
+     "reused_from": null,
+     "run": 10
+    },
+    "ok": true,
+    "settled": true,
+    "straddled": null,
+    "straddled_last": null,
+    "wall": "2026-11-22T08:14:35.810214Z"
+   },
+   "step": "mark reset-1 requested",
+   "utc": "2026-11-22T08:14:35.239288Z"
+  },
+  {
+   "step": "c.txt created; data/a.csv rewritten in place",
+   "utc": "2026-11-22T08:14:38.120739Z"
+  },
+  {
+   "step": "p.txt and q.txt created",
+   "utc": "2026-11-22T08:14:40.121179Z"
+  },
+  {
+   "step": "p.txt and q.txt swapped through .swap.tmp",
+   "utc": "2026-11-22T08:14:42.119537Z"
+  },
+  {
+   "step": "locked/f created; locked/ made mode 000",
+   "utc": "2026-11-22T08:14:44.119852Z"
+  },
+  {
+   "ack": {
+    "accepted": true,
+    "at": "2026-11-22T08:14:46.344768Z",
+    "batch": 4,
+    "covered_utc": "2026-11-22T08:14:46.595252Z",
+    "id": "1795335286284-1b9df358",
+    "label": "end-1",
+    "mark_seq": 24,
+    "metric": {
+     "batch": 4,
+     "complete": false,
+     "error": null,
+     "logged": true,
+     "measured": true,
+     "metrics": {
+      "bytes": 68,
+      "files": 7
+     },
+     "ok": true,
+     "reused_from": null,
+     "run": 5
+    },
+    "ok": true,
+    "settled": true,
+    "straddled": null,
+    "straddled_last": null,
+    "wall": "2026-11-22T08:14:46.595294Z"
+   },
+   "step": "mark end-1 requested",
+   "utc": "2026-11-22T08:14:46.119617Z"
+  },
+  {
+   "step": "post.txt written after the end",
+   "utc": "2026-11-22T08:14:47.152351Z"
+  }
+ ]
+}

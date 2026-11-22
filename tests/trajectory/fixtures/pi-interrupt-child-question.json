@@ -1,0 +1,779 @@
+{
+ "threads": [
+  {
+   "thread": {
+    "createdBy": "user",
+    "creationSource": "web",
+    "id": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+    "projectId": "61a40cf1-0937-4bf7-88c1-a68eccaaff0c",
+    "title": "task",
+    "providerInstanceId": "pi",
+    "modelSelection": {
+     "instanceId": "pi",
+     "model": "anthropic/claude-haiku-5-5",
+     "options": [
+      {
+       "id": "thinking",
+       "value": "off"
+      }
+     ]
+    },
+    "runtimeMode": "full-access",
+    "interactionMode": "default",
+    "branch": "main",
+    "worktreePath": null,
+    "pullRequests": [],
+    "activeProviderThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+    "lineage": {
+     "parentThreadId": null,
+     "relationshipToParent": null,
+     "rootThreadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37"
+    },
+    "forkedFrom": null,
+    "createdAt": "2026-11-22T02:58:32.350Z",
+    "updatedAt": "2026-11-22T02:58:39.799Z",
+    "archivedAt": null,
+    "settledOverride": null,
+    "settledAt": null,
+    "snoozedUntil": null,
+    "snoozedAt": null,
+    "lastVisitedAt": "2026-11-22T02:58:32.350Z",
+    "deletedAt": null
+   },
+   "runs": [
+    {
+     "id": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "ordinal": 1,
+     "providerInstanceId": "pi",
+     "modelSelection": {
+      "instanceId": "pi",
+      "model": "anthropic/claude-haiku-5-5",
+      "options": [
+       {
+        "id": "thinking",
+        "value": "off"
+       }
+      ]
+     },
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "userMessageId": "6fc9f705-ed39-4818-a340-755be1bf94ba",
+     "rootNodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1:root",
+     "activeAttemptId": "run-attempt:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1:attempt:1",
+     "status": "completed",
+     "queuePosition": null,
+     "requestedAt": "2026-11-22T02:58:32.355Z",
+     "startedAt": "2026-11-22T02:58:32.738Z",
+     "completedAt": "2026-11-22T02:58:33.220Z",
+     "checkpointId": "checkpoint:scope:checkpoint-scope%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aname%3Aroot:name:1",
+     "contextHandoffId": null,
+     "delegatedCompletion": {
+      "disposition": "open",
+      "nextGeneration": 2,
+      "delivery": null
+     },
+     "workspacePreparation": {
+      "type": "root"
+     }
+    },
+    {
+     "id": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:2",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "ordinal": 2,
+     "providerInstanceId": "pi",
+     "modelSelection": {
+      "instanceId": "pi",
+      "model": "anthropic/claude-haiku-5-5",
+      "options": [
+       {
+        "id": "thinking",
+        "value": "off"
+       }
+      ]
+     },
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "userMessageId": "message:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:3:9ff07f98-8a43-461a-ac78-1858dbdc4958",
+     "rootNodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A2:root",
+     "activeAttemptId": "run-attempt:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A2:attempt:1",
+     "status": "completed",
+     "queuePosition": null,
+     "requestedAt": "2026-11-22T02:58:37.462Z",
+     "startedAt": "2026-11-22T02:58:37.541Z",
+     "completedAt": "2026-11-22T02:58:37.633Z",
+     "checkpointId": "checkpoint:scope:checkpoint-scope%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aname%3Aroot:name:2",
+     "contextHandoffId": null,
+     "workStartedAt": "2026-11-22T02:58:32.738Z"
+    }
+   ],
+   "attempts": [
+    {
+     "id": "run-attempt:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1:attempt:1",
+     "nativeThreadId": "/home/node/.pi/agent/sessions/--work-project--/2026-11-22T02-58-32-565Z_01a20130-e9f4-72c5-99f7-3e15edf5077c.jsonl",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "attemptOrdinal": 1,
+     "rootNodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1:root",
+     "providerInstanceId": "pi",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": null,
+     "reason": "initial",
+     "status": "completed",
+     "startedAt": "2026-11-22T02:58:32.738Z",
+     "completedAt": "2026-11-22T02:58:33.211Z"
+    },
+    {
+     "id": "run-attempt:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A2:attempt:1",
+     "nativeThreadId": "/home/node/.pi/agent/sessions/--work-project--/2026-11-22T02-58-32-565Z_01a20130-e9f4-72c5-99f7-3e15edf5077c.jsonl",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:2",
+     "attemptOrdinal": 1,
+     "rootNodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A2:root",
+     "providerInstanceId": "pi",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": null,
+     "reason": "initial",
+     "status": "completed",
+     "startedAt": "2026-11-22T02:58:37.541Z",
+     "completedAt": "2026-11-22T02:58:37.624Z"
+    }
+   ],
+   "messages": [
+    {
+     "createdBy": "user",
+     "creationSource": "web",
+     "id": "6fc9f705-ed39-4818-a340-755be1bf94ba",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1:root",
+     "role": "user",
+     "text": "Have a helper ask me for a color.",
+     "attachments": [],
+     "streaming": false,
+     "createdAt": "2026-11-22T02:58:32.355Z",
+     "updatedAt": "2026-11-22T02:58:32.355Z"
+    },
+    {
+     "createdBy": "agent",
+     "creationSource": "provider",
+     "id": "message:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253A1%3Am2%3Ac0",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "nodeId": "node:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253A1%3Am2%3Ac0",
+     "role": "assistant",
+     "text": "A helper is on it.",
+     "attachments": [],
+     "streaming": false,
+     "createdAt": "2026-11-22T02:58:33.198Z",
+     "updatedAt": "2026-11-22T02:58:33.198Z"
+    },
+    {
+     "createdBy": "agent",
+     "creationSource": "server",
+     "id": "message:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:3:9ff07f98-8a43-461a-ac78-1858dbdc4958",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:2",
+     "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A2:root",
+     "role": "user",
+     "text": "Delegated task node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28 (Pick color) in child thread thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28 [interrupted]:\nChild task ended with status interrupted.\n\nStopped by user",
+     "attachments": [],
+     "streaming": false,
+     "createdAt": "2026-11-22T02:58:37.462Z",
+     "updatedAt": "2026-11-22T02:58:37.462Z",
+     "delegatedCompletion": {
+      "parentRunId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+      "generation": 1,
+      "taskIds": [
+       "node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28"
+      ]
+     }
+    },
+    {
+     "createdBy": "agent",
+     "creationSource": "provider",
+     "id": "message:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A2%253Aattempt%253A1%3Am1%3Ac0",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:2",
+     "nodeId": "node:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A2%253Aattempt%253A1%3Am1%3Ac0",
+     "role": "assistant",
+     "text": "The helper is done.",
+     "attachments": [],
+     "streaming": false,
+     "createdAt": "2026-11-22T02:58:37.573Z",
+     "updatedAt": "2026-11-22T02:58:37.614Z"
+    }
+   ],
+   "subagents": [
+    {
+     "id": "node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "parentNodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1:root",
+     "origin": "app_owned",
+     "createdBy": "agent",
+     "driver": "pi",
+     "providerInstanceId": "pi",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+     "childThreadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "nativeTaskRef": null,
+     "prompt": "Act as the research sub-agent for this task.\n\nAsk the user which color to use.",
+     "title": "Pick color",
+     "model": "anthropic/claude-haiku-5-5",
+     "modelSelection": {
+      "instanceId": "pi",
+      "model": "anthropic/claude-haiku-5-5",
+      "options": [
+       {
+        "id": "thinking",
+        "value": "off"
+       }
+      ]
+     },
+     "completionWake": "always",
+     "completionDelivery": {
+      "state": "delivered",
+      "observedByRunId": null
+     },
+     "status": "interrupted",
+     "result": "Child task ended with status interrupted.\n\nStopped by user",
+     "startedAt": "2026-11-22T02:58:32.841Z",
+     "completedAt": "2026-11-22T02:58:37.379Z",
+     "updatedAt": "2026-11-22T02:58:37.687Z"
+    }
+   ],
+   "items": [
+    {
+     "id": "turn-item:message:6fc9f705-ed39-4818-a340-755be1bf94ba",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1:root",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": null,
+     "nativeItemRef": null,
+     "parentItemId": null,
+     "ordinal": 1000001,
+     "status": "completed",
+     "title": null,
+     "startedAt": "2026-11-22T02:58:32.355Z",
+     "completedAt": "2026-11-22T02:58:32.355Z",
+     "updatedAt": "2026-11-22T02:58:32.355Z",
+     "createdBy": "user",
+     "creationSource": "web",
+     "type": "user_message",
+     "messageId": "6fc9f705-ed39-4818-a340-755be1bf94ba",
+     "inputIntent": "turn_start",
+     "text": "Have a helper ask me for a color.",
+     "attachments": []
+    },
+    {
+     "id": "turn-item:provider:pi:native-item:workspace-preparation%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1:root",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": null,
+     "nativeItemRef": null,
+     "parentItemId": null,
+     "ordinal": 1000002,
+     "status": "completed",
+     "title": "Workspace ready",
+     "startedAt": "2026-11-22T02:58:32.355Z",
+     "completedAt": "2026-11-22T02:58:32.390Z",
+     "updatedAt": "2026-11-22T02:58:32.390Z",
+     "type": "command_execution",
+     "input": "Preparing workspace",
+     "output": "Workspace preparation completed.",
+     "exitCode": 0
+    },
+    {
+     "id": "turn-item:provider:pi:native-item:toolu_01KDGJStC1vbDwiJWr3teH26",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "nodeId": "node:provider:pi:native-item:toolu_01KDGJStC1vbDwiJWr3teH26",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3A1",
+     "nativeItemRef": {
+      "driver": "pi",
+      "nativeId": "toolu_01KDGJStC1vbDwiJWr3teH26",
+      "strength": "strong"
+     },
+     "parentItemId": null,
+     "ordinal": 1000003,
+     "status": "completed",
+     "title": "mcp__t3-code__delegate_task",
+     "startedAt": "2026-11-22T02:58:32.825Z",
+     "completedAt": "2026-11-22T02:58:33.188Z",
+     "updatedAt": "2026-11-22T02:58:33.188Z",
+     "type": "dynamic_tool",
+     "toolName": "mcp__t3-code__delegate_task",
+     "input": {
+      "task": "Ask the user which color to use.",
+      "mode": "wait",
+      "role": "research",
+      "title": "Pick color"
+     },
+     "output": {
+      "content": [
+       {
+        "type": "text",
+        "text": "{\"taskId\":\"node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28\",\"childThreadId\":\"thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28\",\"link\":\"[Pick color](t3-thread://v2/5296afad-5ef5-46bf-b220-0e5ce516acb5/thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28)\",\"childRunId\":\"run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1\",\"childNodeId\":\"node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28\",\"status\":\"running\",\"workState\":\"working\",\"hasPendingChildRuns\":false,\"latestTerminalRunId\":null,\"latestTerminalStatus\":null,\"latestTerminalSummary\":null,\"latestTerminalResultContextTransferId\":null,\"providerInstanceId\":\"pi\",\"model\":\"anthropic/claude-haiku-5-5\",\"executedModel\":null,\"options\":[{\"id\":\"thinking\",\"value\":\"off\"}],\"summary\":null,\"resultContextTransferId\":null,\"hasPendingQuestion\":true,\"pendingApproval\":null,\"waitTimedOut\":false}"
+       }
+      ],
+      "structuredContent": {
+       "taskId": "node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+       "childThreadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+       "link": "[Pick color](t3-thread://v2/5296afad-5ef5-46bf-b220-0e5ce516acb5/thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28)",
+       "childRunId": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+       "childNodeId": "node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+       "status": "running",
+       "workState": "working",
+       "hasPendingChildRuns": false,
+       "latestTerminalRunId": null,
+       "latestTerminalStatus": null,
+       "latestTerminalSummary": null,
+       "latestTerminalResultContextTransferId": null,
+       "providerInstanceId": "pi",
+       "model": "anthropic/claude-haiku-5-5",
+       "executedModel": null,
+       "options": [
+        {
+         "id": "thinking",
+         "value": "off"
+        }
+       ],
+       "summary": null,
+       "resultContextTransferId": null,
+       "hasPendingQuestion": true,
+       "pendingApproval": null,
+       "waitTimedOut": false
+      }
+     }
+    },
+    {
+     "id": "turn-item:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "nodeId": "node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3A1",
+     "nativeItemRef": null,
+     "parentItemId": null,
+     "ordinal": 1000004,
+     "status": "interrupted",
+     "title": "Pick color",
+     "startedAt": "2026-11-22T02:58:32.841Z",
+     "completedAt": "2026-11-22T02:58:37.379Z",
+     "updatedAt": "2026-11-22T02:58:37.379Z",
+     "type": "subagent",
+     "subagentId": "node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "origin": "app_owned",
+     "driver": "pi",
+     "providerInstanceId": "pi",
+     "childThreadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "prompt": "Act as the research sub-agent for this task.\n\nAsk the user which color to use.",
+     "result": "Child task ended with status interrupted.\n\nStopped by user"
+    },
+    {
+     "id": "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253A1%3Am2%3Ac0",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "nodeId": "node:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253A1%3Am2%3Ac0",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3A1",
+     "nativeItemRef": {
+      "driver": "pi",
+      "nativeId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3A1:m2:c0",
+      "strength": "strong"
+     },
+     "parentItemId": null,
+     "ordinal": 1000005,
+     "status": "completed",
+     "title": null,
+     "startedAt": "2026-11-22T02:58:33.198Z",
+     "completedAt": "2026-11-22T02:58:33.198Z",
+     "updatedAt": "2026-11-22T02:58:33.198Z",
+     "type": "assistant_message",
+     "messageId": "message:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253A1%3Am2%3Ac0",
+     "text": "A helper is on it.",
+     "streaming": false
+    },
+    {
+     "id": "turn-item:provider:pi:native-item:checkpoint%3Acheckpoint%3Ascope%3Acheckpoint-scope%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aname%253Aroot%3Aname%3A1",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:1",
+     "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1:root",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": null,
+     "nativeItemRef": null,
+     "parentItemId": null,
+     "ordinal": 1000006,
+     "status": "completed",
+     "title": null,
+     "startedAt": "2026-11-22T02:58:33.220Z",
+     "completedAt": "2026-11-22T02:58:33.220Z",
+     "updatedAt": "2026-11-22T02:58:33.220Z",
+     "type": "checkpoint",
+     "checkpointId": "checkpoint:scope:checkpoint-scope%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aname%3Aroot:name:1",
+     "scopeId": "checkpoint-scope:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:name:root",
+     "files": []
+    },
+    {
+     "id": "turn-item:message:message%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A3%3A9ff07f98-8a43-461a-ac78-1858dbdc4958",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:2",
+     "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A2:root",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": null,
+     "nativeItemRef": null,
+     "parentItemId": null,
+     "ordinal": 2000001,
+     "status": "completed",
+     "title": null,
+     "startedAt": "2026-11-22T02:58:37.462Z",
+     "completedAt": "2026-11-22T02:58:37.462Z",
+     "updatedAt": "2026-11-22T02:58:37.462Z",
+     "type": "notification",
+     "source": {
+      "kind": "delegated_task",
+      "taskIds": [
+       "node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28"
+      ],
+      "childThreadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28"
+     },
+     "outcome": "cancelled",
+     "summary": "Delegated task \"Pick color\" stopped"
+    },
+    {
+     "id": "turn-item:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A2%253Aattempt%253A1%3Am1%3Ac0",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:2",
+     "nodeId": "node:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A2%253Aattempt%253A1%3Am1%3Ac0",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A2%3Aattempt%3A1",
+     "nativeItemRef": {
+      "driver": "pi",
+      "nativeId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aordinal%253A2%3Aattempt%3A1:m1:c0",
+      "strength": "strong"
+     },
+     "parentItemId": null,
+     "ordinal": 2000002,
+     "status": "completed",
+     "title": null,
+     "startedAt": "2026-11-22T02:58:37.573Z",
+     "completedAt": "2026-11-22T02:58:37.614Z",
+     "updatedAt": "2026-11-22T02:58:37.614Z",
+     "type": "assistant_message",
+     "messageId": "message:provider:pi:native-item:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Aproject%2525253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%2525253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%25253Aordinal%25253A2%253Aattempt%253A1%3Am1%3Ac0",
+     "text": "The helper is done.",
+     "streaming": false
+    },
+    {
+     "id": "turn-item:provider:pi:native-item:checkpoint%3Acheckpoint%3Ascope%3Acheckpoint-scope%253Athread%253Athread%25253Aproject%25253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%25253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%253Aname%253Aroot%3Aname%3A2",
+     "threadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "runId": "run:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:ordinal:2",
+     "nodeId": "node:run:run%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A2:root",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aordinal%3A1",
+     "providerTurnId": null,
+     "nativeItemRef": null,
+     "parentItemId": null,
+     "ordinal": 2000003,
+     "status": "completed",
+     "title": null,
+     "startedAt": "2026-11-22T02:58:37.633Z",
+     "completedAt": "2026-11-22T02:58:37.633Z",
+     "updatedAt": "2026-11-22T02:58:37.633Z",
+     "type": "checkpoint",
+     "checkpointId": "checkpoint:scope:checkpoint-scope%3Athread%3Athread%253Aproject%253A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%253Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37%3Aname%3Aroot:name:2",
+     "scopeId": "checkpoint-scope:thread:thread%3Aproject%3A61a40cf1-0937-4bf7-88c1-a68eccaaff0c%3Ad7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37:name:root",
+     "files": []
+    }
+   ],
+   "runtimeRequests": [],
+   "providerTurns": []
+  },
+  {
+   "thread": {
+    "createdBy": "agent",
+    "creationSource": "mcp",
+    "id": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+    "projectId": "61a40cf1-0937-4bf7-88c1-a68eccaaff0c",
+    "title": "Pick color",
+    "providerInstanceId": "pi",
+    "modelSelection": {
+     "instanceId": "pi",
+     "model": "anthropic/claude-haiku-5-5",
+     "options": [
+      {
+       "id": "thinking",
+       "value": "off"
+      }
+     ]
+    },
+    "runtimeMode": "full-access",
+    "interactionMode": "default",
+    "branch": "main",
+    "worktreePath": null,
+    "linkedPullRequest": null,
+    "pullRequests": [],
+    "activeProviderThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+    "lineage": {
+     "parentThreadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "relationshipToParent": "subagent",
+     "rootThreadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37"
+    },
+    "forkedFrom": {
+     "type": "node",
+     "nodeId": "node:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28"
+    },
+    "createdAt": "2026-11-22T02:58:32.841Z",
+    "updatedAt": "2026-11-22T02:58:37.379Z",
+    "archivedAt": null,
+    "settledOverride": null,
+    "settledAt": null,
+    "snoozedUntil": null,
+    "snoozedAt": null,
+    "guestShare": null,
+    "pinnedAt": null,
+    "autoSettleDisabledAt": null,
+    "pinOrderKey": null,
+    "lastVisitedAt": "2026-11-22T02:58:32.841Z",
+    "titleRegeneration": null,
+    "titleRenamed": false,
+    "deletedAt": null
+   },
+   "runs": [
+    {
+     "id": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+     "threadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "ordinal": 1,
+     "providerInstanceId": "pi",
+     "modelSelection": {
+      "instanceId": "pi",
+      "model": "anthropic/claude-haiku-5-5",
+      "options": [
+       {
+        "id": "thinking",
+        "value": "off"
+       }
+      ]
+     },
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+     "userMessageId": "message:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "rootNodeId": "node:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:root",
+     "activeAttemptId": "run-attempt:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:attempt:1",
+     "status": "interrupted",
+     "queuePosition": null,
+     "requestedAt": "2026-11-22T02:58:32.842Z",
+     "startedAt": "2026-11-22T02:58:33.081Z",
+     "completedAt": "2026-11-22T02:58:37.347Z",
+     "checkpointId": "checkpoint:scope:checkpoint-scope%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aname%3Aroot:name:1",
+     "contextHandoffId": null
+    }
+   ],
+   "attempts": [
+    {
+     "id": "run-attempt:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:attempt:1",
+     "nativeThreadId": "/home/node/.pi/agent/sessions/--work-project--/2026-11-22T02-58-33-011Z_01a20130-ebb3-7166-8a4d-053a2bd5dcac.jsonl",
+     "runId": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+     "attemptOrdinal": 1,
+     "rootNodeId": "node:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:root",
+     "providerInstanceId": "pi",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+     "providerTurnId": null,
+     "reason": "initial",
+     "status": "interrupted",
+     "startedAt": "2026-11-22T02:58:33.081Z",
+     "completedAt": "2026-11-22T02:58:37.347Z"
+    }
+   ],
+   "messages": [
+    {
+     "createdBy": "agent",
+     "creationSource": "mcp",
+     "senderThreadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "id": "message:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "threadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "runId": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+     "nodeId": "node:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:root",
+     "role": "user",
+     "text": "Act as the research sub-agent for this task.\n\nAsk the user which color to use.",
+     "attachments": [],
+     "streaming": false,
+     "createdAt": "2026-11-22T02:58:32.842Z",
+     "updatedAt": "2026-11-22T02:58:32.842Z"
+    }
+   ],
+   "subagents": [],
+   "items": [
+    {
+     "id": "turn-item:message:message%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "threadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "runId": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+     "nodeId": "node:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:root",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+     "providerTurnId": null,
+     "nativeItemRef": null,
+     "parentItemId": null,
+     "ordinal": 1000001,
+     "status": "completed",
+     "title": null,
+     "startedAt": "2026-11-22T02:58:32.842Z",
+     "completedAt": "2026-11-22T02:58:32.842Z",
+     "updatedAt": "2026-11-22T02:58:32.842Z",
+     "createdBy": "agent",
+     "creationSource": "mcp",
+     "type": "user_message",
+     "messageId": "message:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "senderThreadId": "thread:project:61a40cf1-0937-4bf7-88c1-a68eccaaff0c:d7a4b59b-ea0c-48ca-bae3-0a7e3f82cc37",
+     "inputIntent": "turn_start",
+     "text": "Act as the research sub-agent for this task.\n\nAsk the user which color to use.",
+     "attachments": []
+    },
+    {
+     "id": "turn-item:provider:pi:native-item:toolu_01iiFuCRzrPkkxncqRwueEJa",
+     "threadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "runId": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+     "nodeId": "node:provider:pi:native-item:toolu_01iiFuCRzrPkkxncqRwueEJa",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+     "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Adelegated-task%25253Acommand%2525253Amcp%2525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%2525253Adelegate-task%2525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Adelegated-task%25253Acommand%2525253Amcp%2525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%2525253Adelegate-task%2525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%253Aordinal%253A1%3Aattempt%3A1",
+     "nativeItemRef": {
+      "driver": "pi",
+      "nativeId": "toolu_01iiFuCRzrPkkxncqRwueEJa",
+      "strength": "strong"
+     },
+     "parentItemId": null,
+     "ordinal": 1000002,
+     "status": "interrupted",
+     "title": "ask_user",
+     "startedAt": "2026-11-22T02:58:33.166Z",
+     "completedAt": "2026-11-22T02:58:37.334Z",
+     "updatedAt": "2026-11-22T02:58:37.334Z",
+     "type": "dynamic_tool",
+     "toolName": "ask_user",
+     "input": {
+      "question": "Which color?",
+      "options": [
+       "red",
+       "blue"
+      ]
+     }
+    },
+    {
+     "id": "turn-item:runtime-request:runtime-request%3Aprovider%3Api%3Aprovider-turn%3Aprovider-turn%253Aprovider%253Api%253Anative-turn%253Aprovider-thread%25253Aprovider%25253Api%25253Anative-thread%25253Apending%2525253Arun%2525253Athread%2525253Athread%252525253Adelegated-task%252525253Acommand%25252525253Amcp%25252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25252525253Adelegate-task%25252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%2525253Aordinal%2525253A1%25253Aattempt%25253Arun-attempt%25253Arun%25253Arun%2525253Athread%2525253Athread%252525253Adelegated-task%252525253Acommand%25252525253Amcp%25252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25252525253Adelegate-task%25252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%2525253Aordinal%2525253A1%25253Aattempt%25253A1%3Anative-request%3Aacef6787-b53b-41c6-955b-1002ce4d2d7c%3A49d4366a-dca5-4878-bfb7-c085433cc249",
+     "threadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "runId": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+     "nodeId": "node:runtime-request:runtime-request%3Aprovider%3Api%3Aprovider-turn%3Aprovider-turn%253Aprovider%253Api%253Anative-turn%253Aprovider-thread%25253Aprovider%25253Api%25253Anative-thread%25253Apending%2525253Arun%2525253Athread%2525253Athread%252525253Adelegated-task%252525253Acommand%25252525253Amcp%25252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25252525253Adelegate-task%25252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%2525253Aordinal%2525253A1%25253Aattempt%25253Arun-attempt%25253Arun%25253Arun%2525253Athread%2525253Athread%252525253Adelegated-task%252525253Acommand%25252525253Amcp%25252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25252525253Adelegate-task%25252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%2525253Aordinal%2525253A1%25253Aattempt%25253A1%3Anative-request%3Aacef6787-b53b-41c6-955b-1002ce4d2d7c%3A49d4366a-dca5-4878-bfb7-c085433cc249",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+     "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Adelegated-task%25253Acommand%2525253Amcp%2525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%2525253Adelegate-task%2525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Adelegated-task%25253Acommand%2525253Amcp%2525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%2525253Adelegate-task%2525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%253Aordinal%253A1%3Aattempt%3A1",
+     "nativeItemRef": {
+      "driver": "pi",
+      "nativeId": "acef6787-b53b-41c6-955b-1002ce4d2d7c",
+      "strength": "strong"
+     },
+     "parentItemId": null,
+     "ordinal": 1000003,
+     "status": "cancelled",
+     "title": "Which color?",
+     "startedAt": "2026-11-22T02:58:33.168Z",
+     "completedAt": "2026-11-22T02:58:37.308Z",
+     "updatedAt": "2026-11-22T02:58:37.308Z",
+     "type": "user_input_request",
+     "requestId": "runtime-request:provider:pi:provider-turn:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Adelegated-task%2525253Acommand%252525253Amcp%252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%252525253Adelegate-task%252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Adelegated-task%2525253Acommand%252525253Amcp%252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%252525253Adelegate-task%252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%25253Aordinal%25253A1%253Aattempt%253A1:native-request:acef6787-b53b-41c6-955b-1002ce4d2d7c:49d4366a-dca5-4878-bfb7-c085433cc249",
+     "questions": [
+      {
+       "id": "acef6787-b53b-41c6-955b-1002ce4d2d7c",
+       "header": "Question",
+       "question": "Which color?",
+       "options": [
+        {
+         "label": "red",
+         "description": "red",
+         "value": "red"
+        },
+        {
+         "label": "blue",
+         "description": "blue",
+         "value": "blue"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "turn-item:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:signal:interrupt-request",
+     "threadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "runId": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+     "nodeId": "node:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:root",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+     "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Adelegated-task%25253Acommand%2525253Amcp%2525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%2525253Adelegate-task%2525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Adelegated-task%25253Acommand%2525253Amcp%2525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%2525253Adelegate-task%2525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%253Aordinal%253A1%3Aattempt%3A1",
+     "nativeItemRef": null,
+     "parentItemId": null,
+     "ordinal": 1000004,
+     "status": "completed",
+     "title": "Interrupt requested",
+     "startedAt": "2026-11-22T02:58:34.276Z",
+     "completedAt": "2026-11-22T02:58:34.276Z",
+     "updatedAt": "2026-11-22T02:58:34.276Z",
+     "type": "run_interrupt_request",
+     "message": "Stopped by user"
+    },
+    {
+     "id": "turn-item:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:signal:interrupt-result",
+     "threadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "runId": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+     "nodeId": "node:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:root",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+     "providerTurnId": null,
+     "nativeItemRef": null,
+     "parentItemId": "turn-item:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:signal:interrupt-request",
+     "ordinal": 1000005,
+     "status": "interrupted",
+     "title": "Interrupted",
+     "startedAt": "2026-11-22T02:58:37.347Z",
+     "completedAt": "2026-11-22T02:58:37.347Z",
+     "updatedAt": "2026-11-22T02:58:37.347Z",
+     "type": "run_interrupt_result",
+     "message": "Stopped by user"
+    },
+    {
+     "id": "turn-item:provider:pi:native-item:checkpoint%3Acheckpoint%3Ascope%3Acheckpoint-scope%253Athread%253Athread%25253Adelegated-task%25253Acommand%2525253Amcp%2525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%2525253Adelegate-task%2525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%253Aname%253Aroot%3Aname%3A1",
+     "threadId": "thread:delegated-task:command%3Amcp%3A18c0d629-64b6-4772-85c5-befd1da9f3c4%3Adelegate-task%3A680f28ca-99df-45d2-bc6e-3f7a3afeae28",
+     "runId": "run:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:ordinal:1",
+     "nodeId": "node:run:run%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1:root",
+     "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aordinal%3A1",
+     "providerTurnId": null,
+     "nativeItemRef": null,
+     "parentItemId": null,
+     "ordinal": 1000006,
+     "status": "completed",
+     "title": null,
+     "startedAt": "2026-11-22T02:58:37.379Z",
+     "completedAt": "2026-11-22T02:58:37.379Z",
+     "updatedAt": "2026-11-22T02:58:37.379Z",
+     "type": "checkpoint",
+     "checkpointId": "checkpoint:scope:checkpoint-scope%3Athread%3Athread%253Adelegated-task%253Acommand%25253Amcp%25253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25253Adelegate-task%25253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%3Aname%3Aroot:name:1",
+     "scopeId": "checkpoint-scope:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:name:root",
+     "files": []
+    }
+   ],
+   "runtimeRequests": [
+    {
+     "id": "runtime-request:provider:pi:provider-turn:provider-turn%3Aprovider%3Api%3Anative-turn%3Aprovider-thread%253Aprovider%253Api%253Anative-thread%253Apending%25253Arun%25253Athread%25253Athread%2525253Adelegated-task%2525253Acommand%252525253Amcp%252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%252525253Adelegate-task%252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%25253Aordinal%25253A1%253Aattempt%253Arun-attempt%253Arun%253Arun%25253Athread%25253Athread%2525253Adelegated-task%2525253Acommand%252525253Amcp%252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%252525253Adelegate-task%252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%25253Aordinal%25253A1%253Aattempt%253A1:native-request:acef6787-b53b-41c6-955b-1002ce4d2d7c:49d4366a-dca5-4878-bfb7-c085433cc249",
+     "nodeId": "node:runtime-request:runtime-request%3Aprovider%3Api%3Aprovider-turn%3Aprovider-turn%253Aprovider%253Api%253Anative-turn%253Aprovider-thread%25253Aprovider%25253Api%25253Anative-thread%25253Apending%2525253Arun%2525253Athread%2525253Athread%252525253Adelegated-task%252525253Acommand%25252525253Amcp%25252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25252525253Adelegate-task%25252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%2525253Aordinal%2525253A1%25253Aattempt%25253Arun-attempt%25253Arun%25253Arun%2525253Athread%2525253Athread%252525253Adelegated-task%252525253Acommand%25252525253Amcp%25252525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%25252525253Adelegate-task%25252525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%2525253Aordinal%2525253A1%25253Aattempt%25253A1%3Anative-request%3Aacef6787-b53b-41c6-955b-1002ce4d2d7c%3A49d4366a-dca5-4878-bfb7-c085433cc249",
+     "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Adelegated-task%25253Acommand%2525253Amcp%2525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%2525253Adelegate-task%2525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Adelegated-task%25253Acommand%2525253Amcp%2525253A18c0d629-64b6-4772-85c5-befd1da9f3c4%2525253Adelegate-task%2525253A680f28ca-99df-45d2-bc6e-3f7a3afeae28%253Aordinal%253A1%3Aattempt%3A1",
+     "nativeRequestRef": {
+      "driver": "pi",
+      "nativeId": "acef6787-b53b-41c6-955b-1002ce4d2d7c",
+      "strength": "strong"
+     },
+     "kind": "user_input",
+     "status": "cancelled",
+     "responseCapability": {
+      "type": "live",
+      "providerSessionId": "provider-session:provider-instance:pi:thread:thread%3Adelegated-task%3Acommand%253Amcp%253A18c0d629-64b6-4772-85c5-befd1da9f3c4%253Adelegate-task%253A680f28ca-99df-45d2-bc6e-3f7a3afeae28:19eb9d7d-e9c3-4d31-bb65-e79b653ce126"
+     },
+     "createdAt": "2026-11-22T02:58:33.168Z",
+     "resolvedAt": "2026-11-22T02:58:37.308Z"
+    }
+   ],
+   "providerTurns": []
+  }
+ ]
+}

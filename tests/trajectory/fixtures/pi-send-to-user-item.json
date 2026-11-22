@@ -1,0 +1,37 @@
+{
+ "id": "turn-item:provider:pi:native-item:toolu_011j23yVULTcfop1nNsrkKqc",
+ "threadId": "thread:project:7dcaac46-65b7-4006-bca9-d576d6c82df3:85cdf047-e58e-4f2f-b7a2-998308418c04",
+ "runId": "run:thread:thread%3Aproject%3A7dcaac46-65b7-4006-bca9-d576d6c82df3%3A85cdf047-e58e-4f2f-b7a2-998308418c04:ordinal:3",
+ "nodeId": "node:provider:pi:native-item:toolu_011j23yVULTcfop1nNsrkKqc",
+ "providerThreadId": "provider-thread:provider:pi:native-thread:pending%3Arun%3Athread%3Athread%253Aproject%253A7dcaac46-65b7-4006-bca9-d576d6c82df3%253A85cdf047-e58e-4f2f-b7a2-998308418c04%3Aordinal%3A1",
+ "providerTurnId": "provider-turn:provider:pi:native-turn:provider-thread%3Aprovider%3Api%3Anative-thread%3Apending%253Arun%253Athread%253Athread%25253Aproject%25253A7dcaac46-65b7-4006-bca9-d576d6c82df3%25253A85cdf047-e58e-4f2f-b7a2-998308418c04%253Aordinal%253A1%3Aattempt%3Arun-attempt%3Arun%3Arun%253Athread%253Athread%25253Aproject%25253A7dcaac46-65b7-4006-bca9-d576d6c82df3%25253A85cdf047-e58e-4f2f-b7a2-998308418c04%253Aordinal%253A3%3Aattempt%3A1",
+ "nativeItemRef": {
+  "driver": "pi",
+  "nativeId": "toolu_011j23yVULTcfop1nNsrkKqc",
+  "strength": "strong"
+ },
+ "parentItemId": null,
+ "ordinal": 3000003,
+ "status": "completed",
+ "title": "mcp__t3-code__send_to_user",
+ "startedAt": "2026-11-21T21:10:33.305Z",
+ "completedAt": "2026-11-21T21:10:33.327Z",
+ "updatedAt": "2026-11-21T21:10:33.327Z",
+ "type": "dynamic_tool",
+ "toolName": "mcp__t3-code__send_to_user",
+ "input": {
+  "message": "Build finished at step 3."
+ },
+ "output": {
+  "content": [
+   {
+    "type": "text",
+    "text": "{\"sentMessage\":\"Build finished at step 3.\",\"message\":\"Shown to the user. Don't repeat it.\"}"
+   }
+  ],
+  "structuredContent": {
+   "sentMessage": "Build finished at step 3.",
+   "message": "Shown to the user. Don't repeat it."
+  }
+ }
+}
