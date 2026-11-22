@@ -1,0 +1,1 @@
+{"model":"claude-haiku-5-5","messages":[{"role":"user","content":[{"type":"text","text":"Delete the files scratch.txt and lib/scratch.txt in the project. Reply only with OK.","cache_control":{"type":"ephemeral"}}]}],"max_tokens":128000,"stream":true,"thinking":{"type":"disabled"},"thread":{"type":"continue","previous_message_id":"msg_011ChGmQy5ad8NKFZzL5jfKg"}}

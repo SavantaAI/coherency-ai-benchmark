@@ -1,0 +1,46 @@
+{
+ "source": "driver proof run 2026-11-21T210951-74da66, every Pi 200 response from the model API, all eleven gateway logs including the three snapshot copies (values kept only for the framing headers)",
+ "responses": 104,
+ "header_counts": {
+  "date": 104,
+  "content-type": 104,
+  "transfer-encoding": 104,
+  "connection": 104,
+  "cache-control": 104,
+  "anthropic-ratelimit-input-tokens-limit": 104,
+  "anthropic-ratelimit-input-tokens-remaining": 104,
+  "anthropic-ratelimit-input-tokens-reset": 104,
+  "anthropic-ratelimit-output-tokens-limit": 104,
+  "anthropic-ratelimit-output-tokens-remaining": 104,
+  "anthropic-ratelimit-output-tokens-reset": 104,
+  "anthropic-ratelimit-requests-limit": 104,
+  "anthropic-ratelimit-requests-remaining": 104,
+  "anthropic-ratelimit-requests-reset": 104,
+  "anthropic-ratelimit-tokens-limit": 104,
+  "anthropic-ratelimit-tokens-remaining": 104,
+  "anthropic-ratelimit-tokens-reset": 104,
+  "strict-transport-security": 104,
+  "request-id": 104,
+  "traceresponse": 104,
+  "anthropic-organization-id": 104,
+  "anthropic-workspace-id": 104,
+  "content-security-policy": 104,
+  "vary": 104,
+  "server": 104,
+  "server-timing": 104,
+  "cf-cache-status": 104,
+  "x-robots-tag": 104,
+  "cf-ray": 104
+ },
+ "values": {
+  "content-type": [
+   "text/event-stream; charset=utf-8"
+  ],
+  "transfer-encoding": [
+   "chunked"
+  ],
+  "cache-control": [
+   "no-cache"
+  ]
+ }
+}

@@ -1,0 +1,1 @@
+{"model":"claude-haiku-5-5","messages":[{"role":"user","content":[{"type":"text","text":"What is 17 plus 25? Reply with only the number.","cache_control":{"type":"ephemeral"}}]}],"max_tokens":128000,"stream":true,"thinking":{"type":"disabled"},"thread":{"type":"continue","previous_message_id":"msg_011ChGm1s6X3TATahrxa9eMy"}}

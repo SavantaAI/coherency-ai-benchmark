@@ -1,0 +1,675 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cohbench/scripted/schema.json",
+  "title": "Scripted agent script, version 1",
+  "description": "For editors. The validator in script.py is the authority and also checks what a schema cannot: regular expressions compile and have no nested unbounded repeats, every {{variable}} is set somewhere, delegated children exist, capture groups exist, and no number is NaN or infinite.",
+  "type": "object",
+  "required": [
+    "version",
+    "handlers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "fallback": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reply when the script cannot go on. No variables."
+    },
+    "vars": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "on_child_completion": {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false,
+      "description": "Reply to T3 Code's delegation completion prompt, which is not a user message. Captures run on the prompt and may not be required.",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capture": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capture"
+          }
+        }
+      }
+    },
+    "handlers": {
+      "$ref": "#/$defs/handlers"
+    },
+    "children": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "handlers"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "handlers": {
+            "$ref": "#/$defs/handlers"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "handlers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/handler"
+      }
+    },
+    "handler": {
+      "type": "object",
+      "required": [
+        "steps"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "steps": {
+          "$ref": "#/$defs/steps"
+        },
+        "final": {
+          "type": "string",
+          "minLength": 1
+        },
+        "final_delay": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3600
+        },
+        "end": {
+          "enum": [
+            "statement",
+            "question"
+          ],
+          "default": "statement"
+        },
+        "on_steer": {
+          "enum": [
+            "finish",
+            "abandon"
+          ],
+          "default": "finish"
+        },
+        "expect": {
+          "$ref": "#/$defs/condition"
+        },
+        "capture": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capture"
+          },
+          "description": "Captures from the user message, when the handler starts."
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": [
+        "do"
+      ],
+      "properties": {
+        "do": {
+          "enum": [
+            "bash",
+            "read",
+            "write",
+            "edit",
+            "tool",
+            "delegate",
+            "parallel",
+            "branch",
+            "repeat",
+            "say",
+            "reply",
+            "set"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "say": {
+          "type": "string",
+          "minLength": 1
+        },
+        "delay": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3600
+        },
+        "capture": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capture"
+          }
+        },
+        "command": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "path": {
+          "type": "string"
+        },
+        "offset": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "limit": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "content": {
+          "type": "string"
+        },
+        "edits": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "oldText",
+              "newText"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "oldText": {
+                "type": "string"
+              },
+              "newText": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "input": {
+          "type": "object"
+        },
+        "child": {
+          "type": "string"
+        },
+        "task": {
+          "type": "string"
+        },
+        "tool": {
+          "type": "string"
+        },
+        "calls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        },
+        "cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "when",
+              "steps"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "when": {
+                "$ref": "#/$defs/condition"
+              },
+              "steps": {
+                "$ref": "#/$defs/steps"
+              }
+            }
+          }
+        },
+        "else": {
+          "$ref": "#/$defs/steps"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "end": {
+          "enum": [
+            "statement",
+            "question"
+          ]
+        },
+        "var": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "value": {
+          "type": "string"
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "steps": {
+          "$ref": "#/$defs/steps"
+        },
+        "until": {
+          "$ref": "#/$defs/condition"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "bash"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "command"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "read"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "path"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "write"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "path",
+              "content"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "edit"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "path",
+              "edits"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "tool"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "name"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "delegate"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "child",
+              "task"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "parallel"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "calls"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "branch"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "cases"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "say"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "text"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "text"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "set"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "var",
+              "value"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "do": {
+                "const": "repeat"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "max",
+              "steps"
+            ]
+          }
+        }
+      ]
+    },
+    "capture": {
+      "type": "object",
+      "required": [
+        "var",
+        "regex"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "regex": {
+          "type": "string"
+        },
+        "group": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "exit": {
+          "type": "integer"
+        },
+        "is_error": {
+          "type": "boolean"
+        },
+        "contains": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string"
+        },
+        "var_set": {
+          "type": "string"
+        },
+        "not": {
+          "$ref": "#/$defs/condition"
+        },
+        "all": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        },
+        "any": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        },
+        "var": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false,
+          "minProperties": 2,
+          "maxProperties": 2,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "equals": {
+              "type": "string"
+            },
+            "contains": {
+              "type": "string"
+            },
+            "regex": {
+              "type": "string"
+            },
+            "lt": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "var"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "var": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            },
+            "le": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "var"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "var": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            },
+            "gt": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "var"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "var": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            },
+            "ge": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "var"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "var": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            },
+            "eq": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "var"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "var": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            },
+            "ne": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "var"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "var": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

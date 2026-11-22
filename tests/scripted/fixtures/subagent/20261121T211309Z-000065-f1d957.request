@@ -1,0 +1,1 @@
+{"model":"claude-haiku-5-5","messages":[{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_014hsQvCfyFHxAtncry8fBEN","content":"1 README.md\n","is_error":false,"cache_control":{"type":"ephemeral"}}]}],"max_tokens":128000,"stream":true,"thinking":{"type":"disabled"},"thread":{"type":"continue","previous_message_id":"msg_011ChGmDnmuABU19MDmpmwLH"}}
