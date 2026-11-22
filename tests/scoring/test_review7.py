@@ -12,6 +12,7 @@ import pytest
 from cohbench.scoring import report, stats
 from cohbench.scoring.score import dumps, tidy
 from . import synth as S
+from .runtimes import runtime_interpreters
 from .test_review4 import full_config
 from .test_review6 import release_inputs
 from .test_round2 import plan_file
@@ -212,6 +213,7 @@ def test_absent_reader_digest_is_refused(tmp_path):
 
 
 def test_report_numbers_match_across_runtimes_and_hash_seeds(tmp_path):
+    executables = runtime_interpreters()
     root, plan = varying_inputs(tmp_path)
     code = """import sys
 from cohbench.scoring import report
@@ -219,9 +221,8 @@ from cohbench.scoring.score import dumps
 print(dumps(report.build(sys.argv[1], plan=sys.argv[2], require_plan=True)), end='')
 """
     outputs = []
-    for version in ("3.12", "3.15"):
-        executable = subprocess.check_output(["uv", "python", "find", "--offline", version], text=True).strip()
+    for executable in executables:
         for seed in ("1", "777"):
-            outputs.append(subprocess.check_output([executable, "-c", code, str(root), str(plan)],
+            outputs.append(subprocess.check_output([executable, "-S", "-c", code, str(root), str(plan)],
                            cwd=Path(__file__).resolve().parents[2], env={**os.environ, "PYTHONHASHSEED": seed}))
     assert all(output == outputs[0] for output in outputs)

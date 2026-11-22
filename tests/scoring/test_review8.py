@@ -12,6 +12,7 @@ from cohbench.scoring.load import ScoreError
 from cohbench.scoring.score import dumps, score_episode
 from . import synth as S
 from .build import Bundle, STEERING_KEY
+from .runtimes import runtime_interpreters
 from .test_explanation import CAUSE, cfg, episode, score as explanation_score
 from .test_review4 import full_config
 from .test_review7 import write_release
@@ -177,7 +178,8 @@ def test_ignored_chore_timing_cannot_join_job_edits(tmp_path):
 def test_mixed_batch_span_and_unknown_exclusions_ignore_chore(tmp_path, unknown):
     result = steering.score(chore_episode(tmp_path, 10750, mixed=True, unknown=unknown))
     assert [s["batches"] for s in result["states"]] == [[0], [1], [2]]
-    assert result["g"]["excluded"] == 0 and result["score"] == 2 / 3
+    assert result["g"]["excluded"] == 2 and result["score"] is None
+    assert result["g"]["excluded_by_reason"]["ambiguous_span"] == 2
 
 
 def test_absent_ignore_paths_preserves_original_chore_timing_effect(tmp_path):
@@ -278,20 +280,20 @@ def test_determinism_docs_distinguish_runtime_metadata():
 
 
 def test_exact_score_and_report_bytes_across_pythons_and_hash_seeds(tmp_path):
+    executables = runtime_interpreters()
     root, plan, _, _ = count_report_inputs(tmp_path, "explanation")
+    chore_episode(tmp_path / "bundle", 10750, mixed=True, unknown=True)
     code = """import json, sys
-from pathlib import Path
-from cohbench.scoring import report, steering
+from cohbench.scoring import report
+from cohbench.scoring.load import load
 from cohbench.scoring.score import dumps, score_episode
-from tests.scoring.test_review8 import chore_episode
-result = score_episode(chore_episode(Path(sys.argv[3]), 10750, mixed=True, unknown=True))
+result = score_episode(load(sys.argv[3]))
 print(dumps({'score': result, 'report': report.build(sys.argv[1], plan=sys.argv[2], require_plan=True, resamples=40)}), end='')
 """
     outputs = []
-    for version in ("3.12", "3.15"):
-        executable = subprocess.check_output(["uv", "python", "find", "--offline", version], text=True).strip()
+    for executable in executables:
         for seed in ("1", "777"):
-            outputs.append(subprocess.check_output([executable, "-c", code, str(root), str(plan), str(tmp_path / f"bundle-{version}-{seed}")],
+            outputs.append(subprocess.check_output([executable, "-S", "-c", code, str(root), str(plan), str(tmp_path / "bundle")],
                            cwd=Path(__file__).resolve().parents[2], env={**os.environ, "PYTHONHASHSEED": seed}))
     assert outputs[0] == outputs[1] and outputs[2] == outputs[3] and outputs[0] != outputs[2]
     normalized = [json.loads(value) for value in outputs]

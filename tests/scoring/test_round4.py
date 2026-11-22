@@ -17,6 +17,7 @@ from cohbench.scoring.score import score_episode
 from cohbench.tasks import Options, generate
 from cohbench.trajectory.observations import tree_digest
 from . import synth as S
+from .runtimes import runtime_interpreters
 from .build import Bundle, OPTIONS, ROUTING_KEY, STEERING_KEY
 from .test_explanation import completion, fake, hosted
 from .test_round2 import plan_file
@@ -285,6 +286,7 @@ def test_known_routing_failure_does_not_need_ambiguous_reply_matching(tmp_path, 
 
 
 def test_ordinary_inputs_match_across_runtimes_and_hash_seeds(tmp_path):
+    executables = runtime_interpreters()
     code = '''
 import json, sys
 from pathlib import Path
@@ -306,9 +308,8 @@ rep['python_versions'] = ['runtime']
 print(dumps({'score': score, 'report': rep, 'readings': answers, 'markdown': report.render(rep, True), 'text': report.render(rep, False)}))
 '''
     outputs = []
-    for version in ("3.12", "3.15"):
-        executable = subprocess.check_output(["uv", "python", "find", "--offline", version], text=True).strip()
+    for version, executable in zip(("3.12", "3.15"), executables):
         for seed in ("1", "777"):
-            outputs.append(subprocess.check_output([executable, "-c", code, str(tmp_path / f"{version}-{seed}")],
+            outputs.append(subprocess.check_output([executable, "-S", "-c", code, str(tmp_path / f"{version}-{seed}")],
                            cwd=Path(__file__).resolve().parents[2], env={**os.environ, "PYTHONHASHSEED": seed}))
     assert len(set(outputs)) == 1

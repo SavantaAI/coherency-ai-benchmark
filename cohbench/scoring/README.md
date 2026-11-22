@@ -430,10 +430,23 @@ without that record.
 
 Before the grain rules, remove change records whose path matches
 `ignore_paths`. This also removes those paths from tree equality, legacy
-attempt state and unknown-content exclusions. Leave out batches containing
-only ignored changes, listing their ids in `ignored_batches`. For a batch
-mixing ignored and retained changes, use the times of the retained change
-and git records for its span. Other batches keep their recorded spans.
+attempt state and unknown-content exclusions. Judge moves at both paths:
+measured to ignored is a removal, ignored to measured is a creation,
+and ignored to ignored is nothing. Apply the same rule to each entry in a
+directory move. Leave out batches containing only ignored changes, listing
+their ids in `ignored_batches`.
+
+A mixed batch keeps its recorded span because the log has no per-path
+write times. Compare each join with its neighbours using both endpoints
+of that span for its measured writes. A definite join proceeds as usual;
+a definite gap stays separate. A differing answer leaves the boundary
+unjoined and excludes the moves on both sides from g and c with reason
+`ambiguous_span`. The result lists those batch pairs in
+`ambiguous_boundaries`; `g.excluded` includes the affected moves, and
+`g.excluded_by_reason` and `c.excluded_by_reason` count the two reasons
+separately when a boundary is ambiguous. The c counts cover moves after
+the correction. These exclusions cannot supply a no-move default, just
+as unknown content cannot. Transient runs require definite joins too.
 The original bundle and the final workspace used by chore checks stay intact.
 An absent or empty `ignore_paths` keeps the existing behavior.
 
@@ -558,6 +571,8 @@ log never recorded, lying between two lasting changes, can decide whether
 they form one run. Apart from these limits, scores are invariant to how
 writes under a second apart fall into batches. An attempt made while a
 short-lived write was in place is treated as made in the tree without it.
+When a batch mixes ignored and measured paths and its span leaves a join
+uncertain, both adjacent moves are excluded from g and c as `ambiguous_span`.
 
 ## Controls
 
