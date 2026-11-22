@@ -128,11 +128,14 @@ def test_rule5_each_family_trigger_is_reachable_from_its_reopen(suite):
                 # Any finished turn fires it, and a reopen always ends in a finished turn.
                 assert any("turns" in x for x in e["trigger"]["any"])
             if e["name"] == "follow_up":
-                assert e["trigger"] == {"handbacks": {"at_least": 1}}
+                since = {"since": "handoff"} if t["grouping"]["horizon"] == "h80" else {}
+                assert e["trigger"] == {"handbacks": {"at_least": 1, **since}}
             if e["name"] == "conflict":
                 # The reopen asks for the remaining files, and adding every file prints the clash.
                 assert f"every file in {info(d)['files'][0].split('/')[0]}/" in e["reopen"]
             if e["name"] == "handoff":
-                assert e["trigger"] == {"turns": {"at_least": 1}}
+                # The chores' results are counted; the reopen asks for the list from the first message, whose chores produce them.
+                assert set(e["trigger"]) == {"changes"} and e["trigger"]["changes"]["path"] == "admin/**"
+                assert "my first message" in e["reopen"]
         if fam == "explanation":
-            assert [e["name"] for e in t["events"]] == ["follow_up"]
+            assert [e["name"] for e in t["events"]] == (["handoff", "follow_up"] if t["grouping"]["horizon"] == "h80" else ["follow_up"])

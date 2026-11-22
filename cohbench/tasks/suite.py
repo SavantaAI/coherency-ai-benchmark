@@ -1,4 +1,8 @@
-"""The public development suite: for each family and horizon, the seeds for 6
+"""The public development suite. `suite.json` lists every instance with its
+grouping keys, its directory and its task digest, the plan a results report
+checks coverage against.
+
+For each family and horizon: the seeds for 6
 sibling pairs (Routing) or 6 scored seeds, 6 controls, and for Routing the
 seeds with no conflict, a quarter of all its scored seeds."""
 
@@ -6,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .common import HORIZONS, GenerateError, Options, dumps, write_instance
+from .common import HORIZONS, GenerateError, Options, dumps, task_digest, write_instance
 
 PAIRS = 6  # sibling pairs, or scored seeds, per family and horizon (SPEC.md section 11)
 CONTROLS = 6
@@ -67,6 +71,6 @@ def write_suite(out: Path) -> int:
         inst = generate(o)
         write_instance(inst, out / o.name())
         g = inst.task["grouping"]
-        index.append({"dir": o.name(), **g})
+        index.append({"dir": o.name(), **g, "digest": task_digest(out / o.name())})
     (out / "suite.json").write_text(dumps({"format": "cohbench-task-suite", "version": 1, "instances": index}), encoding="utf-8")
     return len(index)

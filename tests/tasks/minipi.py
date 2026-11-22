@@ -79,7 +79,7 @@ class MiniPi:
         self.last_id = out.msg_id
         self.calls = [b for b in out.blocks if b["type"] == "tool_use"]
         text = "".join(b["text"] for b in out.blocks if b["type"] == "text")
-        return {"text": text, "stop": out.stop_reason, "calls": list(self.calls)}
+        return {"text": text, "stop": out.stop_reason, "calls": list(self.calls), "delay": float(out.delay or 0.0)}
 
     def user(self, text: str) -> dict[str, Any]:
         """Start a turn with a user message."""
@@ -203,7 +203,7 @@ class ScriptedEpisode(FakeEpisode):
             self.live = False
             self.next_t = None
         else:
-            self.next_t = at + STEP_S
+            self.next_t = at + STEP_S + reply["delay"]
 
     def correct(self, text: str, **kw: Any) -> Any:
         if self.cur is not None and not self.live:

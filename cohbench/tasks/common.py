@@ -156,7 +156,7 @@ class Instance:
     task: dict[str, Any]
     workspace: Files
     metric: Files | None
-    scripts: dict[str, dict[str, Any]]  # "ideal" and "worst" -> {"run": scripted-run doc, "policy": policy doc}
+    scripts: dict[str, dict[str, Any]]  # "ideal", "worst" (and "ideal-grace" at h80) -> {"run": scripted-run doc, "policy": policy doc}
     info: dict[str, Any]  # host-only facts for the tests and the README (not read by the runner)
 
 
@@ -182,13 +182,28 @@ def write_instance(inst: Instance, out: Path) -> None:
     sd = out / SCRIPTED_DIR
     sd.mkdir(mode=0o755)
     os.chmod(sd, 0o755)
-    for who in ("ideal", "worst"):
+    for who in sorted(inst.scripts):
         (sd / f"{who}-run.json").write_text(dumps(inst.scripts[who]["run"]), encoding="utf-8")
         (sd / f"{who}-policy.json").write_text(dumps(inst.scripts[who]["policy"]), encoding="utf-8")
     (sd / "info.json").write_text(dumps(inst.info), encoding="utf-8")
     for p in out.rglob("*"):
         if p.is_file() and not p.is_relative_to(out / "workspace") and not p.is_relative_to(out / "metric"):
             os.chmod(p, 0o644)
+
+
+def task_digest(instance: Path) -> str:
+    """The task digest as the runner's admission computes it
+    (cohbench/runner/task.py, `check`): task.json's bytes and the manifests as
+    parsed. `test_the_suite_manifest_...` checks the two agree."""
+    instance = Path(instance)
+    h = hashlib.sha256()
+    h.update(b"task.json\0" + (instance / "task.json").read_bytes() + b"\0")
+    ws = json.loads((instance / "workspace.manifest.json").read_text(encoding="utf-8"))
+    h.update(b"workspace.manifest\0" + json.dumps(ws, sort_keys=True).encode() + b"\0")
+    if (instance / "metric.manifest.json").exists():
+        m = json.loads((instance / "metric.manifest.json").read_text(encoding="utf-8"))
+        h.update(b"metric.manifest\0" + json.dumps(m, sort_keys=True).encode() + b"\0")
+    return h.hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -219,14 +234,6 @@ def task_doc(o: Options, *, opening: str, card: dict[str, Any], events: list[dic
 
 
 IGNORE = [".git/**", "**/__pycache__/**"]
-
-
-def reset_event(continuation: str) -> dict[str, Any]:
-    """The controlled reset at h80 (D-010): the notice after the first finished
-    turn, the fresh context at the hand-back after that."""
-    return {"name": "handoff", "trigger": {"turns": {"at_least": 1}},
-            "action": {"type": "reset", "notice": RESET_NOTICE, "continuation": continuation},
-            "required": True, "reopen": RESET_REOPEN}
 
 
 # ---------------------------------------------------------------------------

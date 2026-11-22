@@ -20,7 +20,12 @@ from cohbench.scoring.controls import KEYS as CONTROL_KEYS
 from cohbench.scripted import load_script
 from cohbench.tasks.common import BUDGETS, MAX_REOPENS, RETURN_DELAY_S, workspace_mtime, Options
 
-from .conftest import info, instances, task
+import pytest
+
+from cohbench.tasks.common import task_digest
+from cohbench.tasks.suite import write_suite
+
+from .conftest import RUNNER_D046, WAITS, info, instances, task
 
 
 def test_the_suite_has_what_the_brief_asks_for(suite):
@@ -43,12 +48,44 @@ def test_the_suite_has_what_the_brief_asks_for(suite):
     assert steer.count("easy_wins") == steer.count("no_valid_improvement")
 
 
+def _waits(d: Path) -> bool:
+    """Explanation at h80 uses the follow-up form the runner admits once its D-046 change lands."""
+    return not RUNNER_D046 and task(d)["grouping"]["family"] == "explanation" and task(d)["grouping"]["horizon"] == "h80"
+
+
+def _scripts(d: Path) -> list[str]:
+    return sorted(p.name[: -len("-run.json")] for p in (d / "scripted").glob("*-run.json"))
+
+
 def test_every_instance_is_admitted_with_each_script_and_policy(suite):
     for d in instances(suite):
-        for who in ("ideal", "worst"):
+        if _waits(d):
+            continue
+        assert _scripts(d) == (["ideal", "ideal-grace", "worst"] if task(d)["grouping"]["horizon"] == "h80" else ["ideal", "worst"])
+        for who in _scripts(d):
             hosts = {"user policy": d / "scripted" / f"{who}-policy.json", "model script": d / "scripted" / f"{who}-run.json"}
             t, problems, _warnings = check(d, hosts)
             assert t is not None and not problems, (d.name, who, problems)
+
+
+@pytest.mark.skipif(RUNNER_D046, reason="the runner admits the D-046 form now; the test above covers it")
+def test_explanation_h80_is_refused_today_only_for_the_follow_up_form(suite):
+    """While the runner lacks D-046, its admission refuses these instances for
+    the follow-up's trigger and nothing else."""
+    for d in instances(suite, "explanation"):
+        if task(d)["grouping"]["horizon"] != "h80":
+            continue
+        _t, problems, _w = check(d, {"user policy": d / "scripted" / "ideal-policy.json", "model script": d / "scripted" / "ideal-run.json"})
+        assert problems and all("follow_up" in p for p in problems), problems
+
+
+@pytest.mark.skipif(not RUNNER_D046, reason=WAITS)
+def test_explanation_h80_is_admitted_once_the_runner_has_d046(suite):
+    for d in instances(suite, "explanation"):
+        if task(d)["grouping"]["horizon"] == "h80":
+            for who in _scripts(d):
+                _t, problems, _w = check(d, {"user policy": d / "scripted" / f"{who}-policy.json", "model script": d / "scripted" / f"{who}-run.json"})
+                assert not problems, (d.name, who, problems)
 
 
 def test_the_check_task_command_admits_an_instance_of_each_family(suite):
@@ -61,7 +98,7 @@ def test_the_check_task_command_admits_an_instance_of_each_family(suite):
 
 def test_every_script_loads_in_the_scripted_model_and_every_policy_is_valid(suite):
     for d in instances(suite):
-        for who in ("ideal", "worst"):
+        for who in _scripts(d):
             doc = json.loads((d / "scripted" / f"{who}-run.json").read_text())
             assert doc["format"] == "cohbench-scripted-run" and doc["version"] == 1
             load_script(doc["script"])
@@ -77,7 +114,7 @@ def test_host_only_files_are_outside_the_workspace(suite):
         if (d / "metric").exists():
             assert not (d / "metric").resolve().is_relative_to(ws)
         names = {p.name for p in (d / "workspace").rglob("*")}
-        assert not names & {"task.json", "info.json", "ideal-run.json", "worst-run.json", "ideal-policy.json", "worst-policy.json"}
+        assert not names & {"task.json", "info.json", "suite.json"} and not any(n.endswith(("-run.json", "-policy.json")) for n in names)
 
 
 def test_workspace_files_are_readable_single_named_small_and_as_the_manifest_says(suite):
@@ -150,8 +187,18 @@ def test_answer_keys_carry_what_the_scoring_unit_reads(suite):
                 decision = next(x for x in t["user"]["card"]["decisions"] if x["id"] == "keeps")
                 assert k["decision_reply"] == decision["answer"]
                 assert k["settled_by_workspace"] is (g["sibling"] == "A")
+                assert k["decision_reply"] in k["card_texts"]
             else:
                 assert "conflict_event" not in k and not any(e["name"] == "conflict" for e in t["events"])
+        if fam == "routing":
+            card = t["user"]["card"]
+            assert k["card_texts"] == [f["text"] for f in card["facts"]] + [x["answer"] for x in card["decisions"]]
+            fixed = [t["prompt"]["opening"], *t["user"]["replies"].values()]
+            for e in t["events"]:
+                fixed += [e["action"][x] for x in ("text", "notice", "continuation") if x in e["action"]] + ([e["reopen"]] if e.get("reopen") else [])
+            assert sorted(k["fixed_messages"]) == sorted(fixed)
+        if fam == "explanation" and g["horizon"] == "h80":
+            assert k["answers_after"] == "handoff"
         if fam == "steering":
             assert k["variant"] in ("easy_wins", "no_valid_improvement")
             assert (k["variant"] == "easy_wins") is info(d)["easy"]
@@ -161,3 +208,34 @@ def test_answer_keys_carry_what_the_scoring_unit_reads(suite):
             assert set(c["expected"]) <= set(CONTROL_KEYS), (d.name, c)
             if "final" in c["expected"]:
                 checks.parse(c["expected"]["final"])
+
+
+def test_routing_decision_text_occurs_in_no_other_card_text_and_no_fixed_message(suite):
+    """The scorer finds the decision in a composed reply by its text; it must
+    not also be inside another card item or a fixed message (the scoring
+    unit's review)."""
+    for d in instances(suite, "routing"):
+        k = task(d)["scoring"]["answer_key"]
+        if not k["conflict"]:
+            continue
+        item = k["decision_reply"]
+        assert [x for x in k["card_texts"] if item in x] == [item], d.name
+        assert not [x for x in k["fixed_messages"] if item in x], d.name
+
+
+def test_the_suite_manifest_lists_every_directory_with_the_runners_digest(suite):
+    rows = json.loads((suite / "suite.json").read_text())["instances"]
+    assert sorted(r["dir"] for r in rows) == sorted(d.name for d in instances(suite))
+    for r in rows:
+        d = suite / r["dir"]
+        g = task(d)["grouping"]
+        assert {k: r[k] for k in ("family", "seed", "pair", "sibling", "control", "horizon")} == g
+        assert r["digest"] == task_digest(d)
+        if not _waits(d):
+            t, problems, _w = check(d)
+            assert not problems and t.digest == r["digest"], (r["dir"], problems)
+
+
+def test_regenerating_the_suite_gives_the_same_manifest(suite, tmp_path):
+    write_suite(tmp_path / "again")
+    assert (tmp_path / "again" / "suite.json").read_bytes() == (suite / "suite.json").read_bytes()

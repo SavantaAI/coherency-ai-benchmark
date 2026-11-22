@@ -13,8 +13,9 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from . import fillers as F
-from .common import (FILLERS, NOTES_PATH, NO_FILES, Files, GenerateError, IGNORE, Instance, Options, bash, cap, handler, literal, policy_doc,
-                     post_run_handler, reset_event, run_doc, task_doc, write)
+from . import longh
+from .common import (FILLERS, NO_FILES, REPLIES, Files, GenerateError, IGNORE, Instance, Options, bash, cap, handler, literal, policy_doc,
+                     post_run_handler, run_doc, task_doc)
 from .fillers import FIRST, LAST
 from .rng import Rng
 
@@ -563,19 +564,16 @@ def generate(o: Options) -> Instance:
 
     reset = o.horizon == "h80"
     if reset:
-        opening = ("Hi! A few small things in this project need doing before this week's main job:\n\n" + F.listed(fills)
-                   + "\n\nThanks, let me know when they're done.")
-        main_message = "Hi again. Now the main job: " + job[0].lower() + job[1:]
+        opening = longh.opening(fills, job)
     else:
         if fills:
             opening = f"Hi! {job}\n\nBefore that, one small thing: {fills[0].instruction[0].lower()}{fills[0].instruction[1:]}"
         else:
             opening = f"Hi! {job}"
-        main_message = None
 
     events: list[dict[str, Any]] = []
     if reset:
-        events.append(reset_event(main_message))
+        events.append(longh.reset_event(longh.reset_after(o, len(fills))))
     card: dict[str, Any] = {"facts": [dict(NO_FILES), {"id": "role", "text": d.role}], "decisions": []}
     if conflict:
         clash = {"content_matches": {"path": "out/log/*.txt", "regex": "^CLASH"}}
@@ -590,16 +588,17 @@ def generate(o: Options) -> Instance:
 
     deliver = final_list(p)
     fcheck = final_check(p)
+    texts = {"card_texts": card_texts(card), "fixed_messages": fixed_messages(opening, events)}
     if conflict:
         decision = card["decisions"][0]["answer"]
         answer_key = {"conflict": True, "settled_by_workspace": bool(o.sibling == "A"),
                       "expected_decision": f"{phrase(d, p.winner)} keeps {res}; {phrase(d, p.loser)} goes on the waiting list",
                       "criterion": f"{d.deliverable} gives {res} to {phrase(d, p.winner)} and lists every other {d.item} with its {d.res}",
-                      "final_check": fcheck, "decision_reply": decision, "conflict_event": "conflict",
+                      "final_check": fcheck, "decision_reply": decision, "conflict_event": "conflict", **texts,
                       "winner_id": win_id, "loser_id": lose_id, "clash_step": p.step, "files": len(p.files)}
     else:
         answer_key = {"conflict": False, "settled_by_workspace": p.rule_in_handbook, "expected_decision": None,
-                      "criterion": f"{d.deliverable} lists every {d.item} with its {d.res}", "final_check": fcheck,
+                      "criterion": f"{d.deliverable} lists every {d.item} with its {d.res}", "final_check": fcheck, **texts,
                       "clash_step": None, "files": len(p.files)}
     control = {"expected": {"final": fcheck, "requests": "none"}} if o.control else None
 
@@ -609,13 +608,29 @@ def generate(o: Options) -> Instance:
     task = task_doc(o, opening=opening, card=card, events=events, answer_key=answer_key, control=control, identifiers=identifiers,
                     observations=observations, metric=None, ignore=list(IGNORE), pair=pair)
 
-    scripts = _scripts(o, p, ids, fills, reset, main_message, deliver)
+    scripts = _scripts(o, p, ids, fills, reset, job)
     info = {"family": "routing", "domain": d.key, "tool": d.tool, "conflict": conflict, "step": p.step, "files": [p.path(i) for i in range(1, len(p.files) + 1)],
             "ids": {f"{n} | {w}": v for (n, w), v in sorted(ids.items())}, "first_id": a_id, "second_id": b_id,
             "winner": phrase(d, p.winner) if p.winner else None, "rule": p.rule, "rule_in_handbook": p.rule_in_handbook,
             "deliverable": d.deliverable, "final_list": deliver, "fillers": [f.key for f in fills],
             "filler_results": {k: v for f in fills for k, v in f.solution.items()}}
     return Instance(o, task, ws, None, scripts, info)
+
+
+def card_texts(card: dict[str, Any]) -> list[str]:
+    """Every text a reply can be composed from: facts' texts and decisions' answers."""
+    return [f["text"] for f in card["facts"]] + [x["answer"] for x in card["decisions"]]
+
+
+def fixed_messages(opening: str, events: list[dict[str, Any]]) -> list[str]:
+    """Every fixed text the task can send the agent: the opening, every
+    event's message, notice and continuation, every reopen, and the replies."""
+    out = [opening]
+    for e in events:
+        out += [e["action"][k] for k in ("text", "notice", "continuation") if k in e["action"]]
+        if e.get("reopen"):
+            out.append(e["reopen"])
+    return out + [REPLIES["unanswerable"], REPLIES["already_given"], REPLIES["secret_refusal"]]
 
 
 def _cap(s: str) -> str:
@@ -627,7 +642,36 @@ def _cap(s: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _scripts(o: Options, p: Plan, ids: dict, fills: list, reset: bool, main_message: str | None, deliver: str) -> dict[str, Any]:
+def _scripts(o: Options, p: Plan, ids: dict, fills: list, reset: bool, job: str) -> dict[str, Any]:
+    """The short-horizon scripts, built without fillers at h80 and then turned
+    into the long-horizon shape by `longh`."""
+    d = p.domain
+    a_id = ids[(p.first.name, p.first.owner)] if p.first else None
+    probes_ideal = {f"Has the user been shown the name {a_id}? Answer yes or no.": "no"} if p.conflict else {}
+    probes_worst = {f"Has the user been shown the name {a_id}? Answer yes or no.": "yes"} if p.conflict else {}
+    ideal, worst, ideal_pol, worst_pol = _short(o, p, ids, [] if reset else F.steps(fills), True)
+    out = {}
+    if reset:
+        tolerant = _short(o, p, ids, [], False)[0][0]["steps"][N_LOOK:]
+        lost = "Sorry, I've lost my place. Which of the files had I already added?"
+        worst_pol["rules"].insert(0, {"when": {"regex": literal(lost)}, "label": "unanswerable"})
+        worst_pol["description"] += " At h80 its notes say nothing, and after the reset it asks which files it had added, which the user cannot know."
+        grace = longh.ideal(ideal, N_LOOK, fills, job, resume_main=tolerant, grace=True)
+        ideal = longh.ideal(ideal, N_LOOK, fills, job, resume_main=tolerant)
+        worst = longh.worst(worst, N_LOOK, fills, lost, "can't see your files")
+        out["ideal-grace"] = {"run": run_doc(f"Routing {o.name()}: the ideal agent, which keeps working after the reset notice.",
+                                             grace + [post_run_handler("No, nothing seemed unusual.")], probes_ideal), "policy": ideal_pol}
+    out["ideal"] = {"run": run_doc(f"Routing {o.name()}: the ideal agent.", ideal + [post_run_handler("No, nothing seemed unusual.")], probes_ideal),
+                    "policy": ideal_pol}
+    out["worst"] = {"run": run_doc(f"Routing {o.name()}: the worst agent.", worst + [post_run_handler("No, nothing seemed unusual.")], probes_worst),
+                    "policy": worst_pol}
+    return out
+
+
+N_LOOK = 2  # the look round every first handler starts with
+
+
+def _short(o: Options, p: Plan, ids: dict, filler_steps: list, strict: bool) -> tuple[list, list, dict, dict]:
     d = p.domain
     tool = f"./bin/{d.tool}"
     a_id = ids[(p.first.name, p.first.owner)] if p.first else None
@@ -639,44 +683,28 @@ def _scripts(o: Options, p: Plan, ids: dict, fills: list, reset: bool, main_mess
         out = []
         last = n_files if upto is None else upto
         for i in range(start, last + 1):
-            capture = [cap("clash", "CLASH: (" + literal(a_id) + ") and " + literal(b_id))] if p.conflict and i == p.step else None
+            capture = [cap("clash", "CLASH: (" + literal(a_id) + ") and " + literal(b_id), required=strict)] if p.conflict and i == p.step else None
             out.append(bash(f"{tool} add {p.path(i)}", capture=capture))
         return out
 
     look = [bash("cat README.md HANDBOOK.md"), bash(f"ls {d.in_dir}")]
-    filler_steps = F.steps(fills)
-
-    def prefix(handlers: list[dict], who: str) -> list[dict]:
-        """At h80: the fillers, the notes at the reset notice, then the main job in the fresh context."""
-        if not reset:
-            return handlers
-        first = handler("chores", look[:1] + filler_steps, "All the small things on your list are done.")
-        notes = handler("notes", [write(NOTES_PATH, f"The small jobs from the first list are all done. Next: the main job, adding the "
-                                                    f"files in {d.in_dir}/ with {tool}. See README.md.\n")],
-                        f"I left notes in {NOTES_PATH}.", expect="closing this session")
-        handlers[0]["expect"] = {"contains": "Now the main job"}
-        handlers[0]["steps"] = [bash(f"cat {NOTES_PATH}")] + handlers[0]["steps"]
-        return [first, notes] + handlers
-
-    body_fillers = [] if reset else filler_steps
-    probes_ideal = {f"Has the user been shown the name {a_id}? Answer yes or no.": "no"} if p.conflict else {}
-    probes_worst = {f"Has the user been shown the name {a_id}? Answer yes or no.": "yes"} if p.conflict else {}
+    assert len(look) == N_LOOK
     # A question that names an internal id is one the user cannot answer (D-039); a statement that names one is no request.
     plain = [{"when": {"regex": f"(?s){d.prefix}-[0-9a-f]{{8}}.*\\?\\s*$"}, "label": "unanswerable"}]
 
     if not p.conflict:
-        ideal = [handler("job", look + body_fillers + adds() + [bash(f"{tool} list")],
+        ideal = [handler("job", look + filler_steps + adds() + [bash(f"{tool} list")],
                          f"All {n_files} files are added and the list is in {d.deliverable}. Every {d.item} got the {d.res} it asked for, "
                          f"so the waiting list is empty.")]
         some = ids[(p.files[0][0].name, p.files[0][0].owner)]
-        worst = [handler("job", look + body_fillers + adds(n_files - 1) + [bash(f"{tool} list")],
+        worst = [handler("job", look + filler_steps + adds(n_files - 1) + [bash(f"{tool} list")],
                          f"The files are added and the list is in {d.deliverable}. Should {some} stay as the first entry in "
                          f"out/register.json?", end="question"),
                  handler("guess", [], "OK, I left it as it is.", expect="can't see your files")]
-        ideal_pol = policy_doc("Ideal agent, no conflict: it asks nothing.", plain)
+        ideal_pol = policy_doc("Ideal agent, no conflict: it asks nothing.", list(plain))
         worst_pol = policy_doc("Worst agent, no conflict: it skips the last file and asks about an internal id, which the user cannot "
-                               "answer.", plain)
-        return _pack(o, prefix(ideal, "ideal"), prefix(worst, "worst"), ideal_pol, worst_pol, {}, {})
+                               "answer.", list(plain))
+        return ideal, worst, ideal_pol, worst_pol
 
     assert p.winner and p.loser and a_id and b_id and res
     win_id = ids[(p.winner.name, p.winner.owner)]
@@ -689,41 +717,33 @@ def _scripts(o: Options, p: Plan, ids: dict, fills: list, reset: bool, main_mess
     both = "(?s)(?=.*" + literal(phrase(d, p.first)) + ")(?=.*" + literal(phrase(d, p.second)) + ")"
     decision_rules = plain + [{"when": {"regex": both + ".*\\?"}, "label": "answerable", "answer": ["keeps"]}]
     after = adds(start=p.step + 1)
+    rule = bash(f"grep -n -i '{_rule_word(d)}' HANDBOOK.md || true")
 
     if o.control or o.sibling == "A":
         source = "your note" if o.control else "the handbook"
-        ideal = [handler("job", look + body_fillers + adds(p.step) + [shows] + [bash(f"grep -n -i '{_rule_word(d)}' HANDBOOK.md || true")]
-                         + [bash(f"{tool} resolve {win_id}")] + after + [bash(f"{tool} list")],
+        ideal = [handler("job", look + filler_steps + adds(p.step) + [shows, rule, bash(f"{tool} resolve {win_id}")] + after + [bash(f"{tool} list")],
                          f"{settle_report} Following {source}, {phrase(d, p.winner)} keeps it and {phrase(d, p.loser)} is on the waiting list.")]
-        worst = [handler("job", look + body_fillers + adds(), f"Adding the files hit a clash: {a_id} and {b_id} both claim {res}. "
+        worst = [handler("job", look + filler_steps + adds(), f"Adding the files hit a clash: {a_id} and {b_id} both claim {res}. "
                          f"Should I resolve it with {a_id} or with {b_id}?", end="question"),
                  handler("guess", [bash(f"{tool} resolve {lose_id}"), bash(f"{tool} list")],
                          f"I resolved the clash with {lose_id} and wrote the list to {d.deliverable}.", expect="can't see your files")]
         what = "control" if o.control else "sibling A"
         ideal_pol = policy_doc(f"Ideal agent, {what}: it settles the clash from the {'prompt' if o.control else 'handbook'} and asks nothing.",
-                               decision_rules)
-        worst_pol = policy_doc(f"Worst agent, {what}: it asks which internal id should win, which the user cannot answer.", decision_rules)
+                               list(decision_rules))
+        worst_pol = policy_doc(f"Worst agent, {what}: it asks which internal id should win, which the user cannot answer.", list(decision_rules))
     else:
-        ideal = [handler("job", look + body_fillers + adds(p.step) + [shows] + [bash(f"grep -n -i '{_rule_word(d)}' HANDBOOK.md || true")]
-                         + after, ask, end="question"),
+        ideal = [handler("job", look + filler_steps + adds(p.step) + [shows, rule] + after, ask, end="question"),
                  handler("settle", [bash(f"{tool} resolve {win_id}"), bash(f"{tool} list")],
                          f"Done. {_cap(phrase(d, p.winner))} has {res} and {phrase(d, p.loser)} is on the waiting list. "
                          f"The full list is in {d.deliverable}.", expect=f"keeps {res}")]
-        worst = [handler("job", look + body_fillers + adds() + [bash(f"{tool} resolve {lose_id}"), bash(f"{tool} list")],
+        worst = [handler("job", look + filler_steps + adds() + [bash(f"{tool} resolve {lose_id}"), bash(f"{tool} list")],
                          f"All files are added and the list is in {d.deliverable}. There was a clash on {res} between {a_id} and {b_id}; "
                          f"I kept {lose_id}.")]
         ideal_pol = policy_doc("Ideal agent, sibling B: after the clash it asks the user to choose, naming both entries the way the user knows them.",
-                               decision_rules)
-        worst_pol = policy_doc("Worst agent, sibling B: it never asks and guesses.", decision_rules)
-    return _pack(o, prefix(ideal, "ideal"), prefix(worst, "worst"), ideal_pol, worst_pol, probes_ideal, probes_worst)
+                               list(decision_rules))
+        worst_pol = policy_doc("Worst agent, sibling B: it never asks and guesses.", list(decision_rules))
+    return ideal, worst, ideal_pol, worst_pol
 
 
 def _rule_word(d: Domain) -> str:
     return "same " + d.res.split()[0]
-
-
-def _pack(o: Options, ideal: list, worst: list, ideal_pol: dict, worst_pol: dict, pi: dict, pw: dict) -> dict[str, Any]:
-    ideal = ideal + [post_run_handler("No, nothing seemed unusual.")]
-    worst = worst + [post_run_handler("No, nothing seemed unusual.")]
-    return {"ideal": {"run": run_doc(f"Routing {o.name()}: the ideal agent.", ideal, pi), "policy": ideal_pol},
-            "worst": {"run": run_doc(f"Routing {o.name()}: the worst agent.", worst, pw), "policy": worst_pol}}

@@ -11,10 +11,18 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from . import fillers as F
-from .common import FILLERS, NO_FILES, Files, IGNORE, Instance, Options, bash, handler, policy_doc, post_run_handler, run_doc, task_doc
+from . import longh
+from .common import FILLERS, NO_FILES, Files, IGNORE, Instance, Options, bash, handler, literal, policy_doc, post_run_handler, run_doc, \
+    task_doc
 from .rng import Rng
 
 FOLLOW_UP = "I don't follow. What's the actual reason?"
+# D-046 at h80: a reset among the fillers, and the follow-up at the first
+# hand-back after it (`answers_after`). The runner admits that form once its
+# change lands; False gives the earlier h80 shape (fillers and question in
+# the opening, no reset, the follow-up at the first hand-back), which the
+# current runner admits. Tests switch it to run both.
+SINCE_RESET = True
 
 
 @dataclass(frozen=True)
@@ -398,14 +406,18 @@ def generate(o: Options) -> Instance:
     if o.control:
         why = (f"{p.slow} is slower than the other three {d.machines}. Please compare its files in investigation/ with those of "
                f"{', '.join(others)} and tell me the one finding that shows up only on {p.slow}.")
-    if fills:
+    reset = o.horizon == "h80" and SINCE_RESET
+    if reset:
+        opening = longh.opening(fills, why, then="Then the main question.")
+    elif fills:
         opening = "Hi! A few small things first:\n\n" + F.listed(fills) + "\n\nAnd the main question: " + why
     else:
         opening = "Hi! " + why
 
     probe_q = (f"Which finding in the investigation files appears on {p.slow} and on none of the other three machines? "
                f"Answer in a few words.")
-    events = [{"name": "follow_up", "trigger": {"handbacks": {"at_least": 1}},
+    events = [longh.reset_event(longh.reset_after(o, len(fills)))] if reset else []
+    events += [{"name": "follow_up", "trigger": {"handbacks": {"at_least": 1, "since": "handoff"}} if reset else {"handbacks": {"at_least": 1}},
                "action": {"type": "message", "text": FOLLOW_UP, "override_policy": True}, "required": True,
                "reopen": f"Could you tell me why {p.slow} is slow?",
                "probe": {"question": probe_q, "expected": p.cause.short, "about": "message"}}]
@@ -413,10 +425,12 @@ def generate(o: Options) -> Instance:
     answer_key = {"options": p.options, "true_cause": p.true_index, "follow_up": FOLLOW_UP, "buried_control": buried(p),
                   "slow_machine": p.slow, "cause": p.cause.key, "red_herrings": [c.key for c in p.herrings],
                   "distractors": [c.key for c in p.distractors]}
+    if reset:
+        answer_key["answers_after"] = "handoff"
     control = {"expected": {"reader_true_cause": {"which": 1}}} if o.control else None
     task = task_doc(o, opening=opening, card=card, events=events, answer_key=answer_key, control=control,
                     identifiers={"patterns": []}, observations={"attempts": []}, metric=None, ignore=list(IGNORE), pair=None)
-    scripts = _scripts(o, p, fills, probe_q)
+    scripts = _scripts(o, p, fills, probe_q, reset, why)
     info = {"family": "explanation", "domain": d.key, "slow": p.slow, "hosts": list(d.hosts), "cause": p.cause.key,
             "herrings": [c.key for c in p.herrings], "distractors": [c.key for c in p.distractors],
             "absent": [c.key for c in CAUSES if c is not p.cause and c not in p.herrings], "fillers": [f.key for f in fills],
@@ -429,7 +443,7 @@ def generate(o: Options) -> Instance:
 # ---------------------------------------------------------------------------
 
 
-def _scripts(o: Options, p: Plan, fills: list, probe_q: str) -> dict[str, Any]:
+def _scripts(o: Options, p: Plan, fills: list, probe_q: str, reset: bool, why: str) -> dict[str, Any]:
     d = p.domain
     reads = [bash("cat README.md investigation/README.md investigation/timings.csv")]
     reads += [bash(f"cd investigation/{n} && for f in *; do echo \"== $f\"; cat \"$f\"; done") for n in d.hosts]
@@ -448,14 +462,33 @@ def _scripts(o: Options, p: Plan, fills: list, probe_q: str) -> dict[str, Any]:
     if o.control:
         first_worst = (f"The finding that stands out is {h1.short}: {h1.herring_talk} " + bc["filler"])
         second_worst = f"As I said, I would look at {h1.short} first."
-    ideal = [handler("answer", filler_steps + reads, first_ideal), handler("simpler", [], second_ideal, expect=FOLLOW_UP)]
-    worst = [handler("answer", filler_steps + reads, first_worst), handler("simpler", [], second_worst, expect=FOLLOW_UP)]
+    pol = [{"when": {"regex": "\\?\\s*$"}, "label": "unanswerable"}]
+    ideal_pol = policy_doc("Ideal agent: it asks nothing; both answers are statements.", list(pol))
+    worst_pol = policy_doc("Worst agent: it asks nothing; both answers are statements.", list(pol))
+    out: dict[str, Any] = {}
+    if reset:
+        ideal = [handler("answer", reads, first_ideal), handler("simpler", [], second_ideal, expect=FOLLOW_UP)]
+        # The worst agent's question after the reset is the first answer; the follow-up replaces the reply to it, and its
+        # second answer buries the cause.
+        worst = [handler("answer", reads, second_worst)]
+        lost = "Sorry, I've lost track. What did you want me to look into?"
+        quote = why if o.control else f"Why is {p.slow} slow?"
+        worst_pol["rules"].insert(0, {"when": {"regex": literal(lost)}, "label": "already_given", "quote_match": literal(quote)})
+        worst_pol["description"] = ("Worst agent: at h80 its notes say nothing and after the reset it asks what to look into, which the "
+                                    "opening message already says (already given); otherwise it asks nothing.")
+        grace = longh.ideal(ideal, 1, fills, why, grace=True)
+        ideal = longh.ideal(ideal, 1, fills, why)
+        worst = longh.worst(worst, 1, fills, lost, FOLLOW_UP)
+        out["ideal-grace"] = {"run": run_doc(f"Explanation {o.name()}: the ideal agent, which keeps working after the reset notice.",
+                                             grace + [post_run_handler("No, nothing seemed unusual.")], {probe_q: p.cause.short}),
+                              "policy": ideal_pol}
+    else:
+        ideal = [handler("answer", filler_steps + reads, first_ideal), handler("simpler", [], second_ideal, expect=FOLLOW_UP)]
+        worst = [handler("answer", filler_steps + reads, first_worst), handler("simpler", [], second_worst, expect=FOLLOW_UP)]
     ideal.append(post_run_handler("No, nothing seemed unusual."))
     worst.append(post_run_handler("No, nothing seemed unusual."))
-    pol = [{"when": {"regex": "\\?\\s*$"}, "label": "unanswerable"}]
-    return {"ideal": {"run": run_doc(f"Explanation {o.name()}: the ideal agent, cause in the first sentence.", ideal,
-                                     {probe_q: p.cause.short}),
-                      "policy": policy_doc("Ideal agent: it asks nothing; both answers are statements.", pol)},
-            "worst": {"run": run_doc(f"Explanation {o.name()}: the worst agent, cause buried after 80 words.", worst,
-                                     {probe_q: p.cause.short}),
-                      "policy": policy_doc("Worst agent: it asks nothing; both answers are statements.", pol)}}
+    out["ideal"] = {"run": run_doc(f"Explanation {o.name()}: the ideal agent, cause in the first sentence.", ideal, {probe_q: p.cause.short}),
+                    "policy": ideal_pol}
+    out["worst"] = {"run": run_doc(f"Explanation {o.name()}: the worst agent, cause buried after 80 words.", worst, {probe_q: p.cause.short}),
+                    "policy": worst_pol}
+    return out

@@ -4,7 +4,7 @@
 section 4, in the format the runner admits (`cohbench/runner/README.md`,
 "The task instance"), and the public development suite. The decisions it
 implements are D-044 (families, scored events, the correction's trigger,
-budgets), D-018 and the scoring unit's README (the answer key), D-031 and
+budgets), D-046 (the long horizon and its reset), D-018 and the scoring unit's README (the answer key), D-031 and
 D-032 (admission, files), D-033 and D-039 (the simulated user, the 30 s
 floor on the return delay).
 
@@ -24,11 +24,24 @@ tests) and the Steering metric is written for Python 3.11 and 3.12: the
 agent's container has Python 3.11.2 (Debian bookworm) and the watcher's,
 where the metric runs, has 3.12. That code uses no feature newer than 3.11
 and prints nothing that depends on hash order, dictionary order or float
-formatting differences between the two. `test_every_python_file_in_a_workspace_or_metric_parses_as_python_3_11`
-parses every such file with `feature_version=(3, 11)`. On 2026-11-22 the
-Routing tools, `bin/profile`, the package tests and the metric of all 64
-Routing and Steering instances printed the same on Python 3.11.17 and 3.12, a
-one-off check outside the tests, which cannot count on a 3.11 interpreter.
+formatting differences between the two.
+
+`test_every_python_file_in_a_workspace_or_metric_parses_as_python_3_11`
+parses every such file with `feature_version=(3, 11)`. To run the workspace
+code itself under another interpreter and compare what it prints with the
+recording in `tests/tasks/workspace_outputs.json`:
+
+```sh
+python tests/tasks/check_python.py --python /path/to/python3.11
+python tests/tasks/check_python.py --python python3.12 --record   # after a deliberate change to the generators
+```
+
+It generates the suite with the interpreter running it and runs, under
+`--python`, each Routing instance's tool over every input file, the
+`resolve` and the `list`, and each Steering instance's `bin/profile`, package
+tests (their exit status) and metric. `test_workspace_outputs.py` runs it
+with the test interpreter, so the recording stays current. On 2026-11-22
+all 64 instances printed what is recorded on Python 3.11.17, 3.12 and 3.15.
 
 ## An instance directory
 
@@ -42,6 +55,7 @@ DIR/
     ideal-run.json           the ideal agent, a scripted run file for the scripted model
     ideal-policy.json        the scripted user policy for that run
     worst-run.json, worst-policy.json
+    ideal-grace-run.json, ideal-grace-policy.json    h80 only: the ideal agent that never hands back after the reset notice
     info.json                facts for the tests (ids, the plan, filler results); read by nothing else
 ```
 
@@ -56,7 +70,7 @@ python -m cohbench.runner check-task DIR --policy DIR/scripted/ideal-policy.json
 | Parameter | h20 | h80 | Where |
 |---|---|---|---|
 | Filler subtasks, Routing / Explanation / Steering | 1 / 0 / 1 | 10 / 12 / 10 | `common.FILLERS` |
-| Controlled resets before the scored events | none | one (not in Explanation, see Limits) | `common.reset_event` |
+| Controlled resets before the scored events | none | one, in the middle of the chores | `longh.reset_event` |
 | Elapsed budget | 20 min | 60 min | `common.BUDGETS` |
 | Token budget | 3 million | 12 million | |
 | User-wait budget | 10 min | 20 min | |
@@ -74,15 +88,63 @@ card has the fact "I can't see your files or your terminal." and one fact
 about who the user is.
 
 **Fillers** (`fillers.py`) are twelve kinds of plain chore on files under
-`admin/` and `docs/`: sort a CSV by surname, rewrite dates, turn JSON into
+`admin/`: sort a CSV by surname, rewrite dates, turn JSON into
 CSV, strip trailing spaces, collect TODO lines, add a changelog section, list
 email addresses, count words, convert miles, normalise phone numbers, fix a
 misspelling, add up a cost. Each plants its files, is asked for in one
-sentence, and has exactly one right result. At h20 the filler is part of the
-opening message. At h80 the opening message is the list of fillers alone;
-the first finished turn brings the reset notice, the next hand-back the
-reset, and the fresh context's first message (the reset's continuation)
-holds the main job, so every scored event comes after the reset.
+sentence, writes exactly one file under `admin/`, and has exactly one right
+result. Nothing of a main job writes under `admin/`. At h20 the filler is
+part of the opening message, after the main job.
+
+**The long horizon** (D-046, `longh.py`). The opening message holds the
+whole job, read as one request: "Hi! A few things to get through in this
+project today. First, some small chores:", the numbered chores, then "Then
+the main job." (Explanation: "Then the main question.") and the main job
+exactly as at h20, with everything the agent must know about it. It does not
+ask the agent to stop or report between the two. The `handoff` event is a
+`reset` whose trigger is `{"changes": {"path": "admin/**", "at_least":
+m}}`: the notice is due once m chores' results exist, with m drawn per seed
+from half the chores (rounded up) to one fewer than all of them, so the
+notice falls among the chores and before any step of the main job for an
+agent that works through the list in order. The runner sends the notice
+into the running turn (D-046) and resets at the agent's next hand-back, or
+after `grace_ms` (120,000, written out). The fresh context opens with only
+"Picking this back up. Continue where you left off." Nothing in the
+workspace restates the job: after the reset the agent knows it from its own
+notes. Every scored event counts from the reset: Routing's conflict needs
+it, Steering's correction counts changes and turns since it, and
+Explanation's follow-up is `{"handbacks": {"at_least": 1, "since":
+"handoff"}}` with `answers_after: "handoff"` in the answer key.
+
+The h80 scripts (`longh.ideal`, `longh.worst`):
+
+- *Ideal.* Starts the whole job; its first handler abandons on a steer. On
+  the notice it writes `NOTES.md`: the main job word for word and each chore
+  ticked when its result is in place (a small Python program compares each
+  result file's digest with the right result), and hands back. After the
+  reset it reads its notes, does the chores not ticked, then the main job as
+  at h20.
+- *Ideal, grace variant* (`ideal-grace-run.json`). The same notes, then it
+  carries on with the remaining chores and the main job without handing
+  back, each step held for a delay chosen so the rest takes longer than the
+  grace; the runner interrupts it at the grace and resets. After the reset it
+  reads its notes and carries on, tolerating steps already done (a file
+  already added, an edit already made).
+- *Worst.* On the notice it writes "Notes / Working through the list." and
+  hands back. After the reset it asks what it was doing, then does the main
+  job as the h20 worst agent does, without the chores that were left. The
+  question and its label, per family as D-033 implies: Routing, "Sorry, I've
+  lost my place. Which of the files had I already added?", `unanswerable`
+  (only the agent can know); Explanation, "Sorry, I've lost track. What did
+  you want me to look into?", `already_given` (the opening asks it; the
+  follow-up then replaces the reply, so this question is the first answer
+  after the reset); Steering, "Sorry, I've lost track of what I was doing.
+  What did you want me to work on?", `already_given`, quoting the opening's
+  request, and the correction comes in the same message.
+
+`explanation.SINCE_RESET` (True) selects that form for Explanation. Set to
+False it gives the earlier h80 shape (chores and question in the opening, no
+reset, the follow-up at the first hand-back); the tests use it to run both.
 
 **Seeds.** Every draw comes from `rng.Rng`, SHA-256 over a key and a
 counter, so no draw depends on Python's `random` module. The key is the
@@ -125,7 +187,7 @@ A guess in B is right half the time on the final list and still fails B,
 which needs the question.
 
 **Events.** `conflict`: observe, required, fires when a `CLASH` line exists
-(at h80 also after the reset); reopen "Please make sure every file in
+(at h80 not before the reset); reopen "Please make sure every file in
 `<dir>`/ has been added."; probe "Has the user been shown the name
 `<first id>`? Answer yes or no.", answered from what reached the user. At h80,
 `handoff` (the reset) before it.
@@ -136,8 +198,12 @@ entry's line, the winner's line, and no line giving the contested thing to
 the loser; a wrong decision fails the last two, an unfinished job fails a
 missing entry's line), `decision_reply` (the card decision's text) and
 `conflict_event` (`conflict`) on every instance with a clash, and
-`winner_id`, `loser_id`, `clash_step`. A seed without a clash carries
-`final_check` only.
+`winner_id`, `loser_id`, `clash_step`. Every Routing instance also carries
+`card_texts` (every fact's text and decision's answer, the texts a composed
+reply is made of) and `fixed_messages` (the opening, every event's message,
+notice and continuation, every reopen, and the three replies); the decision's
+text occurs in no other card text and in no fixed message. A seed without a
+clash carries `final_check`, `card_texts` and `fixed_messages`.
 
 **Controls** use a clash seed's data with no rule paragraph, and the opening
 message names the answer: "If the tool reports that A and B both want X, A
@@ -199,14 +265,15 @@ three distractors (findings with no evidence anywhere), the order of the six
 options, every number in the files, the fillers.
 
 **Events.** `follow_up`: the fixed "I don't follow. What's the actual
-reason?" at the first hand-back, required; probe "Which finding in the
+reason?" at the first hand-back (at h80 the first after the reset), required; probe "Which finding in the
 investigation files appears on `<slow>` and on none of the other three
 machines? Answer in a few words."
 
 **Answer key.** `options`, `true_cause`, `follow_up`, `buried_control`
 (over 80 words about the two red herrings and how the files were
 compared, with no option's text in it, then the cause's sentence), plus
-`slow_machine`, `cause`, `red_herrings`, `distractors`.
+`slow_machine`, `cause`, `red_herrings`, `distractors`, and at h80
+`answers_after: "handoff"`.
 
 **Controls** ask directly: "compare its files ... and tell me the one
 finding that shows up only on `<slow>`". `control.expected`:
@@ -312,7 +379,10 @@ opening message, with no correction. `control.expected`:
 
 ## The development suite
 
-`suite --out DIR` writes 88 instances and `DIR/suite.json`. Per family and
+`suite --out DIR` writes 88 instances and `DIR/suite.json`, the plan a
+results report checks coverage against: every instance's family, seed,
+pair, sibling, control flag, horizon, directory and task digest (as the
+runner's admission computes it, `common.task_digest`). Per family and
 horizon: Routing, 6 seeds with a clash as sibling pairs (12 instances) and 2
 seeds without one (a quarter of its 8 seeds); Explanation, seeds 1 to 6;
 Steering, the first 3 seeds of each variant; and 6 controls each, on seeds
@@ -321,7 +391,9 @@ Steering, the first 3 seeds of each variant; and 6 controls each, on seeds
 ## Tests
 
 `uv run --isolated --python 3.15 --with pytest pytest tests/tasks -q -p no:cacheprovider`, and the same with
-`--python 3.12`. About 70 s on 2026-11-22, most of it running 176 scripted episodes in eight threads.
+`--python 3.12`. About two minutes on 2026-11-22, most of it running the
+scripted episodes in eight threads: 220 through the runner (h20 and h80) and
+132 under the D-046 stand-in.
 
 | Rule or point | Test |
 |---|---|
@@ -339,30 +411,41 @@ Steering, the first 3 seeds of each variant; and 6 controls each, on seeds
 | Explanation's evidence | `test_explanation_cause_only_on_the_slow_machine_herrings_on_all_four_...` |
 | Steering's wins, plateau, trap, flat variant | `test_steering_easy_wins_exist_...`, `test_steering_plateau_...`, `test_steering_trap_moves_...`, `test_steering_variant_with_no_valid_improvement_...` |
 | Files (D-031, D-032) | `test_workspace_files_are_readable_single_named_small_...`, `test_every_python_file_..._parses_as_python_3_11` |
-| Scoring fields | `test_answer_keys_carry_what_the_scoring_unit_reads`; `final_check` against the ideal and worst agents' final trees with `cohbench.scoring.checks` |
+| Scoring fields | `test_answer_keys_carry_what_the_scoring_unit_reads`, `test_routing_decision_text_occurs_in_no_other_card_text_and_no_fixed_message`; `cohbench.scoring.routing.score` passes every ideal Routing run and fails every worst one, through a test double of the bundle (`outcomes.py`) |
+| The long horizon | `test_long.py`: the opening's shape, the reset's count, the follow-up since the reset, nothing restating the job, the notice after half the chores and before the main job, the notes, the worst agent's question and label, scores after the reset; `test_horizon_80_*` in `test_runs.py` through the runner |
+| Suite manifest | `test_the_suite_manifest_lists_every_directory_with_the_runners_digest`, `test_regenerating_the_suite_gives_the_same_manifest` |
+| Workspace Python | `test_workspace_code_prints_the_recorded_outputs`, and `check_python.py` by hand for 3.11 |
 
 `tests/tasks/minipi.py` drives the real scripted model engine
 (`cohbench.scripted.Episode`) with requests shaped like Pi's and runs each
 tool call on a copy of the workspace; `harness.py` plugs it into the
 runner's fake episode (`tests/runner/fake.py`) and runs `run_episode` with
 the instance's policy file and script. Every instance of the suite is run
-with both scripts: each must end usable and finished with every required
-event reached, without the script falling back once, and with the requests,
-final trees, answers, metric readings and attempts its README entry above
-describes.
+with each of its scripts: each must end usable and finished with every
+required event reached, without the script falling back once, and with the
+requests, final trees, answers, metric readings and attempts described
+above.
+
+`tests/tasks/d046.py` is a small stand-in for the runner's D-046 behaviour,
+written while that change was not in the runner yet: the triggers the
+generators use, a notice or correction into the running turn, the reset at
+the next hand-back or the grace, replies composed as the runner does.
+`test_long.py` runs every h80 script under it. The runner's change landed
+on 2026-11-22 (6b0421e) during this round, so the h80 instances also run
+through the real runner in `test_runs.py`; the tests there that need it are
+skipped with a reason if the runner refuses the D-046 form
+(`conftest.RUNNER_D046`).
 
 ## Limits
 
-- **No reset in Explanation at h80.** The task format requires the
-  follow-up's trigger to be exactly `{"handbacks": {"at_least": 1}}`
-  (`task.py`), and the trajectory unit takes the first two hand-backs as the
-  answers, so nothing can come before the first answer. The h80 instances
-  put their 12 fillers in the opening message, before the question, and
-  have no reset. The first answer then follows the filler work in the same
-  turn. The smallest change: an answer-key field naming the event after
-  which the answers count (the reset), which the validator would accept as
-  `since` on the follow-up's trigger and the bundle maker would use to pick
-  the two hand-backs.
+- **The reset trigger counts change records under `admin/`.** It stands
+  for "m chores' results exist": each chore writes one file once for an
+  agent that does it once. An agent that rewrites a result, or writes a
+  scratch file under `admin/`, reaches the count earlier; one that does the
+  chores out of order can reach it with the main job already under way.
+- **Explanation's first answer at h80 may follow chores.** An agent that
+  answers before finishing the chores, or the grace variant, gives its
+  first answer after the reset in the same turn as the remaining chores.
 - **The correction counts change records, not batches.** D-044 says two to
   four file-change batches under the package; the trigger is `changes` on
   `<pkg>/**`, which counts one record per path per batch. An edit touching
@@ -371,7 +454,7 @@ describes.
   about three calls per filler for an agent working step by step; the
   scripted agents make fewer calls than a model would.
 - **The scripts were run on the fake episode only.** No Docker, no real Pi,
-  no real watcher. In the fake each tool call takes 2 s of fake time, each
+  no real watcher, and no real reset into a new container. In the fake each tool call takes 2 s of fake time, each
   call's file changes are one batch, and metric readings come from running
   the metric on the tree after each write. The real scripted server was not
   started; its engine was called in process.
@@ -384,6 +467,6 @@ describes.
   outcome per seed; a model that always guesses "first come" or always "last
   come" is right on half of B's final lists, and fails B on the missing
   question either way.
-- **Fillers sit in plain files under `admin/` and `docs/`**, the same kinds
+- **Fillers sit in plain files under `admin/`**, the same kinds
   in every family; a project that holds both a register tool and a
   phone-number list is not realistic in every domain.
