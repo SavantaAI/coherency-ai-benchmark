@@ -42,9 +42,14 @@ SEGMENT_CAUSES = ("start", "reset", "context")
 TURN_ENDS = ("finished", "waiting", "interrupted", "failed", "open")
 # `post_run`: the runner's awareness question after the episode end. It and
 # everything after it stay in the full trajectory and never reach a scorer input.
-USER_KINDS = ("opening_prompt", "reply", "correction", "reset", "reopen", "from_agent", "post_run")
+# `reset_notice` (D-046): a reset's notice steered into the running turn. It is
+# never a correction and never a reply to an output; a notice sent with the
+# next message keeps that message's kind.
+USER_KINDS = ("opening_prompt", "reply", "correction", "reset", "reopen", "from_agent", "post_run", "reset_notice")
 # User message kinds whose text the user wrote (identifiers in them are known to the user).
-USER_AUTHORED_KINDS = ("opening_prompt", "reply", "correction", "reset", "reopen")
+USER_AUTHORED_KINDS = ("opening_prompt", "reply", "correction", "reset", "reopen", "reset_notice")
+# The kinds dated at their delivery to the running turn (R21).
+DELIVERED_KINDS = ("correction", "reset_notice")
 ASSISTANT_ROLES = ("final", "narration")
 CALL_STATUSES = ("ok", "error", "cancelled", "open")
 END_STATUSES = ("ok", "error", "cancelled")
@@ -169,7 +174,14 @@ RUNNER_EVENT_FIELDS: dict[str, dict[str, Any]] = {
     "budget_cutoff": {"budget": enum(BUDGETS)},
     "episode_end": {"reason": enum(EPISODE_END_REASONS)},
     "probe": {"probe": T.INT},
+    # D-046: when the agent received a reset notice steered into the running
+    # turn, and the runner's watcher mark at the delivery. Full trajectory
+    # only: the delivery's batch position goes to the run manifest
+    # (`notices`), never to the view, so it is no Steering input.
+    "notice_delivered": {"target": T.INT, "mark": T.OPT_STR},
 }
+# Runner events the full trajectory keeps and the scorer view leaves out.
+AUDIT_RUNNER_TYPES = ("notice_delivered",)
 # Optional fields the runner may add that stay in the audit record only (the
 # run manifest's `runner_audit`), never in the trajectory or the bundle:
 # `overrun_ms`, how late a reply was when judging took longer than the return
@@ -182,7 +194,11 @@ RUNNER_AUDIT_FIELDS: dict[str, dict[str, Any]] = {
     "episode_end": {"stopped_utc": T.OPT_STR},
     # Whether the reset's continuation was sent: a reset whose continuation
     # was `unsent` has a segment with no dispatch, which the driver leaves out.
-    "controlled_reset": {"continuation": enum(("launched", "unsent"), True)},
+    # D-046: how the reset's notice went (`mid_turn`: steered into the running
+    # turn; `next_message`: sent with the next message) and whether the reset
+    # came at the agent's hand-back or at the grace period's end.
+    "controlled_reset": {"continuation": enum(("launched", "unsent"), True), "notice": enum(("mid_turn", "next_message"), True),
+                         "reset_at": enum(("handback", "grace"), True)},
 }
 # What the runner may pass (`Hints.runner`): the kept fields and the audit
 # ones. The runner emits a field once this table lists it.
@@ -320,7 +336,7 @@ VIEW_FIELDS: dict[str, dict[str, Any]] = {
     "turn_end": {"turn": T.INT, "end": enum(VIEW_TURN_ENDS), "closed_by": T.OPT_INT},
     "user_message": {"turn": T.OPT_INT, "kind": enum(USER_AUTHORED_KINDS), "text": T.STR, "secret": T.BOOL},
     "to_user": {"turn": T.OPT_INT, "text": T.STR, "secret": T.BOOL},
-    **RUNNER_EVENT_FIELDS,
+    **{k: v for k, v in RUNNER_EVENT_FIELDS.items() if k not in AUDIT_RUNNER_TYPES},
     # `batch`: the change-log batch the delivery mark closed (D-025).
     # `mark`: the delivery mark's neutral number in changes.jsonl.
     # `straddled` (D-037): the batch whose writes began by the delivery and

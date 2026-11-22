@@ -193,8 +193,10 @@ def runner_events(q_item, w, final_item, correction, probe_wall, mark, first_kin
     ]
 
 
-def side_a(clipped=False, declare=True, cut_line=False, edit=None, dispatch=True):
-    """Pi-like. A handoff of 0.5 s at 6 s and an export of 1 s at 10.5 s."""
+def side_a(clipped=False, declare=True, cut_line=False, edit=None, dispatch=True, notice=False):
+    """Pi-like. A handoff of 0.5 s at 6 s and an export of 1 s at 10.5 s.
+    With `notice`, the steered message is a reset notice (D-046): kind
+    `reset_notice`, delivered by `notice_delivered` with the same mark."""
     w = clock((6, 0.5), (10.5, 1.0))
     th = mini.thread("thread:project:p:a")
     r = mini.run_rec(th["id"], 1, 0, w(15))
@@ -225,7 +227,10 @@ def side_a(clipped=False, declare=True, cut_line=False, edit=None, dispatch=True
     evs = runner_events(q["id"], w, final_item, steer["messageId"], w(15.2), "c-1", first_kind="pending")
     if edit:
         evs = edit(evs, final_item, w)
-    hints = Hints(runner=evs, excluded=intervals(w, [(6, 0.5, "handoff"), (10.5, 1.0, "export")]) if declare else [], episode_start_utc=mini.ts(0) if dispatch else None)
+    if notice:
+        evs = [RunnerEvent("notice_delivered", e.utc, e.ref, e.fields) if e.type == "correction_delivered" else e for e in evs]
+    hints = Hints(runner=evs, excluded=intervals(w, [(6, 0.5, "handoff"), (10.5, 1.0, "export")]) if declare else [], episode_start_utc=mini.ts(0) if dispatch else None,
+                  user_kinds={steer["messageId"]: "reset_notice"} if notice else {})
     return run([seg], hints=hints), q["id"], w
 
 
@@ -641,6 +646,33 @@ def test_a_correction_carries_the_batch_of_its_delivery_mark(pair, tmp_path):
     assert (cd["mark"], cd["batch"]) == (None, None)
     assert bundle.validate(b)["ok"], bundle.validate(b)["errors"]
     assert any("post-correction Steering share is undefined" in n for n in b.notes)
+
+
+def test_a_reset_notices_delivery_mark_is_audit_only(pair, tmp_path):
+    """D-046: the same steered message as a reset notice. Its delivery mark's
+    batch position (the batch it closed, any straddling run) goes to the run
+    manifest's `notices`; the view has no delivery event and no correction,
+    and changes.jsonl holds no notice mark, so nothing of it is a Steering
+    input. A mark the change log lacks leaves the position null, with a note."""
+    a = make(pair[0], tmp_path, "a")
+    side = side_a(notice=True)
+    res = side[0]
+    b = make(side, tmp_path, "n", watcher=watcher_a(side[2], store(tmp_path, "n")), end_mark=END_MARK["a"])
+    assert bundle.validate(b)["ok"], bundle.validate(b)["errors"]
+    assert not any(e["type"] in ("correction_delivered", "notice_delivered") for e in b.view.events)
+    (msg,) = [e for e in b.view.events if e["type"] == "user_message" and e["text"] == "Stop after this one and report."]
+    assert msg["kind"] == "reset_notice"
+    (n,) = res.manifest["notices"]
+    assert (n["mark"], n["batch"], n["straddled"], n["straddled_last"]) == ("c-1", 0, None, None)
+    assert res.trajectory.events[n["seq"]]["type"] == "notice_delivered" and res.trajectory.events[n["target"]]["kind"] == "reset_notice"
+    marks = lambda x: [r for r in x.changes.records if r["type"] == "mark"]  # noqa: E731
+    assert len(marks(b)) == len(marks(a)) - 1 and "c-1" not in b.changes.mark_ids and pair[0][0].manifest["notices"] == []
+    # The same batch the correction's mark closed.
+    assert next(e for e in a.view.events if e["type"] == "correction_delivered")["batch"] == n["batch"]
+    wat = watcher_a(side[2], store(tmp_path, "nm"))
+    wat[1].events = _numbered([r for r in wat[1].events if r.get("label") != "c-1"])
+    b = make(side, tmp_path, "nm", watcher=wat, end_mark=END_MARK["a"])
+    assert res.manifest["notices"][0]["batch"] is None and any("reset notice delivery" in x and "not in the change log" in x for x in b.notes)
 
 
 # episode.json ---------------------------------------------------------------------

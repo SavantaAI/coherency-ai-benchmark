@@ -44,7 +44,7 @@ T0 = datetime(2026, 11, 22, 12, 0, 0, tzinfo=timezone.utc)
 
 # The reference kinds the runner may use for each runner event (never a run id).
 REF_KINDS = {"verdict": {"item"}, "wait": {"item"}, "unjudged": {"item"}, "handback": {"item"}, "correction_delivered": {"message", "item"}, "controlled_reset": {"message", "item"},
-             "reopen": {"message", "item"}}
+             "reopen": {"message", "item"}, "notice_delivered": {"message", "item"}}
 
 
 def iso(t: datetime) -> str:

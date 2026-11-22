@@ -7,6 +7,7 @@ import copy
 import pytest
 
 from cohbench.trajectory import Hints, NormaliseError, RunnerEvent, Segment, scorer_view, t3, validate, validate_view
+from cohbench.trajectory import format as F
 from cohbench.trajectory.blindness import scan_view
 
 from . import mini
@@ -1106,14 +1107,17 @@ def test_explanation_answers_follow_the_named_event():
 NOTICE = "I have to close this session in a moment. Leave yourself notes for whoever picks this up."
 
 
-def _reset_notice(route, notes_end):
-    """A reset notice delivered mid-turn the way a correction is (D-046): by
-    native steering into the running turn, by interrupting and restarting
-    with the notice, or queued behind the running turn. The reset event fires
-    as the notice is sent (2 s). The agent sends its notes (3.1 s) and either
-    hands back (4 s) or is interrupted at the grace (5 s); the runner then
-    performs the reset with the continuation (6 s), and the two scored
-    answers follow (8 s, 11 s)."""
+def _reset_notice(route, notes_end, correction_at=None):
+    """A reset notice steered into the running turn (D-046), by native
+    steering, by interrupting and restarting with the notice, or queued
+    behind the running turn, in the runner's shapes: user kind
+    `reset_notice`, a `notice_delivered` event with the delivery mark, and
+    `controlled_reset` with its audit fields. The notice arrives at 2 s
+    (2.6 s queued). The agent sends its notes (3.1 s) and either hands back
+    (4 s) or is interrupted at the grace (5 s); the reset's planted event
+    fires at the continuation's send (6 s) and `controlled_reset` follows at
+    that instant; the two scored answers follow (8 s, 11 s). With
+    `correction_at`, a correction is also steered into the first turn then."""
     th = mini.thread()
     grace = notes_end == "grace"
     status = "interrupted" if grace else "completed"
@@ -1138,9 +1142,14 @@ def _reset_notice(route, notes_end):
     work = mini.command(r1, 1, 1.5, "df -h", "/ 100%\n")
     notes = mini.dynamic(nr, 3, 3.1, "mcp__t3-code__send_to_user", {"message": "Notes are in NOTES.md."}, {"content": [], "structuredContent": {"sentMessage": "Notes are in NOTES.md."}})
     items = [opening, work, notice, notes]
-    evs = [RunnerEvent("planted", mini.ts(at), None, {"name": "reset", "phase": "fired"}),
-           RunnerEvent("correction_delivered", mini.ts(at), {"message": notice["messageId"]}, {"mark": None}),
+    evs = [RunnerEvent("notice_delivered", mini.ts(at), {"message": notice["messageId"]}, {"mark": None}),
            RunnerEvent("verdict", mini.ts(3.1), {"item": notes["id"]}, {"label": "no_request", "reply": None})]
+    kinds = {notice["messageId"]: "reset_notice"}
+    if correction_at is not None:
+        fix = mini.user(r1, correction_at, "Count operations, not cache hits.", inputIntent="steer")
+        items.insert(2, fix)
+        kinds[fix["messageId"]] = "correction"
+        evs.append(RunnerEvent("correction_delivered", mini.ts(correction_at), {"message": fix["messageId"]}, {"mark": None}))
     if not grace:
         closing = mini.assistant(nr, 4, "Stopping here.")
         items.append(closing)
@@ -1153,36 +1162,45 @@ def _reset_notice(route, notes_end):
     a2 = mini.assistant(r4, 11, "A log rotation job holds the disk.")
     items += [cont, a1, mini.user(r4, 9, "I don't follow.\n\nWhat is the actual reason?"), a2]
     runs += [r3, r4]
-    evs += [RunnerEvent("controlled_reset", mini.ts(6), {"message": cont["messageId"]}, {}),
+    evs += [RunnerEvent("planted", mini.ts(6), None, {"name": "reset", "phase": "fired"}),
+            RunnerEvent("controlled_reset", mini.ts(6), {"message": cont["messageId"]},
+                        {"continuation": "launched", "notice": "mid_turn", "reset_at": "grace" if grace else "handback"}),
             RunnerEvent("verdict", mini.ts(8), {"item": a1["id"]}, {"label": "no_request", "reply": None}),
             RunnerEvent("handback", mini.ts(8), {"item": a1["id"]}, {"kind": "finished"}),
             RunnerEvent("verdict", mini.ts(11), {"item": a2["id"]}, {"label": "no_request", "reply": None}),
             RunnerEvent("handback", mini.ts(11), {"item": a2["id"]}, {"kind": "finished"}),
             RunnerEvent("episode_end", mini.ts(12), None, {"reason": "finished"})]
-    hints = Hints(runner=evs, episode_start_utc=mini.ts(0), user_kinds={notice["messageId"]: "correction"})
+    hints = Hints(runner=evs, episode_start_utc=mini.ts(0), user_kinds=kinds)
     return run([Segment(t3.from_export(mini.export([(th, runs, items)])))], hints=hints)
 
 
 @pytest.mark.parametrize("notes_end", ["handback", "grace"])
 @pytest.mark.parametrize("route", ["steer", "restart", "queued"])
 def test_a_reset_notice_is_delivered_mid_turn_like_a_correction(route, notes_end):
-    """D-046: the notice reaches the agent by any correction route and is a
-    correction in the view, dated at its delivery. Outputs between the notice
-    and the reset are judged and replied to by no one (no wait). The notes
-    turn ends at the agent's hand-back, or by the runner's interrupt at the
-    grace; the reset turn follows. The notes hand-back is an ordinary
-    hand-back and, with `answers_after` naming the reset, not an answer."""
+    """D-046: the notice reaches the agent by any correction route, dated at
+    its delivery as a correction is, but it is a `reset_notice` of its own:
+    the view has no delivery event for it (`notice_delivered` stays in the
+    full trajectory) and no correction. Outputs between the notice and the
+    reset are judged and replied to by no one. The notes turn ends at the
+    agent's hand-back, or by the runner's interrupt at the grace; the reset
+    turn follows. The notes hand-back is an ordinary hand-back and, with
+    `answers_after` naming the reset, not an answer. The reset's audit fields
+    stay in the run manifest."""
     from cohbench.trajectory import episode
 
     res = _reset_notice(route, notes_end)
     assert validate(res.trajectory).ok, validate(res.trajectory).errors
+    nd = next(e for e in res.trajectory.events if e["type"] == "notice_delivered")
+    assert res.trajectory.events[nd["target"]]["kind"] == "reset_notice" and res.trajectory.events[nd["target"]]["us"] == nd["us"]
+    audit = {a["field"]: a["value"] for a in res.manifest["runner_audit"]}
+    assert audit["notice"] == "mid_turn" and audit["reset_at"] == notes_end and audit["continuation"] == "launched"
     v = scorer_view(res.trajectory)
     assert validate_view(v).ok, validate_view(v).errors
     ev = v.events
+    assert not any(e["type"] in ("notice_delivered", "correction_delivered") for e in ev)
+    assert not any(e["type"] == "user_message" and e["kind"] == "correction" for e in ev)
     notice = next(e for e in ev if e["type"] == "user_message" and e["text"] == NOTICE)
-    assert notice["kind"] == "correction" and notice["t"] == (2600 if route == "queued" else 2000)
-    cd = next(e for e in ev if e["type"] == "correction_delivered")
-    assert cd["target"] == notice["seq"] and cd["t"] == notice["t"]
+    assert notice["kind"] == "reset_notice" and notice["t"] == (2600 if route == "queued" else 2000)
     reset = next(e for e in ev if e["type"] == "controlled_reset")
     notes = next(e for e in ev if e["type"] == "to_user" and e["text"] == "Notes are in NOTES.md.")
     assert any(e["type"] == "verdict" and e["target"] == notes["seq"] for e in ev)
@@ -1199,3 +1217,24 @@ def test_a_reset_notice_is_delivered_mid_turn_like_a_correction(route, notes_end
     assert episode.explanation_answers(v, "reset", planted) == [outs["The disk is full."], outs["A log rotation job holds the disk."]]
     if notes_end == "handback":
         assert episode.explanation_answers(v)[0] == outs["Stopping here."]
+    # The notice is text the user wrote: its identifiers are known to the user.
+    assert NOTICE in [e["text"] for e in ev if e["type"] == "user_message" and e["kind"] in F.USER_AUTHORED_KINDS]
+
+
+@pytest.mark.parametrize("order", ["notice_first", "correction_first"])
+def test_a_notice_and_a_correction_give_one_correction_boundary(order):
+    """D-046: a Steering-shaped episode where a reset notice and a correction
+    are both steered into the running turn, in either order: the view has one
+    correction and one `correction_delivered`, at the correction, and the
+    notice is a `reset_notice` with no delivery event."""
+    res = _reset_notice("steer", "handback", correction_at=2.5 if order == "notice_first" else 1.8)
+    assert validate(res.trajectory).ok, validate(res.trajectory).errors
+    v = scorer_view(res.trajectory)
+    assert validate_view(v).ok, validate_view(v).errors
+    (cd,) = [e for e in v.events if e["type"] == "correction_delivered"]
+    corr = v.events[cd["target"]]
+    assert corr["kind"] == "correction" and corr["text"] == "Count operations, not cache hits." and cd["t"] == corr["t"] == (2500 if order == "notice_first" else 1800)
+    (notice,) = [e for e in v.events if e["type"] == "user_message" and e["text"] == NOTICE]
+    assert notice["kind"] == "reset_notice" and notice["t"] == 2000
+    kinds = [e["kind"] for e in res.manifest["steering"] if "kind" in e]
+    assert sorted(kinds) == ["correction", "reset_notice"]

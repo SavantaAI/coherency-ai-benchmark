@@ -219,7 +219,10 @@ def answer_handbacks(view: Trajectory, after: str | None = None, planted: list[d
                    for p in planted or [])
     bound = fired["seq"]
     if is_reset:
-        cr = next((e for e in ev[fired["seq"] + 1:] if e.get("type") == "controlled_reset"), None)
+        # The runner fires the event at the continuation's send and records
+        # `controlled_reset` just after, at the same instant; either order
+        # at that instant is the same reset.
+        cr = next((e for e in ev if e.get("type") == "controlled_reset" and (e["seq"] > fired["seq"] or e.get("t") == fired.get("t"))), None)
         if cr is None:
             return []
         bound = max(cr["seq"], cr["target"] if _int(cr.get("target")) else cr["seq"])

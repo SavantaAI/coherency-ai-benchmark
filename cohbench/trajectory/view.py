@@ -88,6 +88,8 @@ def scorer_view(traj: Trajectory) -> Trajectory:
         et, agent, src, u = e["type"], e["agent"], e["seq"], e["us"]
         if src in post:
             continue
+        if et in F.AUDIT_RUNNER_TYPES:
+            continue  # full trajectory only (D-046: a notice's delivery)
         if et in F.RUNNER_TYPES:
             if end_seq is None or src <= end_seq:
                 out = {k: v for k, v in e.items() if k not in ("seq", "agent", "segment", "t", "us", "us_end")}

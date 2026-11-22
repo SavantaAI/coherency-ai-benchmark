@@ -140,7 +140,7 @@ def _runner_target(ev: dict[str, Any], events: list[Any], idx: int, where: str, 
         return
     t = ev["target"]
     if t is None:
-        if ev["type"] in ("verdict", "correction_delivered", "unjudged"):
+        if ev["type"] in ("verdict", "correction_delivered", "unjudged", "notice_delivered"):
             errors.append(f"{where}: needs a target")
         return
     if not _is_int(t) or not 0 <= t < len(events) or not isinstance(events[t], dict):
@@ -152,6 +152,8 @@ def _runner_target(ev: dict[str, Any], events: list[Any], idx: int, where: str, 
         errors.append(f"{where}: target {t} is not user-channel output")
     if et == "correction_delivered" and not (tgt.get("type") in ("user_message", "answer") and tgt.get("kind") == "correction"):
         errors.append(f"{where}: target {t} is not a correction")
+    if et == "notice_delivered" and not (tgt.get("type") == "user_message" and tgt.get("kind") == "reset_notice"):
+        errors.append(f"{where}: target {t} is not a reset notice")
     if et == "controlled_reset" and not (tgt.get("type") == "user_message" and tgt.get("kind") == "reset"):
         errors.append(f"{where}: target {t} is not a reset message")
     if et == "reopen" and not (tgt.get("type") in ("user_message", "answer") and tgt.get("kind") == "reopen"):
@@ -159,8 +161,8 @@ def _runner_target(ev: dict[str, Any], events: list[Any], idx: int, where: str, 
     if et in ("verdict", "wait", "unjudged", "handback") and t > idx:
         errors.append(f"{where}: a {et} comes after the output it is about")
     key = "us" if "us" in ev else "t"
-    if et == "correction_delivered" and tgt.get(key) != ev.get(key):
-        errors.append(f"{where}: the correction is dated {tgt.get(key)}, its delivery {ev.get(key)}")
+    if et in ("correction_delivered", "notice_delivered") and tgt.get(key) != ev.get(key):
+        errors.append(f"{where}: the {'correction' if et == 'correction_delivered' else 'notice'} is dated {tgt.get(key)}, its delivery {ev.get(key)}")
 
 
 def validate(traj: Trajectory, allow_unknown: bool = False) -> Report:

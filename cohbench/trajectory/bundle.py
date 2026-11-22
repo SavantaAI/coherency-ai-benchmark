@@ -366,6 +366,30 @@ def _corrections(traj: Trajectory, view: Trajectory, changes: ChangeLog) -> list
     return notes
 
 
+def _notices(traj: Trajectory, changes: ChangeLog | None) -> tuple[list[dict[str, Any]], list[str]]:
+    """Each reset notice's delivery (D-046), for the run manifest: the
+    notice's trajectory seq, the delivery mark's label, and the batch that
+    mark closed with the run of batches straddling it, as a correction's
+    would be. Never a bundle record and never a Steering input."""
+    out, notes = [], []
+    for e in traj.events:
+        if e["type"] != "notice_delivered":
+            continue
+        label = e.get("mark")
+        rec = {"seq": e["seq"], "target": e["target"], "mark": label, "batch": None, "straddled": None, "straddled_last": None}
+        num = changes.mark_ids.get(label) if changes is not None and label is not None else None
+        m = next((r for r in changes.records if r["type"] == "mark" and r["mark"] == num), None) if num is not None else None
+        if m is None:
+            if label is not None:
+                rejected = changes is not None and any(x.get("label") == label for x in changes.rejected_marks)
+                notes.append(f"reset notice delivery at trajectory seq {e['seq']}: mark {label!r} "
+                             f"{'was not accepted by the watcher' if rejected else 'is not in the change log'}")
+        else:
+            rec.update(batch=m["batch"], straddled=m["straddled"], straddled_last=m["straddled_last"])
+        out.append(rec)
+    return out, notes
+
+
 def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, identifiers_task: TaskIdentifiers | None = None, observations_task: TaskObservations | None = None,
          episode_input: EpisodeInput | None = None, *, episode_record: dict[str, Any] | None = None, probe_targets: dict[Any, dict[str, Any]] | None = None,
          end_mark: str | None = None) -> Bundle:
@@ -415,6 +439,20 @@ def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, 
     except changelog.ChangeLogError as exc:
         raise BundleError(str(exc)) from None
     notes: list[str] = _corrections(traj, view, changes) + _watcher_notes(logs)
+    # D-046: a reset notice's delivery mark is audit. Its batch position goes
+    # to the run manifest, worked out on a second reading of the same logs
+    # that keeps the notice marks too, so changes.jsonl (a Steering input)
+    # holds no notice mark and its numbering is unchanged.
+    notice_labels = {e["mark"] for e in traj.events if e["type"] == "notice_delivered" and isinstance(e.get("mark"), str)}
+    with_notices = None
+    if notice_labels:
+        try:
+            with_notices = changelog.join([(w.events, w.metrics) for w in logs], manifest["episode_start_utc"], excluded=traj.header.get("excluded", []),
+                                          end_us=end_us, end_mark=selecting, keep_marks=refs | notice_labels, settle_ms=max([w.settle_ms for w in logs], default=100))
+        except changelog.ChangeLogError as exc:
+            raise BundleError(str(exc)) from None
+    manifest["notices"], notice_notes = _notices(traj, with_notices)
+    notes += notice_notes
     if elapsed:
         rejected = {r.get("label") for w in logs for r in w.events if r.get("kind") == "mark" and r.get("accepted") is False}
         held = {r.get("label") for w in logs for r in w.events if r.get("kind") == "mark"}

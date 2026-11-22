@@ -154,9 +154,11 @@ class Hints:
 RUNNER_REFS: dict[str, tuple[str, ...]] = {
     "verdict": ("item", "run"), "wait": ("item", "run"), "unjudged": ("item", "run"), "handback": ("item",),
     "correction_delivered": ("item", "message"), "controlled_reset": ("item", "run", "message", "thread"),
-    "reopen": ("item", "run", "message", "thread"),
+    "reopen": ("item", "run", "message", "thread"), "notice_delivered": ("item", "message"),
 }
-RUNNER_NEEDS_REF = ("verdict", "correction_delivered", "unjudged")
+RUNNER_NEEDS_REF = ("verdict", "correction_delivered", "unjudged", "notice_delivered")
+# A delivery event and the user kind it names.
+DELIVERY_KINDS = {"correction_delivered": "correction", "notice_delivered": "reset_notice"}
 # `utc`: the tree in effect at that instant (ISO 8601 with a zone), the
 # batch whose last write is the latest at or before it; an instant inside a
 # batch's first-to-last write span is ambiguous and gives no target.
@@ -395,9 +397,9 @@ class _Builder:
                 self.reset_refs.add(ref)
             if r.type == "reopen" and ref:
                 self.reopen_refs.add(ref)
-            if r.type == "correction_delivered" and r.ref and not set(r.ref) <= {"item", "message"}:
-                raise NormaliseError("correction_delivered names an item or a message")
-            if r.type == "correction_delivered" and ref:
+            if r.type in DELIVERY_KINDS and r.ref and not set(r.ref) <= {"item", "message"}:
+                raise NormaliseError(f"{r.type} names an item or a message")
+            if r.type in DELIVERY_KINDS and ref:
                 self.delivered[ref] = _ts(r.utc)  # a message id or an item id
 
     # -- event plumbing ------------------------------------------------------
@@ -489,7 +491,7 @@ class _Builder:
             # shape for both steering mechanisms.
             prev_end = RUN_END.get(prev_status) if prev_status else None
             continues = n > 0 and not boundary and prev_end == "interrupted" and um is not None and (
-                self.h.user_kinds.get(um.get("messageId"), "correction" if um.get("createdBy") in (None, "user") else "from_agent") == "correction")
+                self.h.user_kinds.get(um.get("messageId"), "correction" if um.get("createdBy") in (None, "user") else "from_agent") in F.DELIVERED_KINDS)
             plans.append((run, items, um, boundary, declared, continues))
             prev_status = run.get("status")
         prev_done: datetime | None = None
@@ -648,8 +650,8 @@ class _Builder:
         if agent == 0:
             self.agent0_user_seen = True
             self.segment_user_seen = True
-        if kind == "correction":
-            ts = self.correction_time(item, ts, ctx)
+        if kind in F.DELIVERED_KINDS:
+            ts = self.correction_time(item, ts, ctx, kind)
         e = self.ev("user_message", agent, ts, item, turn=turn, kind=kind, text=text)
         e["_message"] = item.get("messageId")
         for r in removed:
@@ -657,9 +659,10 @@ class _Builder:
         if item.get("messageId"):
             self.user_by_message[item["messageId"]] = e
 
-    def correction_time(self, item: dict[str, Any], queued: datetime, ctx: dict[str, Any]) -> datetime:
-        """When the agent received a correction: the runner's word, else the
-        harness session's record of the message, else (after an interrupt) the
+    def correction_time(self, item: dict[str, Any], queued: datetime, ctx: dict[str, Any], kind: str = "correction") -> datetime:
+        """When the agent received a correction (or a reset notice steered into
+        the running turn, D-046): the runner's word, else the harness
+        session's record of the message, else (after an interrupt) the
         restarted run's start, else the time it was queued."""
         mid = item.get("messageId")
         run = ctx["run"] or {}
@@ -676,7 +679,7 @@ class _Builder:
             t, src = queued, "unknown: queue time used"
         t = max(t, queued)
         self.m["steering"].append({"_message": item["id"], "mechanism": "restart" if ctx["restart"] else ("native" if item.get("inputIntent") == "steer" else "other"),
-                                   "queued_utc": _iso(queued), "delivered_utc": _iso(t), "delivery_source": src})
+                                   "queued_utc": _iso(queued), "delivered_utc": _iso(t), "delivery_source": src, "kind": kind})
         return t
 
     def output_text(self, item: dict[str, Any], fill: dict[str, str]) -> tuple[str | None, bool]:
@@ -1016,7 +1019,7 @@ class _Builder:
         thread named."""
         ref = e.get("_ref")
         if not ref:
-            if e["type"] in ("verdict", "correction_delivered", "unjudged"):
+            if e["type"] in RUNNER_NEEDS_REF:
                 raise NormaliseError(f"runner event {e['type']} needs a reference")
             return None
         if not isinstance(ref, dict) or len(ref) != 1:
@@ -1042,9 +1045,9 @@ class _Builder:
             if not cands:
                 raise NormaliseError(f"runner event {e['type']}: run {value} delivered no output to the user by {_iso(e['_ts'])}")
             return cands[-1]
-        want = {"correction_delivered": "correction", "controlled_reset": "reset", "reopen": "reopen"}[e["type"]]
-        if e["type"] == "correction_delivered" and kind not in ("item", "message"):
-            raise NormaliseError("correction_delivered names an item or a message")
+        want = {**DELIVERY_KINDS, "controlled_reset": "reset", "reopen": "reopen"}[e["type"]]
+        if e["type"] in DELIVERY_KINDS and kind not in ("item", "message"):
+            raise NormaliseError(f"{e['type']} names an item or a message")
         if kind == "item":
             cands = [x for x in by_item if x["type"] == "user_message"] or [x for x in ordered if x["type"] == "answer" and value in (x.get("_request"), x.get("_question_item"))]
         elif kind == "message":
@@ -1275,7 +1278,7 @@ def normalise(segments: list[Segment], profile: Profile, hints: Hints | None = N
                 # is pending; both are answered when the wait ends).
                 upto = e.get("_ts_end") or max(x["_ts"] for x in ordered)
                 e["_replies"] = [b.resolve({**e, "type": "verdict", "_ref": ref, "_ts": max(upto, e["_ts"])}, ordered, turn_end_ts) for ref in e["_replies_refs"]]
-            if e["type"] == "correction_delivered" and e["_target"] is not None:
+            if e["type"] in DELIVERY_KINDS and e["_target"] is not None:
                 e["_ts"] = e["_target"]["_ts"]  # the message (or answer) is dated at delivery; the event agrees with it
     ordered.sort(key=_sort_key)
 
