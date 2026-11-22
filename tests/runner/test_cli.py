@@ -74,5 +74,5 @@ def test_the_classifier_kind_registers_when_present() -> None:
     from cohbench.runner.policy import POLICY_KINDS
 
     assert "scripted" in POLICY_KINDS
-    if importlib.util.find_spec("cohbench.user") is not None:
+    if importlib.util.find_spec("cohbench.user") is not None and importlib.util.find_spec("cohbench.user.kind") is not None:
         assert "classifier" in POLICY_KINDS

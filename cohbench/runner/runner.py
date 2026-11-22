@@ -46,7 +46,7 @@ class _Ended(Exception):
 
 @dataclass
 class _EventState:
-    status: str = "idle"  # idle, due, queued (a correction sent, not yet taken), notice_sent (a reset), fired
+    status: str = "idle"  # idle, due, queued (a correction or a reset's notice steered, not yet taken), notice_sent (a reset), fired
     reached_utc: str | None = None
     fired_utc: str | None = None
     fired_dt: datetime | None = None  # when it happened: the card unlocks for outputs delivered at or after this
@@ -163,6 +163,11 @@ METRIC_READING_WAIT_S = 30.0
 # hand-back once a budget end has come (the driver confirms the tree idle).
 CONFIRM_WAIT_S = 5.0
 
+# D-046: the user kind of a reset's notice steered into a running turn: its own
+# kind once the trajectory unit's table has it, else a reply (the notice is the
+# user's message, not a correction of the work).
+NOTICE_KIND = "reset_notice" if "reset_notice" in F.USER_KINDS else "reply"  # never "correction"
+
 
 def _has_metric(t: Any) -> bool:
     if not isinstance(t, dict) or len(t) != 1:
@@ -201,6 +206,10 @@ class Runner:
         self.marks: list[str] = []
         self.end_mark: str | None = None
         self.corrections: list[dict[str, Any]] = []
+        self.notices: list[dict[str, Any]] = []  # a reset's notice steered into a running turn (D-046), as a correction's record
+        self.reset_info: dict[str, dict[str, Any]] = {}  # per reset event: how its notice went and when the reset came (D-046)
+        self._notice_at: datetime | None = None  # the delivery instant of the notice of the reset in progress
+        self._reset_how: dict[str, Any] | None = None  # the reset in progress came at a hand-back or at the grace
         self.queued: list[_Queued] = []
         self.sends: list[dict[str, Any]] = []
         self.seen: list[_Seen] = []
@@ -570,7 +579,7 @@ class Runner:
         """m7: a correction's route can be resolved after its delivery was
         settled; every mid-turn correction still without one is asked again."""
         for name, sent in self._correction_sent.items():
-            rec = next((r for r in self.corrections if r["name"] == name and r["delivery"] == "mid_turn"), None)
+            rec = next((r for r in self.corrections + self.notices if r["name"] == name and r["delivery"] == "mid_turn"), None)
             if rec is None or rec.get("mechanism"):
                 continue
             try:
@@ -617,7 +626,18 @@ class Runner:
         lim = self.task.budgets["elapsed_ms"]
         if lim is not None:
             s = min(s, max(self._remaining_s() or 0.0, 0.001))
+        g = self._grace_at()
+        if g is not None:
+            s = min(s, max((g - self.utcnow()).total_seconds(), 0.001))  # the runner looks again at the grace
         return s
+
+    def _grace_at(self) -> datetime | None:
+        """D-046: the instant a reset's grace runs out: `grace_ms` of episode time
+        after its notice's delivery, counted over the excluded intervals; None when
+        no notice is delivered and waiting for its reset."""
+        if self.reset_in_progress is None or self._notice_at is None:
+            return None
+        return self._wall_after(self._notice_at, self.task.event(self.reset_in_progress).action.grace_ms)
 
     def _deadline_at(self) -> datetime | None:
         """The wall instant at which the elapsed budget runs out (past or future),
@@ -722,7 +742,7 @@ class Runner:
         token cutoff), the earliest, with its reason. On a tie the budget wins: a budget
         seen exhausted at an instant was exhausted by it, so neither a finish nor a reply
         at that same instant comes first."""
-        order = {"budget_cutoff": 0, "finished": 1, "reply": 2}
+        order = {"budget_cutoff": 0, "finished": 1, "grace": 2, "reply": 3}
         return min(cands, key=lambda c: (c[0], order.get(c[1], 1)))
 
     def _end_earliest(self, cands: list[tuple[datetime, str, str | None]], why: str | None = None) -> None:
@@ -842,6 +862,13 @@ class Runner:
             # the driver's clock; `_replay_upto` clips it to the deadline. One mark per slice.
             newest = max([slice_at, *(t for t, _q, _d in deliveries), *(d for o in turn.outputs for d in [_dt(o.delivered_utc)] if d is not None)])
             self._replay_upto(turn.outputs, deliveries, until=newest, why="hand-back" if handback else "coverage")
+            g = self._grace_at()
+            if g is not None and ((handback and hb_instant > g) or (not handback and self.utcnow() >= g)):
+                # D-046: the reset's grace ran out before any hand-back. Which came first is
+                # decided from instants, with the budget ends, by the one function.
+                if self._grace_first(g):
+                    turn_t0 = self.ep.clock()
+                    continue
             deadline = self._deadline()  # read after coverage and replay, which take time (judging) (D-037)
             if deadline is not None:
                 self._set_end_bound(deadline)
@@ -866,6 +893,41 @@ class Runner:
                 raise EpisodeFailure(f"a {turn.state} hand-back without its pending request and T3 item id")
             self._hand_back(turn, hb_instant)
             turn_t0 = self.ep.clock()
+
+    def _grace_first(self, g: datetime) -> bool:
+        """The grace instant against the budget ends known now (`_choose_end`): a
+        budget end that came first ends the episode; otherwise a final output not
+        confirmed yet gets its one more wait (a hand-back before the grace resets
+        there), and else the runner interrupts, drains and resets at the grace.
+        True when the reset was performed."""
+        cands = self._budget_candidates()
+        _at, reason, _b = self._choose_end(cands + [(g, "grace", None)])
+        if reason != "grace":
+            self._end_earliest(cands)
+        if self._final_unconfirmed and self.agent == "running":
+            self._confirm_late_hand_back(g)
+            if self.reset_in_progress is None:
+                return True  # reset at that hand-back
+        self._grace_reset(g)
+        return True
+
+    def _grace_reset(self, g: datetime) -> None:
+        """D-046: the agent did not hand back within the grace: the runner interrupts
+        and drains the tree (what the drain returns goes through the one replay), and
+        resets as at a hand-back whose instant is the grace's. The outputs since the
+        notice are judged and get no reply."""
+        e = self.task.event(self.reset_in_progress)  # type: ignore[arg-type]
+        self.log.write("reset_grace", name=e.name, at=utc_us(g), grace_ms=e.action.grace_ms)
+        drained = self._interrupt_and_drain(f"the reset's grace of {e.action.grace_ms} ms ran out")
+        stopped = utc_us(self.utcnow())
+        at = max([self.utcnow(), *(d for o in drained for d in [_dt(o.delivered_utc)] if d is not None)])
+        self._replay_upto(drained, until=at, why="reset")
+        self.agent, self.pending, self._final_unconfirmed, self._drained_handback = "finished", None, False, None
+        self._hb_at = g
+        self._reset_how = {"at": "grace", "utc": utc_us(g), "stopped_utc": stopped}
+        hb = _HB(self.ctx.handbacks, list(self.seen), [], None, False, None)
+        self.seen = []
+        self._do_reset(hb, self._budget_candidates(), probes=False)
 
     def _set_end_bound(self, end: datetime) -> None:
         """The episode's end is known (an elapsed deadline): no runner event is
@@ -1159,16 +1221,23 @@ class Runner:
                        at=st.fired_utc, since_pos=list(pos), since_ms=self.ctx.fired[e.name].elapsed_ms)
 
     def _mid_turn_corrections(self) -> None:
+        """Steer what is due into the running turn: corrections, and (D-046) the
+        first due reset's notice, by the same route, with the same mark and
+        settlement; when there is no run to steer, both go with the next message."""
         if self.corrections_held:
             return  # the port said there is no run to steer; the correction goes at the hand-back
         for e in self.task.events:
-            if self.ev[e.name].status != "due" or e.action.type != "correction":
+            if self.ev[e.name].status != "due" or e.action.type not in ("correction", "reset"):
                 continue
-            assert e.action.text is not None
-            self._guard(e.action.text)
+            notice = e.action.type == "reset"
+            if notice and (self.reset_in_progress is not None or any(self.ev[x.name].status == "queued" for x in self.task.events if x.action.type == "reset")):
+                continue  # one reset at a time
+            text = e.action.notice if notice else e.action.text
+            assert text is not None
+            self._guard(text)
             limit = self._dispatch_gate()  # D-037: the budgets, the deadline last, and the dispatch allowance
             try:
-                sent = self.ep.correct(e.action.text, **limit)
+                sent = self.ep.correct(text, **limit)
             except TurnNotRunning as exc:
                 # The turn has ended, or (D-029) the main run has ended while a subagent
                 # works: nothing to steer. Held until the hand-back, sent there as an
@@ -1181,20 +1250,20 @@ class Runner:
             st.status, st.delivery = "queued", "mid_turn"
             rec = {"name": e.name, "delivery": "mid_turn", "mechanism": sent.mechanism, "queued_utc": sent.utc, "delivered_utc": None, "mark": None,
                        "mark_settled": None, "mark_quiescent": None}
-            self.corrections.append(rec)
-            self._record_send(sent, e.action.text, "correction", "correct", [{"source": "event", "name": e.name, "action": "correction"}], ref=ref)
+            (self.notices if notice else self.corrections).append(rec)
+            self._record_send(sent, text, NOTICE_KIND if notice else "correction", "correct",
+                              [{"source": "event", "name": e.name, "action": "reset_notice" if notice else "correction"}], ref=ref)
             # Queued for settlement first: a late steer's delivery still reaches the end replay (audit).
             self.queued.append(_Queued(e, sent, ref, rec))
             self._correction_sent[e.name] = sent  # its delivery is replayed at its own instant with the next slice (D-037)
             if self._late(sent):  # the same late-send check and audit as every dispatch
-                self._after_deadline(sent, e.action.text, "correction", "correct")
+                self._after_deadline(sent, text, NOTICE_KIND if notice else "correction", "correct")
 
     def _deliver(self, e: Event, ref: dict[str, str], d: Delivery, rec: dict[str, Any], handback: int) -> None:
         """A mid-turn correction taken by the harness. The boundary is the
         driver's: its mark at the observed delivery. Without one the event
         says so (mark null), and `since` counts from the state as of the
         delivery time; no later mark stands in for it."""
-        assert e.action.text is not None
         when, wdt = d.utc, _dt(d.utc)
         rec["delivered_utc"], rec["mark"] = when, d.mark
         rec["mark_settled"], rec["mark_quiescent"] = d.settled, d.quiescent
@@ -1202,6 +1271,10 @@ class Runner:
             self.log.write("correction_mechanism", name=e.name, queued=rec.get("mechanism"), settled=d.mechanism)
             rec["mechanism"] = d.mechanism  # as the driver knows it at settlement
         self._refresh()
+        if e.action.type == "reset":
+            self._notice_delivered(e, ref, d, rec)
+            return
+        assert e.action.text is not None
         if d.mark is not None:
             if d.mark not in self.marks:
                 self.marks.append(d.mark)
@@ -1216,6 +1289,33 @@ class Runner:
         self.log.write("correction_delivered", name=e.name, utc=when, ref=ref, mark=d.mark, mark_settled=d.settled, mark_quiescent=d.quiescent,
                        straddled=sorted(n for _s, n in skip), pos=list(pos))
         self._fire(e, handback, ref, at=wdt, mark=(d.mark, pos) if d.mark else None, pos=pos, elapsed_ms=self._elapsed_at(wdt), skip=skip)
+
+    def _notice_delivered(self, e: Event, ref: dict[str, str], d: Delivery, rec: dict[str, Any]) -> None:
+        """D-046: a reset's notice steered into the running turn was taken by the
+        harness at `d.utc`: the reset is now in progress, at the next hand-back or
+        when its grace runs out, whichever comes first. The event fires when the
+        reset is performed (its continuation's send)."""
+        assert e.action.notice is not None
+        wdt = _dt(d.utc)
+        if d.mark is not None and d.mark not in self.marks:
+            self.marks.append(d.mark)  # the driver's mark at the delivery, as a correction's
+        pos = (self.ctx.work.marks.get(d.mark) if d.mark is not None else None) or self.ctx.work.as_of(wdt).position()
+        skip = self._straddle(wdt, pos, d if d.mark is not None else None)  # type: ignore[arg-type]
+        run = sorted(n for _s, n in skip)
+        rec["straddled"] = run[0] if run else None
+        self._line(USER, e.action.notice, d.utc, kind=NOTICE_KIND, ref=ref, shown_as="reset notice")
+        if "notice_delivered" in F.RUNNER_FIELDS:
+            self._rev("notice_delivered", d.utc, ref, **({"mark": d.mark} if "mark" in F.RUNNER_FIELDS["notice_delivered"] else {}))
+        st = self.ev[e.name]
+        st.status = "notice_sent"
+        self.reset_in_progress = e.name
+        self._notice_at = _dt(d.utc)
+        # Its own record (D-046): never a correction's, so no `correction_delivered` event.
+        self.reset_info.setdefault(e.name, {})["notice"] = {"delivery": "mid_turn", "utc": d.utc, "message": ref, "mechanism": rec.get("mechanism"),
+                                                             "mark": d.mark, "mark_settled": d.settled, "queued_utc": rec.get("queued_utc"),
+                                                             "straddled": run[0] if run else None, "straddled_last": run[-1] if run else None,
+                                                             "pos": list(pos)}
+        self.log.write("reset_notice_sent", name=e.name, delivery="mid_turn", utc=d.utc, ref=ref, mark=d.mark, mechanism=rec.get("mechanism"))
 
     def _straddle(self, at: datetime, pos: tuple[int, int], ack: MarkAck | Delivery | None) -> frozenset[tuple[int, int]]:
         """A correction's boundary straddle (D-037, G6), for mid-turn and next-message
@@ -1281,7 +1381,8 @@ class Runner:
         self._evaluate(h, as_of=self._hb_at)  # as of the hand-back's own instant (D-037)
         secret = self.pending is not None and self.pending.kind == "secret"
         hb = _HB(h, outs, held_now, marked, secret, closing)
-        if self.reset_in_progress is not None:
+        if self.reset_in_progress is not None and (self._notice_at is None or self._notice_at <= self._hb_at):
+            self._reset_how = {"at": "handback", "utc": utc_us(self._hb_at), "handback": h}
             self._do_reset(hb, cands)
             return
         if self.pending is None:
@@ -1424,9 +1525,12 @@ class Runner:
             elif e.action.type == "message":
                 self._fire(e, h, ref, at=_dt(sent.utc), elapsed_ms=dispatch)
             else:
-                st.status = "notice_sent"
+                st.status, st.delivery = "notice_sent", "next_message"
                 self.reset_in_progress = e.name
-                self.log.write("reset_notice_sent", name=e.name)
+                self._notice_at = _dt(sent.utc)  # delivered with the message: its grace counts from its send (D-046)
+                self.reset_info.setdefault(e.name, {})["notice"] = {"delivery": "next_message", "utc": sent.utc, "message": ref, "mechanism": None,
+                                                                     "mark": None}
+                self.log.write("reset_notice_sent", name=e.name, delivery="next_message", utc=sent.utc)
 
     def _deliver_next(self, e: Event, ref: dict[str, str], sent: Sent, rec: dict[str, Any], h: int) -> None:
         """A correction sent as the next message: delivered with it, and
@@ -1527,13 +1631,14 @@ class Runner:
             self.log.write("probe", **row)
             self.due_probes.remove(p)
 
-    def _do_reset(self, hb: _HB, cands: list[tuple[datetime, str, str | None]]) -> None:
-        """The hand-back after a reset's notice ends that context (D-023): a
-        pending request is left unanswered (the tree is stopped and drained, and
-        what the drain returns goes through the one replay), the due probes are
-        taken, and after the wait the continuation opens the fresh context with
-        what is due as of its dispatch instant (`_due_as_of`, the same function as a
-        message's)."""
+    def _do_reset(self, hb: _HB, cands: list[tuple[datetime, str, str | None]], *, probes: bool = True) -> None:
+        """The reset after its notice (D-023, D-046), at the next hand-back or at the
+        grace (`_grace_reset`): that context ends. A pending request is left
+        unanswered (the tree is stopped and drained, and what the drain returns goes
+        through the one replay); every output since the notice is judged and gets no
+        reply. At a hand-back the due probes are taken. After the wait the
+        continuation opens the fresh context with what is due as of its dispatch
+        instant (`_due_as_of`, the same function as a message's)."""
         e = self.task.event(self.reset_in_progress)  # type: ignore[arg-type]
         assert e.action.continuation is not None
         if self.agent == "pending":
@@ -1542,10 +1647,13 @@ class Runner:
             self._replay_upto(drained, until=at, why="reset")
             self.pending = None
             self.agent = "finished"
-            if self.seen:  # judged as they arrived; the context they belong to ends, so no reply goes to them
-                self.log.write("unanswered_at_reset", outputs=[x.output.item_id for x in self.seen])
-                self.seen = []
-        self._take_probes(hb.h)
+        unanswered = [x.output.item_id for x in list(hb.outs) + list(self.seen) if x.output.item_id]
+        if unanswered:  # judged as they arrived; the context they belong to ends, so no reply goes to them
+            self.log.write("unanswered_at_reset", outputs=unanswered)
+        self.seen = []
+        self.reset_info.setdefault(e.name, {})["unanswered"] = unanswered
+        if probes:
+            self._take_probes(hb.h)
         if hb.h >= self.cfg.max_turns:
             self._end("runner_abort", f"the safety limit of {self.cfg.max_turns} hand-backs was reached")
         first = self._due_as_of(hb, self._hb_at, continuation=e)
@@ -1558,21 +1666,40 @@ class Runner:
         self._guard(text)
         sent = self._send(text, "reset", "reset", due.meta, check_late=False)
         ref = self._msg_ref(sent)
-        self._reset_event(utc_us(_dt(sent.utc)), ref, "launched")  # recorded before any cutoff that follows
         if self._late(sent):  # compared on the episode clock, after the excluded handoff
+            self._reset_event(utc_us(_dt(sent.utc)), ref, "launched")  # recorded before the cutoff that follows
             self.reset_in_progress = None
             self._after_deadline(sent, text, "reset", "reset")
-        self.reset_in_progress = None
+        # The event fires at the continuation's send, then the reset is recorded at that same
+        # instant: in the view the firing comes first, the reset (and the message it names) after.
         self._fire(e, hb.h, ref, at=_dt(self._outside_excluded(utc_us(_dt(sent.utc)))), elapsed_ms=self._dispatch_ms(sent))
+        self._reset_event(utc_us(_dt(sent.utc)), ref, "launched")
+        self.reset_in_progress = None
         self._delivered_with(due.delivered, sent, ref, hb.h)
 
     def _reset_event(self, utc: str, ref: dict[str, str] | None, continuation: str) -> None:
         """A context reset is the handoff: `controlled_reset` is recorded once per
         handoff, carrying its continuation's state (launched or unsent), as the
-        driver records it; a field of the event too once the trajectory unit's
-        table has it."""
-        f = {"continuation": continuation} if "continuation" in F.RUNNER_FIELDS.get("controlled_reset", {}) else {}
+        driver records it, and (D-046) how its notice went (`notice`: mid_turn or
+        next_message) and whether the reset came at a hand-back or at the grace
+        (`reset_at`); each a field of the event once the trajectory unit's table
+        has it. The run manifest's event record has all of it."""
+        name = self.reset_in_progress
+        info = self.reset_info.setdefault(name or "", {})
+        how = dict(self._reset_how or {"at": "handback", "utc": utc_us(self._hb_at) if self._hb_at else utc})
+        info["reset"] = {**how, "continuation": continuation, "continuation_utc": utc}
+        spec = F.RUNNER_FIELDS.get("controlled_reset", {})
+        f: dict[str, Any] = {}
+        if "continuation" in spec:
+            f["continuation"] = continuation
+        if "notice" in spec:
+            f["notice"] = (info.get("notice") or {}).get("delivery")
+        if "reset_at" in spec:
+            f["reset_at"] = how["at"]
         self._rev("controlled_reset", utc, ref, **f)["continuation"] = continuation
+        self.log.write("controlled_reset", name=name, utc=utc, ref=ref, continuation=continuation, notice=(info.get("notice") or {}).get("delivery"),
+                       reset_at=how["at"])
+        self._reset_how, self._notice_at = None, None
 
     # ----- waiting on the user and sending ---------------------------------------------------
 

@@ -143,14 +143,17 @@ SHORT = DEMO.parent / "short"
 REFUSAL = "I can't share credentials. Please carry on without them."
 
 
-def _short(out_root: Path, script: str, episode_id: str, elapsed_ms: int | None = None, known_gap=None):
+def _short(out_root: Path, script: str, episode_id: str, elapsed_ms: int | None = None, known_gap=None, edit=None):
     task_dir = SHORT
-    if elapsed_ms is not None:
-        # A copy with a lower elapsed budget; the workspace and its manifest are unchanged.
+    if elapsed_ms is not None or edit is not None:
+        # A copy with a lower elapsed budget or other task edits; the workspace and its manifest are unchanged.
         task_dir = out_root / "task"
         shutil.copytree(SHORT, task_dir)
         doc = json.loads((task_dir / "task.json").read_text())
-        doc["budgets"]["elapsed_ms"] = elapsed_ms
+        if elapsed_ms is not None:
+            doc["budgets"]["elapsed_ms"] = elapsed_ms
+        if edit is not None:
+            edit(doc)
         (task_dir / "task.json").write_text(json.dumps(doc, indent=1) + "\n")
     cfg = RunConfig(episode_id=episode_id, harness="pi", model="claude-haiku-5-5", upstream=("scripted", SHORT / script),
                     mode="default", poll_s=2.0, stall_s=300.0, awareness_timeout_s=180.0)
@@ -247,3 +250,37 @@ def test_budget_cutoff_mid_turn_still_yields_a_bundle() -> None:
     assert len(cut) == 1 and cut[0]["budget"] == "time"
     assert ep["end"]["reason"] == "budget_cutoff" and ep["end"]["duration_ms"] == 15000  # the deadline, not when it was noticed
     assert ep["budget"]["consumed"]["elapsed_ms"] >= 15000
+
+
+# ----- D-046: a reset whose trigger fires while the agent works -----
+
+NOTES_NOTICE = "I have to close this session now. Please leave notes in the project so the work can be picked up later."
+PICK_UP = "Picking this back up. Continue where you left off."
+
+
+def _reset_on_the_draft(doc: dict) -> None:
+    doc["events"] = [{"name": "handoff", "trigger": {"changes": {"path": "draft.txt", "at_least": 1}}, "required": False,
+                      "action": {"type": "reset", "notice": NOTES_NOTICE, "continuation": PICK_UP, "grace_ms": 60000}}]
+
+
+def test_reset_mid_turn_steers_the_notice_and_resets_at_the_hand_back() -> None:
+    """The short task with a reset fired by the draft: the agent is still in its first long step
+    when the trigger fires, so the notice is steered into the running turn (the correction's
+    route); the agent abandons the rest, writes NOTES.md and hands back; the reset comes at that
+    hand-back and the fresh context reads the notes."""
+    root = _out_root("reset")
+    out = _short(root, "reset-run.json", "rreset-1", edit=_reset_on_the_draft)
+    assert out.end_reason == "finished"
+    d = out.path
+    log = lines(d / "runner" / "events.jsonl")
+    sends = [x for x in log if x["type"] == "send"]
+    assert [(s["via"], s["text"]) for s in sends[:3]] == [("start", sends[0]["text"]), ("correct", NOTES_NOTICE), ("reset", PICK_UP)], sends
+    run, ep, view, changes = check_bundle(d)
+    rec = run["events"]["handoff"]
+    assert rec["notice"]["delivery"] == "mid_turn" and rec["notice"]["utc"] and rec["notice"]["mechanism"]
+    assert rec["reset"]["at"] == "handback" and rec["reset"]["continuation"] == "launched" and rec["status"] == "fired"
+    assert rec["notice"]["utc"] <= rec["reset"]["utc"]
+    assert [e["type"] for e in view if e.get("type") == "controlled_reset"] == ["controlled_reset"]
+    assert any(r.get("type") == "change" and r.get("path") == "NOTES.md" for r in changes)
+    md = (d / "transcript.md").read_text()
+    assert NOTES_NOTICE in md and "Picked up from NOTES.md." in md

@@ -136,6 +136,7 @@ class Action:
     override_policy: bool = True  # message
     notice: str | None = None  # reset
     continuation: str | None = None  # reset
+    grace_ms: int = 120_000  # reset (D-046): after the notice's delivery, the reset comes at the next hand-back or after this much episode time
 
 
 @dataclass(frozen=True)
@@ -612,11 +613,11 @@ def _event(v: _V, e: Any, n: int, names: set[str], deps: dict[str, set[str]], ha
     action = None
     if isinstance(a, dict) and "type" in a:
         t = a.get("type")
-        allowed = {"observe": set(), "correction": {"text"}, "message": {"text", "override_policy"}, "reset": {"notice", "continuation"}}
+        allowed = {"observe": set(), "correction": {"text"}, "message": {"text", "override_policy"}, "reset": {"notice", "continuation", "grace_ms"}}
         if not isinstance(t, str) or t not in allowed:
             v.err.append(f"{p}.action.type: one of {list(ACTIONS)}")
         else:
-            needed = allowed[t] - {"override_policy"}
+            needed = allowed[t] - {"override_policy", "grace_ms"}
             for k in sorted(set(a) - {"type"} - allowed[t], key=str):
                 v.err.append(f"{p}.action.{k}: not a field of a {t} action")
             for k in sorted(needed - set(a)):
@@ -625,7 +626,11 @@ def _event(v: _V, e: Any, n: int, names: set[str], deps: dict[str, set[str]], ha
                 v.text(a[k], f"{p}.action.{k}", agent_facing=True)
             if "override_policy" in a and not isinstance(a["override_policy"], bool):
                 v.err.append(f"{p}.action.override_policy: true or false")
-            action = Action(t, a.get("text"), a.get("override_policy", True), a.get("notice"), a.get("continuation"))
+            grace = a.get("grace_ms", 120_000)
+            if not isinstance(grace, int) or isinstance(grace, bool) or grace < 1:
+                v.err.append(f"{p}.action.grace_ms: a positive whole number of milliseconds")
+                grace = 120_000
+            action = Action(t, a.get("text"), a.get("override_policy", True), a.get("notice"), a.get("continuation"), grace)
     else:
         v.err.append(f"{p}.action: an object with a type")
     req = e.get("required")
@@ -953,13 +958,23 @@ def check(directory: str | Path, host_files: dict[str, str | Path] | None = None
     if grouping is not None and grouping.family == "explanation" and isinstance(s, dict) and isinstance(s.get("answer_key"), dict):
         # One source for the fixed follow-up (D-024): the answer key's text,
         # sent by exactly one event, at the first hand-back, replacing the reply.
+        # D-046: with the answer key's `answers_after` naming a reset event, the
+        # first scored hand-back is the first after that reset, and the follow-up
+        # is sent there: {"handbacks": {"at_least": 1, "since": <that event>}}.
         fu = s["answer_key"].get("follow_up")
+        after = s["answer_key"].get("answers_after")
+        resets = {e.name for e in events if e.action.type == "reset"}
+        want = {"handbacks": {"at_least": 1, "since": after}} if isinstance(after, str) else FIRST_HANDBACK
         senders = [e.name for e in events if e.action.type == "message" and e.action.text == fu]
         first = [e.name for e in events if e.action.type == "message" and e.action.text == fu and e.action.override_policy
-                 and e.trigger == FIRST_HANDBACK]
+                 and e.trigger == want]
+        if isinstance(after, str) and after not in resets:
+            v.err.append(f"scoring.answer_key.answers_after: {after!r} names no reset event")
         if len(senders) != 1 or len(first) != 1:
             v.err.append("events: an Explanation task has exactly one event that sends scoring.answer_key.follow_up: a message with "
-                         f"override_policy true and the trigger {json.dumps(FIRST_HANDBACK)}; found {senders or 'none'}")
+                         f"override_policy true and the trigger {json.dumps(want)}"
+                         + ("" if isinstance(after, str) else " (or {\"handbacks\": {\"at_least\": 1, \"since\": <reset event>}} with answers_after naming that event)")
+                         + f"; found {senders or 'none'}")
 
     aw = doc.get("awareness")
     if aw is not None and v.obj(aw, "awareness", {"question"}):

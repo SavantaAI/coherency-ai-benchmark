@@ -2584,3 +2584,230 @@ def test_a_live_threshold_reads_the_origin_clock(tmp_path, judging_s) -> None:
     run.go()
     assert run.record["end"]["reason"] == "finished" and run.planted("t") == ["not_reached"]
     assert run.fake.handoff_problems == []
+
+
+# ----- D-046: the reset's notice goes where the work is -----
+
+NOTES_NOTICE = "I have to close this session now. Please leave notes in the project so the work can be picked up later."
+PICK_UP = "Picking this back up. Continue where you left off."
+
+
+def _reset_mid_turn(d, *, grace_ms: int | None = None, trigger: dict[str, Any] | None = None) -> None:
+    action: dict[str, Any] = {"type": "reset", "notice": NOTES_NOTICE, "continuation": PICK_UP}
+    if grace_ms is not None:
+        action["grace_ms"] = grace_ms
+    d["events"] = [{"name": "handoff", "trigger": trigger or {"changes": {"path": "out/**", "at_least": 1}}, "required": False, "action": action}]
+    d["user"]["card"]["decisions"][0].pop("available_after", None)
+
+
+def _reset_record(r: Run) -> dict[str, Any]:
+    return r.run_json["events"]["handoff"]
+
+
+def test_a_reset_triggered_mid_turn_steers_its_notice_and_resets_at_the_hand_back(run_factory) -> None:
+    """D-046: a file change at 2 s fires the reset while the agent works. The notice is steered
+    into the running turn at the 5 s slice, by the correction's route and with the driver's
+    delivery mark; the agent writes its notes and hands back at 10 s; the reset comes there and
+    the continuation opens the fresh context."""
+    acts = [Act(duration_s=10, writes=[(2, "out/step1.txt", "one"), (8, "notes/NOTES.md", "the job, the constraints, done: step 1")], final="Notes left."),
+            Act(duration_s=5, final="Done."), Act()]
+    r = run_factory(acts, edit=_reset_mid_turn, poll_s=5).go()
+    assert ("correct", NOTES_NOTICE) in r.fake.received
+    rec = _reset_record(r)
+    assert rec["notice"]["delivery"] == "mid_turn" and rec["notice"]["mechanism"] == "native_steer" and rec["notice"]["mark"] is not None
+    assert dt(rec["notice"]["utc"]) == dt("2026-11-22T12:00:05Z")
+    assert rec["reset"]["at"] == "handback" and dt(rec["reset"]["utc"]) == dt("2026-11-22T12:00:10Z") and rec["reset"]["continuation"] == "launched"
+    assert rec["status"] == "fired" and r.planted("handoff") == ["reached", "fired"]
+    (reset,) = [x for x in r.sends() if x["via"] == "reset"]
+    assert reset["text"] == PICK_UP
+    assert r.run_json["notices"][0]["delivered_utc"] is not None and r.run_json["corrections"] == []
+    assert len(r.events("controlled_reset")) == 1 and r.events("correction_delivered") == []
+    assert "notes/NOTES.md" in r.fake.watchers[0].tree and r.outcome.status == "usable"
+    assert r.fake.handoff_problems == []
+
+
+def test_a_reset_whose_agent_never_hands_back_comes_at_the_grace(run_factory) -> None:
+    """D-046: the notice is delivered at 5 s and the agent keeps working; with a 30 s grace the
+    runner interrupts at 35 s, drains (the message the agent sent at 20 s is judged and gets no
+    reply) and resets at the grace."""
+    acts = [Act(duration_s=300, writes=[(2, "out/step1.txt", "one"), (8, "notes/NOTES.md", "notes")], messages=[(20, "Still on step 2.")]),
+            Act(duration_s=5, final="Done."), Act()]
+    r = run_factory(acts, edit=lambda d: _reset_mid_turn(d, grace_ms=30_000), poll_s=5).go()
+    rec = _reset_record(r)
+    assert rec["notice"]["delivery"] == "mid_turn" and rec["grace_ms"] == 30_000
+    assert rec["reset"]["at"] == "grace" and dt(rec["reset"]["utc"]) == dt("2026-11-22T12:00:35Z")
+    assert dt(rec["reset"]["stopped_utc"]) >= dt(rec["reset"]["utc"])
+    assert rec["unanswered_at_reset"] == ["item-run-1-m0"]
+    assert [v["ref"] for v in r.events("verdict")][:1] == [{"item": "item-run-1-m0"}]
+    assert r.fake.interrupts >= 1 and any(x["type"] == "reset_grace" for x in r.log)
+    (reset,) = [x for x in r.sends() if x["via"] == "reset"]
+    assert reset["text"] == PICK_UP and r.outcome.status == "usable"
+    assert r.fake.handoff_problems == []
+
+
+def test_a_reset_due_while_idle_goes_with_the_next_message_as_before(run_factory) -> None:
+    """D-046, unchanged: a reset whose trigger fires at a hand-back sends its notice with the next
+    message; the reset comes at the hand-back after that."""
+    acts = [Act(duration_s=2, final="Started."), Act(duration_s=2, final="Noted."), Act(duration_s=2, final="Done."), Act()]
+    r = run_factory(acts, edit=lambda d: _reset_mid_turn(d, trigger={"handbacks": {"at_least": 1}}), poll_s=5).go()
+    rec = _reset_record(r)
+    assert rec["notice"]["delivery"] == "next_message" and rec["reset"]["at"] == "handback" and rec["reset"]["handback"] == 2
+    assert r.fake.received[1] == ("reply", NOTES_NOTICE) and not any(v == "correct" for v, _ in r.fake.received)
+    assert r.fake.handoff_problems == []
+
+
+@pytest.mark.parametrize("case", ["pending_request", "main_run_ended"])
+def test_a_notice_with_no_run_to_steer_goes_with_the_next_message(run_factory, case) -> None:
+    """D-046: the same handling as a correction's. At a pending request the notice goes with the
+    answer; when the port says there is no run to steer, it is held and goes with the next
+    message. The reset comes at the hand-back after it."""
+    if case == "pending_request":
+        acts = [Act(duration_s=4, state="question", ask=SLOT_Q), Act(duration_s=2, final="Noted."), Act(duration_s=2, final="Done."), Act()]
+        r = run_factory(acts, edit=lambda d: _reset_mid_turn(d, trigger={"handbacks": {"at_least": 1}}), pol=policy(SLOT_POLICY), poll_s=5).go()
+        answer = next(x for x in r.sends() if x["via"] == "answer")
+        assert answer["text"].endswith(NOTES_NOTICE)
+    else:
+        acts = [Act(duration_s=10, writes=[(2, "out/step1.txt", "one")], final="Step 1 done."), Act(duration_s=2, final="Noted."),
+                Act(duration_s=2, final="Done."), Act()]
+        r = run_factory(acts, edit=_reset_mid_turn, poll_s=5, correct_race=True).go()
+        assert any(x["type"] == "correction_deferred" and x["name"] == "handoff" for x in r.log)
+        assert r.fake.received[1] == ("reply", NOTES_NOTICE)
+    rec = _reset_record(r)
+    assert rec["notice"]["delivery"] == "next_message" and rec["reset"]["at"] == "handback"
+    assert r.outcome.status == "usable"
+    assert r.fake.handoff_problems == []
+
+
+def test_an_elapsed_cutoff_during_the_grace_ends_the_episode(run_factory) -> None:
+    """D-046: the notice is delivered at 5 s with a 60 s grace and a 20 s cap: the deadline comes
+    first (the one end choice), so the episode cuts off at 20,000 ms and no reset is performed."""
+    acts = [Act(duration_s=300, writes=[(2, "out/step1.txt", "one")]), Act()]
+    r = run_factory(acts, edit=chain(lambda d: _reset_mid_turn(d, grace_ms=60_000), budgets(elapsed_ms=20_000)), poll_s=5).go()
+    rec = _reset_record(r)
+    assert rec["notice"]["delivery"] == "mid_turn" and rec["reset"] is None and rec["status"] == "notice_sent"
+    assert r.record["end"] == {"reason": "budget_cutoff", "duration_ms": 20_000}
+    assert r.events("controlled_reset") == [] and r.planted("handoff") == ["reached", "not_reached"]
+    assert r.fake.handoff_problems == []
+
+
+def test_the_grace_and_the_hand_back_are_decided_from_instants(tmp_path) -> None:
+    """D-046: the notice is steered at the first slice after 2 s and taken by the harness at 8 s
+    whatever the polling interval; its 26 s grace runs out at 34 s. A hand-back at 33 s is the
+    reset's moment at every polling interval, one at 35 s never is (the grace came first)."""
+    for poll_s in (1, 5, 7):
+        for final_at, want in ((33, "handback"), (35, "grace")):
+            acts = [Act(duration_s=final_at, writes=[(2, "out/step1.txt", "one")], final="Notes left."), Act(duration_s=2, final="Done."), Act()]
+            run = Run(tmp_path / f"i-{poll_s}-{final_at}", acts, edit=lambda d: _reset_mid_turn(d, grace_ms=26_000), poll_s=poll_s,
+                      delivery_at_s=8.0)
+            run.go()
+            rec = run.run_json["events"]["handoff"]
+            assert dt(rec["notice"]["utc"]) == dt("2026-11-22T12:00:08Z")
+            assert rec["reset"]["at"] == want, (poll_s, final_at, rec)
+            assert dt(rec["reset"]["utc"]) == dt("2026-11-22T12:00:33Z" if want == "handback" else "2026-11-22T12:00:34Z")
+            assert run.fake.handoff_problems == []
+
+
+def _explanation_after_reset(d) -> None:
+    explanation(d)
+    _reset_mid_turn(d)
+    d["events"][0].update(required=True, reopen="Please leave your notes now.")  # as the generators declare it
+    d["events"].append({"name": "follow_up", "trigger": {"handbacks": {"at_least": 1, "since": "handoff"}},
+                        "action": {"type": "message", "text": "I don't follow. What's the actual reason?"}, "required": True,
+                        "reopen": "Could you tell me why the slow machine is slow?"})
+    d["scoring"]["answer_key"]["answers_after"] = "handoff"
+
+
+class _ResetView(_View):
+    """`_View` with the planted firings and the controlled reset, in log order, as the
+    trajectory unit's Explanation check reads them."""
+
+    def __init__(self, r: Run) -> None:
+        self.header = {}
+        self.events = []
+        seq_of: dict[str, int] = {}
+        reset_msg = None
+        for x in r.log:
+            if x["type"] == "verdict":
+                seq_of[x["output"]["item"]] = len(self.events)
+                self.events.append({"seq": len(self.events), "type": "assistant_message", "text": x["text"]})
+            elif x["type"] == "hand_back" and not x.get("drained"):
+                self.events.append({"seq": len(self.events), "type": "handback", "target": seq_of.get(x["closing"])})
+            elif x["type"] == "send" and x["kind"] != "post_run":
+                self.events.append({"seq": len(self.events), "type": "user_message", "text": x["text"]})
+                if x["via"] == "reset":
+                    reset_msg = len(self.events) - 1
+            elif x["type"] == "controlled_reset":
+                self.events.append({"seq": len(self.events), "type": "controlled_reset", "target": reset_msg})
+            elif x["type"] == "event_fired":
+                self.events.append({"seq": len(self.events), "type": "planted", "name": x["name"], "phase": "fired"})
+
+
+def test_explanation_answers_after_the_reset(run_factory) -> None:
+    """D-046: the notes hand-back is not an answer. The reset fires mid-turn, the agent leaves its
+    notes and hands back, the reset comes; the first hand-back after it is the first answer and
+    gets the fixed follow-up; the second is the second answer."""
+    from cohbench.trajectory import episode as tep
+
+    acts = [Act(duration_s=10, writes=[(2, "out/step1.txt", "one"), (8, "notes/NOTES.md", "notes")], final="Notes left."),
+            Act(duration_s=4, final="The disk on m3 is full."), Act(duration_s=4, final="m3 is slow because its disk is full."), Act(final="No.")]
+    r = run_factory(acts, edit=_explanation_after_reset).go()
+    assert r.outcome.status == "usable"
+    sends = [x for x in r.sends() if x["kind"] != "post_run"]
+    assert [x["via"] for x in sends] == ["start", "correct", "reset", "reply"]
+    assert sends[3]["text"] == "I don't follow. What's the actual reason?"
+    rec = _reset_record(r)
+    assert rec["notice"]["delivery"] == "mid_turn" and rec["reset"]["at"] == "handback"
+    view = _ResetView(r)
+    doc = dict(r.record)
+    planted = doc["planted"]
+    doc["answers"] = tep.explanation_answers(view, "handoff", planted)  # type: ignore[arg-type]
+    assert [view.events[s]["text"] for s in doc["answers"]] == ["The disk on m3 is full.", "m3 is slow because its disk is full."]
+    assert tep._explanation_errors(doc, view) == []
+    assert r.planted("follow_up") == ["reached", "fired"]
+    assert r.fake.handoff_problems == []
+
+
+def test_the_episode_record_carries_the_task_digest_once_the_table_lists_it(run_factory, monkeypatch) -> None:
+    """D-046: `task_sha256` is the digest admission computes (the run manifest's `task.digest`),
+    emitted once the trajectory unit's episode table has the field, absent before."""
+    from cohbench.runner import record
+    from cohbench.trajectory import episode as tep
+
+    r = run_factory([Act(final="Done."), Act()], edit=no_events, episode="before").go()
+    assert ("task_sha256" in r.record) == ("task_sha256" in tep.FIELDS)
+    monkeypatch.setattr(record, "_episode_fields", lambda: tuple(tep.FIELDS) + ("task_sha256",))
+    r2 = run_factory([Act(final="Done."), Act()], edit=no_events, episode="after").go()
+    assert r2.record["task_sha256"] == r2.run_json["task"]["digest"] and len(r2.record["task_sha256"]) == 64
+
+
+@pytest.mark.parametrize("order", ["notice_first", "correction_first"])
+def test_a_steered_notice_is_never_a_correction(run_factory, order) -> None:
+    """D-046, for the trajectory unit: a Steering-shaped task where a reset notice and a correction
+    are both steered into the running turn, in either order. They share the delivery machinery,
+    but only the correction is a correction: one `correction_delivered`, at the correction; the
+    notice keeps its own kind and its delivery (instant, route, mechanism, mark, straddle) is on
+    the reset's event record."""
+    fix = "The operation count is what matters, not the cache score. Please optimise for that."
+    first, second = ("out/**", "src/**") if order == "notice_first" else ("src/**", "out/**")
+
+    def edit(d):
+        _reset_mid_turn(d, trigger={"changes": {"path": first if order == "notice_first" else second, "at_least": 1}})
+        d["events"].append({"name": "correction", "trigger": {"changes": {"path": "src/**", "at_least": 1}}, "required": False,
+                            "action": {"type": "correction", "text": fix}})
+    writes = [(2, first, "a"), (7, second, "b")]
+    acts = [Act(duration_s=15, writes=[(t, p.replace("**", "x.txt"), c) for t, p, c in writes], final="Notes left."), Act(duration_s=3, final="Done."), Act()]
+    r = run_factory(acts, edit=edit, poll_s=5).go()
+    steers = [t for v, t in r.fake.received if v == "correct"]
+    assert steers == ([NOTES_NOTICE, fix] if order == "notice_first" else [fix, NOTES_NOTICE])
+    (cd,) = r.events("correction_delivered")
+    (corr,) = r.run_json["corrections"]
+    assert corr["name"] == "correction" and corr["delivery"] == "mid_turn"
+    assert cd["utc"] == corr["delivered_utc"] or dt(cd["utc"]) == dt(corr["delivered_utc"])
+    notice_msg = next(x for x in r.sends() if x["via"] == "correct" and x["text"] == NOTES_NOTICE)
+    assert cd["ref"] != {"message": notice_msg["message"]}
+    assert notice_msg["kind"] != "correction" and r.h.user_kinds[notice_msg["message"]] != "correction"
+    rec = _reset_record(r)["notice"]
+    assert rec["delivery"] == "mid_turn" and rec["mechanism"] == "native_steer" and rec["mark"] is not None and rec["utc"]
+    assert "straddled" in rec and "straddled_last" in rec
+    assert _reset_record(r)["reset"]["at"] == "handback" and r.planted("correction") == ["reached", "fired"]
+    assert r.fake.handoff_problems == []

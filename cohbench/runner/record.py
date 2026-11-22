@@ -62,6 +62,9 @@ def episode_record(task: Task, cfg: RunConfig, r: Runner) -> dict[str, Any]:
         # The polling interval is a fixed parameter of the benchmark (README): in the scorer
         # record once the trajectory unit's episode table has the field.
         **({"poll_s": cfg.poll_s} if "poll_s" in _episode_fields() else {}),
+        # D-046: the task instance's digest as admission computes it (the run manifest's
+        # `task.digest`), once the trajectory unit's episode table lists the field.
+        **({"task_sha256": task.digest} if "task_sha256" in _episode_fields() else {}),
     }
 
 
@@ -149,9 +152,16 @@ def run_manifest(task: Task, cfg: RunConfig, r: Runner | None, desc: Description
         "failure_detail": detail,
         "reachability": {"all_required_reached": not (r.not_reached if r else []), "not_reached": list(r.not_reached) if r else [],
                          "reopens_used": r.reopens if r else 0, "reopens_limit": task.max_reopens},
+        # A reset event's record (D-046) also says how its notice went (`notice`: mid_turn
+        # or next_message, its delivery instant, route and mark) and when the reset came
+        # (`reset`: at a hand-back or at the grace, its instant, the continuation's state).
         "events": {e.name: {"status": r.ev[e.name].status, "reached_utc": r.ev[e.name].reached_utc, "fired_utc": r.ev[e.name].fired_utc,
-                            "delivery": r.ev[e.name].delivery} for e in task.events} if r else {},
+                            "delivery": r.ev[e.name].delivery,
+                            **({"notice": r.reset_info.get(e.name, {}).get("notice"), "reset": r.reset_info.get(e.name, {}).get("reset"),
+                                "grace_ms": e.action.grace_ms, "unanswered_at_reset": r.reset_info.get(e.name, {}).get("unanswered", [])}
+                               if e.action.type == "reset" else {})} for e in task.events} if r else {},
         "corrections": list(r.corrections) if r else [],
+        "notices": list(r.notices) if r else [],
         "probes": list(r.probe_log) if r else [],
         "handback_log": list(r.handback_log) if r else [],
         "probes_not_taken": list(r.probes_not_taken) if r else [],

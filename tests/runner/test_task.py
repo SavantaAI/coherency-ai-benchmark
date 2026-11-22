@@ -577,3 +577,55 @@ def test_a_metric_json_file_is_compared_as_parsed_json(tmp_path: Path) -> None:
     (d / "workspace" / "limits.json").write_text(json.dumps({"window": [1, 2, 3, 4], "logs": 3}, indent=3))
     rebuild(d)
     assert "workspace/limits.json: the same JSON document as the host-only metric/thresholds.json, reformatted" in check(d)[1]
+
+
+RESET = {"name": "handoff", "trigger": {"turns": {"at_least": 1}}, "required": True, "reopen": "Please leave your notes now.",
+         "action": {"type": "reset", "notice": "I have to close this session now.", "continuation": "Picking this back up. Continue where you left off."}}
+
+
+def _explanation_with_reset(d, *, since: str | None, after: str | None) -> None:
+    d["grouping"].update(family="explanation", pair=None, sibling=None)
+    trig: dict = {"handbacks": {"at_least": 1, **({"since": since} if since else {})}}
+    d["events"] = [dict(RESET), {"name": "follow_up", "trigger": trig, "action": {"type": "message", "text": "I don't follow. What's the actual reason?"},
+                                 "required": True, "reopen": "Could you tell me why the slow machine is slow?"}]
+    d["user"]["card"]["decisions"][0].pop("available_after", None)
+    d["scoring"]["answer_key"] = {"options": ["The disk on m3 is full.", "A cron job.", "The network.", "Swap use.", "An old kernel.", "Cold caches."],
+                                  "true_cause": 0, "follow_up": "I don't follow. What's the actual reason?", "buried_control": BURIED,
+                                  **({"answers_after": after} if after else {})}
+
+
+@pytest.mark.parametrize("since, after, ok", [
+    (None, None, True),  # the follow-up at the first hand-back
+    ("handoff", "handoff", True),  # D-046: at the first hand-back after the reset, the answer key saying so
+    ("handoff", None, False),  # the since form needs answers_after naming the same event
+    (None, "handoff", False),  # answers_after needs the since form
+])
+def test_explanation_follow_up_may_count_from_the_reset(tmp_path: Path, since, after, ok) -> None:
+    task, errs, _ = check(write_task(tmp_path, lambda d: _explanation_with_reset(d, since=since, after=after)))
+    assert (task is not None) == ok, errs
+    if not ok:
+        assert any(e.startswith("events: an Explanation task has exactly one event") for e in errs), errs
+
+
+def test_answers_after_names_a_reset_event(tmp_path: Path) -> None:
+    def edit(d):
+        _explanation_with_reset(d, since="handoff", after="handoff")
+        d["events"][0]["action"] = {"type": "message", "text": "Thanks.", "override_policy": False}
+        d["events"][0]["reopen"] = None
+        d["events"][0]["required"] = False
+    errs = problems(tmp_path, edit)
+    assert any("answers_after: 'handoff' names no reset event" in e for e in errs), errs
+
+
+@pytest.mark.parametrize("grace, ok", [(None, True), (30_000, True), (0, False), (1.5, False), (True, False)])
+def test_a_reset_takes_an_optional_grace(tmp_path: Path, grace, ok) -> None:
+    """D-046: `grace_ms`, a positive whole number of milliseconds, 120,000 by default."""
+    def edit(d):
+        d["events"] = [dict(RESET, action={**RESET["action"], **({"grace_ms": grace} if grace is not None else {})})]
+        d["user"]["card"]["decisions"][0].pop("available_after", None)
+    task, errs, _ = check(write_task(tmp_path, edit))
+    assert (task is not None) == ok, errs
+    if task is not None:
+        assert task.events[0].action.grace_ms == (grace or 120_000)
+    else:
+        assert any("grace_ms" in e for e in errs), errs
