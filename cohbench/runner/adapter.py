@@ -18,7 +18,8 @@ What it maps, and what it absorbs:
   still works (the driver's plain `EpisodeError`, nothing to steer) is
   `TurnNotRunning`: the runner holds the correction for the hand-back.
 - Usage. The gateway summary's four token fields are summed; usage is
-  complete when every call reported it (`calls_not_complete == 0`).
+  complete when every call reported it or the driver settled it at a
+  confirmed interrupt (`calls_not_complete == 0`).
 - Probes on the scripted upstream need the copy's reply. It comes from the
   scripted run file (below), by question, with a default.
 - Runner events. The driver is opened with `driver_events` set to the

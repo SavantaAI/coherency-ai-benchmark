@@ -212,9 +212,11 @@ the key file; it passes the path on.
    the deadline; every output since the notice keeps its verdict, and no
    reply goes to that context. At a hand-back the due probes are taken at
    that now idle boundary (including probes due at a grace reset), the turn cap is checked, and after the return delay the
-   driver resets (D-010). The continuation message is composed by the same function as
-   any message, at its dispatch instant: the continuation text, then the
-   corrections and fixed messages due by then. A context reset is the
+   driver resets (D-010). The continuation always goes alone (D-046). A due
+   correction follows by the ordinary delivery rule: steered into the fresh
+   turn, or sent with the next message when the agent is idle. A due fixed
+   message waits for the next hand-back. Each correction has its own delivery
+   instant, message reference and mark. A context reset is the
    handoff: `controlled_reset` is recorded once per handoff, with its
    continuation's state (`launched`, or `unsent` when the continuation never
    reached T3), as the driver records it. The adapter compares the two
@@ -244,7 +246,8 @@ one function, and every place that needs the decision calls it.
   due by then, the reopen, and the outputs answered. Finish or continue
   calls it at the hand-back's instant; the message is composed by calling it
   again at the dispatch instant (the hand-back plus the return delay); the
-  reset's continuation calls it with the continuation. The reopen reads the
+  reset's continuation calls it with the continuation and gets only that
+  message. The reopen reads the
   state as of the hand-back (an event counts as fired only if it fired by
   then), never the current state, and stays decided at dispatch. A probe is
   taken only for an event fired at or before the hand-back's instant. An
@@ -488,7 +491,7 @@ telling word or the canary (`words.py`).
 | `budgets` | `elapsed_ms`, `tokens`, `user_wait_ms`. Each may be absent or null for no limit. |
 | `reachability` | `max_reopens`: how many reopen messages the episode may send in total; at least 1 when any event is required. |
 | `events` | The schedule, below. |
-| `scoring` | `answer_key` (the per-family payload, D-018, checked at load: Routing `conflict`, `settled_by_workspace`, `expected_decision`, `criterion`; Explanation `options`, `true_cause`, `follow_up`, `buried_control`; Steering `objective`, `direction`, `proxy`, `correction_rule`), `control` (null, or `{"expected": {...}}` exactly when `grouping.control` is true), `identifiers` (the trajectory unit's `TaskIdentifiers`), `observations` (`{"attempts": [{"name", "regex", "capture", "by"}]}`; `capture` has exactly one group and its captured text is the attempt's result fingerprint, D-022. Optional `by: "output"` requires `capture` and emits one attempt per whole-line output match, independent of the shell command. If output is unavailable, `regex` selects one attempt with no fingerprint). |
+| `scoring` | `answer_key` (the per-family payload, D-018, checked at load: Routing `conflict`, `settled_by_workspace`, `expected_decision`, `criterion`; Explanation `options`, `true_cause`, `follow_up`, `buried_control`; Steering `objective`, `direction`, `proxy`, `correction_rule`), `control` (null, or `{"expected": {...}}` exactly when `grouping.control` is true), `identifiers` (the trajectory unit's `TaskIdentifiers`), `observations` (`{"attempts": [{"name", "regex", "capture", "by"}]}`; `capture` has exactly one group and its captured text is the attempt's result fingerprint, D-022. Optional `by: "output"` requires `capture` and emits one attempt per whole-line output match, independent of the shell command. Every output pattern is collected; legacy command patterns keep first-match. A command matching `regex` yields at least one attempt even if its output is unavailable, clipped or has no matching line; that fallback has no fingerprint). |
 | `awareness` | Null, or `{"question": "..."}`, asked after the episode ends. |
 
 The user card is what the policy receives, as a deep copy:
@@ -622,6 +625,11 @@ mid-turn, the driver's mark naming the delivery). So the mark's own metric
 reading belongs to the state before the event. When the driver could take
 no delivery mark, the event says so (`mark: null`) and the boundary is the
 state as of the delivery time; no later mark stands in.
+
+Observe events continue to be evaluated while a reset notice is pending
+and during the reset wait. Their firing instant is the triggering write or
+clock threshold, even when the runner reads it later at dispatch. An event's
+card entries are available from that instant.
 
 Triggers evaluated for an output read the workspace as it stood at that
 output's delivery. A batch has two instants (D-030, D-037): a path it
@@ -1028,8 +1036,12 @@ interval, by up to one slice of agent work (`poll_s`, 5 s by default) plus
 the driver's finish allowance on a wait (at most `finish_s`, 15 s by
 default). The overshoot was not measured on a real harness. With a token limit set, usage that is unavailable or
 incomplete for longer than `usage_grace_s` ends the episode as
-`driver_failure`; a shorter gap is tolerated. Tool-call counts are never
-limits.
+`driver_failure`; a shorter gap is tolerated. Calls canceled by the runner's
+confirmed interrupt are settled with the gateway's recorded tokens, including
+zero when none were recorded. Their incomplete usage does not consume this
+grace. The driver records the interrupt interval, canceled call ids and raw
+summary beside the effective usage; unrelated incomplete calls still consume
+the grace. Tool-call counts are never limits.
 
 ## The episode directory
 
@@ -1421,3 +1433,12 @@ fallback after its base event. If the agent ends a turn after the base without
 making enough edits, the correction goes with the next message. This also
 covers a variant with no valid improvement, where doing no edits is correct.
 The hand-back where the reset occurs does not count after that reset.
+
+
+Output attempts combine two sources of evidence: each whole result-line
+match, or at least one attempt when the command matches the task's regex.
+A call with three recognized lines records three attempts; three tool runs
+whose lines were all hidden record only the command-backed lower bound of
+one. A wrapper that hides both the command name and its result lines is
+still missed. These limits apply to `by: "output"`; omitted `by` retains
+legacy first-match extraction.

@@ -194,44 +194,44 @@ def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations) -
             continue
         cmd = e["input"].get("command") or ""
         out = e["output"]
-        match = None
+        selected = []
+        legacy_selected = False
         for a, rx, cap in pats:
-            if a.by == "output" and out["available"]:
-                matches = list(whole_matches(cap, out["text"], out["clipped"], out["last_line_whole"]))
-                if matches:
-                    match = (a, cap, matches)
-                    break
-            elif rx.search(cmd):
-                match = (a, cap, [None])
-                break
-        if match is None:
+            if a.by == "output":
+                matches = list(whole_matches(cap, out["text"], out["clipped"], out["last_line_whole"])) if out["available"] else []
+                if matches or rx.search(cmd):
+                    selected.append((a, cap, matches or [None]))
+            elif not legacy_selected and rx.search(cmd):
+                selected.append((a, cap, [None]))
+                legacy_selected = True
+        if not selected:
             continue
-        a, cap, matches = match
         unfinished = e["status"] == "open" or e["us_end"] is None or (end_us is not None and e["us_end"] > end_us)
         t = clock(e["us"], f"attempt (trajectory seq {e['seq']})")
         t_end = None if unfinished else clock(e["us_end"], f"the end of attempt (trajectory seq {e['seq']})")
-        for captured in matches:
-            if unfinished:
-                result = {"status": "unfinished", "fingerprint": None}
-            elif e["status"] == "cancelled":
-                result = {"status": "cancelled", "fingerprint": None}
-            elif not out["available"]:
-                result = {"status": "unavailable", "fingerprint": None}
-            elif cap is not None:
-                # The task's result decides: a whole captured line is the result,
-                # whatever else of the output the harness kept.
-                m = captured or whole_match(cap, out["text"], out["clipped"], out["last_line_whole"])
-                if m:
-                    result = {"status": "complete", "fingerprint": hashlib.sha256(m.group(1).encode("utf-8")).hexdigest()}
+        for a, cap, matches in selected:
+            for captured in matches:
+                if unfinished:
+                    result = {"status": "unfinished", "fingerprint": None}
+                elif e["status"] == "cancelled":
+                    result = {"status": "cancelled", "fingerprint": None}
+                elif not out["available"]:
+                    result = {"status": "unavailable", "fingerprint": None}
+                elif cap is not None:
+                    # The task's result decides: a whole captured line is the result,
+                    # whatever else of the output the harness kept.
+                    m = captured or whole_match(cap, out["text"], out["clipped"], out["last_line_whole"])
+                    if m:
+                        result = {"status": "complete", "fingerprint": hashlib.sha256(m.group(1).encode("utf-8")).hexdigest()}
+                    else:
+                        result = {"status": "truncated" if out["truncated"] else "complete", "fingerprint": None}
                 else:
-                    result = {"status": "truncated" if out["truncated"] else "complete", "fingerprint": None}
-            else:
-                status = "truncated" if out["truncated"] else "complete"
-                fp = hashlib.sha256(out["text"].encode("utf-8")).hexdigest() if status == "complete" else None
-                result = {"status": status, "fingerprint": fp}
-            b0 = batch_at(e["us"])
-            recs.append({"_src": e["seq"], "_us": e["us"], "_us_end": None if unfinished else e["us_end"], "type": "attempt", "name": a.name, "t": t, "t_end": t_end,
-                         "state": tree_digest(changes, b0), "state_unknown": bool(changes is not None and b0 is not None and changes.unknown(b0)), "batch_start": b0, "batch_end": batch_at(e["us_end"]) if changes and not unfinished else None, "result": result})
+                    status = "truncated" if out["truncated"] else "complete"
+                    fp = hashlib.sha256(out["text"].encode("utf-8")).hexdigest() if status == "complete" else None
+                    result = {"status": status, "fingerprint": fp}
+                b0 = batch_at(e["us"])
+                recs.append({"_src": e["seq"], "_us": e["us"], "_us_end": None if unfinished else e["us_end"], "type": "attempt", "name": a.name, "t": t, "t_end": t_end,
+                             "state": tree_digest(changes, b0), "state_unknown": bool(changes is not None and b0 is not None and changes.unknown(b0)), "batch_start": b0, "batch_end": batch_at(e["us_end"]) if changes and not unfinished else None, "result": result})
     recs.sort(key=lambda r: (r["_us"], r["_us_end"] if r["_us_end"] is not None else r["_us"], r["name"]))
     sources, wall = {}, {}
     for n, r in enumerate(recs, 1):

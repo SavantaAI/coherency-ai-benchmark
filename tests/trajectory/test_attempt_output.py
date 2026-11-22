@@ -13,7 +13,7 @@ from . import mini
 PATTERN = {"name": "profile", "regex": r"\./bin/profile", "capture": r"^PROFILE (.+)$"}
 
 
-def extract(command, output, *, by=True, unavailable=False):
+def extract(command, output, *, by=True, unavailable=False, patterns=None):
     th = mini.thread()
     run = mini.run_rec(th["id"], 1, 0, 9)
     call = mini.command(run, 1, 2, command, output)
@@ -24,7 +24,7 @@ def extract(command, output, *, by=True, unavailable=False):
     segment = Segment(t3.from_export(mini.export([(th, [run], items)])))
     traj = normalise([segment], PiProfile()).trajectory
     spec = {**PATTERN, **({"by": "output"} if by else {})}
-    return build(traj, None, TaskObservations.from_dict({"attempts": [spec]}))
+    return build(traj, None, TaskObservations.from_dict({"attempts": patterns if patterns is not None else [spec]}))
 
 
 @pytest.mark.parametrize("command", ["cd bin && ./profile", "./wrapper", "./bin/profile"])
@@ -51,7 +51,7 @@ def test_three_runs_in_one_shell_call_are_three_attempts():
     ("no result\n", 0),
 ])
 def test_output_clipping_counts_only_whole_result_lines(output, count):
-    assert len(extract("./bin/profile", output).records) == count
+    assert len(extract("./wrapper", output).records) == count
 
 
 def test_unavailable_output_falls_back_to_command_regex():
@@ -102,3 +102,62 @@ def test_output_whole_line_rule_at_each_cut_edge(clipped, count):
 
     matches = list(whole_matches(re.compile(PATTERN["capture"], re.M), "PROFILE first\nPROFILE middle\nPROFILE last", clipped))
     assert len(matches) == count
+
+
+@pytest.mark.parametrize("output, status", [
+    ("PROFILE ops=12\n… output truncated for transport", "truncated"),
+    ("no result\n", "complete"),
+])
+def test_command_match_counts_when_output_has_no_whole_result(output, status):
+    records = extract("./bin/profile", output).records
+    assert len(records) == 1
+    assert records[0]["result"] == {"status": status, "fingerprint": None}
+
+
+def test_three_commands_with_hidden_results_count_at_least_one_attempt():
+    records = extract("./bin/profile | sed '$d'; ./bin/profile | sed '$d'; ./bin/profile | sed '$d'", "").records
+    assert len(records) == 1 and records[0]["result"]["fingerprint"] is None
+
+
+def test_all_output_patterns_match_the_same_call():
+    patterns = [{**PATTERN, "by": "output"}, {"name": "test", "regex": "test", "by": "output", "capture": r"^TEST (.+)$"}]
+    records = extract("./wrapper", "PROFILE ops=12\nTEST passed\nPROFILE ops=13\n", patterns=patterns).records
+    assert [r["name"] for r in records] == ["profile", "profile", "test"]
+    assert [r["result"]["fingerprint"] for r in records] == [hashlib.sha256(v.encode()).hexdigest() for v in ("ops=12", "ops=13", "passed")]
+
+
+@pytest.mark.parametrize("output_first", [False, True])
+def test_output_patterns_and_first_legacy_pattern_are_independent(output_first):
+    legacy = [{**PATTERN, "name": "first"}, {**PATTERN, "name": "second"}]
+    output = [{**PATTERN, "by": "output"}]
+    patterns = output + legacy if output_first else legacy + output
+    records = extract("./bin/profile", "PROFILE ops=12\nPROFILE ops=13\n", patterns=patterns).records
+    assert [r["name"] for r in records] == ["first", "profile", "profile"]
+
+
+@pytest.mark.parametrize("overlap", [False, True])
+@pytest.mark.parametrize("completed_at", [None, 14, 16])
+def test_trusted_delivery_reconciles_completion_clock_or_rejects_work_overlap(overlap, completed_at):
+    from cohbench.trajectory import validate
+    from cohbench.trajectory.normalise import NormaliseError
+    from cohbench.trajectory.view import scorer_view
+
+    th = mini.thread()
+    first = mini.run_rec(th["id"], 1, 0, completed_at)
+    corrected = mini.run_rec(th["id"], 2, 15.111, 25)
+    opening = mini.user(first, 0, "go")
+    correction = mini.user(corrected, 15.111, "Use the actual count.")
+    items = [opening, mini.assistant(first, 15.05 if overlap else 5, "Done."), correction, mini.assistant(corrected, 24, "Corrected.")]
+    hints = Hints(user_kinds={correction["messageId"]: "correction"}, runner=[RunnerEvent("correction_delivered", mini.ts(15), {"message": correction["messageId"]}, {"mark": "delivery"})])
+    segments = [Segment(t3.from_export(mini.export([(th, [first, corrected], items)])))]
+    if overlap:
+        with pytest.raises(NormaliseError, match="irreconcilable clocks: previous run work extends past the trusted correction delivery"):
+            normalise(segments, PiProfile(), hints=hints)
+        return
+    result = normalise(segments, PiProfile(), hints=hints)
+    assert validate(result.trajectory).ok, validate(result.trajectory).errors
+    view = scorer_view(result.trajectory)
+    delivered = next(e for e in view.events if e["type"] == "correction_delivered")
+    message = next(e for e in view.events if e["type"] == "user_message" and e["kind"] == "correction")
+    assert delivered["t"] == message["t"] == 15000
+    assert any("reconciled to trusted delivery" in n for n in result.manifest["notes"]) == (completed_at == 16)

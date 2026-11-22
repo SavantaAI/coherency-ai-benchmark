@@ -1472,6 +1472,7 @@ class Runner:
             d.parts.append(continuation.action.continuation)
             d.meta.append({"source": "event", "name": continuation.name, "action": "reset_continuation"})
             d.causes.append("reset")
+            return d  # D-046: the fresh context opens with the continuation alone
         else:
             if not override:
                 for s in hb.outs:
@@ -1657,8 +1658,8 @@ class Runner:
         unanswered (the tree is stopped and drained, and what the drain returns goes
         through the one replay); every output since the notice is judged and gets no
         reply. At a hand-back the due probes are taken. After the wait the
-        continuation opens the fresh context with what is due as of its dispatch
-        instant (`_due_as_of`, the same function as a message's)."""
+        continuation alone opens the fresh context. Due corrections follow by
+        the ordinary delivery rule; fixed messages wait for its hand-back."""
         e = self.task.event(self.reset_in_progress)  # type: ignore[arg-type]
         assert e.action.continuation is not None
         if self.agent == "pending":
@@ -1695,7 +1696,7 @@ class Runner:
         self._fire(e, hb.h, ref, at=_dt(self._outside_excluded(utc_us(_dt(sent.utc)))), elapsed_ms=self._dispatch_ms(sent))
         self._reset_event(utc_us(_dt(sent.utc)), ref, "launched")
         self.reset_in_progress = None
-        self._delivered_with(due.delivered, sent, ref, hb.h)
+        self._mid_turn_corrections()
 
     def _reset_event(self, utc: str, ref: dict[str, str] | None, continuation: str) -> None:
         """A context reset is the handoff: `controlled_reset` is recorded once per

@@ -494,16 +494,29 @@ class _Builder:
                 self.h.user_kinds.get(um.get("messageId"), "correction" if um.get("createdBy") in (None, "user") else "from_agent") in F.DELIVERED_KINDS)
             plans.append((run, items, um, boundary, declared, continues))
             prev_status = run.get("status")
+        # A trusted next-message delivery closes the preceding turn and opens
+        # the next one. A late run-completion stamp alone can be reconciled;
+        # actual recorded work after that delivery cannot.
+        for n in range(1, len(plans)):
+            run, items, um, boundary, declared, continues = plans[n]
+            delivery = _first(self.delivered, (um or {}).get("messageId"), (um or {}).get("id"))
+            previous = plans[n - 1]
+            done = _ts(previous[0].get("completedAt"))
+            if delivery is not None and not continues:
+                stamps = [_ts(x.get(k)) for x in previous[1] for k in ("startedAt", "completedAt") if x.get(k)]
+                start = _ts(previous[0].get("startedAt") or previous[0].get("requestedAt"))
+                if (start is not None and start > delivery) or any(t > delivery for t in stamps if t is not None):
+                    raise NormaliseError("irreconcilable clocks: previous run work extends past the trusted correction delivery " + _iso_us(delivery))
+                if done is not None and delivery < done:
+                    self.m["notes"].append(f"run {previous[0]['id']}: completion {_iso_us(done)} reconciled to trusted delivery {_iso_us(delivery)}")
+                    plans[n - 1] = ({**previous[0], "completedAt": _iso_us(delivery)}, *previous[1:])
         prev_done: datetime | None = None
         for n, (run, items, um, boundary, declared, continues) in enumerate(plans):
             starts = [_ts(x) for x in [run.get("requestedAt"), run.get("startedAt")] + [i.get("startedAt") for i in items[:1]] if x]
             # A next-message correction opens this turn at the runner's
             # recorded delivery, before T3 may have stamped the dispatch.
-            if um is not None:
-                delivery = _first(self.delivered, um.get("messageId"), um.get("id"))
-                if delivery is not None:
-                    starts.append(delivery)
-            ts0 = min(starts) if starts else None
+            delivery = _first(self.delivered, (um or {}).get("messageId"), (um or {}).get("id"))
+            ts0 = delivery if delivery is not None else (min(starts) if starts else None)
             # A queued run (a message T3 accepted while the previous run was
             # still going, such as a refusal queued after a declined secret
             # request) reaches the agent only once that run has completed:

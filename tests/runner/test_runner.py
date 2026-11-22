@@ -1328,8 +1328,8 @@ def test_a_pending_tree_stopped_at_a_reset_is_drained_and_judged(run_factory) ->
     assert r.fake.handoff_problems == []
 
 
-def test_a_fixed_message_due_at_the_reset_goes_with_the_continuation(run_factory) -> None:
-    """S2: the reset branch carries everything due, not only the continuation."""
+def test_a_fixed_message_due_at_the_reset_follows_the_continuation(run_factory) -> None:
+    """D-046: a due fixed message follows the continuation at the next hand-back."""
     def edit(d):
         d["events"] = [{"name": "restart", "trigger": {"handbacks": {"at_least": 1}}, "required": False,
                         "action": {"type": "reset", "notice": "I'm closing this session now.", "continuation": "Hi again."}},
@@ -1338,10 +1338,11 @@ def test_a_fixed_message_due_at_the_reset_goes_with_the_continuation(run_factory
         d["user"]["card"]["decisions"][0].pop("available_after", None)
     r = run_factory([Act(final="Started."), Act(final="Noted."), Act(final="Fresh."), Act()], edit=edit).go()
     resets = [t for v, t in r.fake.received if v == "reset"]
-    assert resets == ["Hi again.\n\nPlease keep the CSV."]
+    assert resets == ["Hi again."]
+    assert ("reply", "Please keep the CSV.") in r.fake.received
     assert r.planted("nudge") == ["reached", "fired"]
     w = [x for x in r.log if x["type"] == "user_wait_end" and "reset" in x["causes"]]
-    assert w[0]["causes"] == ["fixed_message", "reset"]
+    assert w[0]["causes"] == ["reset"]
     assert r.fake.handoff_problems == []
 
 
@@ -2199,9 +2200,8 @@ def test_g4_an_overriding_message_due_by_dispatch_replaces_the_reply(run_factory
     assert r.fake.handoff_problems == []
 
 
-def test_g4_a_message_due_during_the_reset_wait_goes_with_the_continuation(run_factory) -> None:
-    """G4 residual: the reset hand-back's 30 s wait; a fixed message falls due during it. It goes
-    with the continuation, not on the next turn."""
+def test_g4_a_message_due_during_the_reset_wait_follows_the_continuation(run_factory) -> None:
+    """D-046: a fixed message due during the reset wait goes at the next hand-back."""
     def edit(d):
         _reset_then(d)
         d["events"].append({"name": "nudge", "trigger": {"elapsed_ms": {"at_least": 50_000}}, "required": False,
@@ -2210,7 +2210,8 @@ def test_g4_a_message_due_during_the_reset_wait_goes_with_the_continuation(run_f
     r = run_factory([Act(duration_s=2, final="Started."), Act(duration_s=2, final="Noted."), Act(duration_s=2, final="Fresh."), Act()],
                     edit=edit, poll_s=5).go()
     (reset,) = [x for x in r.sends() if x["via"] == "reset"]
-    assert reset["text"] == "Hi again.\n\nPlease keep it short."
+    assert reset["text"] == "Hi again."
+    assert ("reply", "Please keep it short.") in r.fake.received
     assert r.fake.handoff_problems == []
 
 
@@ -2293,7 +2294,7 @@ def test_choose_end_orders_candidates_one_way() -> None:
 def test_due_as_of_gives_the_same_answer_at_every_site(run_factory, site) -> None:
     """`_due_as_of`: a fixed message reached 10 s after a hand-back with a 30 s return delay. At the
     hand-back's instant it is not due (a no-request final finishes without it); at the dispatch
-    instant it is (it goes with the reply, or with the reset's continuation)."""
+    instant it is (it goes with a reply, after the continuation in a fresh context)."""
     text = "Please keep it short."
 
     def edit(d):
@@ -2319,7 +2320,8 @@ def test_due_as_of_gives_the_same_answer_at_every_site(run_factory, site) -> Non
         r = run_factory([Act(duration_s=2, final="Started."), Act(duration_s=2, final="Noted."), Act(duration_s=2, final="Fresh."), Act()],
                         edit=edit, poll_s=5).go()
         (reset,) = [x for x in r.sends() if x["via"] == "reset"]
-        assert reset["text"] == f"Hi again.\n\n{text}" and dt(reset["sent_utc"]) >= dt("2026-11-22T12:01:04Z")
+        assert reset["text"] == "Hi again." and dt(reset["sent_utc"]) >= dt("2026-11-22T12:01:04Z")
+        assert ("reply", text) in r.fake.received
     assert r.fake.handoff_problems == []
 
 
@@ -2893,3 +2895,131 @@ def test_reset_outcome_ignores_a_trigger_discarded_after_the_end(run_factory):
     state = SimpleNamespace(end={"reason": "finished"}, runner_events=[], reset_info={},
                             ev={"handoff": SimpleNamespace(status="idle", reached_utc="2026-11-22T12:00:10Z")})
     assert reset_outcomes(r.task, state) == [{"event": "handoff", "reached": False, "fired": False, "performed": False, "reason": "finished_before_reset"}]
+
+
+@pytest.mark.parametrize("return_delay_ms", [41000, 68000])
+def test_grace_cancelled_usage_is_settled_before_the_return_wait(run_factory, monkeypatch, return_delay_ms):
+    """The review's 41 s and 68 s fake-clock cases use the real driver usage path."""
+    from types import SimpleNamespace
+    from cohbench.driver.episode import Episode
+    from cohbench.driver.usage import TOKEN_FIELDS
+    from cohbench.runner.adapter import DriverEpisode
+    from .fake import iso_us
+
+    def edit(d):
+        _reset_mid_turn(d, grace_ms=30000)
+        d["budgets"].update(tokens=12000000, elapsed_ms=3600000, user_wait_ms=1200000)
+        d["user"]["return_delay_ms"] = return_delay_ms
+    r = run_factory([Act(duration_s=300, writes=[(2, "out/step1.txt", "one")]), Act(duration_s=2), Act()], edit=edit, poll_s=5)
+    raw = {"calls": 1, "calls_not_complete": 0, "usage_status": "complete", **{k: 17 for k in TOKEN_FIELDS}}
+    calls = []
+    driver = SimpleNamespace(env=SimpleNamespace(final_usage=None, usage=lambda: dict(raw)), _usage_interrupts=[], _usage_snapshot=None)
+    driver.usage = lambda: Episode.usage(driver)
+    adapter = SimpleNamespace(ep=driver, started=True, _call=lambda f: f())
+    monkeypatch.setattr("cohbench.driver.episode.read_calls", lambda env: {"summary": dict(raw), "calls": list(calls)})
+    factory = r.factory
+
+    def make(spec):
+        ep = factory(spec)
+        interrupt = ep.interrupt
+
+        def stop():
+            at = iso_us(r.clock.wall)
+            interrupt()
+            if not driver._usage_interrupts:
+                driver._usage_interrupts.append({"start": at, "end": at})
+                raw.update(calls_not_complete=1, usage_status="partial")
+                calls.append({"id": "in-flight", "start": at, "duration_ms": 0, "outcome": "unknown", "usage_status": "partial",
+                              **{k: 17 for k in TOKEN_FIELDS}})
+        ep.interrupt = stop
+        ep.usage = lambda: DriverEpisode.usage(adapter)
+        return ep
+    r.factory = make
+    r.go()
+    assert r.outcome.status == "usable"
+    assert r.record["resets"][0]["performed"]
+    assert r.run_json["budgets"]["consumed"]["tokens_complete"]
+    assert r.run_json["budgets"]["consumed"]["tokens"] == 68
+    assert r.run_json["budgets"]["usage"]["recorded"]["calls_not_complete"] == 1
+    assert r.fake.handoff_problems == []
+
+
+@pytest.mark.parametrize("due_during_wait", [False, True])
+@pytest.mark.parametrize("idle", [False, True])
+def test_correction_due_at_reset_is_delivered_after_its_continuation(run_factory, due_during_wait, idle):
+    from cohbench.runner.port import TurnNotRunning
+
+    text = "Use the actual count."
+
+    def edit(d):
+        _reset_mid_turn(d)
+        d["user"]["return_delay_ms"] = 30000
+        trigger = {"elapsed_ms": {"at_least": 20000}} if due_during_wait else {"handbacks": {"at_least": 1}}
+        d["events"].append({"name": "correction", "required": False, "trigger": trigger, "action": {"type": "correction", "text": text}})
+    r = run_factory([Act(duration_s=10, writes=[(2, "out/step1.txt", "one")]), Act(duration_s=2), Act(duration_s=2), Act()], edit=edit)
+    factory = r.factory
+
+    def make(spec):
+        ep = factory(spec)
+        correct = ep.correct
+
+        def send(text_, **kw):
+            if idle and text_ == text:
+                raise TurnNotRunning("the fresh turn has finished")
+            return correct(text_, **kw)
+        ep.correct = send
+        return ep
+    r.factory = make
+    r.go()
+    reset = next(s for s in r.sends() if s["via"] == "reset")
+    correction = next(s for s in r.sends() if s["text"] == text)
+    assert reset["text"] == PICK_UP
+    assert reset["parts"] == [{"source": "event", "name": "handoff", "action": "reset_continuation"}]
+    assert correction["ref"] != reset["ref"]
+    assert correction["via"] == ("reply" if idle else "correct")
+    delivery = r.events("correction_delivered")[0]
+    assert delivery["ref"] == correction["ref"]
+    assert dt(delivery["utc"]) >= dt(reset["sent_utc"])
+    assert delivery["fields"]["mark"] != r.events("controlled_reset")[0]["fields"].get("mark")
+    assert r.fake.handoff_problems == []
+
+
+@pytest.mark.parametrize("poll_s", [1, 5])
+def test_planted_conflict_fires_while_reset_notice_is_pending(tmp_path, poll_s):
+    def edit(d):
+        _reset_mid_turn(d)
+        d["events"].append({"name": "conflict", "trigger": {"content_matches": {"path": "out/job-c.log", "regex": "CONFLICT:"}},
+                            "required": False, "action": {"type": "observe"}})
+        d["user"]["card"]["decisions"][0]["available_after"] = "conflict"
+    r = Run(tmp_path / str(poll_s), [Act(duration_s=15, writes=[(2, "out/step1.txt", "one"), (7, *CONFLICT_LOG)], messages=[(10, SLOT_Q)]), Act(), Act()],
+            edit=edit, pol=policy(SLOT_POLICY), poll_s=poll_s).go()
+    assert dt(_fired(r)["conflict"]) == dt("2026-11-22T12:00:07Z")
+    assert dt(_reset_record(r)["notice"]["utc"]) < dt(_fired(r)["conflict"]) < dt(_reset_record(r)["reset"]["utc"])
+    assert _verdicts(r)[0][1] == "answerable"
+    assert r.fake.handoff_problems == []
+
+
+@pytest.mark.parametrize("poll_s", [1, 5])
+def test_planted_conflict_fires_at_its_write_during_the_reset_wait(tmp_path, poll_s):
+    def edit(d):
+        _reset_mid_turn(d)
+        d["events"].append({"name": "conflict", "trigger": {"content_matches": {"path": "out/job-c.log", "regex": "CONFLICT:"}},
+                            "required": False, "action": {"type": "observe"}})
+        d["user"]["card"]["decisions"][0]["available_after"] = "conflict"
+        _delay30(d)
+    r = Run(tmp_path / str(poll_s), [Act(duration_s=10, writes=[(2, "out/step1.txt", "one")]), Act(duration_s=2, final=SLOT_Q), Act(), Act()],
+            edit=edit, pol=policy(SLOT_POLICY), poll_s=poll_s)
+
+    def sleep(s):
+        if r.clock.clock < 20 <= r.clock.clock + s:
+            before = 20 - r.clock.clock
+            r.clock.advance(before)
+            r.fake.watchers[0].write(*CONFLICT_LOG)
+            s -= before
+        r.clock.advance(s)
+    r.go(sleep=sleep)
+    assert dt(_fired(r)["conflict"]) == dt("2026-11-22T12:00:20Z")
+    reset_wait = next(e for e in r.events("wait") if "reset" in e["fields"]["causes"])
+    assert dt(reset_wait["utc"]) < dt(_fired(r)["conflict"]) < dt(reset_wait["end_utc"])
+    assert "answerable" in [label for _, label in _verdicts(r)]
+    assert r.fake.handoff_problems == []

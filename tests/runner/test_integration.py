@@ -322,3 +322,37 @@ def test_reset_at_grace_records_silent_handback_and_rebuilds():
     wait = next(e for e in view if e.get("type") == "wait" and "reset" in wait_causes(e))
     assert any(e["t"] == wait["t"] for e in silent)
     _assert_rebuild(out.path)
+
+
+def test_grace_reset_settles_cancelled_usage_across_long_return_delay():
+    def edit(doc):
+        _reset_on_the_draft(doc)
+        doc["events"][0]["action"]["grace_ms"] = 8000
+        doc["user"]["return_delay_ms"] = 68000
+        doc["budgets"]["elapsed_ms"] = 300000
+    out = _short(_out_root("grace-usage"), "reset-grace-long-wait-run.json", "rgrace-usage-1", edit=edit)
+    run, ep, _, _ = check_bundle(out.path)
+    assert run["events"]["handoff"]["reset"]["at"] == "grace"
+    assert run["budgets"]["consumed"]["tokens_complete"]
+    usage = run["budgets"]["usage"]
+    assert usage["runner_cancelled_calls"], usage
+    assert usage["recorded"]["calls_not_complete"] > 0
+    assert ep["resets"][0]["performed"]
+    _assert_rebuild(out.path)
+
+
+def test_correction_due_before_reset_has_its_own_delivery_in_bundle():
+    def edit(doc):
+        _reset_on_the_draft(doc)
+        doc["events"].append({"name": "correction", "required": False,
+                              "trigger": {"handbacks": {"at_least": 1}},
+                              "action": {"type": "correction", "text": "Please include the release date."}})
+    out = _short(_out_root("reset-due-correction"), "reset-due-correction-run.json", "rreset-due-correction-1", edit=edit)
+    run, ep, view, changes = check_bundle(out.path)
+    reset = next(e for e in view if e.get("type") == "controlled_reset")
+    correction = next(e for e in view if e.get("type") == "correction_delivered")
+    assert reset["target"] != correction["target"]
+    assert view[reset["target"] + 1]["text"] == PICK_UP  # JSONL header precedes view seq zero
+    mark = next(e for e in changes if e.get("type") == "mark" and e["mark"] == correction["mark"])
+    assert mark["t"] == correction["t"] >= reset["t"]
+    _assert_rebuild(out.path)

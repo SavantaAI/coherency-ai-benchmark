@@ -50,6 +50,7 @@ from . import turns
 from .harness import DRIVER_REF_NAMESPACES, PI_DIALOG_EXTENSION_NAME, Harness, harness as get_harness, instruction_files
 from .t3 import T3
 from .t3client import NODE_MARGIN_S, RpcFailure, RpcUnsent, T3Error, new_id
+from .usage import instant, read_calls, settled_usage
 
 
 class EpisodeError(RuntimeError):
@@ -558,6 +559,8 @@ class Episode:
         self.reads = 0  # tree reads `wait` attempted, for tests and diagnosis
         self.reads_ok = 0  # of those, the ones that returned the main thread's projection
         self._tree_cache: dict[str, tuple[dict[str, Any], tuple]] = {}  # settled children, by shell key (read_tree)
+        self._usage_interrupts: list[dict[str, str]] = []
+        self._usage_snapshot: dict[str, Any] | None = None
         self._interrupted = False  # interrupt stopped something; the next hand-back is interrupted
         self._last_interrupt = ""  # the receipt of the interrupt-then-queue path's interrupt
         self._force_refusal_queue = False  # test hook: refuse_secret takes the queued route
@@ -595,8 +598,16 @@ class Episode:
         return self.env.wall_elapsed() if self.env else 0.0
 
     def usage(self) -> dict[str, Any]:
-        """The gateway's episode usage summary (`python -m gateway summary --episode`)."""
-        return self.env.usage() if self.env else {}
+        """Gateway tokens, with calls canceled by this driver settled at their interrupt."""
+        if self.env is None:
+            return {}
+        if not self._usage_interrupts:
+            return self.env.usage()
+        if getattr(self.env, "final_usage", None) is None:
+            self._usage_snapshot = read_calls(self.env)
+        if self._usage_snapshot is None:
+            return self.env.usage()
+        return settled_usage(self._usage_snapshot, self._usage_interrupts)
 
     def _prepare(self, c: Container, role: str) -> None:
         """Run in every harness container before the checks: the settings this
@@ -1452,8 +1463,9 @@ class Episode:
                             continue
                         tried[(op, x, r)] = time.monotonic()
                         before = {"background": bg.get(x, 0)} if op == "thread.stop" else {"status": next((s_ for t_, r_, s_ in st["live"] if r_ == r), "queued")}
+                        stop_started = utc_now()
                         outcome = self._stop(op, x, r, at)
-                        attempts.append({"op": op, "thread_id": x, "run_id": r, "utc": utc_now(), "outcome": outcome, "before": before})
+                        attempts.append({"started_utc": stop_started, "op": op, "thread_id": x, "run_id": r, "utc": utc_now(), "outcome": outcome, "before": before})
                         changed = changed or not outcome.startswith(("unsent", "rejected"))
             if _left(at) <= 0.6:
                 if not changed:
@@ -1467,7 +1479,8 @@ class Episode:
         # run now interrupted or cancelled was stopped; a thread whose
         # background work is gone after a stop whose receipt was lost was
         # stopped.
-        runs_now = {r["id"]: r.get("status") for p in last_tree.values() if isinstance(p, dict) for r in p.get("runs", [])}
+        run_records = {r["id"]: r for p in last_tree.values() if isinstance(p, dict) for r in p.get("runs", [])}
+        runs_now = {rid: r.get("status") for rid, r in run_records.items()}
         bg_now = dict(st["background"]) if st else {}
         for a in attempts:
             a["observed"] = {"status": runs_now.get(a["run_id"])} if a.get("run_id") else {"background": bg_now.get(a["thread_id"], 0)}
@@ -1482,6 +1495,13 @@ class Episode:
         stopped = [a for a in attempts if was_stopped(a)]
         if stopped:
             self._interrupted = True
+            for a in stopped:
+                # Bound cancellation by the recorded run end, never by the
+                # time a quiet-tree poll happened to return. A background
+                # stop without a run uses the stop receipt's instant.
+                ended = run_records.get(a.get("run_id"), {}).get("completedAt") or a["utc"]
+                if instant(ended) >= instant(a["started_utc"]):
+                    self._usage_interrupts.append({"start": a["started_utc"], "end": ended})
         latest = st["latest"] or {}
         if latest.get("id") and self._pending_message is None:
             self.run_id = latest["id"]

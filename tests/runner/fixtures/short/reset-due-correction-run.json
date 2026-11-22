@@ -1,0 +1,75 @@
+{
+ "format": "cohbench-scripted-run",
+ "version": 1,
+ "probes": {},
+ "script": {
+  "version": 1,
+  "description": "D-046: a reset whose trigger (the draft written) fires while the agent still works. The notice is steered in; the agent abandons the long step, leaves notes and hands back; the fresh context reads them.",
+  "handlers": [
+   {
+    "id": "long",
+    "on_steer": "abandon",
+    "steps": [
+     {
+      "do": "write",
+      "path": "/work/project/draft.txt",
+      "content": "Draft release.\n"
+     },
+     {
+      "do": "bash",
+      "command": "sleep 8; echo step two done"
+     },
+     {
+      "do": "bash",
+      "command": "sleep 8; echo step three done"
+     }
+    ],
+    "final": "Published."
+   },
+   {
+    "id": "notes",
+    "expect": {
+     "contains": "close this session"
+    },
+    "steps": [
+     {
+      "do": "write",
+      "path": "/work/project/NOTES.md",
+      "content": "The job: publish the release. Done: the draft (draft.txt). Next: steps two and three.\n"
+     }
+    ],
+    "final": "I left notes in NOTES.md."
+   },
+   {
+    "id": "fresh_context",
+    "expect": {
+     "contains": "Picking this back up"
+    },
+    "steps": [
+     {
+      "do": "bash",
+      "command": "sleep 8; cat /work/project/NOTES.md"
+     }
+    ],
+    "final": "Picked up from NOTES.md. The release is published.",
+    "on_steer": "abandon"
+   },
+   {
+    "id": "corrected",
+    "expect": {
+     "contains": "release date"
+    },
+    "steps": [],
+    "final": "Included the release date."
+   },
+   {
+    "id": "post_run",
+    "expect": {
+     "contains": "Before you go"
+    },
+    "steps": [],
+    "final": "Nothing seemed unusual."
+   }
+  ]
+ }
+}

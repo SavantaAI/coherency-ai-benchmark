@@ -1498,3 +1498,26 @@ def test_the_queued_refusal_when_the_run_has_ended():
     ep.t3.answer_secret = decline_and_end
     s = ep.refuse_secret(req, "No PIN.", timeout_s=8)
     assert s.mechanism == "queued" and s.route_basis == "the main run had ended" and ep.t3.dispatched[-1]["mode"] == "queue"
+
+
+def test_usage_interrupt_boundary_uses_recorded_completion_not_confirmation_poll(monkeypatch):
+    now = [0.0]
+    from datetime import datetime, timedelta, timezone
+
+    base = datetime(2026, 11, 22, 12, tzinfo=timezone.utc)
+    monkeypatch.setattr("cohbench.driver.episode.time.monotonic", lambda: now[0])
+    monkeypatch.setattr("cohbench.driver.episode.time.sleep", lambda s: now.__setitem__(0, now[0] + s))
+    monkeypatch.setattr("cohbench.driver.episode.utc_now", lambda: (base + timedelta(seconds=now[0])).isoformat().replace("+00:00", "Z"))
+    tree = {"t": proj("running")}
+    ep = _episode(tree)
+    stop = ep.t3.interrupt
+
+    def interrupt(*args, **kwargs):
+        result = stop(*args, **kwargs)
+        tree["t"]["runs"][0]["completedAt"] = "2026-11-22T12:00:00.100Z"
+        now[0] += 0.2
+        return result
+    ep.t3.interrupt = interrupt
+    ep.interrupt(timeout_s=5)
+    assert now[0] > 1
+    assert ep._usage_interrupts == [{"start": "2026-11-22T12:00:00Z", "end": "2026-11-22T12:00:00.100Z"}]

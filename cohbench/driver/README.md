@@ -113,7 +113,7 @@ if it holds it.
 | `add_runner_event(type, utc, ref=, **fields)` | dict | Any other runner event the trajectory unit takes: `verdict`, `planted`, `reopen`, `budget_cutoff`, `episode_end`. |
 | `export(dest, task=, end_reason=, end_mark=, user_kinds=, answers=, marks=, probe_targets=, end_utc=None, timeout_s=900)` | dict | Below. Raises `ExportFailed(stage, reasons)`. The result's `files` maps each SPEC section 3 "Logging" item the export holds (the runner's `episode_dir.LOGGING` keys) to its files. |
 | `close()`, `left_over` | removal results | Removes every container, network, volume and snapshot image the episode made, by exact name, outside any deadline; the shared images stay. Also on leaving the `with` block, after an exception, and after SIGTERM with `install_sigterm`. A later call retries whatever `left_over` still lists. |
-| `elapsed()`, `wall_elapsed()`, `usage()` | | The episode clock, the raw wall clock, and the gateway's `summary --episode`. |
+| `elapsed()`, `wall_elapsed()`, `usage()` | | The episode clock, the raw wall clock, and gateway token accounting with runner-canceled calls settled (below). |
 
 Every `Sent` carries `kind`, `segment`, T3's `thread_id`, `message_id`,
 `command_id` and `run_id`, the UTC time and the episode-clock time it was
@@ -414,6 +414,23 @@ directory taken through Docker, and the export copies both logs out of the
 stopped containers through Docker (`Site.copy_logs`), scans them in memory,
 unpacks them in a private directory and only then stages them; the export's
 usage summary is computed from that copy.
+
+After a confirmed driver interrupt, `usage()` also reads sanitized per-call
+accounting inside the gateway. An unknown-outcome call whose recorded span
+overlaps a successful stop is settled with the tokens recorded for it, or
+zero if none were recorded. The stop interval runs from the stop dispatch to
+the run's recorded completion, or the stop receipt when there is no run
+completion. It does not end at a later quiet-tree poll. Completed calls with
+missing usage, and incomplete calls outside those intervals, remain
+incomplete. Token totals retain all recorded tokens.
+
+The effective summary includes `recorded` (the unmodified gateway summary),
+`runner_cancelled_calls` (ids, start times, interrupt intervals and token
+fields), and `interrupts`. `calls_not_complete` and `usage_status` describe
+only calls still needing usage. The runner's usage grace therefore does not
+wait for a response it canceled. With no driver interrupt the summary is
+unchanged. This adjustment is accounting only; raw export logs retain the
+canceled response's original status.
 
 `export` quiesces first: it stops T3 and the harness container, takes the
 watcher's shutdown mark (`export`), stops the watcher (a clean shutdown is
