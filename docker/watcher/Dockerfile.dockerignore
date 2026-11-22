@@ -1,0 +1,4 @@
+# Build context is the repository root; send only the watcher package.
+*
+!cohbench/__init__.py
+!cohbench/watcher/*.py
