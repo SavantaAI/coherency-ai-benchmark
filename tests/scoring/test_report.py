@@ -49,14 +49,15 @@ def test_known_cells_bands_and_eligibility(tmp_path):
     lo, hi = b["headline"]["interval"]
     assert b["headline"]["value"] == pytest.approx(50) and lo < 50 < hi < 100
     # Bands are per harness column: m1 is first in pi and first in cc.
-    assert (a["headline"]["band"]["ranks"], b["headline"]["band"]["ranks"]) == ("1", "1")
+    assert a["headline"]["band"]["ranks"] == "1"
+    assert b["headline"]["band"] is None  # Planned h80 controls are missing for this configuration.
     assert c["headline"]["ranked"] is False and c["headline"]["band"] is None
     assert c["R"]["value"] == 0.0 and c["E"]["value"] == pytest.approx(0.3) and c["S"]["value"] == pytest.approx(0.3)
     assert c["headline"]["value"] == pytest.approx(100 * (0.05 * 0.3 * 0.3) ** (1 / 3))
-    assert c["eligibility"]["routing"] == {"eligible": False, "rate": 0.8, "why": None}
-    assert c["headline"]["unranked_because"][0] == "not eligible in routing (pooled controls 8/10 = 80.0%)"
-    assert c["capability"] == pytest.approx(0.8) and a["capability"] == 1.0
-    assert t["rank_correlation"]["pi"]["n"] == 2 and t["rank_correlation"]["pi"]["spearman"] is None
+    assert c["eligibility"]["routing"]["status"] == "not established"
+    assert "not established" in c["headline"]["unranked_because"][0]
+    assert c["capability"] is None and a["capability"] == 1.0
+    assert t["rank_correlation"][report.config_key({"harness": "pi"})]["n"] == 1 and t["rank_correlation"][report.config_key({"harness": "pi"})]["spearman"] is None
 
 
 def test_rank_correlation_is_per_harness(tmp_path):
@@ -64,7 +65,7 @@ def test_rank_correlation_is_per_harness(tmp_path):
               + S.config_set("c", r_pass=2, pairs=4, e=[0.5] * 4, s=[0.5] * 4, controls=(9, 10))
               + S.config_set("d", r_pass=1, pairs=4, e=[0.2] * 4, s=[0.2] * 4, controls=(8, 10)))
     t = rows(build(tmp_path, scores))[1]
-    assert t["rank_correlation"]["pi"]["n"] == 3 and t["rank_correlation"]["pi"]["spearman"] == pytest.approx(1.0)
+    assert t["rank_correlation"][report.config_key({"harness": "pi"})]["n"] == 3 and t["rank_correlation"][report.config_key({"harness": "pi"})]["spearman"] == pytest.approx(1.0)
 
 
 def test_a_pair_with_one_sibling_passing_fails(tmp_path):
@@ -95,7 +96,7 @@ def test_runs_with_different_polling_intervals_are_never_in_one_table(tmp_path):
     scores = S.config_set("a", r_pass=1, pairs=2, e=[1.0], s=[1.0]) + S.config_set("b", r_pass=1, pairs=2, e=[1.0], s=[1.0], poll_s=5.0)
     rep = build(tmp_path, scores)
     assert [s["poll_s"] for s in rep["sections"]] == ["2.0", "5.0"]
-    assert "no table compares runs across them" in rep["notes"][0]
+    assert "no table compares runs across them" in " ".join(rep["notes"])
     for sec in rep["sections"]:
         eps = {e for t in sec["tables"] for r in t["rows"] for e in r["episodes"]}
         assert {e.split("-")[0] for e in eps} in ({"a"}, {"b"})
@@ -186,7 +187,7 @@ def test_a_rerun_required_episode_is_listed_and_its_instance_missing(tmp_path):
     assert cell["rerun_required"] == ["a-e1"] and "a-e1" not in cell["episodes"]
     assert cell["coverage"]["ran"] == cell["coverage"]["planned"] - 1 and not cell["headline"]["ranked"]
     assert rep["inputs"]["rerun_required"] == ["a-e1"]
-    assert rep["sections"][0]["harness_effect"][0]["headline"]["not_comparable"].startswith("m1 in pi at h20 default did not run the full planned set")
+    assert rep["sections"][0]["harness_effect"][0]["headline"]["not_comparable"]== "judged on both sides 5 of 6"
     assert "Rerun required" in report.render(rep, False)
 
 
@@ -206,13 +207,14 @@ def test_cells_on_different_task_instances_are_not_compared(tmp_path):
               + [x for x in S.config_set("b", r_pass=2, pairs=2, e=[1.0] * 2, s=[1.0] * 2) if x["episode"] not in ("b-ra0", "b-rb0")])
     sec = build(tmp_path, scores)["sections"][0]
     gap = sec["coached_gap"][0]
-    assert gap["E"] == {"value": None, "interval": None, "not_comparable": "the cells ran different task instances"}
-    assert all(sec["harness_effect"][0][k]["value"] is None for k in ("headline", "R", "E", "S"))
-    assert "did not run the full planned set" in sec["harness_effect"][0]["R"]["not_comparable"]
+    assert gap["E"]["value"] is None and gap["E"]["not_comparable"] == "judged on both sides 2 of 3"
+    assert all(sec["harness_effect"][0][k]["value"] is None for k in ("headline", "R"))
+    assert sec["harness_effect"][0]["S"]["value"] == 0
+    assert "judged on both sides 1 of 2" == sec["harness_effect"][0]["R"]["not_comparable"]
     drop = next(x for x in sec["horizon_drop"] if x["harness"] == "pi" and x["mode"] == "default")
-    assert drop["headline"]["not_comparable"] == "the cells ran different task instances"
+    assert drop["headline"]["not_comparable"] == "judged on both sides 6 of 7"
     text = report.render(build(tmp_path / "again", scores), False)
-    assert "not comparable" in text and "the cells ran different task instances" in text
+    assert "not comparable" in text and "judged on both sides" in text
 
 
 def test_one_reader_per_report(tmp_path):
@@ -302,7 +304,7 @@ def test_zero_resamples_text_and_json_agree(tmp_path):
     assert cell["headline"]["ranked"] is True and cell["headline"]["interval"] is None and cell["headline"]["band"] is None
     assert cell["headline"]["band_note"] == "no interval, so no band (zero resamples)"
     text = report.render(rep, False)
-    assert "100.0 (eligible; no interval, so no band (zero resamples))" in text and "100.0 unranked" not in text
+    assert "100.0 judged 3 of 3 (eligible; no interval, so no band (zero resamples))" in text and "100.0 unranked" not in text
 
 
 # ---------------------------------------------------------------------------
@@ -428,7 +430,7 @@ def test_eligibility_is_pooled_over_horizons_and_modes(tmp_path):
         assert c["eligibility"]["routing"]["rate"] == pytest.approx(0.85) and c["eligibility"]["routing"]["eligible"] is False
         assert c["capability"] == pytest.approx(0.85) and c["headline"]["ranked"] is False
     assert (h20["controls"]["routing"]["rate"], h80["controls"]["routing"]["rate"]) == (1.0, 0.7)
-    assert "85.0%* (100.0%)" in report.render(rep, False)
+    assert "85.0%* judged 20 of 20 (100.0%; judged 10 of 10)" in report.render(rep, False)
 
 
 def test_pooled_eligibility_can_rank_a_cell_with_a_weak_cell_rate(tmp_path):
@@ -469,7 +471,7 @@ def test_a_configuration_missing_seeds_is_shown_with_its_n_and_flagged(tmp_path)
     assert a["coverage"]["missing"] == [] and a["headline"]["ranked"]
     assert (b["coverage"]["ran"], b["coverage"]["planned"]) == (a["coverage"]["planned"] - 2, a["coverage"]["planned"])
     assert b["headline"]["ranked"] is False and b["headline"]["band"] is None
-    assert any(x.startswith("ran ") and "planned task instances" in x for x in b["headline"]["unranked_because"])
+    assert "R partial: judged 2 of 3" in b["headline"]["unranked_because"]
     assert b["headline"]["value"] == pytest.approx(100) and b["R"]["pairs"] == 2
 
 

@@ -43,7 +43,8 @@ class Bundle:
     def __init__(self, family: str, payload: dict[str, Any] | None = None, *, seed: int = 1, pair: str | None = None,
                  sibling: str | None = None, control: bool = False, expected: dict[str, Any] | None = None,
                  horizon: str = "h20", mode: str = "default", episode: str = "e1", poll_s: float | None = 2.0,
-                 elapsed_ms: int | None = 600000, baseline: dict[str, str] | None = None, baseline_metric: dict[str, Any] | None = None):
+                 elapsed_ms: int | None = 600000, baseline: dict[str, str] | None = None, baseline_metric: dict[str, Any] | None = None,
+                 t_first: bool = True):
         self.family = family
         self.payload = dict(payload if payload is not None else {"routing": ROUTING_KEY, "explanation": EXPLANATION_KEY, "steering": STEERING_KEY}[family])
         self.grouping = {"family": family, "seed": seed, "pair": pair, "sibling": sibling, "control": control, "horizon": horizon, "mode": mode}
@@ -67,6 +68,7 @@ class Bundle:
         self.reach = {"status": "reached", "not_reached": []}
         self.turn = 0
         self.open = False
+        self.t_first = t_first
         self.batch(0, 0, baseline if baseline is not None else {"README.md": "task\n"}, metric=baseline_metric)
 
     # The scorer view
@@ -157,7 +159,10 @@ class Bundle:
                        "file_type": "file", "mode": "0644", "target": None, "content_unknown": p in unknown}
                 self.files[p] = c
             self.records.append(rec)
-        self.records.append({"type": "batch", "batch": b, "t": t_last, "baseline": b == 0, "resync": False, "incomplete": False, "settled": True})
+        rec = {"type": "batch", "batch": b, "t": t_last, "baseline": b == 0, "resync": False, "incomplete": False, "settled": True}
+        if self.t_first:
+            rec["t_first"] = None if b == 0 else t_first      # the batch's first write (the trajectory unit's new field)
+        self.records.append(rec)
         if metric is not None:
             self.records.append({"type": "metric", "batch": b, "ok": True, "metrics": metric, "absent": [], "absent_count": 0})
         else:

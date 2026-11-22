@@ -109,7 +109,14 @@ def parse_config(raw: Any) -> Config:
     if not (isinstance(o, dict) and set(o) <= {"count", "seed"} and isinstance(o.get("count", 6), int)
             and o.get("count", 6) > 0 and o.get("count", 6) % 6 == 0 and isinstance(o.get("seed", 0), int)):
         raise ReaderError("orders is {count: a positive multiple of 6, seed: an integer}")
-    extra = sorted(set(raw) - CONFIG_KEYS)
+    allowed = {"format", "version", "kind", "orders"}
+    if kind == "scripted":
+        allowed |= {"rule"}
+        if raw.get("rule") in ("position", "table"):
+            allowed.add(raw["rule"])
+    elif kind == "hosted":
+        allowed |= {"endpoint", "expect", "sampling", "prompt_sha256", "timeout_s"}
+    extra = sorted(set(raw) - allowed)
     if extra:
         raise ReaderError(f"a reader config has no field {extra[0]!r} (the window is fixed at {WINDOW_WORDS} words)")
     if kind == "scripted":
@@ -285,3 +292,52 @@ def make(cfg: Config, key: str | None = None, transport: Transport | None = None
     if cfg.raw["kind"] == "scripted":
         return ScriptedReader(cfg)
     return HostedReader(cfg, key if key is not None else read_key(), transport or http_transport)
+
+
+class RecordedReader:
+    """Record choices for this score, replaying a persistent cache when supplied."""
+
+    def __init__(self, reader: Reader, path: Path | None = None):
+        self.reader = reader
+        self.path = path
+        self.records = {}
+        self.cache = {}
+        if path is not None and path.exists():
+            for line in path.read_text(encoding="utf-8").splitlines():
+                try:
+                    row = json.loads(line)
+                    key = (row["reader_digest"], row["request_digest"])
+                    choice = row["choice"]
+                    if not isinstance(choice, str) or len(choice) != 1 or choice not in LETTERS:
+                        raise ValueError
+                    if key in self.cache and self.cache[key] != choice:
+                        raise ReaderError(f"conflicting cached choices for request {key[1]}")
+                    self.cache[key] = choice
+                except (ValueError, KeyError, TypeError):
+                    raise ReaderError("malformed reader cache record") from None
+
+    def describe(self):
+        return self.reader.describe()
+
+    def choose(self, question: str, excerpt: str, shown: list[str]):
+        request = item_key(question, excerpt, shown)
+        digest = self.describe()["config_sha256"]
+        key = (digest, request)
+        if key in self.cache:
+            choice = self.cache[key]
+        else:
+            pos = self.reader.choose(question, excerpt, shown)
+            if not isinstance(pos, int) or isinstance(pos, bool) or not 0 <= pos < len(shown):
+                raise ReaderError("the reader returned a position outside the options")
+            choice = LETTERS[pos]
+            self.cache[key] = choice
+            if self.path is not None:
+                with self.path.open("a", encoding="utf-8") as out:
+                    out.write(canonical({"request_digest": request, "reader_digest": digest, "choice": choice}) + "\n")
+        if choice not in LETTERS[:len(shown)]:
+            raise ReaderError("cached choice is outside the options")
+        self.records[request] = {"request_digest": request, "reader_digest": digest, "choice": choice}
+        return LETTERS.index(choice)
+
+    def used(self):
+        return [self.records[k] for k in sorted(self.records)]

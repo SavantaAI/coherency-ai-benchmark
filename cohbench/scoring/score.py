@@ -177,6 +177,9 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
     if end in UNUSABLE_ENDS:
         return {**head, "rerun_required": True, "reason": f"rerun required: the episode ended by {end}, outside the agent (D-034)",
                 "score": None, "control": None, "reported": None, "probes": [], "reader": None}
+    recorded = R.RecordedReader(rd) if rd is not None and uses_reader(ep) else None
+    if recorded is not None:
+        rd = recorded
     fam: dict[str, Any] | None = None
     ctl: dict[str, Any] | None = None
     if g.get("control"):
@@ -189,4 +192,5 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
         fam = steering.score(ep)
     return {**head, "rerun_required": False, "score": fam, "control": ctl,
             "reported": reported(ep), "probes": probes(ep, fam, ctl),
-            "reader": rd.describe() if rd is not None and uses_reader(ep) else None}
+            "reader": rd.describe() if rd is not None and uses_reader(ep) else None,
+            "reader_requests": recorded.used() if recorded is not None else []}

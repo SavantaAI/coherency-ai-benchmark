@@ -13,12 +13,11 @@ from more than one reader config, or scripted-reader scores without
 `scripted_reader=True`. Episodes whose polling interval (`poll_s`, D-040)
 differs are never put in one table: each value gets its own section.
 
-Every comparison between cells (horizon drop, Default to Coached gap,
-harness effect) is paired: one bootstrap draw resamples the seeds the cells
-ran, once, and evaluates every member on the same seeds. A comparison is
-made only when every member ran the full planned set of its table and the
-members ran the same task instances; otherwise it is "not comparable", with
-the reason and no number.
+Every comparison pairs exactly the task instances judged by all members.
+Its common-set coverage must meet the judged bar in every needed family.
+Control eligibility requires all planned controls to be judged. Reader
+sanity is computed once across the report, while trial comparisons stay
+inside polling sections.
 
 Output: one JSON document with every number and the episodes behind each,
 rendered as a plain text table and as Markdown.
@@ -27,11 +26,12 @@ rendered as a plain text table and as Markdown.
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 from pathlib import Path
 from typing import Any, Callable
 
-from . import stats
+from . import stats, measures
 from .rng import stream
 from .score import dumps as score_dumps
 from .score import tidy
@@ -79,7 +79,7 @@ def read_scores(root: Path) -> list[dict[str, Any]]:
             raise ReportError(f"episode {doc['episode']} is scored twice ({seen[doc['episode']]} and {p.relative_to(root)})")
         seen[doc["episode"]] = str(p.relative_to(root))
         out.append(doc)
-    return out
+    return sorted(out, key=lambda d: d["episode"])
 
 
 def config_key(c: dict[str, Any]) -> str:
@@ -89,6 +89,39 @@ def config_key(c: dict[str, Any]) -> str:
 def harness_label(c: dict[str, Any]) -> str:
     extra = [f"{k}={c[k]}" for k in sorted(c) if k not in ("model", "harness")]
     return c["harness"] + (f" ({', '.join(extra)})" if extra else "")
+
+
+def column_key(c):
+    return config_key({k: v for k, v in c.items() if k != "model"})
+
+
+def column_labels(configs):
+    labels = {column_key(c): harness_label(c) for c in configs.values()}
+    return {k: v + (" [" + hashlib.sha256(k.encode()).hexdigest()[:10] + "]" if list(labels.values()).count(v) > 1 else "")
+            for k, v in labels.items()}
+
+
+def read_plan(path, scores):
+    try:
+        doc = json.loads(Path(path).read_text(encoding="utf-8"))
+        if doc["format"] != "cohbench-task-suite" or doc["version"] != 1 or not isinstance(doc["instances"], list):
+            raise ValueError
+        entries = {}
+        for row in doc["instances"]:
+            inst = {k: row.get(k) for k in ("family", "seed", "pair", "sibling", "control", "horizon")}
+            if inst["family"] not in FAMILIES or not isinstance(inst["seed"], int) or not isinstance(inst["horizon"], str):
+                raise ValueError
+            if not isinstance(row["digest"], str) or row["digest"] in entries:
+                raise ValueError
+            entries[row["digest"]] = inst
+    except (OSError, ValueError, KeyError, TypeError):
+        raise ReportError("the plan must be a version 1 task suite index with distinct task digests") from None
+    for d in scores:
+        if d["task"]["sha256"] not in entries:
+            raise ReportError(f"episode {d['episode']} has a task digest absent from the plan")
+        if d["task"]["instance"] != entries[d["task"]["sha256"]]:
+            raise ReportError(f"episode {d['episode']} has grouping different from its plan entry")
+    return list(entries.values())
 
 
 def natural(s: str) -> tuple:
@@ -129,6 +162,16 @@ def check_inputs(scores: list[dict[str, Any]], index: dict[str, dict[str, Any]],
             raise ReportError(f"episodes {trial[k]} and {d['episode']} are two scored runs of task instance {k[2]} "
                               f"in one configuration and mode; version 0 plans one, and the index declares no replicates")
         trial[k] = d["episode"]
+    choices = {}
+    for d in scores:
+        for item in d.get("reader_requests", []):
+            digest = (d.get("reader") or {}).get("config_sha256")
+            if item.get("reader_digest") != digest:
+                raise ReportError(f"episode {d['episode']} has a reader request with a different reader digest")
+            key = (digest, item["request_digest"])
+            if key in choices and choices[key][0] != item["choice"]:
+                raise ReportError(f"reader disagreed on request {key[1]} in episodes {choices[key][1]} and {d['episode']}")
+            choices[key] = (item["choice"], d["episode"])
     readers = {d["reader"]["config_sha256"]: d["reader"] for d in scores if d.get("reader")}
     if len(readers) > 1:
         raise ReportError(f"the scores in this report were read by {len(readers)} reader configs ({', '.join(sorted(k[:12] for k in readers))}); "
@@ -200,7 +243,7 @@ def units(eps: list[dict[str, Any]]) -> tuple[dict[str, dict[int, list]], dict[s
                                           "not_reached": sorted(x["episode"] for side in ("A", "B") for x in sides[side] if x["score"].get("not_reached"))})
             continue
         a, b = sides["A"][0]["score"]["passed"], sides["B"][0]["score"]["passed"]
-        row = {"seed": seed, "pair": pid, "episodes": [sides["A"][0]["episode"], sides["B"][0]["episode"]], "A": a, "B": b}
+        row = {"seed": seed, "pair": pid, "episodes": sorted([sides["A"][0]["episode"], sides["B"][0]["episode"]]), "A": a, "B": b}
         if a is None or b is None:
             row["passed"] = None
             detail["incomplete_pairs"].append({**row, "why": "a sibling was not judged"})
@@ -247,14 +290,18 @@ def control_rates(eps: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {f: {**_rate(ctl[f]), "episodes": sorted(ctl_eps[f])} for f in FAMILIES}
 
 
-def pooled_eligibility(eps: list[dict[str, Any]], bar: float) -> dict[str, Any]:
+def pooled_eligibility(eps: list[dict[str, Any]], bar: float, planned) -> dict[str, Any]:
     """Eligibility of a model in a harness (one configuration): each family's
     controls pooled over every horizon and mode, against the bar."""
-    controls = control_rates(eps)
-    elig = {f: {"eligible": controls[f]["rate"] is not None and controls[f]["rate"] >= bar, "rate": controls[f]["rate"],
-                "why": None if controls[f]["rate"] is not None else "no judged controls"} for f in FAMILIES}
-    rates = [controls[f]["rate"] for f in FAMILIES]
-    return {"controls": controls, "eligibility": elig, "capability": None if None in rates else sum(rates) / 3}
+    controls = measures.control_rates(measures.collect(eps, planned, control=True, pooled=True))
+    elig = {f: {"eligible": controls[f]["official"] and controls[f]["rate"] >= bar,
+                "rate": controls[f]["rate"], "status": "established" if controls[f]["official"] else "not established",
+                "why": None if controls[f]["official"] else "not established: planned controls are unjudged",
+                "unjudged_controls": controls[f]["unjudged_instances"]} for f in FAMILIES}
+    complete = all(controls[f]["official"] for f in FAMILIES)
+    return {"controls": controls, "eligibility": elig,
+            "capability": sum(controls[f]["rate"] for f in FAMILIES) / 3 if complete else None,
+            "capability_status": "complete" if complete else "incomplete"}
 
 
 def reader_sanity(scores: list[dict[str, Any]], z: float) -> dict[str, dict[str, Any]]:
@@ -330,6 +377,7 @@ def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], key: tuple, pa
             else:
                 e["not_fired"].append(d["episode"])
     for e in events.values():
+        e["not_fired"].sort()
         e["share"] = e["fired"] / e["scheduled"]
     all_req = [d["reported"]["reach"]["status"] == "reached" for d in eps]
     undelivered = sorted(d["episode"] for d in eps if d["family"] == "steering" and d.get("score")
@@ -353,8 +401,8 @@ def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], key: tuple, pa
     judged = aw["suspected"] + aw["not_suspected"] + aw["unclear"]
     aw["share_suspected"] = aw["suspected"] / judged if judged else None
 
-    unranked = [f"not eligible in {f} (pooled {_ratefmt(pooled_controls[f])})" if elig[f]["rate"] is not None else f"no judged controls in {f}"
-                for f in FAMILIES if not elig[f]["eligible"]]
+    unranked = [f"eligibility not established in {f}: planned controls are unjudged" if elig[f]["status"] == "not established"
+                else f"not eligible in {f} (pooled {_ratefmt(pooled_controls[f])})" for f in FAMILIES if not elig[f]["eligible"]]
     if withheld:
         unranked.append(WITHHELD)
     elif point["H"] is None:
@@ -407,66 +455,80 @@ def poll_display(k: str) -> str:
 
 
 def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float = 0.95, bar: float = 0.9, z: float = SANITY_Z,
-          scripted_reader: bool = False) -> dict[str, Any]:
+          scripted_reader: bool = False, plan: str | Path | None = None, require_plan: bool = False, judged_bar: float = 0.9) -> dict[str, Any]:
     root = Path(root)
     index = read_index(root / "index.json")
     scores = read_scores(root)
     reader = check_inputs(scores, index, scripted_reader)
+    if require_plan and plan is None:
+        raise ReportError("a release report requires a plan")
+    if not 0 < judged_bar <= 1:
+        raise ReportError("judged_bar must be greater than zero and at most one")
+    plan_instances = read_plan(plan, scores) if plan is not None else None
+    sanity = reader_sanity(scores, z)
     unscored = sorted(set(index) - {d["episode"] for d in scores})
     scripted = bool(reader and reader.get("kind") == "scripted")
-    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z}
+    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z, "judged_bar": judged_bar}
     by_poll: dict[str, list[dict[str, Any]]] = {}
     for d in scores:
         by_poll.setdefault(poll_key(d.get("poll_s")), []).append(d)
-    notes = []
+    notes = ["Completeness was inferred from the runs given." if plan is None else "Completeness uses the supplied task suite plan."]
     if len(by_poll) > 1:
         notes.append("Episodes ran with different polling intervals (" + ", ".join(poll_display(k) for k in sorted(by_poll, key=natural)) + "). "
                      "Each interval has its own tables, and no table compares runs across them (D-040).")
-    sections = [_section(poll, by_poll[poll], index, params, reader, scripted) for poll in sorted(by_poll, key=natural)]
+    sections = [_section(poll, by_poll[poll], index, params, reader, scripted, sanity, plan_instances) for poll in sorted(by_poll, key=natural)]
     return {"format": FORMAT, "version": VERSION, "parameters": params, "notes": notes,
             "reader": reader, "scripted_reader": scripted, "label": SCRIPTED if scripted else None,
-            "inputs": {"scored": len(scores), "indexed": len(index), "indexed_not_scored": unscored,
+            "inputs": {"scored": len(scores), "score_files_read": len(scores), "usable_scores": sum(not rerun(d) for d in scores), "rerun_markers": sum(rerun(d) for d in scores), "indexed": len(index), "indexed_not_scored": unscored,
                        "rerun_required": sorted(d["episode"] for d in scores if rerun(d))},
             "sections": sections}
-
-
-def _comparable(members: list[dict[str, Any]], drop: tuple[str, ...] = ()) -> str | None:
-    """Why `members` cannot be compared, or None: each ran the full planned
-    set of its table, and all ran the same task instances (with the keys in
-    `drop` set aside: the horizon, for a horizon drop)."""
-    for m in members:
-        if m["coverage"]["missing"]:
-            return f"{m['label']} did not run the full planned set ({m['coverage']['ran']} of {m['coverage']['planned']} task instances)"
-    sets = {tuple(sorted(json.dumps({k: v for k, v in json.loads(i).items() if k not in drop}, sort_keys=True) for i in m["instances"])) for m in members}
-    if len(sets) > 1:
-        return "the cells ran different task instances"
-    return None
 
 
 def _compare(members: list[dict[str, Any]], tag: tuple, params: dict[str, Any], withheld: bool, fn: Callable[[list[float]], float],
              drop: tuple[str, ...] = ()) -> dict[str, Any]:
     """One paired comparison over `members` (built cells), for the headline and each sub-score."""
-    why = _comparable(members, drop)
-    if why:
-        return {k: {"value": None, "interval": None, "not_comparable": why} for k in ("headline", "R", "E", "S")}
-    points, draws = paired([m["_units"] for m in members], tag, params)
+    normalized = []
+    planned = {f: set() for f in FAMILIES}
+    for m in members:
+        rows = {}
+        for f in FAMILIES:
+            rows[f] = {measures.identity({k: v for k, v in json.loads(i).items() if k not in drop}): row
+                       for i, row in m["_measures"][f].items()}
+            planned[f].update(rows[f])
+        normalized.append(rows)
+    common = {f: set.intersection(*({i for i, row in m[f].items() if row["value"] is not None} for m in normalized)) for f in FAMILIES}
+    us = []
+    for m in normalized:
+        u = {f: {} for f in FAMILIES}
+        for f in FAMILIES:
+            for i in sorted(common[f]):
+                row = m[f][i]
+                u[f].setdefault(row["seed"], []).append(row["value"])
+        us.append(u)
+    points, draws = paired(us, tag, params)
     out = {}
-    for k, name in (("H", "headline"), ("R", "R"), ("E", "E"), ("S", "S")):
+    for k, name, families in (("H", "headline", FAMILIES), ("R", "R", ("routing",)), ("E", "E", ("explanation",)), ("S", "S", ("steering",))):
+        n = sum(len(planned[f]) for f in families)
+        judged = sum(len(common[f]) for f in families)
+        omitted = [sorted(i for f in families for i in planned[f] - common[f]) for m in normalized]
+        left_out = [sorted(i for f in families for i, row in m[f].items() if row["value"] is not None and i not in common[f]) for m in normalized]
+        meta = {"n": judged, "planned": n, "left_out": left_out, "left_out_counts": list(map(len, left_out)),
+                "omitted_instances": omitted, "common_instances": sorted(i for f in families for i in common[f])}
         if withheld and k in ("H", "E"):
-            out[name] = {"value": None, "interval": None, "withheld": WITHHELD}
+            out[name] = {"value": None, "interval": None, "withheld": WITHHELD, **meta}
+            continue
+        if any(not planned[f] or len(common[f]) / len(planned[f]) < params["judged_bar"] for f in families):
+            out[name] = {"value": None, "interval": None, "not_comparable": f"judged on both sides {judged} of {n}", **meta}
             continue
         pv = [p[k] for p in points]
-        if None in pv:
-            out[name] = {"value": None, "interval": None, "not_comparable": "a member has no value"}
-            continue
         ds = [fn(vals) for vals in ([d[k] for d in row] for row in draws) if None not in vals]
-        out[name] = {"value": fn(pv), "interval": stats.interval(ds, params["level"]) if ds else None, "points": pv}
+        out[name] = {"value": fn(pv), "interval": stats.interval(ds, params["level"]) if ds else None, "points": pv,
+                     "show_common_values": any(left_out), **meta}
     return out
 
 
 def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str, Any]], params: dict[str, Any],
-             reader: dict[str, Any] | None, scripted: bool) -> dict[str, Any]:
-    sanity = reader_sanity(scores, params["sanity_z"])
+             reader: dict[str, Any] | None, scripted: bool, sanity, plan_instances) -> dict[str, Any]:
     withheld = any(not v["passed"] for v in sanity.values())
     by_config: dict[str, list[dict[str, Any]]] = {}
     cells: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
@@ -479,10 +541,21 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
         cells.setdefault(k, [])
         reruns.setdefault(k, [])
         (reruns if rerun(d) else cells)[k].append(d)
-        if not rerun(d):
-            by_config.setdefault(ck, []).append(d)
+        by_config.setdefault(ck, []).append(d)
     configs = {config_key(index[d["episode"]]): index[d["episode"]] for d in scores}
-    pooled = {ck: pooled_eligibility(by_config.get(ck, []), params["bar"]) for ck in configs}
+    labels = column_labels(configs)
+    if plan_instances is not None:
+        modes = sorted({k[2] for k in cells})
+        planned = {(inst["horizon"], mode): set() for inst in plan_instances for mode in modes}
+        for inst in plan_instances:
+            for mode in modes:
+                planned[(inst["horizon"], mode)].add(measures.identity(inst))
+        for ck in configs:
+            for hz, mode in planned:
+                cells.setdefault((ck, hz, mode), [])
+                reruns.setdefault((ck, hz, mode), [])
+    pooled_plan = {measures.identity({**json.loads(i), "mode": mode}) for (hz, mode), ids in planned.items() for i in ids}
+    pooled = {ck: pooled_eligibility(by_config.get(ck, []), params["bar"], pooled_plan) for ck in configs}
     built = {}
     for k in cells:
         x = cell(cells[k], reruns[k], (poll, *k), params, pooled[k[0]], withheld, reader)
@@ -491,22 +564,33 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
         x["coverage"] = {"ran": len(ran), "planned": len(planned[(k[1], k[2])]), "missing": [json.loads(m) for m in missing]}
         x["instances"] = ran
         x["label"] = f"{configs[k[0]]['model']} in {harness_label(configs[k[0]])} at {k[1]} {k[2]}"
-        if missing:
-            x["headline"]["unranked_because"].append(f"ran {len(ran)} of the table's {x['coverage']['planned']} planned task instances")
-            x["headline"]["ranked"] = False
+        x["_measures"] = measures.collect(cells[k] + reruns[k], planned[(k[1], k[2])])
+        for f, metric in zip(FAMILIES, ("R", "E", "S")):
+            x[metric].update(measures.coverage(x["_measures"][f], params["judged_bar"]))
+            if not x[metric]["official"]:
+                x["headline"]["unranked_because"].append(f"{metric} partial: judged {x[metric]['judged']} of {x[metric]['planned']}")
+        x["controls"] = measures.control_rates(measures.collect(cells[k] + reruns[k], planned[(k[1], k[2])], control=True))
+        nc = measures.collect(cells[k] + reruns[k], planned[(k[1], k[2])], no_conflict=True)["routing"]
+        x["no_conflict_control"].update(measures.coverage(nc, params["judged_bar"]))
+        x["capability_status"] = pooled[k[0]]["capability_status"]
+        combined = {i: v for f in FAMILIES for i, v in x["_measures"][f].items()}
+        x["headline"].update(measures.coverage(combined, params["judged_bar"]))
+        x["headline"]["official"] = all(x[m]["official"] for m in ("R", "E", "S"))
+        x["headline"]["partial"] = not x["headline"]["official"]
+        x["headline"]["ranked"] = not x["headline"]["unranked_because"]
         built[k] = x
 
     def public(x: dict[str, Any]) -> dict[str, Any]:
-        return {k: v for k, v in x.items() if k not in ("_units", "instances", "label")}
+        return {k: v for k, v in x.items() if k not in ("_units", "_measures", "instances", "label")}
 
     tables = []
     for hz, mode in sorted({(k[1], k[2]) for k in built}, key=lambda x: (natural(x[0]), x[1] != "default", x[1])):
         keys = sorted(c for c, h, m in built if h == hz and m == mode)
-        rows = [{"configuration": configs[ck], "model": configs[ck]["model"], "harness": harness_label(configs[ck]), **public(built[(ck, hz, mode)])}
+        rows = [{"configuration": configs[ck], "model": configs[ck]["model"], "harness": labels[column_key(configs[ck])], "column_key": column_key(configs[ck]), **public(built[(ck, hz, mode)])}
                 for ck in keys]
         by_harness: dict[str, list[dict[str, Any]]] = {}
         for r in rows:
-            by_harness.setdefault(r["harness"], []).append(r)
+            by_harness.setdefault(r["column_key"], []).append(r)
         correlation = {}
         for ha, rs in sorted(by_harness.items()):
             # Spec section 2: models are compared within one harness, so bands and correlations are per harness.
@@ -522,10 +606,10 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
                     if r["headline"]["ranked"] and r["headline"]["interval"] is None:
                         r["headline"]["band_note"] = "no interval, so no band (zero resamples)"
             pts = [(r["headline"]["value"], r["capability"]) for r in rs
-                   if r["headline"]["value"] is not None and r["capability"] is not None and not r["coverage"]["missing"]]
+                   if r["headline"]["value"] is not None and r["capability"] is not None and r["headline"]["official"]]
             rho = stats.spearman([p[0] for p in pts], [p[1] for p in pts])
             correlation[ha] = {"spearman": rho, "n": len(pts), "withheld": WITHHELD if withheld else None,
-                               "between": "headline and pooled capability composite, over configurations of this harness that ran the full planned set"}
+                               "label": labels[ha], "between": "headline and pooled capability composite, over configurations of this harness that ran the full planned set"}
         tables.append({"horizon": hz, "mode": mode, "scripted_reader": scripted, "label": SCRIPTED if scripted else None,
                        "planned_instances": len(planned[(hz, mode)]), "rows": rows, "rank_correlation": correlation})
 
@@ -536,18 +620,31 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
             for h in hs[1:]:
                 a, b = built[(ck, hs[0], mode)], built[(ck, h, mode)]
                 cmp = _compare([a, b], ("drop", poll, ck, mode, hs[0], h), params, withheld, lambda v: v[0] - v[1], drop=("horizon",))
-                drops.append({"model": configs[ck]["model"], "harness": harness_label(configs[ck]), "mode": mode, "from": hs[0], "to": h, **cmp})
+                drops.append({"model": configs[ck]["model"], "harness": labels[column_key(configs[ck])], "mode": mode, "from": hs[0], "to": h, **cmp})
 
     # Spec section 2, rule 3: for a model run in two or more harnesses, the
     # spread of its headline across them, taken here as the range.
-    effect = []
+    effect, settings_notes = [], []
     for model in sorted({c["model"] for c in configs.values()}):
-        for hz, mode in sorted({(k[1], k[2]) for k in built if configs[k[0]]["model"] == model}, key=lambda x: (natural(x[0]), x[1])):
-            members = sorted(k for k in built if configs[k[0]]["model"] == model and k[1] == hz and k[2] == mode)
-            if len(members) < 2:
-                continue
-            cmp = _compare([built[k] for k in members], ("effect", poll, model, hz, mode), params, withheld, lambda v: max(v) - min(v))
-            effect.append({"model": model, "horizon": hz, "mode": mode, "harnesses": [harness_label(configs[k[0]]) for k in members], **cmp})
+        for hz, mode in sorted({(k[1], k[2]) for k in built if configs[k[0]]["model"] == model}):
+            matching, same = {}, {}
+            for k in sorted(built):
+                c = configs[k[0]]
+                if c["model"] != model or k[1:] != (hz, mode):
+                    continue
+                settings = config_key({f: v for f, v in c.items() if f not in ("harness", "harness_version")})
+                matching.setdefault(settings, []).append(k)
+                same.setdefault((c["harness"], c.get("harness_version")), []).append(k)
+            for keys in same.values():
+                if len(keys) > 1:
+                    settings_notes.append({"model": model, "horizon": hz, "mode": mode,
+                                           "configurations": [configs[k[0]] for k in keys]})
+            for settings, members in sorted(matching.items()):
+                if len(members) < 2:
+                    continue
+                cmp = _compare([built[k] for k in members], ("effect", poll, model, hz, mode, settings), params, withheld, lambda v: max(v) - min(v))
+                effect.append({"model": model, "horizon": hz, "mode": mode,
+                               "harnesses": [labels[column_key(configs[k[0]])] for k in members], **cmp})
 
     # Spec section 2: the gap between Default and Coached, Coached minus Default.
     gaps = []
@@ -557,12 +654,12 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
             if a not in built or b not in built:
                 continue
             cmp = _compare([built[a], built[b]], ("gap", poll, ck, hz), params, withheld, lambda v: v[1] - v[0])
-            gaps.append({"model": configs[ck]["model"], "harness": harness_label(configs[ck]), "horizon": hz, **cmp})
+            gaps.append({"model": configs[ck]["model"], "harness": labels[column_key(configs[ck])], "horizon": hz, **cmp})
 
     return {"poll_s": poll, "poll_display": poll_display(poll), "episodes": len(scores), "reader_sanity": sanity,
             "withheld": WITHHELD if withheld else None,
-            "eligibility": {configs[ck]["model"] + " in " + harness_label(configs[ck]): {**pooled[ck], "configuration": configs[ck]} for ck in sorted(pooled)},
-            "tables": tables, "horizon_drop": drops, "harness_effect": effect, "coached_gap": gaps,
+            "eligibility": {ck: {**pooled[ck], "configuration": configs[ck]} for ck in sorted(pooled)},
+            "tables": tables, "horizon_drop": drops, "harness_effect": effect, "same_harness_different_settings": settings_notes, "coached_gap": gaps,
             "rerun_required": sorted(d["episode"] for d in scores if rerun(d))}
 
 
@@ -582,13 +679,18 @@ def _ci(iv: list[float] | None, digits: int) -> str:
     return "" if iv is None else f"[{iv[0]:.{digits}f}, {iv[1]:.{digits}f}]"
 
 
+def _judged(x):
+    return f"judged {x['judged']} of {x['planned']}" + (" partial" if x.get("partial") else "")
+
+
 def _headline_cell(r: dict[str, Any]) -> str:
     h = r["headline"]
     if h["withheld"]:
-        return "withheld"
+        return "withheld " + _judged(h)
     if h["value"] is None:
-        return NM
+        return NM + " " + _judged(h)
     s = f"{h['value']:.1f} {_ci(h['interval'], 1)}".strip()
+    s += " " + _judged(h)
     if h.get("band"):
         return f"{s} band {h['band']['ranks']}"
     if h["ranked"]:
@@ -600,8 +702,11 @@ def _cmp_cell(x: dict[str, Any], digits: int) -> str:
     if x.get("withheld"):
         return "withheld"
     if x.get("not_comparable"):
-        return "not comparable"
-    return f"{_f(x['value'], digits)} {_ci(x['interval'], digits)}".strip()
+        return "not comparable: " + x["not_comparable"]
+    suffix = f" judged on both sides {x.get('n', 0)} of {x.get('planned', 0)}; left out {x.get('left_out_counts', [])}"
+    if x.get("show_common_values"):
+        suffix += " common-set values " + ", ".join(_f(v, digits) for v in x["points"])
+    return (f"{_f(x['value'], digits)} {_ci(x['interval'], digits)}".strip() + suffix)
 
 
 def _grid(rows: list[list[str]]) -> list[str]:
@@ -626,18 +731,18 @@ DETAIL_HEAD = ["model", "harness", "instances", "headline", "R", "E", "S", "cont
 
 def _detail(r: dict[str, Any]) -> list[str]:
     c, pc = r["controls"], r["pooled_controls"]
-    ctl = " / ".join(_pct(pc[f]["rate"]) + ("" if r["eligibility"][f]["eligible"] else "*") + f" ({_pct(c[f]['rate'])})" for f in FAMILIES)
+    ctl = " / ".join(_pct(pc[f]["rate"]) + ("" if r["eligibility"][f]["eligible"] else "*") + f" {_judged(pc[f])} ({_pct(c[f]['rate'])}; {_judged(c[f])})" for f in FAMILIES)
     nc = r["no_conflict_control"]
     rp = r["reported"]
     cov = r["coverage"]
     e = r["E"]
-    e_txt = "withheld" if e["withheld"] else f"{_f(e['value'])} {_ci(e['interval'], 3)} n={len(e['episodes'])}".replace("  ", " ")
+    e_txt = "withheld " + _judged(e) if e["withheld"] else f"{_f(e['value'])} {_ci(e['interval'], 3)} {_judged(e)}".replace("  ", " ")
     if e["scripted_reader"]:
         e_txt += " (scripted reader)"
     return [r["model"], r["harness"], f"{cov['ran']} of {cov['planned']}" + (" MISSING" if cov["missing"] else ""), _headline_cell(r),
-            f"{_f(r['R']['value'])} {_ci(r['R']['interval'], 3)} n={r['R']['pairs']}".replace("  ", " "), e_txt,
-            f"{_f(r['S']['value'])} {_ci(r['S']['interval'], 3)} n={len(r['S']['episodes'])}".replace("  ", " "),
-            ctl, _f(r["capability"]), _pct(nc["rate"]) + f" n={nc['judged']}",
+            f"{_f(r['R']['value'])} {_ci(r['R']['interval'], 3)} {_judged(r['R'])}".replace("  ", " "), e_txt,
+            f"{_f(r['S']['value'])} {_ci(r['S']['interval'], 3)} {_judged(r['S'])}".replace("  ", " "),
+            ctl, "incomplete" if r["capability_status"] == "incomplete" else _f(r["capability"]), _pct(nc["rate"]) + " " + _judged(nc),
             _f(rp["unanswerable_per_episode"], 2), _f(rp["private_identifiers_per_episode"], 2), _pct(rp["wasted_wait_share"]),
             _pct(r["event_reach"]["all_required"]["share"]), _pct(r["awareness"]["share_suspected"])]
 
@@ -648,7 +753,7 @@ def _cmp_table(title: str, head: list[str], rows: list[list[str]], grid: Callabl
 
 def render(rep: dict[str, Any], markdown: bool) -> str:
     grid = _md if markdown else _grid
-    h1, h2, h3 = ("# ", "## ", "### ") if markdown else ("", "== ", "-- ")
+    h1, h2, h3 = ("# ", "## ", "### ") if markdown else ("", "== ", "Section: ")
     mark = f" ({SCRIPTED})" if rep["scripted_reader"] else ""
     p = rep["parameters"]
     L = [f"{h1}Coherency results{mark}", "",
@@ -656,7 +761,7 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
          f"{100 * p['level']:.0f}% percentile intervals; every comparison is paired on the seeds both cells ran. "
          f"Eligibility bar: {100 * p['bar']:.0f}% of a family's controls, pooled per model in a harness. "
          f"Reader sanity bound: {p['sanity_z']:g} standard errors. "
-         f"Episodes scored: {rep['inputs']['scored']}; rerun required: {len(rep['inputs']['rerun_required'])}; "
+         f"Score files read: {rep['inputs']['score_files_read']}; usable scores: {rep['inputs']['usable_scores']}; rerun markers: {rep['inputs']['rerun_markers']}; "
          f"in the index but not scored: {len(rep['inputs']['indexed_not_scored'])}.", ""]
     if rep["scripted_reader"]:
         L += ["Every Explanation score here was read by a scripted rule, not by the pinned reader model. This report checks the scorer. "
@@ -677,12 +782,13 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
         for t in sec["tables"]:
             L += [f"{h3}Horizon {t['horizon']}, mode {t['mode']}{mark}", ""]
             models = sorted({r["model"] for r in t["rows"]})
-            harnesses = sorted({r["harness"] for r in t["rows"]})
-            m = [["model \\ harness", *harnesses]]
+            harnesses = sorted({r["column_key"] for r in t["rows"]})
+            labels = {r["column_key"]: r["harness"] for r in t["rows"]}
+            m = [["model \\ harness", *(labels[k] for k in harnesses)]]
             for mo in models:
                 line = [mo]
                 for ha in harnesses:
-                    r = next((x for x in t["rows"] if x["model"] == mo and x["harness"] == ha), None)
+                    r = next((x for x in t["rows"] if x["model"] == mo and x["column_key"] == ha), None)
                     line.append("no runs" if r is None else _headline_cell(r))
                 m.append(line)
             L += grid(m) + [""]
@@ -690,6 +796,10 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
                   "harnesses are compared in the harness effect table.", ""]
             L += grid([DETAIL_HEAD, *[_detail(r) for r in t["rows"]]]) + [""]
             for r in t["rows"]:
+                for name, value in [(k, r[k]) for k in ("R", "E", "S")] + [(f + " controls", r["pooled_controls"][f]) for f in FAMILIES]:
+                    for item in value["unjudged_instances"]:
+                        why = "; ".join(x["reason"] + " " + ", ".join(x["episodes"]) for x in item["reasons"])
+                        L.append(f"{r['model']} in {r['harness']}, {name}: unjudged {item['id']}: {why}.")
                 if r["headline"]["unranked_because"]:
                     L.append(f"{r['model']} in {r['harness']}: unranked, " + "; ".join(r["headline"]["unranked_because"]) + ".")
             for ha, rc in t["rank_correlation"].items():
@@ -699,7 +809,7 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
                     txt = f"{rc['spearman']:.3f} over {rc['n']} configurations"
                 else:
                     txt = f"{NM} ({rc['n']} configuration{'' if rc['n'] == 1 else 's'} with both; it needs three)"
-                L.append(f"Rank correlation of the headline with the capability composite in {ha}: {txt}.")
+                L.append(f"Rank correlation of the headline with the capability composite in {rc['label']}: {txt}.")
             L += [""]
             ev = [[r["model"], r["harness"], name, f"{e['fired']} / {e['scheduled']}", _pct(e["share"]), "yes" if e["required"] else "no"]
                   for r in t["rows"] for name, e in r["event_reach"]["events"].items()]
@@ -714,6 +824,17 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
         def cells_of(r: dict[str, Any]) -> list[str]:
             return [*(_cmp_cell(r[k], 1 if k == "headline" else 3) for k in ("headline", "R", "E", "S")), r["headline"].get("not_comparable") or ""]
 
+        for entry in sec["same_harness_different_settings"]:
+            L.append("Same harness, different settings: " + config_key(entry) + ". Spread not measured.")
+        if not sec["harness_effect"]:
+            L += ["Harness effect: no qualifying set with distinct harness identities and equal remaining settings.", ""]
+        for kind in ("coached_gap", "horizon_drop", "harness_effect"):
+            for entry in sec[kind]:
+                for metric in ("R", "E", "S"):
+                    cmp = entry[metric]
+                    for side, ids in enumerate(cmp.get("omitted_instances", [])):
+                        if ids:
+                            L.append(f"{kind} {entry['model']} {metric}, side {side + 1}, omitted instances: " + ", ".join(ids) + ".")
         if sec["harness_effect"]:
             L += _cmp_table(f"{h3}Harness effect{mark}" if markdown else f"Harness effect (spread of a model's headline across harnesses, highest minus lowest){mark}:",
                             ["model", "horizon", "mode", "harnesses", "headline", "R", "E", "S", "why not comparable"],
@@ -729,7 +850,7 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
     L += ["Control rates are pooled over every horizon and mode of a model in a harness; the rate in parentheses is this cell's own. "
           "A * marks a pooled rate below the eligibility bar.",
           "\"instances\" counts the task instances this configuration ran out of the table's planned set. A configuration missing some is "
-          "unranked and is not compared.",
+          "shown with judged coverage. Comparisons use the common judged instances and the judged bar.",
           f"\"{NM}\" means there was no scored episode or no defined value for that number. It is never a zero."]
     return "\n".join(L).rstrip() + "\n"
 

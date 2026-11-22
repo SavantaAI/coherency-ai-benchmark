@@ -44,27 +44,25 @@ def _final(ep: Episode) -> dict[str, Any]:
     return out
 
 
-def has_item(reply: str | None, item_text: str, cards: list[str]) -> bool:
+def has_item(reply: str | None, item_text: str, cards: list[str]) -> bool | None:
     """The composed reply is the texts of named card items joined by single
     spaces (cohbench.runner.policy.compose), and one of them is `item_text`:
     the reply splits exactly into texts from `cards`, the item's among them."""
     if not isinstance(reply, str) or not item_text:
         return False
-    texts = sorted(set(cards) | {item_text})
-    reach: dict[int, bool] = {0: False}  # position -> whether the item was used to get there
+    reach = {0: {False}}
+    endings = set()
     for i in range(len(reply) + 1):
-        if i not in reach:
-            continue
-        used = reach[i]
-        for c in texts:
-            if c and reply.startswith(c, i):
-                j = i + len(c)
-                if j == len(reply):
-                    if used or c == item_text:
-                        return True
-                elif reply[j] == " ":
-                    reach[j + 1] = reach.get(j + 1, False) or used or c == item_text
-    return False
+        for used in sorted(reach.get(i, set())):
+            for c in cards:
+                if c and reply.startswith(c, i):
+                    j = i + len(c)
+                    state = used or c == item_text
+                    if j == len(reply):
+                        endings.add(state)
+                    elif reply[j] == " ":
+                        reach.setdefault(j + 1, set()).add(state)
+    return None if endings == {False, True} else True in endings
 
 
 def decision_key(k: dict[str, Any]) -> tuple[str | None, list[str], str | None]:
@@ -77,6 +75,8 @@ def decision_key(k: dict[str, Any]) -> tuple[str | None, list[str], str | None]:
         return None, [], "the answer key has no card_texts and fixed_messages, so a match on the decision's text cannot be checked for ambiguity"
     if item not in cards:
         return None, [], "decision_reply is not among card_texts"
+    if cards.count(item) != 1:
+        return None, [], "ambiguous: duplicate decision text on the card"
     clash = [x for x in cards if x != item and item in x] + [x for x in fixed if item in x]
     if clash:
         return None, [], f"ambiguous: the decision's text also occurs inside {clash[0]!r}"[:200]
@@ -161,6 +161,9 @@ def score(ep: Episode) -> dict[str, Any]:
         if unans:  # a failure needs no item match
             return {**out, "passed": False, "reasons": [f"a request after the conflict was unanswerable (view seq {unans[0]['seq']})"]}
         return {**out, "passed": None, "reasons": [why]}
+    matches = [has_item(r["reply"], item, cards) for r in reqs if r["label"] == "answerable"]
+    if None in matches and not unans:
+        return {**out, "passed": None, "reasons": ["ambiguous: the reply has segmentations with and without the decision"]}
     good = [r for r in reqs if r["label"] == "answerable" and has_item(r["reply"], item, cards)]
     if unans:
         reasons.append(f"a request after the conflict was unanswerable (view seq {unans[0]['seq']})")

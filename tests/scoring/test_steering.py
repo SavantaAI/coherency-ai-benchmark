@@ -134,7 +134,7 @@ def test_a_third_equivalent_attempt_is_a_loop(tmp_path):
     for t in (3000, 3100, 3200):
         b.attempt("measure", "ignored", "f1", t=t)
     r = steering.score(b.load(tmp_path))
-    assert r["l"] == {"value": 0.0, "loop_attempts": [{"seq": 3, "name": "measure", "nth": 3}]}
+    assert r["l"] == {"value": 0.0, "loop_attempts": [{"seq": 3, "name": "measure", "nth": 3}], "unplaced_attempts": 0}
     assert parts(r) == (1.0, 1.0, 0.0, 2 / 3)
 
 
@@ -160,15 +160,53 @@ def test_a_tree_holding_unknown_content_has_no_state(tmp_path):
     assert steering.score(ep)["l"]["value"] == 1.0
 
 
-def test_an_attempt_inside_a_groups_span_takes_its_final_tree(tmp_path):
+def test_an_attempt_inside_a_groups_span_has_no_state(tmp_path):
     b = sb()
     b.batch(2000, 2000, {"pkg/core.py": "half"}, m(120))
     b.batch(2300, 2300, {"pkg/core.py": "v1"}, m(90))
     b.attempt("measure", None, "f", t=2100)            # between the two writes of one group
-    b.attempt("measure", None, "f", t=5000)
+    b.attempt("measure", None, "f", t=2300)            # at the group's last write: placed
+    b.attempt("measure", None, "f", t=1500)            # before the group: the baseline tree
     ep = b.load(tmp_path)
     st = steering.attempt_states(ep, steering.groups(ep))
-    assert st[1] == st[2] is not None
+    assert st[1] is None and st[2] is not None and st[3] is not None and st[2] != st[3]
+    assert steering.score(ep)["l"]["unplaced_attempts"] == 1
+
+
+def test_no_attempt_gets_a_tree_from_after_its_start(tmp_path):
+    b = sb()
+    b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
+    b.attempt("measure", None, "f", t=1999)
+    b.attempt("measure", None, "f", t=500)
+    ep = b.load(tmp_path)
+    st = steering.attempt_states(ep, steering.groups(ep))
+    assert st[1] == st[2]          # both the baseline tree
+
+
+def test_t_first_is_the_first_write_and_the_records_are_the_fallback(tmp_path):
+    for with_field in (True, False):
+        b = sb(t_first=with_field)
+        b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
+        b.batch(2700, 3100, {"pkg/core.py": "v2"}, m(80))   # first write 2700 by the field; the record says 2700 too
+        d = b.write(tmp_path / str(with_field))
+        if with_field:
+            # The field wins over the change records' time.
+            import json
+            lines = [json.loads(x) for x in (d / "changes.jsonl").read_text().splitlines()]
+            for x in lines:
+                if x.get("type") == "batch" and x["batch"] == 2:
+                    x["t_first"] = 2500
+            (d / "changes.jsonl").write_text("".join(json.dumps(x) + "\n" for x in lines))
+        from cohbench.scoring import load
+        ep = load(d, validate=False)
+        assert steering.first_writes(ep)[2] == (2500 if with_field else 2700)
+
+
+def test_a_null_t_first_falls_back(tmp_path):
+    b = sb()
+    b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
+    b.records[-2]["t_first"] = None
+    assert steering.first_writes(b.load(tmp_path))[1] == 2000
 
 
 def _temp_file(tmp_path, split: bool) -> dict:
@@ -306,3 +344,67 @@ def test_a_missing_mark_is_settled_before_the_no_move_default(tmp_path):
         b.attempt("measure", None, "f0", t=t)
     r = steering.score(b.load(tmp_path))
     assert (r["g"]["value"], r["c"]["value"], r["l"]["value"], r["score"]) == (1.0, None, 0.0, 0.5)
+
+
+def _reviewer_b1(tmp_path, rendering: str) -> dict:
+    """The second review's case: an edit at 2000 ms (100 to 90), a temporary
+    file from 2950 to 3030 ms, an edit at 3900 ms (to 110), three attempts
+    with one fingerprint, two before the later edit and one after."""
+    b = sb()
+    b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
+    if rendering == "split":
+        b.batch(2950, 2950, {"pkg/tmp.txt": "x"}, m(90))
+        b.batch(3030, 3030, {"pkg/tmp.txt": None}, m(90))
+    elif rendering == "merged":
+        b.batch(2950, 3030, {}, m(90))
+    b.batch(3900, 3900, {"pkg/core.py": "v2"}, m(110))
+    b.attempt("measure", None, "f" * 64, t=2400)
+    b.attempt("measure", None, "f" * 64, t=2800)
+    b.attempt("measure", None, "f" * 64, t=4500)
+    b.t = 5000
+    from cohbench.scoring.load import load
+    from cohbench.trajectory.observations import tree_digest
+    ep = b.load(tmp_path / rendering)
+    for attempt in b.attempts:
+        attempt["batch_start"] = max(r["batch"] for r in ep.batch_records() if r["t"] <= attempt["t"])
+        attempt["batch_end"] = max(r["batch"] for r in ep.batch_records() if r["t"] <= attempt["t_end"])
+        attempt["state"] = tree_digest(ep.changes, attempt["batch_start"])
+        attempt["state_unknown"] = False
+    return steering.score(load(b.write(tmp_path / rendering), validate=True))
+
+
+def test_the_reviewers_burst_case_gives_one_score_in_every_rendering(tmp_path):
+    rs = {k: _reviewer_b1(tmp_path, k) for k in ("split", "merged", "omitted")}
+    for r in rs.values():
+        assert parts(r) == (0.5, 1.0, 1.0, 5 / 6)
+    assert rs["split"]["transient_batches"] == [2, 3] and rs["merged"]["transient_batches"] == [2] and rs["omitted"]["transient_batches"] == []
+
+
+def test_a_batch_that_changed_nothing_is_transient_whatever_its_span(tmp_path):
+    b = sb()
+    b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
+    b.batch(2500, 4500, {}, m(90))
+    b.batch(5000, 5000, {"pkg/core.py": "v2"}, m(80))
+    r = steering.score(b.load(tmp_path))
+    assert r["transient_batches"] == [2] and len(r["moves"]) == 2
+
+
+def test_a_long_run_that_nets_to_nothing_is_kept(tmp_path):
+    b = sb()
+    b.batch(2000, 2000, {"pkg/tmp.txt": "x"}, m(100))
+    b.batch(3500, 3500, {"pkg/tmp.txt": None}, m(100))
+    assert steering.score(b.load(tmp_path))["transient_batches"] == []
+
+
+def test_unknown_content_on_either_side_makes_a_run_not_transient(tmp_path):
+    # A file of unknown content that comes and goes: the trees on both sides are known and equal.
+    b = sb()
+    b.batch(2000, 2000, {"pkg/blob.bin": "?"}, m(100), unknown=("pkg/blob.bin",))
+    b.batch(2100, 2100, {"pkg/blob.bin": None}, m(100))
+    assert steering.score(b.load(tmp_path / "a"))["transient_batches"] == [1, 2]
+    # A file of unknown content that stays: a later burst that nets to nothing is not transient.
+    b = sb()
+    b.batch(2000, 2000, {"pkg/blob.bin": "?"}, m(100), unknown=("pkg/blob.bin",))
+    b.batch(5000, 5000, {"pkg/tmp.txt": "x"}, m(100))
+    b.batch(5080, 5080, {"pkg/tmp.txt": None}, m(100))
+    assert steering.score(b.load(tmp_path / "b"))["transient_batches"] == []

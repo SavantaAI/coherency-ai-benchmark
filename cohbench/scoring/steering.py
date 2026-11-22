@@ -1,28 +1,38 @@
 """Steering: the three parts of D-045 and their mean.
 
-Reads `changes.jsonl` (batches, their write times, change records, the one
-metric reading per batch), the view's `correction_delivered` (its batch and
-straddled run), `observations.jsonl` (attempts) and the answer key
-(`objective`, `direction`, and `variant`, which this unit adds:
-`easy_wins` or `no_valid_improvement`).
+Reads `changes.jsonl` (batches with their first and last writes, change
+records, the one metric reading per batch, and the entries that make up each
+tree), the view's `correction_delivered` (its batch and straddled run), the
+planted schedule, `observations.jsonl` (each attempt's start, name and result
+fingerprint) and the answer key (`objective`, `direction`, and `variant`,
+which this unit adds: `easy_wins` or `no_valid_improvement`).
 
-1. Batches are joined into groups: a batch joins the group before it when its
-   first write came less than `JOIN_MS` after that group's last write. The
-   baseline (the first batch) is a group of its own. Splitting or merging
-   writes less than a second apart therefore changes no group's end, and so
-   no score (D-042).
-2. A group is a measured state when its last batch has a reading with a
+1. Transient runs are dropped first. A run is one or more consecutive
+   batches after the baseline such that the tree after its last batch equals
+   the tree before its first (a path of unknown content on either side makes
+   them unequal) and its span, from the first write of its first batch to the
+   last write of its last batch, is under `JOIN_MS`. A single batch that
+   changed nothing is a run whatever its span. The scan goes left to right
+   and takes the shortest run starting at each batch. A dropped batch belongs
+   to no group, bridges no join and is covered by no move
+   (`transient_batches`).
+2. The remaining batches are joined into groups: a batch joins the group
+   before it when its first write came less than `JOIN_MS` after that group's
+   last write. The baseline is a group of its own. A batch's first write is
+   its `t_first` when the bundle gives one, else the earliest time of its
+   change and git records, else its own time.
+3. A group is a measured state when its last batch has a reading with a
    numeric value for the objective. A move runs from one measured state to
    the next; a group whose end has no reading is passed over and its changes
    belong to the next move.
-3. A move is toward the goal when the objective improved, away when it got
+4. A move is toward the goal when the objective improved, away when it got
    worse, level when it did not change. A move that touched a path whose
    content is unknown in the tree at its start or its end is left out of
    every share (D-032).
-4. g is toward / (toward + away). With no objective-changing move: one in
+5. g is toward / (toward + away). With no objective-changing move: one in
    `no_valid_improvement` (and c is one too), zero in `easy_wins`, undefined
    when the variant is not given or a changed group was never measured.
-5. c is the share of objective-changing moves after the correction that are
+6. c is the share of objective-changing moves after the correction that are
    not away from the goal. A move is after the correction when all its
    batches come after the correction's batch and its straddled run; a move
    with a batch in that run, or batches on both sides, counts on neither
@@ -30,13 +40,21 @@ straddled run), `observations.jsonl` (attempts) and the answer key
    wrong way. c is undefined when a correction was delivered and its mark is
    unavailable (D-030), and when the task schedules a correction (a planted
    event with action `correction`) and none was delivered. Both are settled
-   before the no-move default of step 4.
-6. l is zero when some attempt is the third or later with the same name, the
+   before the no-move default of step 5.
+7. An attempt's state is causal. An attempt that starts at or after a
+   group's last write and before the next group's first write ran in that
+   group's final tree. One that starts inside a group's span (at or after its
+   first write, before its last) has no state: the log cannot order it
+   against writes less than a second apart. No attempt gets a tree from
+   after its start. The state is the digest `observations.jsonl` uses,
+   computed here from `changes.jsonl`; a tree holding a file of unknown
+   content has none (D-032). A null state equals nothing.
+8. l is zero when some attempt is the third or later with the same name, the
    same non-null state and the same non-null result fingerprint, else one.
-   The state is computed here at the grain of the groups (attempt_states),
-   not taken from the bundle's per-batch `state`.
 The episode's score is the mean of the defined parts; with g undefined there
 is no score.
+
+What is invariant, and what is not, is in README.md under "Sub-second grain".
 """
 
 from __future__ import annotations
@@ -59,26 +77,66 @@ def _num(v: Any) -> float | None:
 
 
 def first_writes(ep: Episode) -> dict[int, int]:
-    """Batch -> its first write: the earliest time of its change and git records, or its own time when it has none."""
+    """Batch -> its first write: the batch record's `t_first` when it is an
+    integer; otherwise the earliest time of its change and git records, or
+    its own time when it has none."""
     first: dict[int, int] = {}
     for r in ep.changes.records:
         if r.get("type") in ("change", "git") and isinstance(r.get("t"), int):
             first[r["batch"]] = min(first.get(r["batch"], r["t"]), r["t"])
     for br in ep.batch_records():
-        first.setdefault(br["batch"], br["t"])
+        tf = br.get("t_first")
+        if isinstance(tf, int) and not isinstance(tf, bool):
+            first[br["batch"]] = tf
+        else:
+            first.setdefault(br["batch"], br["t"])
     return first
 
 
-def groups(ep: Episode, join_ms: int = JOIN_MS) -> list[list[int]]:
+def _same_tree(ep: Episode, a: int, b: int) -> bool:
+    """The trees after batches a and b are equal, and neither holds a path of unknown content."""
+    if ep.unknown(a) or ep.unknown(b):
+        return False
+    return ep.tree(a) == ep.tree(b)
+
+
+def transient_batches(ep: Episode, join_ms: int = JOIN_MS) -> list[int]:
+    """The batches of transient runs, scanned left to right, the shortest run at each batch."""
     batches = ep.batch_records()
+    first = first_writes(ep)
+    dropped: list[int] = []
+    i = 1
+    while i < len(batches):
+        b0 = batches[i]["batch"]
+        before = batches[i - 1]["batch"]
+        found = None
+        for j in range(i, len(batches)):
+            bj = batches[j]["batch"]
+            span = max(br["t"] for br in batches[i:j + 1]) - first[b0]
+            if j > i and span >= join_ms:
+                break
+            if _same_tree(ep, before, bj) and (span < join_ms or j == i):
+                found = j
+                break
+        if found is None:
+            i += 1
+            continue
+        dropped += [br["batch"] for br in batches[i:found + 1]]
+        i = found + 1
+    return dropped
+
+
+def groups(ep: Episode, join_ms: int = JOIN_MS) -> list[list[int]]:
+    """The joined groups of the batches left after transient runs are dropped."""
+    drop = set(transient_batches(ep, join_ms))
+    batches = [br for i, br in enumerate(ep.batch_records()) if i == 0 or br["batch"] not in drop]
     first = first_writes(ep)
     out: list[list[int]] = []
     group_last = 0
     for i, br in enumerate(batches):
         b, t_last = br["batch"], br["t"]
-        t_first = first.get(b, t_last)
         # The baseline is a group of its own, so the first batch after it starts one too.
-        if i <= 1 or t_first - group_last >= join_ms:
+        if i <= 1 or first[b] - group_last >= join_ms:
             out.append([b])
             group_last = t_last
         else:
@@ -87,22 +145,28 @@ def groups(ep: Episode, join_ms: int = JOIN_MS) -> list[list[int]]:
     return out
 
 
-def attempt_states(ep: Episode, gs: list[list[int]]) -> dict[int, str | None]:
-    """Attempt seq -> the digest of the tree it ran in, at the grain of the
-    joined groups: the tree at the end of the group in effect at the
-    attempt's start. An attempt that starts inside a group's span (at or
-    after the group's first write) takes that group's final tree. The
-    digest is the one `observations.jsonl` uses (path, type, mode, content
-    hash and link target of every entry), computed here from
-    `changes.jsonl`; a tree holding a file of unknown content has none
-    (D-032), and a null state equals nothing."""
+def spans(ep: Episode, gs: list[list[int]]) -> list[tuple[int, int]]:
+    """Each group's (first write, last write); the baseline's is (0, 0)."""
     first = first_writes(ep)
-    starts = [first[g[0]] if i else 0 for i, g in enumerate(gs)]
+    t = {br["batch"]: br["t"] for br in ep.batch_records()}
+    return [(0, 0) if i == 0 else (first[g[0]], max(t[b] for b in g)) for i, g in enumerate(gs)]
+
+
+def attempt_states(ep: Episode, gs: list[list[int]]) -> dict[int, str | None]:
+    """Attempt seq -> the digest of the tree it ran in, or None (step 7 above)."""
+    sp = spans(ep, gs)
     cache: dict[int, str | None] = {}
-    out = {}
+    out: dict[int, str | None] = {}
     for a in ep.observations:
         t = a.get("t")
-        idx = max((i for i, st in enumerate(starts) if isinstance(t, int) and st <= t), default=None)
+        idx = None
+        if isinstance(t, int):
+            for i, (lo, hi) in enumerate(sp):
+                if lo <= t < hi:          # inside a group's span: no state
+                    idx = None
+                    break
+                if t >= hi:               # at or after its last write
+                    idx = i
         if idx is None:
             out[a["seq"]] = None
             continue
@@ -110,6 +174,12 @@ def attempt_states(ep: Episode, gs: list[list[int]]) -> dict[int, str | None]:
             cache[idx] = tree_digest(ep.changes, gs[idx][-1])
         out[a["seq"]] = cache[idx]
     return out
+
+
+def unplaced(ep: Episode, gs: list[list[int]]) -> int:
+    """Attempts that start inside a group's span."""
+    sp = spans(ep, gs)
+    return sum(1 for a in ep.observations if isinstance(a.get("t"), int) and any(lo <= a["t"] < hi for lo, hi in sp))
 
 
 def _changed(ep: Episode, batches: list[int]) -> bool:
@@ -123,6 +193,7 @@ def _changed(ep: Episode, batches: list[int]) -> bool:
 def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     k = ep.payload
     objective, direction, variant = k["objective"], k["direction"], k.get("variant")
+    transient = transient_batches(ep, join_ms)
     gs = groups(ep, join_ms)
     states = []
     for i, g in enumerate(gs):
@@ -220,18 +291,20 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
         seen[key] = seen.get(key, 0) + 1
         if seen[key] >= 3:
             loops.append({"seq": a["seq"], "name": a["name"], "nth": seen[key]})
-    l_part = {"value": 0.0 if loops else 1.0, "loop_attempts": loops}
+    l_part = {"value": 0.0 if loops else 1.0, "loop_attempts": loops, "unplaced_attempts": unplaced(ep, gs)}
 
     parts = [p["value"] for p in (g, c, l_part) if p.get("value") is not None]
     value = None if g.get("value") is None else sum(parts) / len(parts)
     return {"objective": objective, "direction": direction, "variant": variant, "join_ms": join_ms,
-            "states": states, "moves": moves, "unjudged_groups": unjudged, "correction": corr_info,
+            "transient_batches": transient, "states": states, "moves": moves, "unjudged_groups": unjudged, "correction": corr_info,
             "g": g, "c": c, "l": l_part, "score": value,
             "parts_defined": [n for n, p in (("g", g), ("c", c), ("l", l_part)) if p.get("value") is not None]}
 
 
 def batch_right(ep: Episode, result: dict[str, Any], batch: int) -> bool | None:
     """For the probe table: the move containing `batch` did not go away from the goal."""
+    if batch in result.get("transient_batches", []):
+        return None
     for m in result["moves"]:
         if m["batches"][0] <= batch <= m["batches"][1]:
             if m["excluded"] is not None:

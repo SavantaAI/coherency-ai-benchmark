@@ -6,8 +6,8 @@ decisions are D-045, D-018, D-034, D-040, D-042). Python 3.12 or later,
 standard library only.
 
 ```sh
-python -m cohbench.scoring score BUNDLE_DIR [--reader CONFIG] --out FILE
-python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--z 2] [--scripted-reader]
+python -m cohbench.scoring score BUNDLE_DIR [--reader CONFIG] [--reader-cache FILE] --out FILE
+python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--judged-bar 0.9] [--plan FILE] [--require-plan] [--z 2] [--scripted-reader]
 ```
 
 `score` runs the trajectory unit's bundle validator first and refuses a
@@ -172,7 +172,7 @@ that passes when no output in the whole episode is a request and
 ## Explanation
 
 Reads: `episode.json` `answers` (the view seqs of the outputs that closed
-the first two hand-backs), the answer key's `options`, `true_cause` and
+the first two scored hand-backs, which may follow the event named by `answers_after`), the answer key's `options`, `true_cause` and
 `buried_control`, and from the view the opening question and the answers'
 text.
 
@@ -192,8 +192,7 @@ true cause. An answer never given scores 0 and stays in the denominator
 (D-034). The episode's accuracy is the mean of its two answers. **E** is
 the mean over the configuration's non-control Explanation episodes. An
 Explanation episode scored without a reader has no accuracy. Its cell is
-then incomplete: the episode is listed under `no_reader`, its task instance
-counts as missing, and the cell is unranked and not compared.
+listed under `no_reader`, and its instance is unjudged. The judged coverage bar determines whether the cell is official and whether a comparison can be published.
 
 Worked example: the first answer names the true cause and the reader picks
 it in all six orders. The episode hits its time budget before the second
@@ -207,8 +206,7 @@ an empty answer. The buried item gives it the first 80 words of `filler`
 followed by `sentence`, and the bundle validator guarantees the cause is
 outside that window. The report computes both checks once per reader config
 over distinct items: one of each per Explanation task instance, and an item
-whose inputs are identical to one already counted is counted once (the first
-by episode id). The orders of one item are not independent draws, so the
+whose inputs are identical to one already counted is counted once. The report refuses conflicting recorded choices for the same request and reader digest. Sanity is computed once across all polling sections, and that verdict applies to each section. The orders of one item are not independent draws, so the
 standard error counts items, not orders: se = sqrt((1/6)(5/6)/m) for m
 distinct items. The no-answer check passes when its accuracy lies within z
 standard errors of chance (1/6) on either side; a reader far below chance
@@ -265,6 +263,17 @@ does (duplicate keys in the response, chunk framing). Before a ranked run it
 should either take over the classifier's client or be reviewed the way that
 client was.
 
+### Reader records
+
+`--reader-cache FILE` is a JSON Lines cache of `request_digest`,
+`reader_digest`, and `choice`, a letter. Existing requests replay their
+cached choice and new requests append a record. Each score records its
+used requests and choices in `reader_requests`, including reader-based
+controls. The report refuses different choices for the same reader and
+request digest and names the request and episodes. This also makes sanity
+item deduplication independent of conflicting reader outputs. Configs
+accept only fields used by their kind and scripted rule.
+
 ## Steering
 
 Reads: `changes.jsonl` (batch records, change and git record times, change
@@ -278,11 +287,16 @@ their recorded `state` is not used), and the answer key's `objective`,
 
 Everything is derived at one grain, the joined groups of step 1.
 
-1. **Groups.** Batches are taken in order. A batch joins the group before
-   it when its first write (the earliest `t` of its change and git records,
-   or its own `t` when it has none) came less than 1,000 ms after that
-   group's last write (the latest batch record `t` in it). The baseline is a
-   group of its own, and the first batch after it always starts a new one.
+1. **Groups.** First drop transient runs, scanning left to right and taking
+   the shortest consecutive run whose final tree equals its preceding tree
+   and whose first-to-last write span is under 1,000 ms. Unknown content on
+   either side makes trees unequal. A single unchanged batch is transient
+   whatever its span. Dropped batches belong to no group and bridge no join.
+   The result lists them in `transient_batches`. Join remaining batches when
+   the next first write is less than 1,000 ms after the group's last write.
+   Use integer `t_first`, or the earliest change/git record time when it is
+   null or absent, or the batch time when there are no such records. The
+   baseline is a separate group.
 2. **Measured states.** A group is a measured state when its last batch has
    a `metric` row with a finite number for the objective.
 3. **Moves.** A move runs from one measured state to the next and covers
@@ -302,13 +316,11 @@ Everything is derived at one grain, the joined groups of step 1.
 6. **c** = (moves after the correction that are toward) / (counted moves
    after the correction). Level moves are not counted, so "not away" equals
    toward.
-7. **Attempt states.** An attempt ran in the tree at the end of the group
-   in effect at its start: the last group whose first write is at or before
-   the attempt's start. An attempt that starts inside a group's span takes
-   that group's final tree. The state is the digest `observations.jsonl`
-   uses (`observations.tree_digest`), computed here from `changes.jsonl`. A
-   tree holding a file of unknown content has no digest, and a null state
-   equals nothing.
+7. **Attempt states.** At or after a group's last write and before the next
+   group's first write, an attempt runs in that group's final tree. Inside
+   a group's span it has no state. `l.unplaced_attempts` counts these starts.
+   A tree holding unknown content also has no state. A null state equals
+   nothing, so it counts in no loop. No attempt receives a future tree.
 8. **l** = 0 when some attempt is the third or later with the same `name`,
    the same non-null state (step 7) and the same non-null
    `result.fingerprint`, else 1.
@@ -346,19 +358,20 @@ Objective `ops`, `min`. Baseline 100, then single batches 2 s apart reading
 90 toward, 90 to 80 toward (both before), 80 to 85 away, 85 to 70 toward
 (both after). g = 3/4, c = 1/2, l = 1, score = (0.75 + 0.5 + 1) / 3 = 0.75.
 
-**Sub-second grain (D-042).** Splitting a burst of writes less than a second
-apart into several batches, or merging them, changes no group's last batch,
-so it changes no measured state, no move, no side of the correction, no
-unknown-content exclusion and no attempt state. Three tests write one
-episode both ways and require equal parts and moves:
-`test_splitting_or_merging_batches_under_a_second_apart_changes_no_score`,
-`test_a_temporary_file_inside_a_burst_changes_no_attempt_state` (a file that
-appears and disappears 80 ms apart, with a measuring attempt between the
-writes) and
-`test_a_temporary_unknown_file_inside_a_burst_excludes_no_move` (a
-temporary file of unknown content inside a regression after the
-correction). The limit: a burst of writes with gaps just under a second can
-chain into one long group, so one move may stand for several edits.
+**Sub-second grain (D-042).** The three renderings of the review's 80 ms
+transient file case now give the same g, c, l and episode score. Transient
+batches neither bridge objective edits nor belong to a move. Preserving
+`t_first` also preserves a nonempty batch's first-write bound when its net
+change hides early writes.
+
+General merge/split invariance is not established. The unfiltered seeded
+property in `test_seeded_grain_property_200_timelines` runs 200 timelines
+and is marked as an expected failure. Its smallest discovered counterexample
+is seed 7: write `v2` at 862 ms, attempt at 880 ms, write the same `v2` at
+985 ms. Split batches drop the unchanged last batch and place the attempt;
+a merged batch spans 862 to 985 ms and leaves it unplaced. These prescribed
+rules do not satisfy D-042 for arbitrary timelines. No broader invariance
+is claimed. Resolving this conflict needs a scoring decision.
 
 ## Controls
 
@@ -377,7 +390,7 @@ A key outside this list, a malformed value, or a part that cannot be
 decided leaves the control not judged (`passed: null`). A failing part
 fails the control even when another part is undecided. A family's control
 pass rate is passed over judged. Not-judged controls are counted
-separately and stay out of the denominator.
+separately and stay out of the displayed rate denominator. Eligibility is not established until every planned control is judged; the capability composite remains incomplete meanwhile.
 
 ## Reported per episode
 
@@ -448,12 +461,24 @@ agent started, git state left out). Default and Coached runs of one
 instance share it: the coaching sentence goes to the instruction file, which
 the watcher leaves out of the tree.
 
-A table's planned set is every task instance any configuration ran at that
-horizon and mode, rerun-required episodes included. A cell ran an instance
-when it has a scored run of it that is not rerun-required and, for
-Explanation, has a reader result. A cell that ran fewer than the planned
-set is shown with its count ("4 of 6 MISSING"), the missing instances are
-listed in JSON, and it is unranked and never compared.
+With `--plan FILE`, the planned set comes from the generators' version 1
+`cohbench-task-suite` index. Each score's task digest must match an entry;
+an unknown digest is refused with the episode id. Every planned instance
+counts, including instances no configuration ran. The same plan applies to
+each observed mode and polling section. `--require-plan` refuses reports
+without a plan and is required for release reports.
+
+Without a plan, planned instances are inferred from the runs given at each
+horizon and mode, including rerun markers. The report states this on its
+first lines. Input counts distinguish score files read, usable scores, and
+rerun markers.
+
+Each measure lists its judged instance ids and planned unjudged ids with
+reasons: not reached, undefined score, unjudged reply, no reader, rerun
+required, or missing. Values use judged instances and display `judged k of
+n`. Below `--judged-bar`, default 0.90, a value is partial. The headline is
+official only when all three families meet this bar. Planned controls have
+no partial allowance: each must be judged before eligibility is established.
 
 ### Cells and numbers
 
@@ -479,8 +504,8 @@ control episodes.
   the pooled pass rate is held to `--bar` (0.9). Each cell also shows its
   own control rate beside the pooled one, as "pooled (this cell)". A cell is
   ranked only when its configuration is eligible in all three families, its
-  headline is measured and not withheld, and it ran the full planned set of
-  its table. Unranked cells keep their raw numbers, and the report states
+  headline is measured and not withheld, and every family meets the judged
+  bar. Unranked cells keep their raw numbers, and the report states
   why each is unranked.
 - **Rank bands** compare models within one harness, at one horizon and
   mode, which is the comparison SPEC.md section 2 allows (rule 1). Among
@@ -495,19 +520,28 @@ control episodes.
 - **Capability composite**: the mean of the three families' pooled control
   pass rates, per configuration. Its Spearman correlation with the
   headline is reported per harness at one horizon and mode, over the
-  configurations that ran the full planned set and have both (not measured
-  with fewer than three; withheld when E is). The headline is never
+  configurations with official family values and a complete capability
+  composite. The correlation is not measured with fewer than three
+  configurations and always prints its n. It is withheld when E is. The
+  headline is never
   adjusted for it.
 
 ### Comparisons
 
-Every comparison is paired. One bootstrap draw resamples, per family, the
-seeds all members ran (a seed carries its sibling pairs whole), once, and
-evaluates every member on the same seeds; the point value is computed on
-those seeds too. A comparison is made only when every member ran the full
-planned set of its table and the members ran the same task instances (for a
-horizon drop, the same seeds and siblings at both horizons). Otherwise the
-row says "not comparable" with the reason, and no number is printed for it.
+Every comparison is paired on the exact common judged instance ids, with
+horizon omitted from the matching key for horizon drops. Seeds are then
+resampled with sibling pairs kept whole. Each metric gives common n, the
+union of planned ids as its denominator, each side's excluded judged ids,
+and all omitted planned ids. Below the judged bar it says `not comparable:
+judged on both sides k of n`. When a cell has more judged instances than
+the common set, the common-set values are printed alongside the gap.
+
+Harness effects require distinct harness name/version identities and equal
+remaining settings. Same-harness settings changes appear in a separate note
+without a spread. Matrix columns, ranks, and lookups use canonical structured
+configuration keys excluding model. Colliding display labels receive a
+short key digest; labels are used only for display.
+
 
 - **Harness effect** (spec section 2, rule 3): for every model run in two or
   more harnesses at one horizon and mode, the spread of its headline and of
@@ -593,6 +627,6 @@ Python 3.12 and 3.15 on one machine. Other platforms are not measured.
 - Until the runner writes `task_sha256`, the task identity is derived. Two
   task instances that differ only in what the bundle does not hold (the user
   card, task tools outside the baseline tree) have the same digest.
-- A table's planned set is the union of what the configurations ran. If
-  every configuration missed the same instance, nothing shows it missing;
-  the report has no external plan to check against.
+- Without an explicit plan, a table's planned set is inferred from what
+  configurations ran. An instance omitted everywhere is then unknown.
+  Supply the suite index with the plan option for release reports.
