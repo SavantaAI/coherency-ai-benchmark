@@ -1,0 +1,1 @@
+"""Offline suite self check."""
