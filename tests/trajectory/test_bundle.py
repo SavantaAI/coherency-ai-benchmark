@@ -1599,6 +1599,16 @@ def _edit_lines(path, fn):
     path.write_text("".join(json.dumps(r) + "\n" for r in fn(rows)))
 
 
+def test_a_bundle_from_before_batches_carried_their_first_write_reads_back(pair, tmp_path):
+    """`t_first` is on every batch record the maker writes; a stored bundle
+    from before the field reads back and validates without it."""
+    b = make(pair[0], tmp_path, "a")
+    assert all("t_first" in r for r in b.changes.records if r["type"] == "batch")
+    strip = lambda d: _edit_lines(d / "changes.jsonl", lambda rs: [{k: v for k, v in r.items() if k != "t_first"} for r in rs])  # noqa: E731
+    rep = _readback(b, tmp_path, "old", strip)
+    assert rep["ok"], rep["errors"]
+
+
 @pytest.mark.parametrize("case, where, message", [
     ("null replies_to", "scorer.jsonl", "replies_to is a list"),
     ("charged wait without an end", "scorer.jsonl", "a charged wait has an end"),
@@ -1699,7 +1709,7 @@ def test_the_readback_validator_enforces_what_the_maker_guarantees(pair, tmp_pat
             def late(rs):
                 out = list(rs)
                 last = max(r["batch"] for r in rs if r.get("type") == "batch")
-                out.append({"type": "batch", "batch": last + 1, "t": 50_000, "baseline": False, "resync": False, "incomplete": False, "settled": True})
+                out.append({"type": "batch", "batch": last + 1, "t": 50_000, "t_first": None, "baseline": False, "resync": False, "incomplete": False, "settled": True})
                 out.append({"type": "no_metric", "batch": last + 1, "reason": "none_taken"})
                 out[0] = {**out[0], "records": out[0]["records"] + 2, "batches": out[0]["batches"] + 1, "no_metric": out[0]["no_metric"] + 1}
                 return out

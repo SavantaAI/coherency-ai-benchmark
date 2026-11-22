@@ -911,3 +911,62 @@ def test_a_sweep_only_batch_row_and_its_marks_share_one_timestamp():
     bounds = {0: (t("00.1"), t("00.1")), 1: (t("00.9"), t("01.1")), 2: (t("01.300"), t("01.600"))}
     assert answer_for(t("01.601"), bounds) == (2, None, None)
     assert (m["straddled"], m["straddled_last"]) == (None, None) and log.batch_at_us(1_601_000) == 2
+
+
+def test_every_batch_carries_its_first_write():
+    """D-042's input: `t_first` on every batch record, the batch's first
+    write, so batches can be joined by their writes whatever the watcher
+    netted away. A file written at 2.95 s and again at 3.4 s is one change
+    record and the batch's first write is still 2.95 s; a file created and
+    deleted in one batch leaves no change record and its batch keeps its
+    first write. The baseline, a sweep-only batch and an `unknown` one have
+    none. `t` is the last write (the commit with no write times), so
+    `[t_first, t]` is the write span."""
+    recs = [f(1, "00.0", "created", "a", 0), b(2, "00.1", 0, write_times="none"),
+            f(3, "03.4", "modified", "a", 1, changed=["content"]),
+            b(4, "03.6", 1, write_times="known", first_write_after=W("02.9"), first_write=W("02.95"), last_write=W("03.4")),
+            b(5, "05.2", 2, write_times="known", first_write_after=W("04.8"), first_write=W("04.9"), last_write=W("05.0")),
+            f(6, "07.0", "created", "c", 3), b(7, "07.1", 3, write_times="none", first_write=None, last_write=None),
+            f(8, "08.0", "created", "d", 4), b(9, "08.5", 4, write_times="unknown", first_write=None, last_write=None)]
+    log = changelog.build(recs, START)
+    assert changelog.validate(log) == []
+    spans = {r["batch"]: (r["t_first"], r["t"]) for r in log.records if r["type"] == "batch"}
+    assert spans == {0: (None, 100), 1: (2950, 3400), 2: (4900, 5000), 3: (None, 7100), 4: (None, 8500)}
+    assert [r["t"] for r in log.records if r["type"] == "change" and r["batch"] == 1] == [2950]
+    # Older output without `write_times`: the first write it records, if any.
+    old = [f(1, "00.0", "created", "a", 0), b(2, "00.1", 0),
+           f(3, "01.5", "created", "b", 1), b(4, "02.0", 1, first_write=W("01.4"), last_write=W("01.6")),
+           f(5, "03.0", "modified", "a", 2, changed=["content"]), b(6, "03.5", 2, first_write=None, last_write=None)]
+    assert [(r["t_first"], r["t"]) for r in changelog.build(old, START).records if r["type"] == "batch"] == [(None, 100), (1400, 1600), (None, 3500)]
+
+
+def test_the_first_write_is_checked_and_optional_on_readback():
+    """`t_first` is null or an integer from the previous batch's `t` to its
+    own; the baseline's is null. A change log from before the field reads
+    back without it on every batch, never on some."""
+    recs = [f(1, "00.0", "created", "a", 0), b(2, "00.1", 0, write_times="none"),
+            f(3, "01.0", "created", "b", 1), b(4, "01.2", 1, write_times="known", first_write_after=W("00.8"), first_write=W("01.0"), last_write=W("01.1")),
+            f(5, "02.0", "created", "c", 2), b(6, "02.2", 2, write_times="known", first_write_after=W("01.9"), first_write=W("02.0"), last_write=W("02.1"))]
+    log = changelog.build(recs, START)
+    assert changelog.validate(log) == []
+
+    def edited(fn):
+        return changelog.validate(changelog.ChangeLog(log.header, [fn(r) if r["type"] == "batch" else r for r in log.records]))
+
+    assert edited(lambda r: {k: v for k, v in r.items() if k != "t_first"}) == []
+    assert any("without t_first" in e for e in edited(lambda r: {k: v for k, v in r.items() if k != "t_first"} if r["batch"] == 1 else r))
+    assert any("t_first is null or an integer" in e for e in edited(lambda r: dict(r, t_first=r["t"] + 1) if r["batch"] == 2 else r))
+    assert any("t_first is null or an integer" in e for e in edited(lambda r: dict(r, t_first=1000) if r["batch"] == 2 else r))
+    assert any("t_first is null or an integer" in e for e in edited(lambda r: dict(r, t_first="1000") if r["batch"] == 1 else r))
+    assert any("the baseline has no first write" in e for e in edited(lambda r: dict(r, t_first=0) if r["batch"] == 0 else r))
+
+
+def test_a_first_write_inside_an_excluded_interval_counts_at_its_start():
+    """The episode clock stands still inside an excluded interval: a batch
+    whose netted-away first write fell inside one has `t_first` at the
+    interval's start (2,000 ms on the episode clock, as its end is)."""
+    recs = [f(1, "00.0", "created", "a", 0), b(2, "00.1", 0, write_times="none"),
+            b(3, "05.8", 1, write_times="known", first_write_after=W("03.9"), first_write=W("04.0"), last_write=W("05.5"))]
+    log = changelog.build(recs, START, excluded=[{"t": 2000, "t_end": 5000, "reason": "handoff"}])
+    assert changelog.validate(log) == []
+    assert [(r["t_first"], r["t"]) for r in log.records if r["type"] == "batch"] == [(None, 100), (2000, 2500)]

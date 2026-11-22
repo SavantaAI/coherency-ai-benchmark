@@ -90,7 +90,11 @@ HEADER_KEYS = ("type", "format", "version", "records", "changes", "batches", "ma
 
 RECORD_FIELDS: dict[str, tuple[str, ...]] = {
     "change": ("type", "seq", "batch", "t", "kind", "path", "from", "sha256", "content", "file_type", "mode", "target", "content_unknown"),
-    "batch": ("type", "batch", "t", "baseline", "resync", "incomplete", "settled"),
+    # `t`: when the batch's tree is in effect (its last write; its commit for
+    # a batch with no write times). `t_first`: its first write, the instant
+    # its changes exist from (null for the baseline and for a batch with no
+    # write times); `[t_first, t]` is the batch's write span.
+    "batch": ("type", "batch", "t", "t_first", "baseline", "resync", "incomplete", "settled"),
     # `straddled`: the batch that began at or before the mark's instant and
     # ended after it (D-037), whose changes count on neither side of it; null
     # when none did.
@@ -398,6 +402,9 @@ def build(events: Iterable[dict[str, Any]], start_utc: str | datetime, metrics: 
     # Without those fields, the record time.
     begins: dict[int, int] = {}
     close: dict[int, int] = {}
+    # The batches whose first write is known (the watcher's `first_write`,
+    # or `first_event` in older output): `t_first` on the batch record.
+    first_known: set[int] = set()
     # The lower end of the span in which an instant is straddled by a batch
     # (the watcher's rule, its round 6): the recorded `first_write_after`,
     # whatever the batch's `write_times`. Without it: `first_write`; for a
@@ -418,6 +425,8 @@ def build(events: Iterable[dict[str, Any]], start_utc: str | datetime, metrics: 
         fe = _us(r[fk], start, f"watcher record {n}") if isinstance(r.get(fk), str) else None
         le = _us(r[lk], start, f"watcher record {n}") if isinstance(r.get(lk), str) else None
         wt = r.get("write_times")
+        if fe is not None and wt in (None, "known"):
+            first_known.add(r["batch"])
         if fk == "first_write" and fe is None and le is None:
             fe = le = us_of[n]  # a sweep-only (`none`) or `unknown` batch: its changes and its tree at the commit
         b = r["batch"]
@@ -551,7 +560,7 @@ def build(events: Iterable[dict[str, Any]], start_utc: str | datetime, metrics: 
             # trusted), or directories without a watch.
             # `settled`: the watcher's last validation round came back clean;
             # an unsettled boundary may be one the tree never had.
-            recs.append({"type": "batch", "_ob": batch, "_us": close[batch], "resync": bool(r.get("resync")),
+            recs.append({"type": "batch", "_ob": batch, "_us": close[batch], "_first": begins[batch] if batch in first_known else None, "resync": bool(r.get("resync")),
                          "incomplete": bool(r.get("recovered")) or bool(r.get("unwatched")), "settled": r.get("settled") is not False})
 
     readings: list[dict[str, Any]] = []
@@ -704,6 +713,7 @@ def build(events: Iterable[dict[str, Any]], start_utc: str | datetime, metrics: 
     written, wall = [], []
     cut_marks: set[int] = set()
     seq = 0
+    prev_batch_t: int | None = None
     for x in final:
         y = {k: v for k, v in x.items() if not k.startswith("_")}
         if x["type"] not in ("metric", "no_metric"):
@@ -713,6 +723,18 @@ def build(events: Iterable[dict[str, Any]], start_utc: str | datetime, metrics: 
             y["seq"] = seq
         if x["type"] == "batch":
             y["baseline"] = x["_ob"] == 0
+            # The first write, on the same rule as the change records' times
+            # (never earlier than the previous batch's commit), and never
+            # earlier than the previous batch's `t` nor later than its own: an
+            # instant inside an excluded interval counts as its start, where
+            # the episode clock stands still.
+            f = x["_first"]
+            if y["baseline"] or f is None:
+                y["t_first"] = None
+            else:
+                gap = clock.inside(f)
+                y["t_first"] = min(y["t"], max(clock(gap.us if gap else f, "a batch's first write"), prev_batch_t or 0))
+            prev_batch_t = y["t"]
         if x["type"] == "mark":
             y["mark"] = mark_ids[x["_label"]]
             # The straddling run, in retained numbering; a batch of it outside
@@ -855,14 +877,22 @@ def validate(log: ChangeLog) -> list[str]:
     closed_at: dict[int, int] = {}
     seqs, marks_seen = [], []
     readings: dict[int, int] = {}  # batch -> metric and no_metric rows
+    no_first: list[int] = []
+    prev_t: int | None = None  # the previous batch's `t`
     for n, r in enumerate(log.records):
         where = f"change record {n}"
         typ = r.get("type") if isinstance(r, dict) else None
         if not isinstance(typ, str) or typ not in RECORD_FIELDS:
             errors.append(f"{where}: unknown type {typ!r:.30}")
             continue
-        if set(r) != set(RECORD_FIELDS[typ]):
-            errors.append(f"{where}: fields {sorted(set(r) ^ set(RECORD_FIELDS[typ]))} differ from the schema")
+        want = set(RECORD_FIELDS[typ])
+        if typ == "batch" and "t_first" not in r:
+            # A bundle made before batches carried their first write reads back
+            # without it; every batch of one log is the same either way.
+            want.discard("t_first")
+            no_first.append(n)
+        if set(r) != want:
+            errors.append(f"{where}: fields {sorted(set(r) ^ want)} differ from the schema")
             continue
         if not _is_int(r["batch"]):
             errors.append(f"{where}: time and batch are integers")
@@ -888,6 +918,12 @@ def validate(log: ChangeLog) -> list[str]:
                 errors.append(f"{where}: batch {r['batch']} does not follow {batches[-1]}")
             if r["baseline"] is not (r["batch"] == 0) or not isinstance(r["settled"], bool):
                 errors.append(f"{where}: only batch 0 is the baseline; settled is a boolean")
+            tf = r.get("t_first")
+            if "t_first" in r and not (tf is None or (_is_int(tf) and (prev_t or 0) <= tf <= r["t"])):
+                errors.append(f"{where}: t_first is null or an integer from the previous batch's t to this batch's t")
+            if r["baseline"] is True and tf is not None:
+                errors.append(f"{where}: the baseline has no first write (t_first null)")
+            prev_t = r["t"]
             batches.append(r["batch"])
             closed_at[r["batch"]] = n
         if typ in ("change", "git") and r["batch"] in closed_at:
@@ -914,6 +950,8 @@ def validate(log: ChangeLog) -> list[str]:
                 errors.append(f"{where}: a mark is a neutral number, not {r['mark']!r:.40}")
             else:
                 marks_seen.append(r["mark"])
+    if no_first and len(no_first) != len(batches):
+        errors.append(f"change records {no_first[:5]}: batch records without t_first in a log whose other batches carry it")
     if seqs != list(range(1, len(seqs) + 1)):
         errors.append("changes are numbered 1, 2, ... in order")
     if marks_seen != list(range(1, len(marks_seen) + 1)):
