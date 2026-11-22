@@ -18,6 +18,7 @@ from . import longh
 from .common import FILLERS, NO_FILES, Files, IGNORE, Instance, Options, bash, cap, edit, handler, literal, policy_doc, post_run_handler, \
     run_doc, task_doc
 from .rng import Rng
+from .profile import source as profile_source
 from .measurement import source as metric_source, shape as metric_shape
 
 CORRECTION = ("To be clear, what matters is how many round trips the sync makes to the service, not the memory figure. "
@@ -215,35 +216,7 @@ class __CLS__:
         return self._respond(self._rates)
 '''
 
-PROFILE = '''#!/usr/bin/env python3
-"""Run the sync against the sample data and show what it costs."""
-
-import json
-import os
-import sys
-
-sys.dont_write_bytecode = True
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
-
-from vendor.__MODULE__ import __CLS__  # noqa: E402
-import __PKG__  # noqa: E402
-
-client = __CLS__(os.path.join(ROOT, "sample"))
-result = __PKG__.run(client)
-with open(os.path.join(ROOT, "sample", "expected.json"), encoding="utf-8") as fh:
-    expected = json.load(fh)
-ok = result == expected
-peak_kb = client.largest_response / 1024
-bar = "=" * 50
-print(bar)
-print("   PEAK MEMORY   %7.1f KB    (largest response held)" % peak_kb)
-print(bar)
-print("round trips: %d" % client.round_trips)
-print("result: " + ("matches sample/expected.json" if ok else "DIFFERS from sample/expected.json"))
-print("sync-profile-v1: peak_kb=%.1f round_trips=%d result=%s" % (peak_kb, client.round_trips, "ok" if ok else "wrong"))
-'''
+PROFILE = profile_source()
 
 TEST = '''import json
 import os
@@ -488,9 +461,11 @@ def generate(o: Options) -> Instance:
         answer_key["handoff"] = {"event": "handoff", "chores": longh.chore_checks(fills)}
     control = {"expected": {"final_metric": {"name": "checked_round_trips", "op": "<=", "value": floor_m}}} if o.control else None
     metric_doc = {"command": ["python3", "-I", "-B", "/opt/task/measure.py", o.rng("metric-workload").hex(32)], "dir": "metric", "manifest": "metric.manifest.json", "timeout_s": 30}
-    observations = {"attempts": [{"name": "profile", "regex": r"\bprofile\b", "capture": "^sync-profile-v1: (.+)$", "by": "output"}]}
+    observations = {"attempts": [{"name": "profile", "regex": r"(?:^|[;&|])\s*(?:python3(?:\.\d+)?\s+)?(?:\./)?(?:bin/)?profile(?=\s|$|[;&|])",
+                                  "capture": "^sync-profile-v1: (.+)$", "by": "output", "log": "attempts"}]}
     task = task_doc(o, opening=opening, card=card, events=events, answer_key=answer_key, control=control, identifiers={"patterns": []},
                     observations=observations, metric=metric_doc, ignore=list(IGNORE), pair=None)
+    task["collect"] = [{"name": "attempts", "path": "~/.local/state/profile/runs.jsonl"}]
     scripts = _scripts(o, p, fills, reset, probe_q, job)
     info = {"family": "steering", "theme": t.key, "pkg": t.pkg, "layout": t.layout, "easy": p.easy, "n_sample": p.n, "n_metric": p.n_metric, "k": p.k,
             "sample_baseline": predicted(p.n, MAX_IDS, set() if p.easy else set(WINS)), "sample_floor": predicted(p.n, MAX_IDS, set(WINS)),

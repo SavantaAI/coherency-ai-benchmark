@@ -58,6 +58,8 @@ class MiniPi:
         self.ep = Episode()
         self.ep.load(load_script(script))
         self.work = work
+        self.home = work.parent / "home"
+        self.home.mkdir(exist_ok=True)
         self.model = model
         self.last_id: str | None = None
         self.calls: list[dict[str, Any]] = []  # tool calls not yet answered
@@ -111,7 +113,7 @@ class MiniPi:
 
     def _run(self, name: str, inp: dict[str, Any]) -> tuple[str, bool]:
         if name == "bash":
-            env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
+            env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "HOME": str(self.home)}
             r = subprocess.run(["bash", "-c", inp["command"].replace(WORKSPACE, str(self.work))], cwd=self.work, capture_output=True,
                                text=True, env=env, timeout=120)
             out = (r.stdout + r.stderr).replace(str(self.work), WORKSPACE).rstrip("\n")
@@ -138,12 +140,17 @@ class MiniPi:
 def run_metric(command: list[str], metric_dir: Path, tree: dict[str, str]) -> dict[str, Any]:
     """The task's metric command on a copy of `tree`, as the watcher runs it."""
     with tempfile.TemporaryDirectory() as tmp:
-        root = Path(tmp)
+        root = Path(tmp) / "work"
+        root.mkdir()
+        home, scratch = Path(tmp) / "home", Path(tmp) / "temp"
+        home.mkdir()
+        scratch.mkdir()
         for p, t in tree.items():
             (root / p).parent.mkdir(parents=True, exist_ok=True)
             (root / p).write_text(t, encoding="utf-8")
         argv = [sys.executable if command[0] == "python3" else command[0]] + [a.replace("/opt/task", str(metric_dir)) for a in command[1:]]
-        r = subprocess.run(argv, cwd=root, capture_output=True, text=True, timeout=60)
+        r = subprocess.run(argv, cwd=root, capture_output=True, text=True, timeout=60,
+                           env={**os.environ, "HOME": str(home), "TMPDIR": str(scratch), "PYTHONDONTWRITEBYTECODE": "1"})
         assert r.returncode == 0, r.stderr
         return json.loads(r.stdout)
 

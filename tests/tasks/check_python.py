@@ -31,7 +31,10 @@ RECORDED = Path(__file__).with_name("workspace_outputs.json")
 
 
 def _run(argv: list[str], cwd: Path) -> subprocess.CompletedProcess:
-    return subprocess.run(argv, cwd=cwd, capture_output=True, text=True, env={"PYTHONDONTWRITEBYTECODE": "1", "PATH": "/usr/bin:/bin"})
+    home = cwd.parent / (cwd.name + "-home")
+    home.mkdir(exist_ok=True)
+    return subprocess.run(argv, cwd=cwd, capture_output=True, text=True,
+                          env={"PYTHONDONTWRITEBYTECODE": "1", "PATH": "/usr/bin:/bin", "HOME": str(home)})
 
 
 def instance_outputs(inst: Path, python: str, work: Path) -> list[str]:

@@ -249,7 +249,7 @@ def test_s03_seed_is_only_in_host_command_and_not_package_inputs(tmp_path):
     assert seeds[0] != seeds[1]
 
 
-def test_s04_profile_leaves_every_workspace_byte_and_path_unchanged(tmp_path):
+def test_s04_profile_leaves_every_workspace_byte_and_path_unchanged(tmp_path, tool_home):
     for seed in (1, 2, 3, 8205):
         inst = generate(Options("steering", seed, "h20"))
         root = tmp_path / str(seed)
@@ -257,10 +257,14 @@ def test_s04_profile_leaves_every_workspace_byte_and_path_unchanged(tmp_path):
         def snapshot():
             return {p.relative_to(root).as_posix(): (p.stat().st_mode, p.read_bytes() if p.is_file() else None) for p in root.rglob("*")}
         before = snapshot()
+        log = tool_home / ".local/state/profile/runs.jsonl"
+        previous = log.read_bytes() if log.exists() else b""
         env = {k: v for k, v in os.environ.items() if k != "PYTHONDONTWRITEBYTECODE"}
         result = subprocess.run([sys.executable, "bin/profile"], cwd=root, capture_output=True, text=True, env=env)
         assert result.returncode == 0, result.stderr
         assert snapshot() == before
+        assert log.read_bytes().startswith(previous)
+        assert len(log.read_bytes()[len(previous):].splitlines()) == 1
 
 
 def test_v02_named_profile_with_hidden_summary_is_still_an_attempt(tmp_path):

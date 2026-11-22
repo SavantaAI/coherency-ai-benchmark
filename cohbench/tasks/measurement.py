@@ -7,6 +7,7 @@ import os
 import socket
 import sys
 
+sys.pycache_prefix = os.devnull
 sock = socket.socket(fileno=int(sys.argv[1]))
 wire = sock.makefile("rwb")
 
@@ -36,6 +37,7 @@ class Client:
 
 try:
     name = sys.argv[2]
+    sys.path.insert(0, os.getcwd())
     root = os.path.join(os.getcwd(), name)
     spec = importlib.util.spec_from_file_location(name, os.path.join(root, "__init__.py"), submodule_search_locations=[root])
     mod = importlib.util.module_from_spec(spec)

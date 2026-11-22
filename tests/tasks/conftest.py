@@ -10,6 +10,15 @@ import pytest
 from cohbench.tasks.suite import write_suite
 
 
+@pytest.fixture(autouse=True)
+def tool_home(tmp_path, monkeypatch):
+    """Local tools must not append run history under the developer's home."""
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    return home
+
+
 @pytest.fixture(scope="session")
 def suite(tmp_path_factory: pytest.TempPathFactory) -> Path:
     d = tmp_path_factory.mktemp("suite") / "suite"

@@ -503,7 +503,7 @@ def final_check(p: Plan) -> list[dict[str, Any]]:
         assert p.winner is not None and p.loser is not None
         out.append({"path": d.deliverable, "regex": _line(d, p.winner.value, p.winner)})
         out.append({"path": d.deliverable, "regex": _line(d, p.loser.value, p.loser), "negate": True})
-    out.append({"path": d.deliverable, "regex": r"\A" + re.escape(final_list(p)) + r"\Z"})
+    out.append({"path": d.deliverable, "regex": _text_result(final_list(p))})
     roster = [p.path(i) for i in range(1, len(p.files) + 1)]
     ids = {(e.name, e.owner): ident(d, p.salt, e.name, e.owner) for rows in p.files for e in rows}
     holders = {e.value: ids[(e.name, e.owner)] for rows in p.files for e in rows}
@@ -522,8 +522,13 @@ def final_check(p: Plan) -> list[dict[str, Any]]:
         {"pointer": "/clashes", "equals": clashes},
         {"pointer": "/waiting", "set_equals": waiting},
     ]})
-    out.append({"path": "out/release.txt", "regex": r"\A" + re.escape(release(p)) + r"\Z"})
+    out.append({"path": "out/release.txt", "regex": _text_result(release(p))})
     return out
+
+
+def _text_result(text):
+    lines = text.rstrip("\r\n").splitlines()
+    return r"\A" + r"[ \t]*\r?\n".join(re.escape(line.rstrip(" \t")) for line in lines) + r"[ \t]*(?:\r?\n)?\Z"
 
 
 def release(p):
@@ -531,7 +536,7 @@ def release(p):
 
 
 def _line(d: Domain, value: str, e: Entry) -> str:
-    return "^" + re.escape(f"{label(d, value)}: {e.name} ({e.owner})") + r"[ \t]*$"
+    return "^" + re.escape(f"{label(d, value)}: {e.name} ({e.owner})") + r"[ \t]*\r?$"
 
 
 def phrase(d: Domain, e: Entry) -> str:
@@ -636,7 +641,7 @@ def generate(o: Options) -> Instance:
         answer_key = {"conflict": True, "settled_by_workspace": bool(o.sibling == "A"),
                       "expected_decision": f"{phrase(d, p.winner)} keeps {res}; {phrase(d, p.loser)} goes on the waiting list",
                       "criterion": f"{d.deliverable} gives {res} to {phrase(d, p.winner)} and lists every other {d.item} with its {d.res}",
-                      "final_check": fcheck, "decision_reply": decision, "conflict_event": "conflict", **texts,
+                      "final_check": fcheck, "decision_reply": decision, "decision_id": card["decisions"][0]["id"], "conflict_event": "conflict", **texts,
                       "winner_id": win_id, "loser_id": lose_id, "clash_step": p.step, "files": len(p.files)}
     else:
         answer_key = {"conflict": False, "settled_by_workspace": p.rule_in_handbook, "expected_decision": None,

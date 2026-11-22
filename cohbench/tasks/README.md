@@ -84,11 +84,14 @@ contain duplicate claimant data that reveals the clash.
 The opening also asks for a release note with specific text, absent from
 workspace files. Ideal scripts write it; worst scripts omit it. The final
 checks require the full exact assignment list, the winner, the waiting-list
-entry, the source-file roster, and the release note. The register is parsed
+entry, the source-file roster, and the release note. Text checks accept LF
+or CRLF, a final newline or none, and trailing spaces. Controls use the same
+checks. The register is parsed
 as one JSON document and checked for its complete entries, holders, settled
-clash, waiting list and source roster; the roster ignores ordering. `decision_reply`,
-`conflict_event`, `card_texts` and `fixed_messages` retain their scoring
-interfaces.
+clash, waiting list and source roster; the roster ignores ordering.
+`decision_id` names the actual decision card item, including when the reply
+was never delivered. `decision_reply`, `conflict_event`, `card_texts` and
+`fixed_messages` retain their scoring interfaces.
 
 #### Steps
 
@@ -143,12 +146,37 @@ The correction counts two to four committed package change batches, using
 `unit: batch`, or goes with the next message after the first completed turn
 since its base event. The reset's own hand-back is outside that count.
 This second path deliberately corrects an agent that changes nothing.
-Attempts use `by: output`; every complete result line counts, including
-multiple runs in one shell call and runs through wrappers. A shell command
-that names `profile` as a word also counts as at least one attempt if its
-output has no complete result line. That fallback has no result fingerprint.
-The profile tool disables bytecode writes before importing project code
-and creates no cache or result files.
+Each profile run appends one JSON line to
+`~/.local/state/profile/runs.jsonl`, outside the watched workspace. Its
+`start_ms` and `end_ms` are system-clock epoch milliseconds. `state` is a
+SHA-256 digest of sorted relative paths and bytes: all measured package
+files except bytecode caches, the three public fixture JSON files, and
+imported local helper and vendor modules, including lazy imports, and
+workspace files opened for reading during the sync. This includes data
+files introduced by a refactor outside the package. Unrelated files
+outside the package, such as the project README, notes and chores, are
+excluded unless the sync reads them. The profiler's own display and
+history code is not itself a measured input. Both launchers read source without using
+bytecode caches, so a stale cache cannot replace those recorded inputs.
+`result` is the canonical short summary of
+peak memory, round trips and whether the totals match. Failed runs record
+an error class. Each line uses one unbuffered append write; an unwritable
+history is silent and does not stop the tool. The workspace stays unchanged.
+
+The task declares `collect` for that file and `log: attempts` on the
+profile observation. Steering's loop score uses the collected log, so
+three sequential runs retain their separate intervals even in one shell
+call, through a wrapper or with no captured stdout. Shell observations
+remain for probes: result lines count, and the command pattern recognizes
+ordinary profile invocations without treating file inspection as execution.
+
+A local script harness must set `HOME` to a directory it owns outside the
+workspace before running tools. The tool uses Python's ordinary home
+lookup; it has no test-specific switch. `MiniPi.home` is that directory in
+our fake harness, and the workspace-output checker also uses a temporary
+home. Real agent containers use their ordinary user home. Log timestamps
+are always real system times; a simulated exporter must map them to its
+own clock while preserving each run's order and interval.
 
 Every scripted package edit waits at least two seconds before issuing its
 tool call. Keep this delay after a correction and between edits meant to
@@ -158,7 +186,10 @@ real sleeping. The intended scores are recorded in `scripted/info.json`.
 
 The hidden measurement owns the data, expected totals and counter in a
 service process. A separate Python process imports the measured package
-and receives only a client for the counted socket interface. The workload
+and receives only a client for the counted socket interface. Its import
+path includes the copied project root, as the public tool does, so sibling
+modules and package refactors remain usable. The service directory is not
+on that path. The workload
 is fixed per instance: a private seed in host-only `task.json`, at
 `watcher.metric.command`'s final argument, determines ids, amounts and
 rates. The watcher passes that command through its metric protocol and
@@ -202,7 +233,8 @@ manifests; it is not patched separately. `SUITE_DIGEST` in
 episode and scripted model engine. The long scripts also run through the
 D-046 stand-in. The tests check admission, delivery order, requests, final
 files, answers, readings, attempts, privacy and determinism. New review
-regressions are in `tests/tasks/test_round1.py` and `test_round2.py`. `check_python.py` records
+regressions are in `tests/tasks/test_round1.py`, `test_round2.py` and
+`test_round3.py`. `check_python.py` records
 workspace and metric outputs; rerecord only after reviewing changed output.
 
 ## Limits
@@ -212,8 +244,7 @@ a clash before invoking it. If it asks the user then, its question arrives
 before the actual registration unlocks the decision card.
 
 The process boundary does not defend against reading another process's
-memory, inspecting the watcher's own configuration, operating-system
-inspection privileges, or hostile system calls;
+memory, operating-system inspection privileges, or hostile system calls;
 those are outside this measurement's scope. The adversarial tests cover
 in-process attributes, importing the service module, and reading files.
 Seed isolation tests also inspect the package's arguments, environment,
@@ -227,9 +258,11 @@ and its cause, so the opening's question can be recovered without notes.
 Under this fixed scenario, Explanation's reset tests little beyond the
 length of the context.
 
-An attempt wrapper that hides both the `profile` command name and the
-result line is still missed. A matching command with no result line counts
-as an attempt but has no fingerprint to compare in the loop diagnostic.
+The run log is writable inside the agent container. An agent that edits
+or deletes it changes its own loop score; nothing tells the agent that
+the log matters. An invocation hidden from both command and output is
+still absent from shell probe observations, but its log entry remains
+available for the loop score.
 
 The reset pacing is tested on a fake clock; this round uses no
 containers or live harness. Tool-call counts remain pilot estimates.
@@ -242,5 +275,8 @@ measurement isolation and expected-score metadata. It did not alter the
 headline definitions in SPEC.md. Round 2 adds script edit pacing, public
 currency invariants, register data checks, immediate clash unlocking,
 representation-tolerant chores, a fixed private workload, a read-only
-profile and command fallback for attempts. Additional implementation constraints are
+profile and command fallback for attempts. Round 3 replaces the loop
+score's shell evidence with a collected run history, aligns public and
+hidden imports, accepts the permitted final-output formatting, and adds
+the decision card id. Additional implementation constraints are
 recorded in `LEARNINGS.md`.
