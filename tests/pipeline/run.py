@@ -45,9 +45,20 @@ def run_one(instance, who, output):
             commit_delay_s=0.1, probes=doc["probes"],
         )
 
-    opaque = "e" + hashlib.sha256(f"{instance.name}/{who}".encode()).hexdigest()[:20]
+    identity = {
+        "task": task.digest,
+        "script": doc,
+        "policy": read(policy),
+        "harness": "simulated-pi",
+        "model": "scripted-worst" if who == "worst" else "scripted-ideal",
+        "mode": "default",
+        "poll_s": 5.0,
+    }
+    opaque = "e" + hashlib.sha256(
+        json.dumps(identity, sort_keys=True).encode()
+    ).hexdigest()[:16]
     config = RunConfig(
-        episode_id=opaque, harness="pi", model="claude-haiku-5-5",
+        episode_id=opaque, scorer_id=opaque, harness="pi", model="claude-haiku-5-5",
         upstream=("scripted", script), mode="default", poll_s=5.0, stall_s=3600.0,
     )
     outcome = run_episode(
@@ -77,7 +88,7 @@ def run_suite(suite, output, workers=8):
     reader = output / "reader.json"
     write(reader, {
         "format": "cohbench-reader-config", "version": 1,
-        "kind": "scripted", "rule": "overlap", "orders": {"count": 6, "seed": 0},
+        "kind": "scripted", "rule": "earliest_statement", "orders": {"count": 6, "seed": 0},
     })
 
     def execute(job):
@@ -127,7 +138,7 @@ def run_suite(suite, output, workers=8):
         with contextlib.redirect_stdout(io.StringIO()) as printed:
             code = scoring_main([
                 "report", str(folder), "--out", str(output / f"{label}-report"),
-                "--plan", str(plan_path), "--require-plan", "--scripted-reader",
+                "--plan", str(plan_path), "--scripted-reader",
                 "--resamples", "0",
             ])
         reports[label] = {"exit": code, "text": printed.getvalue()}
