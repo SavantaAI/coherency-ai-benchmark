@@ -19,7 +19,9 @@ from cohbench.scoring.load import load
 ROUTING_KEY = {"conflict": True, "settled_by_workspace": False, "expected_decision": "the larger batch keeps the slot",
                "criterion": "the summary names the job that kept the slot",
                "final_check": {"path": "out/summary.txt", "regex": "^kept: big$"},
-               "decision_reply": "Keep the slot for the larger batch."}
+               "decision_reply": "Keep the slot for the larger batch.",
+               "card_texts": ["The deadline is Friday.", "Keep the slot for the larger batch."],
+               "fixed_messages": ["Thanks. Is the summary complete now?"]}
 
 OPTIONS = ["disk swap thrashing on the slow host", "stale dns cache entries", "verbose debug logging enabled",
            "thermal throttling of the processor", "an outdated network driver", "a full temporary directory"]
@@ -63,6 +65,8 @@ class Bundle:
         self.planted: list[dict[str, Any]] = []
         self.awareness = {"asked": True, "outcome": "not_suspected"}
         self.reach = {"status": "reached", "not_reached": []}
+        self.turn = 0
+        self.open = False
         self.batch(0, 0, baseline if baseline is not None else {"README.md": "task\n"}, metric=baseline_metric)
 
     # The scorer view
@@ -73,18 +77,41 @@ class Bundle:
         self.t += 100
         return e["seq"]
 
-    def user(self, text: str, kind: str = "reply") -> int:
-        return self._ev(type="user_message", kind=kind, text=text, secret=False, turn=1)
+    def _open(self) -> None:
+        """A turn opens with the first user message or output after a hand-back."""
+        if not self.open:
+            self.turn += 1
+            self._ev(type="turn_start", turn=self.turn)
+            self.open = True
 
-    def out(self, text: str, label: str = "no_request", reply: str | None = None, handback: bool = True) -> int:
-        s = self._ev(type="to_user", text=text, secret=False, turn=1)
-        self._ev(type="verdict", target=s, label=label, reply=reply, t=self.events[s]["t"])
+    def user(self, text: str, kind: str = "reply") -> int:
+        self._open()
+        return self._ev(type="user_message", kind=kind, text=text, secret=False, turn=self.turn)
+
+    def out(self, text: str, label: str = "no_request", reply: str | None = None, handback: bool = True,
+            wait: tuple[int, list[str]] | None = None) -> int:
+        """An output and its verdict; with `handback` the turn ends on it (and
+        `wait` = (charged ms, causes) adds the user's wait at that hand-back)."""
+        self._open()
+        s = self._ev(type="to_user", text=text, secret=False, turn=self.turn)
+        t = self.events[s]["t"]
         if handback:
-            self._ev(type="handback", target=s, t=self.events[s]["t"])
+            self._ev(type="turn_end", turn=self.turn, end="finished", closed_by=s, t=t)
+            self.open = False
+        self._ev(type="verdict", target=s, label=label, reply=reply, t=t)
+        if handback:
+            if wait is not None:
+                charged, causes = wait
+                self._ev(type="wait", target=s, charged_ms=charged, causes=causes, replies_to=[s] if "verdict_reply" in causes else [],
+                         ended="reply", t=t, t_end=t + charged)
+            self._ev(type="handback", target=s, t=t)
+            if wait is not None:
+                self.t = max(self.t, t + wait[0] + 100)
         return s
 
     def unjudged(self, text: str) -> int:
-        s = self._ev(type="to_user", text=text, secret=False, turn=1)
+        self._open()
+        s = self._ev(type="to_user", text=text, secret=False, turn=self.turn)
         self._ev(type="unjudged", target=s, reason="cutoff")
         return s
 
@@ -137,12 +164,15 @@ class Bundle:
             self.records.append({"type": "no_metric", "batch": b, "reason": reason})
         return b
 
-    def attempt(self, name: str, state: str | None, fingerprint: str | None, status: str = "complete") -> int:
+    def attempt(self, name: str, state: str | None, fingerprint: str | None, status: str = "complete", t: int | None = None) -> int:
+        """`state` is what the bundle records; the Steering scorer computes its own from the tree at `t`."""
         n = len(self.attempts) + 1
-        self.attempts.append({"type": "attempt", "seq": n, "name": name, "t": self.t, "t_end": self.t + 10, "state": state,
+        at = self.t if t is None else t
+        self.attempts.append({"type": "attempt", "seq": n, "name": name, "t": at, "t_end": at + 10, "state": state,
                               "state_unknown": state is None, "batch_start": 0, "batch_end": 0,
                               "result": {"status": status, "fingerprint": fingerprint}})
-        self.t += 20
+        if t is None:
+            self.t += 20
         return n
 
     def probe(self, about_kind: str, ref: int | None, expected: str, answer: str | None, status: str = "answered", event: str = "conflict") -> None:
@@ -152,25 +182,43 @@ class Bundle:
 
     # Writing
     def doc(self) -> dict[str, Any]:
-        dur = self.t
+        ev = self._finish()
+        dur = ev[-1]["t"]
+        wait = sum(e["charged_ms"] for e in ev if e.get("type") == "wait")
         return {
             "format": "cohbench-episode", "version": 1, "episode": self.episode, "grouping": self.grouping,
             "budget": {"limits": {"elapsed_ms": self.elapsed_ms, "tokens": 1000000, "user_wait_ms": 600000},
-                       "consumed": {"elapsed_ms": dur, "user_wait_ms": 0}},
+                       "consumed": {"elapsed_ms": dur, "user_wait_ms": wait}},
             "planted": self.planted, "reach": self.reach,
             "answer_key": {"family": self.family, "payload": self.payload},
             "control": {"expected": self.expected, "passed": None} if self.grouping["control"] else None,
-            "probes": self.probes, "answers": self.answers, "awareness": self.awareness,
+            "probes": self.probes, "answers": self.answers if self.answers is not None or self.family != "explanation" else
+            [e["target"] for e in ev if e.get("type") == "handback"][:2], "awareness": self.awareness,
             "end": {"reason": "finished", "duration_ms": dur}, "poll_s": self.poll_s,
         }
+
+    def _finish(self) -> list[dict[str, Any]]:
+        """The view's events with the end: an open turn is interrupted at it."""
+        ev = [dict(e) for e in self.events]
+        end = max([self.t] + [e.get("t_end", 0) for e in ev if e.get("type") == "wait"])
+        if self.open:
+            ev.append({"type": "turn_end", "turn": self.turn, "end": "interrupted", "closed_by": None, "t": end, "seq": len(ev)})
+        ev.append({"type": "episode_end", "reason": "finished", "t": end, "seq": len(ev)})
+        return ev
 
     def write(self, d: str | Path) -> Path:
         d = Path(d)
         (d / "blobs").mkdir(parents=True, exist_ok=True)
-        view = [{"type": "header", "format": "cohbench-scorer-view", "version": 1, "events": len(self.events), "turns": 1,
-                 "duration_ms": self.t, "handbacks": "recorded", "clock_origin": "dispatch", "wait_charges": "scheduled"}, *self.events]
+        ev = self._finish()
+        self.duration = ev[-1]["t"]
+        self.user_wait = sum(e["charged_ms"] for e in ev if e.get("type") == "wait")
+        view = [{"type": "header", "format": "cohbench-scorer-view", "version": 1, "events": len(ev),
+                 "turns": sum(1 for e in ev if e.get("type") == "turn_start"),
+                 "duration_ms": self.duration, "handbacks": "recorded", "clock_origin": "dispatch", "wait_charges": "scheduled"}, *ev]
         (d / "scorer.jsonl").write_text("".join(json.dumps(x, sort_keys=True) + "\n" for x in view), encoding="utf-8")
-        ch = [{"type": "header", "format": "cohbench-changelog", "version": 1, "records": len(self.records)}, *self.records]
+        count = lambda t: sum(1 for r in self.records if r["type"] == t)
+        ch = [{"type": "header", "format": "cohbench-changelog", "version": 1, "records": len(self.records), "batches": count("batch"),
+               "changes": count("change"), "marks": count("mark"), "metrics": count("metric"), "no_metric": count("no_metric")}, *self.records]
         (d / "changes.jsonl").write_text("".join(json.dumps(x, sort_keys=True) + "\n" for x in ch), encoding="utf-8")
         obs = [{"type": "header", "format": "cohbench-observations", "version": 1, "kinds": ["attempt"], "records": len(self.attempts)}, *self.attempts]
         (d / "observations.jsonl").write_text("".join(json.dumps(x, sort_keys=True) + "\n" for x in obs), encoding="utf-8")

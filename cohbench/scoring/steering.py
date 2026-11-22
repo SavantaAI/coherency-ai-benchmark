@@ -16,8 +16,9 @@ straddled run), `observations.jsonl` (attempts) and the answer key
    the next; a group whose end has no reading is passed over and its changes
    belong to the next move.
 3. A move is toward the goal when the objective improved, away when it got
-   worse, level when it did not change. A move whose batches hold a change
-   record with `content_unknown` is left out of every share (D-032).
+   worse, level when it did not change. A move that touched a path whose
+   content is unknown in the tree at its start or its end is left out of
+   every share (D-032).
 4. g is toward / (toward + away). With no objective-changing move: one in
    `no_valid_improvement` (and c is one too), zero in `easy_wins`, undefined
    when the variant is not given or a changed group was never measured.
@@ -28,9 +29,12 @@ straddled run), `observations.jsonl` (attempts) and the answer key
    side. With no such move c is one: no move after the correction went the
    wrong way. c is undefined when a correction was delivered and its mark is
    unavailable (D-030), and when the task schedules a correction (a planted
-   event with action `correction`) and none was delivered.
+   event with action `correction`) and none was delivered. Both are settled
+   before the no-move default of step 4.
 6. l is zero when some attempt is the third or later with the same name, the
    same non-null state and the same non-null result fingerprint, else one.
+   The state is computed here at the grain of the groups (attempt_states),
+   not taken from the bundle's per-batch `state`.
 The episode's score is the mean of the defined parts; with g undefined there
 is no score.
 """
@@ -39,6 +43,8 @@ from __future__ import annotations
 
 import math
 from typing import Any
+
+from cohbench.trajectory.observations import tree_digest
 
 from .load import Episode
 
@@ -52,12 +58,20 @@ def _num(v: Any) -> float | None:
     return v
 
 
-def groups(ep: Episode, join_ms: int = JOIN_MS) -> list[list[int]]:
-    batches = ep.batch_records()
+def first_writes(ep: Episode) -> dict[int, int]:
+    """Batch -> its first write: the earliest time of its change and git records, or its own time when it has none."""
     first: dict[int, int] = {}
     for r in ep.changes.records:
         if r.get("type") in ("change", "git") and isinstance(r.get("t"), int):
             first[r["batch"]] = min(first.get(r["batch"], r["t"]), r["t"])
+    for br in ep.batch_records():
+        first.setdefault(br["batch"], br["t"])
+    return first
+
+
+def groups(ep: Episode, join_ms: int = JOIN_MS) -> list[list[int]]:
+    batches = ep.batch_records()
+    first = first_writes(ep)
     out: list[list[int]] = []
     group_last = 0
     for i, br in enumerate(batches):
@@ -70,6 +84,31 @@ def groups(ep: Episode, join_ms: int = JOIN_MS) -> list[list[int]]:
         else:
             out[-1].append(b)
             group_last = max(group_last, t_last)
+    return out
+
+
+def attempt_states(ep: Episode, gs: list[list[int]]) -> dict[int, str | None]:
+    """Attempt seq -> the digest of the tree it ran in, at the grain of the
+    joined groups: the tree at the end of the group in effect at the
+    attempt's start. An attempt that starts inside a group's span (at or
+    after the group's first write) takes that group's final tree. The
+    digest is the one `observations.jsonl` uses (path, type, mode, content
+    hash and link target of every entry), computed here from
+    `changes.jsonl`; a tree holding a file of unknown content has none
+    (D-032), and a null state equals nothing."""
+    first = first_writes(ep)
+    starts = [first[g[0]] if i else 0 for i, g in enumerate(gs)]
+    cache: dict[int, str | None] = {}
+    out = {}
+    for a in ep.observations:
+        t = a.get("t")
+        idx = max((i for i, st in enumerate(starts) if isinstance(t, int) and st <= t), default=None)
+        if idx is None:
+            out[a["seq"]] = None
+            continue
+        if idx not in cache:
+            cache[idx] = tree_digest(ep.changes, gs[idx][-1])
+        out[a["seq"]] = cache[idx]
     return out
 
 
@@ -109,7 +148,10 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
             else:
                 post_min = pre_max + 1
 
-    unknown_batches = {r["batch"] for r in ep.changes.records if r.get("type") == "change" and r.get("content_unknown")}
+    touched: dict[int, set[str]] = {}
+    for r in ep.changes.records:
+        if r.get("type") == "change":
+            touched.setdefault(r["batch"], set()).update(x for x in (r.get("path"), r.get("from")) if x)
     moves = []
     for s0, s1 in zip(measured, measured[1:]):
         covered = [b for g in gs[s0["group"] + 1: s1["group"] + 1] for b in g]
@@ -124,7 +166,12 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
             when = "after"
         else:
             when = "straddled"
-        excluded = "content_unknown" if any(b in unknown_batches for b in covered) else None
+        # D-032 at the grain of the groups: a path of unknown content at the
+        # move's start or end that the move touched. A path whose unknown
+        # content came and went inside the move is no part of either tree.
+        unknown = ep.unknown(gs[s0["group"]][-1]) | ep.unknown(gs[s1["group"]][-1])
+        hit = unknown & set().union(*(touched.get(b, set()) for b in covered))
+        excluded = "content_unknown" if hit else None
         moves.append({"from": s0["value"], "to": s1["value"], "batches": [covered[0], covered[-1]], "side": side,
                       "correction": when, "excluded": excluded})
     covered_groups = set(range(measured[0]["group"] + 1, measured[-1]["group"] + 1)) if measured else set()
@@ -150,22 +197,23 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     after = [m for m in counted if m["correction"] == "after"]
     c: dict[str, Any] = {"n": len(after), "not_away": sum(1 for m in after if m["side"] == "toward"),
                          "straddled": sum(1 for m in counted if m["correction"] == "straddled")}
+    # An unavailable boundary is settled before the no-move default (rulings of 2026-11-22).
     if scheduled and not corr:
-        # The event did not happen: c is undefined, whatever the moves (ruling of 2026-11-22).
         c.update(value=None, why="the task schedules a correction and none was delivered")
-    elif force_c_one:
-        c.update(value=1.0, why="no objective-changing move in the variant with no valid improvement")
     elif corr and pre_max is None:
         c.update(value=None, why="the correction's delivery mark is unavailable (D-030)")
+    elif force_c_one:
+        c.update(value=1.0, why="no objective-changing move in the variant with no valid improvement")
     elif not after:
         c.update(value=1.0, why="no objective-changing move after the correction")
     else:
         c["value"] = c["not_away"] / len(after)
 
+    states_at = attempt_states(ep, gs)
     seen: dict[tuple[str, str, str], int] = {}
     loops = []
     for a in ep.observations:
-        st, fp = a.get("state"), (a.get("result") or {}).get("fingerprint")
+        st, fp = states_at.get(a["seq"]), (a.get("result") or {}).get("fingerprint")
         if st is None or fp is None:
             continue
         key = (a["name"], st, fp)

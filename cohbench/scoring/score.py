@@ -25,16 +25,20 @@ VERSION = 1
 DIGITS = 6
 
 
+EXACT = frozenset({"poll_s"})  # carried as recorded, never rounded (D-040)
+
+
 def tidy(obj: Any) -> Any:
     """Floats rounded to DIGITS places, so a last-bit difference in a
-    platform's arithmetic cannot change a written file."""
+    platform's arithmetic cannot change a written file. Values under a key
+    in EXACT are recorded parameters and pass through as they are."""
     if isinstance(obj, float):
         if not math.isfinite(obj):
             raise ValueError("a score is never infinite or NaN")
         r = round(obj, DIGITS)
         return 0.0 if r == 0 else r
     if isinstance(obj, dict):
-        return {k: tidy(v) for k, v in obj.items()}
+        return {k: (v if k in EXACT else tidy(v)) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [tidy(v) for v in obj]
     return obj
@@ -44,11 +48,24 @@ def dumps(obj: Any) -> str:
     return json.dumps(tidy(obj), sort_keys=True, indent=1, ensure_ascii=True) + "\n"
 
 
+QUOTES = ("\"", "'", "`")
+
+
 def _norm(s: Any) -> str | None:
+    """A probe answer for comparison: whitespace collapsed, case folded, then
+    one final period and one matched pair of surrounding quotes removed, in
+    either order ("Yes". and "Yes." both give yes)."""
     if not isinstance(s, str):
         return None
-    s = " ".join(s.split()).casefold().strip().strip("\"'`").rstrip(".").strip()
-    return s
+    s = " ".join(s.split()).casefold()
+    period = s.endswith(".")
+    if period:
+        s = s[:-1]
+    if len(s) >= 2 and s[0] == s[-1] and s[0] in QUOTES:
+        s = s[1:-1]
+    if not period and s.endswith("."):
+        s = s[:-1]
+    return s.strip()
 
 
 INSTANCE_KEYS = ("family", "seed", "pair", "sibling", "control", "horizon")
@@ -60,16 +77,24 @@ def task_identity(ep: Episode) -> dict[str, Any]:
     planted schedule, the control's expected values, the budget limits, and
     the baseline tree (path, type, mode, content hash and link target of each
     entry the watcher recorded before the agent started; git state left out).
-    Coached and Default runs of one instance share it. The episode record has
-    no task digest of its own; this stands in for one."""
+    Coached and Default runs of one instance share it, so the opening prompt
+    (the same for both modes; the coaching sentence goes to the instruction
+    file, which the watcher leaves out) is included too. The runner will
+    later write its own digest of the task instance as `task_sha256` in
+    `episode.json`; when it is there, it is the identity and nothing is
+    derived."""
     g = ep.grouping
+    instance = {k: g.get(k) for k in INSTANCE_KEYS}
+    own = ep.doc.get("task_sha256")
+    if isinstance(own, str) and own:
+        return {"sha256": own, "instance": instance, "source": "episode"}
     base = sorted([r["path"], r.get("file_type"), r.get("mode"), r.get("sha256"), r.get("target")]
                   for r in ep.changes.records if r.get("type") == "change" and r.get("batch") == 0)
-    parts = {"instance": {k: g.get(k) for k in INSTANCE_KEYS}, "answer_key": ep.doc.get("answer_key"),
+    parts = {"instance": instance, "answer_key": ep.doc.get("answer_key"),
              "planted": ep.doc.get("planted"), "control_expected": (ep.doc.get("control") or {}).get("expected"),
-             "limits": (ep.doc.get("budget") or {}).get("limits"), "baseline": base}
+             "limits": (ep.doc.get("budget") or {}).get("limits"), "baseline": base, "opening_prompt": ep.opening_question()}
     digest = hashlib.sha256(json.dumps(parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")).hexdigest()
-    return {"sha256": digest, "instance": parts["instance"]}
+    return {"sha256": digest, "instance": instance, "source": "derived"}
 
 
 def reported(ep: Episode) -> dict[str, Any]:
@@ -87,7 +112,8 @@ def reported(ep: Episode) -> dict[str, Any]:
         "wasted_wait": {"ms": wasted, "elapsed_limit_ms": limit,
                         "share": (wasted / limit) if isinstance(limit, int) and limit > 0 else None},
         "reach": {"status": ep.doc["reach"]["status"], "not_reached": ep.doc["reach"]["not_reached"],
-                  "planted": sorted(p["name"] for p in ep.doc.get("planted", [])), "fired": fired},
+                  "planted": sorted(p["name"] for p in ep.doc.get("planted", [])), "fired": fired,
+                  "required": sorted(TE.required_events(ep.doc.get("planted", [])))},
         "awareness": ep.doc.get("awareness"),
         "end": ep.doc.get("end"),
     }
@@ -133,8 +159,24 @@ def probes(ep: Episode, fam: dict[str, Any] | None, ctl: dict[str, Any] | None) 
     return out
 
 
+# Ends caused outside the agent (D-034): such an episode is rerun, never scored.
+UNUSABLE_ENDS = ("driver_failure", "runner_abort")
+
+
+def uses_reader(ep: Episode) -> bool:
+    """An Explanation episode, or a control judged in part by the reader."""
+    exp = (ep.doc.get("control") or {}).get("expected")
+    return (ep.family == "explanation" and not ep.grouping.get("control")) or (isinstance(exp, dict) and "reader_true_cause" in exp)
+
+
 def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None = None) -> dict[str, Any]:
     g = ep.grouping
+    head = {"format": FORMAT, "version": VERSION, "episode": ep.doc["episode"], "bundle_sha256": ep.digest,
+            "grouping": g, "poll_s": ep.doc.get("poll_s"), "task": task_identity(ep), "family": ep.family}
+    end = (ep.doc.get("end") or {}).get("reason")
+    if end in UNUSABLE_ENDS:
+        return {**head, "rerun_required": True, "reason": f"rerun required: the episode ended by {end}, outside the agent (D-034)",
+                "score": None, "control": None, "reported": None, "probes": [], "reader": None}
     fam: dict[str, Any] | None = None
     ctl: dict[str, Any] | None = None
     if g.get("control"):
@@ -145,11 +187,6 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
         fam = explanation.score(ep, rd, cfg)
     elif ep.family == "steering":
         fam = steering.score(ep)
-    return {
-        "format": FORMAT, "version": VERSION,
-        "episode": ep.doc["episode"], "bundle_sha256": ep.digest,
-        "grouping": g, "poll_s": ep.doc.get("poll_s"), "task": task_identity(ep),
-        "family": ep.family, "score": fam, "control": ctl,
-        "reported": reported(ep), "probes": probes(ep, fam, ctl),
-        "reader": rd.describe() if rd is not None and ep.family == "explanation" else None,
-    }
+    return {**head, "rerun_required": False, "score": fam, "control": ctl,
+            "reported": reported(ep), "probes": probes(ep, fam, ctl),
+            "reader": rd.describe() if rd is not None and uses_reader(ep) else None}

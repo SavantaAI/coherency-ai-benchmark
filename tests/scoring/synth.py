@@ -9,25 +9,30 @@ from typing import Any
 
 from cohbench.scoring.score import dumps
 
-READER = {"kind": "scripted", "rule": "overlap", "config_sha256": "r" * 64, "prompt_version": "reader-1"}
+# A stand-in reader record. Its kind is "hosted" so that reports on synthetic
+# scores print bands; no reader read anything here.
+READER = {"kind": "hosted", "model": "stand-in", "provider": "stand-in", "config_sha256": "r" * 64, "prompt_version": "reader-1"}
+SCRIPTED_READER = {"kind": "scripted", "rule": "overlap", "config_sha256": "s" * 64, "prompt_version": "reader-1"}
 
 
 def base(eid: str, family: str, seed: int, *, horizon: str = "h20", mode: str = "default", pair: str | None = None,
          sibling: str | None = None, control: bool = False, poll_s: float | None = 2.0, unanswerable: int = 0,
          private: int = 0, wasted: float | None = 0.0, reached: bool = True, awareness: str | None = "not_suspected",
-         probes: list[dict[str, Any]] | None = None, task: str | None = None) -> dict[str, Any]:
+         probes: list[dict[str, Any]] | None = None, task: str | None = None, planted: tuple[str, ...] = (), fired: tuple[str, ...] = (),
+         required: tuple[str, ...] = (), rerun_required: bool = False) -> dict[str, Any]:
     grouping = {"family": family, "seed": seed, "pair": pair, "sibling": sibling, "control": control, "horizon": horizon, "mode": mode}
     instance = {k: grouping[k] for k in ("family", "seed", "pair", "sibling", "control", "horizon")}
     # The task digest: by default a function of the instance, so every configuration faced the same suite.
     digest = task or hashlib.sha256(json.dumps(instance, sort_keys=True).encode()).hexdigest()
     return {
-        "task": {"sha256": digest, "instance": instance},
+        "task": {"sha256": digest, "instance": instance, "source": "derived"}, "rerun_required": rerun_required,
         "format": "cohbench-score", "version": 1, "episode": eid, "bundle_sha256": "0" * 64,
         "grouping": grouping,
         "poll_s": poll_s, "family": family, "score": None, "control": None, "reader": None,
         "reported": {"unanswerable_questions": unanswerable, "requests": unanswerable, "outputs": 3, "private_identifiers_sent": private,
                      "private_mentions_sent": private, "wasted_wait": {"ms": 0, "elapsed_limit_ms": 600000, "share": wasted},
-                     "reach": {"status": "reached" if reached else "not_reached", "not_reached": [], "planted": [], "fired": []},
+                     "reach": {"status": "reached" if reached else "not_reached", "not_reached": [], "planted": sorted(planted), "fired": sorted(fired),
+                               "required": sorted(required)},
                      "awareness": {"asked": awareness is not None, "outcome": awareness}, "end": {"reason": "finished", "duration_ms": 1}},
         "probes": probes or [],
     }
@@ -45,10 +50,13 @@ def no_conflict(eid: str, seed: int, passed: bool, **kw) -> dict[str, Any]:
     return d
 
 
-def expl(eid: str, seed: int, acc: float, no_answer: tuple[int, int] = (1, 6), buried: tuple[int, int] = (0, 6), reader: dict | None = None, **kw) -> dict[str, Any]:
+def expl(eid: str, seed: int, acc: float | None, no_answer: tuple[int, int] = (1, 6), buried: tuple[int, int] = (0, 6), reader: dict | None = None,
+         items: tuple[str, str] | None = None, **kw) -> dict[str, Any]:
+    """`items` names the two sanity items' inputs; by default they are the task instance's own."""
     d = base(eid, "explanation", seed, **kw)
-    d["score"] = {"accuracy": acc, "answers": [], "sanity": {"no_answer": {"correct": no_answer[0], "n": no_answer[1]},
-                                                             "buried": {"correct": buried[0], "n": buried[1]}}}
+    na, bu = items or (f"na-{d['task']['sha256']}", f"bu-{d['task']['sha256']}")
+    d["score"] = {"accuracy": acc, "answers": [], "sanity": {"no_answer": {"key": na, "correct": no_answer[0], "n": no_answer[1]},
+                                                             "buried": {"key": bu, "correct": buried[0], "n": buried[1]}}}
     d["reader"] = reader or READER
     return d
 

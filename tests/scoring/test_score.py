@@ -118,3 +118,31 @@ def test_task_identity_ignores_the_mode_and_sees_the_task(tmp_path):
     assert d == c and d["instance"] == {"family": "routing", "seed": 1, "pair": "p1", "sibling": "B", "control": False, "horizon": "h20"}
     assert ident("default", readme="another task\n")["sha256"] != d["sha256"]
     assert ident("default", payload={**ROUTING_KEY, "decision_reply": "Keep the smaller batch."})["sha256"] != d["sha256"]
+
+
+def test_probe_answers_compare_after_a_final_period_and_one_pair_of_quotes():
+    from cohbench.scoring.score import _norm
+    assert _norm('"Yes".') == _norm('"Yes."') == _norm("Yes") == _norm(" yes ") == "yes"
+    assert _norm("'r24'") == "r24" and _norm('""Yes""') == '"yes"' and _norm("Yes..") == "yes."
+
+
+def test_poll_s_is_carried_exactly(tmp_path):
+    for n, v in enumerate((2.0000001, 2.0000002)):
+        b = Bundle("routing", poll_s=v)
+        s = json.loads(dumps(score_episode(b.load(tmp_path / str(n)))))
+        assert s["poll_s"] == v
+
+
+def test_the_task_digest_sees_the_opening_prompt_and_prefers_the_runners(tmp_path):
+    def ident(prompt, own=None):
+        b = Bundle("routing")
+        b.user(prompt, kind="opening_prompt")
+        d = b.write(tmp_path / f"{len(prompt)}{own}")
+        if own:
+            doc = json.loads((d / "episode.json").read_text())
+            doc["task_sha256"] = own
+            (d / "episode.json").write_text(json.dumps(doc))
+        return score_episode(load(d, validate=False))["task"]
+    a, b = ident("Run every batch."), ident("Run every batch, then stop.")
+    assert a["sha256"] != b["sha256"] and a["source"] == "derived"
+    assert ident("Run every batch.", own="ab" * 32) == {"sha256": "ab" * 32, "instance": a["instance"], "source": "episode"}

@@ -17,8 +17,9 @@ Two kinds, chosen by a config file (`--reader CONFIG`):
   exercise it only through an injected transport that returns canned bytes.
 
 A config also fixes the option orders (`orders`: `count`, a multiple of six,
-and `seed`) and the window (`window_words`, 80 by the spec). The config's
-digest (sha256 of its canonical JSON) is written into every score file.
+and `seed`). The window is 80 words, a constant of the scorer that no config
+can change. The config's digest (sha256 of its canonical JSON) is written
+into every score file.
 """
 
 from __future__ import annotations
@@ -36,7 +37,8 @@ from typing import Any, Callable, Protocol
 LETTERS = "ABCDEF"
 KEY_ENV = "COHBENCH_READER_KEY_FILE"
 CONFIG_FORMAT = "cohbench-reader-config"
-WINDOW_WORDS = 80
+WINDOW_WORDS = 80  # SPEC.md section 6; a constant, never a config field
+CONFIG_KEYS = {"format", "version", "kind", "rule", "position", "table", "orders", "endpoint", "expect", "sampling", "prompt_sha256", "timeout_s"}
 
 PROMPT_VERSION = "reader-1"
 SYSTEM = (
@@ -97,9 +99,6 @@ class Config:
         o = self.raw.get("orders", {})
         return int(o.get("count", 6)), int(o.get("seed", 0))
 
-    @property
-    def window_words(self) -> int:
-        return int(self.raw.get("window_words", WINDOW_WORDS))
 
 
 def parse_config(raw: Any) -> Config:
@@ -110,9 +109,9 @@ def parse_config(raw: Any) -> Config:
     if not (isinstance(o, dict) and set(o) <= {"count", "seed"} and isinstance(o.get("count", 6), int)
             and o.get("count", 6) > 0 and o.get("count", 6) % 6 == 0 and isinstance(o.get("seed", 0), int)):
         raise ReaderError("orders is {count: a positive multiple of 6, seed: an integer}")
-    ww = raw.get("window_words", WINDOW_WORDS)
-    if not (isinstance(ww, int) and ww > 0):
-        raise ReaderError("window_words is a positive integer")
+    extra = sorted(set(raw) - CONFIG_KEYS)
+    if extra:
+        raise ReaderError(f"a reader config has no field {extra[0]!r} (the window is fixed at {WINDOW_WORDS} words)")
     if kind == "scripted":
         rule = raw.get("rule")
         if rule == "position" and not (isinstance(raw.get("position"), int) and 0 <= raw["position"] < 6):
@@ -269,6 +268,7 @@ class HostedReader:
             if ch[0].get("finish_reason") != "stop":
                 raise ReaderError("the completion did not finish normally")
             answer = json.loads(ch[0]["message"]["content"])
+            choice = answer["choice"] if isinstance(answer, dict) and set(answer) == {"choice"} else None
         except ReaderError:
             raise
         except Exception:  # noqa: BLE001 - nothing from the response is shown
@@ -276,9 +276,9 @@ class HostedReader:
         x = self.cfg.raw["expect"]
         if doc.get("model") != x["model"] or doc.get("provider") != x["provider"]:
             raise ReaderError("the response does not report the pinned model and provider")
-        if not (isinstance(answer, dict) and set(answer) == {"choice"} and answer["choice"] in LETTERS[:n]):
-            raise ReaderError("the answer is not one of the option letters")
-        return LETTERS.index(answer["choice"])
+        if not (isinstance(choice, str) and len(choice) == 1 and choice in LETTERS[:n]):
+            raise ReaderError("the answer is not exactly one of the option letters")
+        return LETTERS.index(choice)
 
 
 def make(cfg: Config, key: str | None = None, transport: Transport | None = None) -> Reader:

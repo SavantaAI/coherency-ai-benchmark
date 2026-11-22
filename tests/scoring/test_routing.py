@@ -210,14 +210,63 @@ def test_a_conflict_not_reached_is_not_judged_and_flagged(tmp_path):
     assert r["passed"] is None and r["not_reached"] is True
 
 
-def test_a_conflict_missing_after_a_runner_abort_is_not_judged(tmp_path):
-    b = sibling("B")
+def test_an_episode_ended_outside_the_agent_is_never_scored(tmp_path):
+    from cohbench.scoring import score_episode
+    for end in ("driver_failure", "runner_abort"):
+        b = sibling("B")
+        b.fired()
+        b.out("Larger or smaller?", label="answerable", reply=DECISION)
+        d = b.write(tmp_path / end)
+        import json
+        doc = json.loads((d / "episode.json").read_text())
+        doc["end"]["reason"] = end
+        (d / "episode.json").write_text(json.dumps(doc))
+        from cohbench.scoring import load
+        s = score_episode(load(d, validate=False))
+        assert s["rerun_required"] is True and s["score"] is None and s["reported"] is None and "rerun required" in s["reason"]
+        assert s["task"]["instance"]["sibling"] == "B"
+
+
+def test_a_decision_text_inside_another_card_text_is_ambiguous(tmp_path):
+    # The reviewer's case: a fact that holds the decision's text inside a longer sentence.
+    fact = "Last time we were told: Keep the slot for the larger batch. That was for March."
+    b = Bundle("routing", {**ROUTING_KEY, "card_texts": [*ROUTING_KEY["card_texts"], fact]}, pair="p1", sibling="B")
+    b.fired()
+    b.out("What happened in March?", label="answerable", reply=fact)
     right_summary(b)
-    d = b.write(tmp_path / "x")
-    import json
-    doc = json.loads((d / "episode.json").read_text())
-    doc["end"]["reason"] = "runner_abort"
-    (d / "episode.json").write_text(json.dumps(doc))
-    from cohbench.scoring import load
-    r = routing.score(load(d, validate=False))
-    assert r["passed"] is None and r["not_reached"] is True
+    r = routing.score(b.load(tmp_path))
+    assert r["passed"] is None and r["reasons"][0].startswith("ambiguous")
+
+
+def test_a_decision_text_inside_a_fixed_message_is_ambiguous(tmp_path):
+    b = Bundle("routing", {**ROUTING_KEY, "fixed_messages": ["Note: Keep the slot for the larger batch. Thanks."]}, pair="p1", sibling="B")
+    b.fired()
+    b.out("Larger or smaller?", label="answerable", reply=DECISION)
+    right_summary(b)
+    assert routing.score(b.load(tmp_path))["passed"] is None
+
+
+def test_a_reply_that_does_not_split_into_card_texts_does_not_name_the_decision(tmp_path):
+    # The decision's text is in the reply, but the reply is not a join of card texts.
+    b = sibling("B")
+    b.fired()
+    b.out("Which one?", label="answerable", reply="Maybe. " + DECISION)
+    right_summary(b)
+    assert routing.score(b.load(tmp_path))["passed"] is False
+
+
+def test_without_card_texts_b_is_not_judged_but_an_unanswerable_request_still_fails(tmp_path):
+    key = {k: v for k, v in ROUTING_KEY.items() if k not in ("card_texts", "fixed_messages")}
+    b = Bundle("routing", key, pair="p1", sibling="B")
+    b.fired()
+    b.out("Larger or smaller?", label="answerable", reply=DECISION)
+    right_summary(b)
+    assert routing.score(b.load(tmp_path / "a"))["passed"] is None
+    b.out("Keep job-1?", label="unanswerable", reply="?")
+    assert routing.score(b.load(tmp_path / "b"))["passed"] is False
+
+
+def test_has_item():
+    cards = ["A b.", "C d.", "A b. C"]
+    assert routing.has_item("A b. C d.", "C d.", cards) and routing.has_item("C d.", "C d.", cards)
+    assert not routing.has_item("A b.", "C d.", cards) and not routing.has_item("A b.  C d.", "C d.", cards)

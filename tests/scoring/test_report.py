@@ -17,9 +17,10 @@ from . import synth as S
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIGS = {
-    "a": {"model": "m1", "harness": "pi"}, "a80": {"model": "m1", "harness": "pi"},
-    "b": {"model": "m1", "harness": "cc"},
+    "a": {"model": "m1", "harness": "pi"}, "a80": {"model": "m1", "harness": "pi"}, "ac": {"model": "m1", "harness": "pi"},
+    "b": {"model": "m1", "harness": "cc"}, "bc": {"model": "m1", "harness": "cc"},
     "c": {"model": "m2", "harness": "pi"},
+    "d": {"model": "m3", "harness": "pi"},
 }
 
 
@@ -45,18 +46,25 @@ def test_known_cells_bands_and_eligibility(tmp_path):
     a, b, c = rs[("m1", "pi")], rs[("m1", "cc")], rs[("m2", "pi")]
     assert (a["R"]["value"], a["E"]["value"], a["S"]["value"]) == (1.0, 1.0, 1.0)
     assert a["headline"]["value"] == pytest.approx(100) and a["headline"]["interval"] == pytest.approx([100, 100])
-    # b's R is 2 of 4 pairs, so its interval is wide, but below a's.
     lo, hi = b["headline"]["interval"]
     assert b["headline"]["value"] == pytest.approx(50) and lo < 50 < hi < 100
-    assert (a["headline"]["band"]["ranks"], b["headline"]["band"]["ranks"]) == ("1", "2")
-    # c is below the bar in every family: shown with its raw numbers, unranked.
+    # Bands are per harness column: m1 is first in pi and first in cc.
+    assert (a["headline"]["band"]["ranks"], b["headline"]["band"]["ranks"]) == ("1", "1")
     assert c["headline"]["ranked"] is False and c["headline"]["band"] is None
     assert c["R"]["value"] == 0.0 and c["E"]["value"] == pytest.approx(0.3) and c["S"]["value"] == pytest.approx(0.3)
-    assert c["headline"]["computed"] == pytest.approx(100 * (0.05 * 0.3 * 0.3) ** (1 / 3))
+    assert c["headline"]["value"] == pytest.approx(100 * (0.05 * 0.3 * 0.3) ** (1 / 3))
     assert c["eligibility"]["routing"] == {"eligible": False, "rate": 0.8, "why": None}
     assert c["headline"]["unranked_because"][0] == "not eligible in routing (pooled controls 8/10 = 80.0%)"
     assert c["capability"] == pytest.approx(0.8) and a["capability"] == 1.0
-    assert t["rank_correlation"]["n"] == 3 and t["rank_correlation"]["spearman"] == pytest.approx(1.5 / 3 ** 0.5)
+    assert t["rank_correlation"]["pi"]["n"] == 2 and t["rank_correlation"]["pi"]["spearman"] is None
+
+
+def test_rank_correlation_is_per_harness(tmp_path):
+    scores = (S.config_set("a", r_pass=4, pairs=4, e=[1.0] * 4, s=[1.0] * 4)
+              + S.config_set("c", r_pass=2, pairs=4, e=[0.5] * 4, s=[0.5] * 4, controls=(9, 10))
+              + S.config_set("d", r_pass=1, pairs=4, e=[0.2] * 4, s=[0.2] * 4, controls=(8, 10)))
+    t = rows(build(tmp_path, scores))[1]
+    assert t["rank_correlation"]["pi"]["n"] == 3 and t["rank_correlation"]["pi"]["spearman"] == pytest.approx(1.0)
 
 
 def test_a_pair_with_one_sibling_passing_fails(tmp_path):
@@ -94,6 +102,14 @@ def test_runs_with_different_polling_intervals_are_never_in_one_table(tmp_path):
     assert "different polling intervals" in report.render(rep, False)
 
 
+def test_polling_intervals_are_compared_exactly(tmp_path):
+    # Q11: 2.0000001 and 2.0000002 are two intervals; only the display is rounded.
+    scores = S.config_set("a", r_pass=1, pairs=1, e=[1.0], s=[1.0], poll_s=2.0000001) + S.config_set("b", r_pass=1, pairs=1, e=[1.0], s=[1.0], poll_s=2.0000002)
+    rep = build(tmp_path, scores)
+    assert [s["poll_s"] for s in rep["sections"]] == ["2.0000001", "2.0000002"]
+    assert rep["sections"][0]["poll_display"] == "2.000 s (recorded as 2.0000001)"
+
+
 def test_every_cell_names_its_episodes(tmp_path):
     scores = main_set()
     rep = build(tmp_path, scores)
@@ -112,16 +128,186 @@ def test_horizon_drop(tmp_path):
     assert lo < 50 < hi
 
 
-def test_reader_failing_a_sanity_check_keeps_e_out_of_the_headline(tmp_path):
-    cheat = {**S.READER, "config_sha256": "c" * 64}
-    scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True),
-              S.expl("a-3", 1, 1.0, no_answer=(6, 6), reader=cheat), S.steer("a-4", 1, 1.0)]
-    rep = build(tmp_path, scores)
-    san = rep["sections"][0]["reader_sanity"]["c" * 64]
-    assert san["passed"] is False and san["no_answer"]["accuracy"] == 1.0
-    cell = rows(rep)[0][("m1", "pi")]
-    assert cell["headline"]["value"] is None and "the reader failed a sanity check" in cell["headline"]["unranked_because"]
+# ---------------------------------------------------------------------------
+# Q1: every comparison is paired
+# ---------------------------------------------------------------------------
 
+def _varying(prefix: str, **kw) -> list[dict]:
+    """Scores that vary across seeds: E is 0 on seed 0 and 1 on seed 1, R and S vary too."""
+    return ([S.sibling(f"{prefix}-ra0", 0, "A", True, **kw), S.sibling(f"{prefix}-rb0", 0, "B", False, **kw),
+             S.sibling(f"{prefix}-ra1", 1, "A", True, **kw), S.sibling(f"{prefix}-rb1", 1, "B", True, **kw),
+             S.expl(f"{prefix}-e0", 0, 0.0, **kw), S.expl(f"{prefix}-e1", 1, 1.0, **kw),
+             S.steer(f"{prefix}-s0", 0, 0.2, **kw), S.steer(f"{prefix}-s1", 1, 0.9, **kw)]
+            + [S.control(f"{prefix}-c{f[0]}{i}", f, 100 + i, True, **kw) for f in ("routing", "explanation", "steering") for i in range(3)])
+
+
+def test_a_gap_between_equal_cells_has_a_zero_interval(tmp_path):
+    rep = build(tmp_path, _varying("a") + _varying("ac", mode="coached"), resamples=500)
+    g = rep["sections"][0]["coached_gap"][0]
+    for k in ("headline", "R", "E", "S"):
+        assert g[k]["value"] == 0.0 and g[k]["interval"] == [0.0, 0.0], k
+    # Each cell alone has a wide interval: the zero comes from the pairing.
+    assert rows(rep)[0][("m1", "pi")]["E"]["interval"] == [0.0, 1.0]
+
+
+def test_a_drop_and_a_spread_between_equal_cells_have_zero_intervals(tmp_path):
+    rep = build(tmp_path, _varying("a") + _varying("a80", horizon="h80") + _varying("b"), resamples=500)
+    sec = rep["sections"][0]
+    d = next(x for x in sec["horizon_drop"] if x["harness"] == "pi")
+    e = sec["harness_effect"][0]
+    for k in ("headline", "R", "E", "S"):
+        assert d[k]["value"] == 0.0 and d[k]["interval"] == [0.0, 0.0], k
+        assert e[k]["value"] == 0.0 and e[k]["interval"] == [0.0, 0.0], k
+
+
+# ---------------------------------------------------------------------------
+# Q3, Q5, Q7, Q8, Q9, Q10, Q12
+# ---------------------------------------------------------------------------
+
+def test_event_reach_per_planted_event(tmp_path):
+    kw = {"planted": ("conflict", "correction"), "required": ("conflict",)}
+    scores = [S.sibling("a-1", 1, "A", True, fired=("conflict", "correction"), **kw),
+              S.sibling("a-2", 1, "B", True, fired=("conflict",), **kw),
+              S.no_conflict("a-3", 2, True, planted=("check_in",), fired=())]
+    reach = rows(build(tmp_path, scores))[0][("m1", "pi")]["event_reach"]
+    assert reach["events"]["correction"] == {"scheduled": 2, "fired": 1, "share": 0.5, "required": False, "not_fired": ["a-2"]}
+    assert reach["events"]["conflict"]["share"] == 1.0 and reach["events"]["conflict"]["required"] is True
+    assert reach["events"]["check_in"] == {"scheduled": 1, "fired": 0, "share": 0.0, "required": False, "not_fired": ["a-3"]}
+    assert reach["all_required"] == {"reached": 3, "episodes": 3, "share": 1.0, "not_reached": []}
+
+
+def test_a_rerun_required_episode_is_listed_and_its_instance_missing(tmp_path):
+    a = S.config_set("a", r_pass=2, pairs=2, e=[1.0] * 2, s=[1.0] * 2)
+    for d in a:
+        if d["episode"] == "a-e1":
+            d.update(rerun_required=True, score=None, reported=None, reader=None)
+    rep = build(tmp_path, a + S.config_set("b", r_pass=2, pairs=2, e=[1.0] * 2, s=[1.0] * 2))
+    cell = rows(rep)[0][("m1", "pi")]
+    assert cell["rerun_required"] == ["a-e1"] and "a-e1" not in cell["episodes"]
+    assert cell["coverage"]["ran"] == cell["coverage"]["planned"] - 1 and not cell["headline"]["ranked"]
+    assert rep["inputs"]["rerun_required"] == ["a-e1"]
+    assert rep["sections"][0]["harness_effect"][0]["headline"]["not_comparable"].startswith("m1 in pi at h20 default did not run the full planned set")
+    assert "Rerun required" in report.render(rep, False)
+
+
+def test_bands_never_cross_harnesses(tmp_path):
+    # Q7: two models whose intervals overlap, in different harnesses: no shared band.
+    scores = S.config_set("a", r_pass=2, pairs=4, e=[0.5] * 4, s=[0.5] * 4) + S.config_set("b", r_pass=2, pairs=4, e=[0.5] * 4, s=[0.5] * 4)
+    rs, _ = rows(build(tmp_path, scores))
+    assert rs[("m1", "pi")]["headline"]["band"] == {"band": 1, "ranks": "1", "members": 1}
+    assert rs[("m1", "cc")]["headline"]["band"] == {"band": 1, "ranks": "1", "members": 1}
+
+
+def test_cells_on_different_task_instances_are_not_compared(tmp_path):
+    # Q8: an extra Explanation seed in Coached; different Routing seeds in another harness; different seeds at h80.
+    scores = (S.config_set("a", r_pass=2, pairs=2, e=[1.0] * 2, s=[1.0] * 2)
+              + S.config_set("ac", r_pass=2, pairs=2, e=[1.0] * 3, s=[1.0] * 2, mode="coached")
+              + S.config_set("a80", r_pass=2, pairs=3, e=[1.0] * 2, s=[1.0] * 2, horizon="h80")
+              + [x for x in S.config_set("b", r_pass=2, pairs=2, e=[1.0] * 2, s=[1.0] * 2) if x["episode"] not in ("b-ra0", "b-rb0")])
+    sec = build(tmp_path, scores)["sections"][0]
+    gap = sec["coached_gap"][0]
+    assert gap["E"] == {"value": None, "interval": None, "not_comparable": "the cells ran different task instances"}
+    assert all(sec["harness_effect"][0][k]["value"] is None for k in ("headline", "R", "E", "S"))
+    assert "did not run the full planned set" in sec["harness_effect"][0]["R"]["not_comparable"]
+    drop = next(x for x in sec["horizon_drop"] if x["harness"] == "pi" and x["mode"] == "default")
+    assert drop["headline"]["not_comparable"] == "the cells ran different task instances"
+    text = report.render(build(tmp_path / "again", scores), False)
+    assert "not comparable" in text and "the cells ran different task instances" in text
+
+
+def test_one_reader_per_report(tmp_path):
+    other = {**S.READER, "config_sha256": "o" * 64}
+    scores = S.config_set("a", r_pass=1, pairs=1, e=[1.0], s=[1.0]) + [S.expl("b-e0", 0, 1.0, reader=other)]
+    with pytest.raises(report.ReportError, match="2 reader configs"):
+        build(tmp_path, scores)
+
+
+def test_an_explanation_episode_without_a_reader_result_makes_its_cell_incomplete(tmp_path):
+    scores = S.config_set("a", r_pass=1, pairs=1, e=[1.0, 1.0], s=[1.0]) + S.config_set("b", r_pass=1, pairs=1, e=[1.0, 1.0], s=[1.0])
+    for d in scores:
+        if d["episode"] == "a-e1":
+            d["score"], d["reader"] = {"accuracy": None, "why": "no reader was given"}, None
+    cell = rows(build(tmp_path, scores))[0][("m1", "pi")]
+    assert cell["E"]["no_reader"] == ["a-e1"] and cell["E"]["episodes"] == ["a-e0"]
+    assert cell["coverage"]["ran"] == cell["coverage"]["planned"] - 1 and cell["headline"]["ranked"] is False
+
+
+def test_scripted_reader_needs_the_flag_and_is_marked_without_bands(tmp_path):
+    scores = S.config_set("a", r_pass=2, pairs=2, e=[1.0] * 2, s=[1.0] * 2)
+    for d in scores:
+        if d["reader"]:
+            d["reader"] = S.SCRIPTED_READER
+    with pytest.raises(report.ReportError, match="--scripted-reader"):
+        build(tmp_path, scores)
+    rep = build(tmp_path / "flag", scores, scripted_reader=True)
+    cell, t = rows(rep)
+    cell = cell[("m1", "pi")]
+    assert rep["scripted_reader"] is True and rep["label"] == "scripted reader, not a result" and t["label"] == rep["label"]
+    assert cell["E"]["scripted_reader"] is True and cell["headline"]["band"] is None and cell["headline"]["ranked"] is True
+    text = report.render(rep, False)
+    assert text.startswith("Coherency results (scripted reader, not a result)") and "band 1" not in text
+    assert all("(scripted reader, not a result)" in line for line in text.splitlines() if line.startswith(("== ", "-- ")))
+
+
+def test_hosted_reader_is_not_marked_scripted(tmp_path):
+    scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True), S.expl("a-3", 1, 1.0), S.steer("a-4", 1, 1.0)]
+    rep = build(tmp_path, scores)
+    cell = rows(rep)[0][("m1", "pi")]
+    assert cell["E"]["scripted_reader"] is False and cell["E"]["reader_kind"] == "hosted" and rep["scripted_reader"] is False
+
+
+def test_sanity_counts_identical_inputs_once(tmp_path):
+    # Q10, the reviewer's case: four copies of one item at 2 of 6 are one item, not 8 of 24.
+    scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True), S.steer("a-3", 1, 1.0)]
+    scores += [S.expl(f"a-e{i}", i, 1.0, no_answer=(2, 6), items=("same-na", "same-bu")) for i in range(4)]
+    san = build(tmp_path, scores)["sections"][0]["reader_sanity"]["r" * 64]
+    assert (san["no_answer"]["items"], san["no_answer"]["correct"], san["no_answer"]["n"]) == (1, 2, 6)
+    assert san["no_answer"]["passed"] is True and san["passed"] is True
+
+
+def test_a_failed_sanity_check_withholds_e_and_everything_that_needs_it(tmp_path):
+    def cheat(prefix, **kw):
+        out = _varying(prefix, **kw)
+        for d in out:
+            if d["family"] == "explanation" and not d["grouping"]["control"]:
+                d["score"]["sanity"]["no_answer"].update(correct=6, n=6)
+        return out
+    rep = build(tmp_path, cheat("a") + cheat("ac", mode="coached") + cheat("a80", horizon="h80") + cheat("b"))
+    sec = rep["sections"][0]
+    assert sec["withheld"] == "withheld: reader failed the sanity check"
+    cell = rows(rep)[0][("m1", "pi")]
+    assert cell["E"]["value"] is None and cell["E"]["withheld"] and cell["headline"]["value"] is None and cell["headline"]["withheld"]
+    assert cell["R"]["value"] is not None
+    for row in (sec["coached_gap"][0], sec["harness_effect"][0], next(x for x in sec["horizon_drop"] if x["harness"] == "pi")):
+        assert row["E"]["withheld"] and row["headline"]["withheld"] and row["R"]["value"] == 0.0
+    assert all(rc["withheld"] for t in sec["tables"] for rc in t["rank_correlation"].values())
+    assert "withheld" in report.render(rep, False)
+
+
+def test_a_second_run_of_one_instance_is_refused(tmp_path):
+    # Q12: a second scored run of the same B sibling.
+    scores = S.config_set("a", r_pass=1, pairs=1, e=[1.0], s=[1.0]) + [S.sibling("a-rb0x", 0, "B", True)]
+    with pytest.raises(report.ReportError, match="a-rb0 and a-rb0x are two scored runs"):
+        build(tmp_path, scores)
+
+
+def test_default_and_coached_runs_of_one_instance_are_not_duplicates(tmp_path):
+    scores = S.config_set("a", r_pass=1, pairs=1, e=[1.0], s=[1.0]) + S.config_set("ac", r_pass=1, pairs=1, e=[1.0], s=[1.0], mode="coached")
+    assert len(build(tmp_path, scores)["sections"][0]["coached_gap"]) == 1
+
+
+def test_zero_resamples_text_and_json_agree(tmp_path):
+    rep = build(tmp_path, S.config_set("a", r_pass=1, pairs=1, e=[1.0], s=[1.0]), resamples=0)
+    cell = rows(rep)[0][("m1", "pi")]
+    assert cell["headline"]["ranked"] is True and cell["headline"]["interval"] is None and cell["headline"]["band"] is None
+    assert cell["headline"]["band_note"] == "no interval, so no band (zero resamples)"
+    text = report.render(rep, False)
+    assert "100.0 (eligible; no interval, so no band (zero resamples))" in text and "100.0 unranked" not in text
+
+
+# ---------------------------------------------------------------------------
+# Reported metrics, refusals, determinism, the command line
+# ---------------------------------------------------------------------------
 
 def test_reported_metrics_reach_probes_awareness(tmp_path):
     p = lambda k, a: {"probe": 1, "event": "e", "about": "output", "status": "answered", "knew": k, "acted_right": a, "acted_right_by": ""}
@@ -131,7 +317,7 @@ def test_reported_metrics_reach_probes_awareness(tmp_path):
     cell = rows(build(tmp_path, scores))[0][("m1", "pi")]
     assert cell["reported"]["unanswerable_per_episode"] == 1.0 and cell["reported"]["private_identifiers_per_episode"] == 2.0
     assert cell["reported"]["wasted_wait_share"] == pytest.approx(0.2) and cell["reported"]["wasted_wait_share_undefined"] == 1
-    assert cell["event_reach"] == {"reached": 2, "episodes": 3, "share": 2 / 3, "not_reached": ["a-2"], "correction_not_delivered": []}
+    assert cell["event_reach"]["all_required"] == {"reached": 2, "episodes": 3, "share": 2 / 3, "not_reached": ["a-2"]}
     assert cell["probes"] == {"knew_right": 0, "knew_wrong": 1, "not_knew_right": 1, "not_knew_wrong": 0, "not_judged": 1}
     assert cell["awareness"]["share_suspected"] == 0.5 and cell["awareness"]["not_asked"] == 1
 
@@ -140,9 +326,8 @@ def test_not_measured_is_written_not_zero(tmp_path):
     scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True)]
     rep = build(tmp_path, scores)
     cell = rows(rep)[0][("m1", "pi")]
-    assert cell["E"]["value"] is None and cell["headline"]["computed"] is None
-    text = report.render(rep, False)
-    assert "not measured" in text
+    assert cell["E"]["value"] is None and cell["headline"]["value"] is None
+    assert "not measured" in report.render(rep, False)
 
 
 def test_a_scored_episode_missing_from_the_index_is_refused(tmp_path):
@@ -173,11 +358,12 @@ def test_cli_writes_three_files_and_prints_the_table(tmp_path, capsys):
     assert printed == (tmp_path / "out" / "report.txt").read_text()
     assert "model \\ harness" in printed and (tmp_path / "out" / "report.md").read_text().startswith("# Coherency results")
     doc = json.loads((tmp_path / "out" / "report.json").read_text())
-    assert doc["format"] == "cohbench-report" and "_draws" not in json.dumps(doc)
+    assert doc["format"] == "cohbench-report" and "_units" not in json.dumps(doc)
 
 
-def test_end_to_end_from_bundles(tmp_path):
-    """Bundles built by hand, scored by the command, reported by the command."""
+def test_end_to_end_from_validated_bundles(tmp_path):
+    """Bundles built by hand, checked by the bundle validator, scored by the
+    command with its validation on, reported by the command."""
     from .build import ROUTING_KEY, STEERING_KEY, Bundle
     from .test_explanation import CAUSE
 
@@ -185,43 +371,51 @@ def test_end_to_end_from_bundles(tmp_path):
     rcfg.write_text(json.dumps({"format": "cohbench-reader-config", "version": 1, "kind": "scripted", "rule": "overlap", "orders": {"count": 6, "seed": 3}}))
     bundles = []
     a = Bundle("routing", {**ROUTING_KEY, "settled_by_workspace": True}, pair="p1", sibling="A", episode="x-a")
+    a.user("Please run the batches and write out/summary.txt.", kind="opening_prompt")
     a.fired()
+    a.batch(a.t, a.t, {"out/summary.txt": "kept: big\n"})
     a.out("Done.")
-    a.batch(5000, 5000, {"out/summary.txt": "kept: big\n"})
     bundles.append(a)
     b = Bundle("routing", pair="p1", sibling="B", episode="x-b")
+    b.user("Please run the batches and write out/summary.txt.", kind="opening_prompt")
     b.fired()
-    b.out("Larger or smaller batch?", label="answerable", reply=ROUTING_KEY["decision_reply"])
-    b.batch(5000, 5000, {"out/summary.txt": "kept: big\n"})
+    b.out("Should the larger or the smaller batch keep the slot?", label="answerable", reply=ROUTING_KEY["decision_reply"], wait=(2000, ["verdict_reply"]))
+    b.user(ROUTING_KEY["decision_reply"])
+    b.batch(b.t, b.t, {"out/summary.txt": "kept: big\n"})
+    b.out("Done.")
     bundles.append(b)
     e = Bundle("explanation", episode="x-e")
     e.user("Why is the build machine slow?", kind="opening_prompt")
     e.answers = [e.out(CAUSE)]          # cut off before the second answer
     bundles.append(e)
     s = Bundle("steering", STEERING_KEY, episode="x-s", baseline={"pkg/a.py": "0"}, baseline_metric={"ops": 100})
-    s.batch(2000, 2000, {"pkg/a.py": "1"}, {"ops": 90})
+    s.user("Please make pkg faster.", kind="opening_prompt")
+    s.batch(s.t, s.t, {"pkg/a.py": "1"}, {"ops": 90})
+    s.out("Done.")
     bundles.append(s)
     for f in ("routing", "explanation", "steering"):
         c = Bundle(f, control=True, expected={"requests": "none"}, episode=f"x-c{f[0]}")
+        c.user("Do exactly this.", kind="opening_prompt")
+        c.out("Done.")
         bundles.append(c)
     res = tmp_path / "results"
     (res / "scores").mkdir(parents=True)
     for bd in bundles:
         d = bd.write(tmp_path / "bundles" / bd.episode)
         out = res / "scores" / f"{bd.episode}.score.json"
-        assert main(["score", str(d), "--out", str(out), "--no-validate", "--reader", str(rcfg)]) == 0
+        assert main(["score", str(d), "--out", str(out), "--reader", str(rcfg)]) == 0, bd.episode
     (res / "index.json").write_text(json.dumps({"format": "cohbench-results-index", "version": 1,
                                                 "episodes": {bd.episode: {"model": "m", "harness": "h"} for bd in bundles}}))
-    rep = report.build(res, resamples=50)
+    rep = report.build(res, resamples=50, scripted_reader=True)
     cell = rows(rep)[0][("m", "h")]
     assert (cell["R"]["value"], cell["E"]["value"], cell["S"]["value"]) == (1.0, 0.5, 1.0)
     assert cell["headline"]["value"] == pytest.approx(100 * 0.5 ** (1 / 3))
     assert all(cell["eligibility"][f]["eligible"] for f in ("routing", "explanation", "steering"))
-    assert cell["headline"]["band"]["ranks"] == "1"
+    assert cell["headline"]["ranked"] and cell["headline"]["band"] is None and rep["scripted_reader"]
 
 
 # ---------------------------------------------------------------------------
-# Rulings of 2026-11-22: pooled eligibility, the task suite, section 2's tables
+# Pooled eligibility, the task suite, section 2's tables
 # ---------------------------------------------------------------------------
 
 def test_eligibility_is_pooled_over_horizons_and_modes(tmp_path):
@@ -234,13 +428,13 @@ def test_eligibility_is_pooled_over_horizons_and_modes(tmp_path):
         assert c["eligibility"]["routing"]["rate"] == pytest.approx(0.85) and c["eligibility"]["routing"]["eligible"] is False
         assert c["capability"] == pytest.approx(0.85) and c["headline"]["ranked"] is False
     assert (h20["controls"]["routing"]["rate"], h80["controls"]["routing"]["rate"]) == (1.0, 0.7)
-    assert "100.0% (100.0%)" not in report.render(rep, False) and "85.0%* (100.0%)" in report.render(rep, False)
+    assert "85.0%* (100.0%)" in report.render(rep, False)
 
 
 def test_pooled_eligibility_can_rank_a_cell_with_a_weak_cell_rate(tmp_path):
     # 10/10 default and 9/10 coached: pooled 19/20 = 95%, so both cells are eligible.
     scores = (S.config_set("a", r_pass=2, pairs=2, e=[1.0], s=[1.0], controls=(10, 10))
-              + S.config_set("a80", r_pass=2, pairs=2, e=[1.0], s=[1.0], controls=(9, 10), mode="coached"))
+              + S.config_set("ac", r_pass=2, pairs=2, e=[1.0], s=[1.0], controls=(9, 10), mode="coached"))
     c = rows(build(tmp_path, scores), "h20", "coached")[0][("m1", "pi")]
     assert c["controls"]["routing"]["rate"] == 0.9 and c["eligibility"]["routing"]["rate"] == 0.95 and c["headline"]["ranked"]
 
@@ -273,10 +467,10 @@ def test_a_configuration_missing_seeds_is_shown_with_its_n_and_flagged(tmp_path)
     rs, _ = rows(build(tmp_path, scores))
     a, b = rs[("m1", "pi")], rs[("m1", "cc")]
     assert a["coverage"]["missing"] == [] and a["headline"]["ranked"]
-    assert (b["coverage"]["instances"], b["coverage"]["of"]) == (a["coverage"]["of"] - 2, a["coverage"]["of"])
+    assert (b["coverage"]["ran"], b["coverage"]["planned"]) == (a["coverage"]["planned"] - 2, a["coverage"]["planned"])
     assert b["headline"]["ranked"] is False and b["headline"]["band"] is None
-    assert any(x.startswith("missing 2 of the table's") for x in b["headline"]["unranked_because"])
-    assert b["headline"]["computed"] == pytest.approx(100) and b["R"]["pairs"] == 2
+    assert any(x.startswith("ran ") and "planned task instances" in x for x in b["headline"]["unranked_because"])
+    assert b["headline"]["value"] == pytest.approx(100) and b["R"]["pairs"] == 2
 
 
 def test_harness_effect(tmp_path):
@@ -284,40 +478,27 @@ def test_harness_effect(tmp_path):
     eff = rep["sections"][0]["harness_effect"]
     assert [(r["model"], r["horizon"], r["mode"]) for r in eff] == [("m1", "h20", "default")]
     r = eff[0]
-    assert r["spread"] == pytest.approx(50) and [x["harness"] for x in r["harnesses"]] == ["cc", "pi"]
-    lo, hi = r["interval"]
-    # pi is 100 in every draw and cc lies in [23.2, 63.0], so the spread lies in [37, 76.8].
-    assert 36 < lo < 50 < hi < 77 and r["flags"] == []
+    assert r["headline"]["value"] == pytest.approx(50) and r["harnesses"] == ["cc", "pi"]
+    lo, hi = r["headline"]["interval"]
+    # pi is 100 on every draw, so the spread is 100 minus cc's headline on the same seeds.
+    assert 36 < lo < 50 < hi < 77
 
 
 def test_coached_gap(tmp_path):
     scores = (S.config_set("a", r_pass=4, pairs=4, e=[1.0] * 4, s=[1.0] * 4)
-              + S.config_set("a80", r_pass=4, pairs=4, e=[0.5] * 4, s=[1.0] * 4, mode="coached"))
+              + S.config_set("ac", r_pass=4, pairs=4, e=[0.5] * 4, s=[1.0] * 4, mode="coached"))
     g = build(tmp_path, scores)["sections"][0]["coached_gap"]
-    assert len(g) == 1 and g[0]["horizon"] == "h20" and g[0]["flags"] == []
+    assert len(g) == 1 and g[0]["horizon"] == "h20" and "not_comparable" not in g[0]["E"]
     assert g[0]["E"]["value"] == pytest.approx(-0.5) and g[0]["E"]["interval"] == pytest.approx([-0.5, -0.5])
     assert g[0]["headline"]["value"] == pytest.approx(100 * 0.5 ** (1 / 3) - 100)
     assert g[0]["R"]["value"] == 0.0
 
 
-def test_scripted_reader_is_marked(tmp_path):
-    rep = build(tmp_path, main_set())
-    cell = rows(rep)[0][("m1", "pi")]
-    assert cell["E"]["scripted_reader"] is True and cell["E"]["reader_kind"] == "scripted"
-    text = report.render(rep, False)
-    assert "(scripted reader)" in text and "not a measurement of the agent" in text
-
-
-def test_hosted_reader_is_not_marked_scripted(tmp_path):
-    hosted = {**S.READER, "kind": "hosted"}
-    scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True), S.expl("a-3", 1, 1.0, reader=hosted), S.steer("a-4", 1, 1.0)]
-    cell = rows(build(tmp_path, scores))[0][("m1", "pi")]
-    assert cell["E"]["scripted_reader"] is False and cell["E"]["reader_kind"] == "hosted"
-
-
 def test_sanity_bound_on_the_command_line(tmp_path):
-    root = S.write(tmp_path / "results", [S.expl("a-1", 1, 1.0, no_answer=(3, 6)), S.steer("a-2", 1, 1.0)], CONFIGS)
-    # 3 of 6 with no answer: 2.08 standard errors above chance, so it fails at the default 2 and passes at 2.5.
+    scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True), S.steer("a-3", 1, 1.0)]
+    scores += [S.expl(f"a-e{i}", i, 1.0, no_answer=(3, 6)) for i in range(6)]
+    root = S.write(tmp_path / "results", scores, CONFIGS)
+    # Six items at 3 of 6: 0.5 against a bound of 1/6 + z * 0.152, which fails at z = 2 and passes at z = 2.5.
     assert main(["report", str(root), "--out", str(tmp_path / "o1"), "--resamples", "10"]) == 0
     assert main(["report", str(root), "--out", str(tmp_path / "o2"), "--resamples", "10", "--z", "2.5"]) == 0
     a = json.loads((tmp_path / "o1" / "report.json").read_text())

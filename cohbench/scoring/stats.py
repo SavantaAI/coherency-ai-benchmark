@@ -127,14 +127,19 @@ def spearman(xs: list[float], ys: list[float]) -> float | None:
     return sxy / math.sqrt(sxx * syy)
 
 
-def near_chance(correct: int, n: int, chance: float, z: float, two_sided: bool) -> dict[str, Any]:
+def near_chance(correct: int, n: int, chance: float, z: float, two_sided: bool, clusters: int | None = None) -> dict[str, Any]:
     """A sanity check on a reader: is the observed accuracy within z standard
-    errors of chance (two-sided), or not above it (one-sided)?"""
-    if n == 0:
-        return {"accuracy": None, "n": 0, "passed": None}
+    errors of chance (two-sided), or not above it (one-sided)? The `n`
+    observations come in `clusters` items whose answers need not be
+    independent (one item's option orders), so the standard error counts
+    items: se = sqrt(chance (1 - chance) / clusters). Without `clusters`,
+    every observation is its own item."""
+    m = n if clusters is None else clusters
+    if n == 0 or m == 0:
+        return {"accuracy": None, "n": n, "clusters": m, "passed": None}
     acc = correct / n
-    se = math.sqrt(chance * (1 - chance) / n)
+    se = math.sqrt(chance * (1 - chance) / m)
     hi = chance + z * se
     lo = chance - z * se
     ok = (lo <= acc <= hi) if two_sided else (acc <= hi)
-    return {"accuracy": acc, "n": n, "chance": chance, "bound": [lo, hi] if two_sided else [None, hi], "passed": ok}
+    return {"accuracy": acc, "n": n, "clusters": m, "chance": chance, "bound": [lo, hi] if two_sided else [None, hi], "passed": ok}

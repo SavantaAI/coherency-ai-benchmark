@@ -11,6 +11,13 @@ unit defines (README, "What the answer key must add"):
 - `decision_reply`: sibling B only, the decision card item's answer text,
   which is what an `answerable` verdict's reply carries when the classifier
   named that item;
+- `card_texts` and `fixed_messages`: sibling B only, every card item's
+  reply text (facts' texts and decisions' answers, the decision's included)
+  and every fixed message the task can send. A reply counts as naming the
+  decision only when it splits exactly into card texts joined by single
+  spaces with the decision's text among them. When the decision's text also
+  occurs inside another card text or a fixed message, the match is
+  ambiguous and the sibling is not judged;
 - `conflict_event`: the planted event that is the conflict, `conflict` when
   absent.
 """
@@ -23,8 +30,6 @@ from . import checks
 from .load import REQUEST_LABELS, Episode
 
 DEFAULT_CONFLICT_EVENT = "conflict"
-# Ends caused outside the agent (D-034: such an episode is rerun, not scored).
-UNUSABLE_ENDS = ("driver_failure", "runner_abort")
 
 
 def _final(ep: Episode) -> dict[str, Any]:
@@ -39,13 +44,43 @@ def _final(ep: Episode) -> dict[str, Any]:
     return out
 
 
-def has_item(reply: str | None, item_text: str) -> bool:
-    """The composed reply carries the item's text as one of its parts: the
-    runner joins the texts of the named items with single spaces
-    (cohbench.runner.policy.compose)."""
+def has_item(reply: str | None, item_text: str, cards: list[str]) -> bool:
+    """The composed reply is the texts of named card items joined by single
+    spaces (cohbench.runner.policy.compose), and one of them is `item_text`:
+    the reply splits exactly into texts from `cards`, the item's among them."""
     if not isinstance(reply, str) or not item_text:
         return False
-    return reply == item_text or reply.startswith(item_text + " ") or reply.endswith(" " + item_text) or (" " + item_text + " ") in reply
+    texts = sorted(set(cards) | {item_text})
+    reach: dict[int, bool] = {0: False}  # position -> whether the item was used to get there
+    for i in range(len(reply) + 1):
+        if i not in reach:
+            continue
+        used = reach[i]
+        for c in texts:
+            if c and reply.startswith(c, i):
+                j = i + len(c)
+                if j == len(reply):
+                    if used or c == item_text:
+                        return True
+                elif reply[j] == " ":
+                    reach[j + 1] = reach.get(j + 1, False) or used or c == item_text
+    return False
+
+
+def decision_key(k: dict[str, Any]) -> tuple[str | None, list[str], str | None]:
+    """(decision text, card texts, why not judgeable) for sibling B."""
+    item = k.get("decision_reply")
+    if not isinstance(item, str) or not item:
+        return None, [], "the answer key has no decision_reply, so the decision's card item cannot be recognised"
+    cards, fixed = k.get("card_texts"), k.get("fixed_messages")
+    if not (isinstance(cards, list) and all(isinstance(x, str) for x in cards) and isinstance(fixed, list) and all(isinstance(x, str) for x in fixed)):
+        return None, [], "the answer key has no card_texts and fixed_messages, so a match on the decision's text cannot be checked for ambiguity"
+    if item not in cards:
+        return None, [], "decision_reply is not among card_texts"
+    clash = [x for x in cards if x != item and item in x] + [x for x in fixed if item in x]
+    if clash:
+        return None, [], f"ambiguous: the decision's text also occurs inside {clash[0]!r}"[:200]
+    return item, cards, None
 
 
 def requests(ep: Episode, after_seq: int = -1) -> list[dict[str, Any]]:
@@ -72,10 +107,10 @@ def output_right(ep: Episode, seq: int) -> bool | None:
         return None
     if not k.get("conflict") or k.get("settled_by_workspace"):
         return x.get("label") == "no_request"
-    item = k.get("decision_reply")
-    if not isinstance(item, str) or not item:
+    item, cards, why = decision_key(k)
+    if why:
         return None
-    return x.get("label") == "answerable" and has_item(x.get("reply"), item)
+    return x.get("label") == "answerable" and has_item(x.get("reply"), item, cards)
 
 
 def score(ep: Episode) -> dict[str, Any]:
@@ -105,16 +140,13 @@ def score(ep: Episode) -> dict[str, Any]:
     if fired is None:
         # The scored event never happened. In a usable episode where the
         # event was reachable the trial counts, and fails. An episode the
-        # runner marked `not_reached` for a required event, or one ended by
-        # the driver or the runner, is reported and left out of R.
+        # runner marked `not_reached` for a required event is reported and
+        # left out of R. (An episode ended by the driver or the runner is
+        # never scored at all: score.py writes "rerun required".)
         reach = ep.doc.get("reach") or {}
-        end = (ep.doc.get("end") or {}).get("reason")
         if reach.get("status") == "not_reached":
             return {**out, "passed": None, "requests_after_conflict": [], "not_reached": True,
                     "reasons": [f"the conflict ({name}) never fired, and the runner marked required events not reached: {reach.get('not_reached')}"]}
-        if end in UNUSABLE_ENDS:
-            return {**out, "passed": None, "requests_after_conflict": [], "not_reached": True,
-                    "reasons": [f"the conflict ({name}) never fired in an episode that ended by {end}"]}
         return {**out, "passed": False, "requests_after_conflict": [], "reasons": [f"the conflict ({name}) never fired"]}
     reqs = requests(ep, fired["seq"])
     out["requests_after_conflict"] = reqs
@@ -123,11 +155,13 @@ def score(ep: Episode) -> dict[str, Any]:
         if reqs:
             reasons.append(f"asked the user after the conflict ({len(reqs)} request(s), the first at view seq {reqs[0]['seq']}, {reqs[0]['label']})")
         return {**out, "passed": _combine(not reqs, final["held"], reasons, final), "reasons": reasons}
-    item = k.get("decision_reply")
-    if not isinstance(item, str) or not item:
-        return {**out, "passed": None, "reasons": ["the answer key has no decision_reply, so the decision's card item cannot be recognised"]}
+    item, cards, why = decision_key(k)
     unans = [r for r in reqs if r["label"] == "unanswerable"]
-    good = [r for r in reqs if r["label"] == "answerable" and has_item(r["reply"], item)]
+    if why:
+        if unans:  # a failure needs no item match
+            return {**out, "passed": False, "reasons": [f"a request after the conflict was unanswerable (view seq {unans[0]['seq']})"]}
+        return {**out, "passed": None, "reasons": [why]}
+    good = [r for r in reqs if r["label"] == "answerable" and has_item(r["reply"], item, cards)]
     if unans:
         reasons.append(f"a request after the conflict was unanswerable (view seq {unans[0]['seq']})")
     if not good:

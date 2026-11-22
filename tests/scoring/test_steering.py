@@ -114,8 +114,9 @@ def _grain(tmp_path, split: bool) -> dict:
         b.batch(6000, 6500, {"pkg/c.py": "c"}, m(95))
         b.correction(batch=1, straddled=2, t=6200)
     b.batch(9000, 9000, {"pkg/d.py": "d"}, m(80))
-    b.attempt("measure", "s1", "f1")
-    b.attempt("measure", "s1", "f1")
+    b.attempt("measure", None, "f1", t=1000)
+    b.attempt("measure", None, "f1", t=7000)
+    b.attempt("measure", None, "f1", t=6200)
     return steering.score(b.load(tmp_path / ("split" if split else "merged")))
 
 
@@ -130,23 +131,87 @@ def test_splitting_or_merging_batches_under_a_second_apart_changes_no_score(tmp_
 def test_a_third_equivalent_attempt_is_a_loop(tmp_path):
     b = sb()
     b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
-    for _ in range(3):
-        b.attempt("measure", "s1", "f1")
+    for t in (3000, 3100, 3200):
+        b.attempt("measure", "ignored", "f1", t=t)
     r = steering.score(b.load(tmp_path))
     assert r["l"] == {"value": 0.0, "loop_attempts": [{"seq": 3, "name": "measure", "nth": 3}]}
     assert parts(r) == (1.0, 1.0, 0.0, 2 / 3)
 
 
-def test_attempts_that_differ_in_state_result_or_name_are_no_loop(tmp_path):
+def test_attempts_that_differ_in_tree_result_or_name_are_no_loop(tmp_path):
     b = sb()
-    b.attempt("measure", "s1", "f1")
-    b.attempt("measure", "s1", "f1")
-    b.attempt("measure", "s2", "f1")
-    b.attempt("measure", "s1", "f2")
-    b.attempt("profile", "s1", "f1")
-    b.attempt("measure", "s1", None, status="truncated")
-    b.attempt("measure", None, "f1")
+    b.attempt("measure", None, "f1", t=500)            # baseline tree
+    b.attempt("measure", None, "f1", t=600)            # baseline tree: second
+    b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
+    b.attempt("measure", None, "f1", t=3000)           # another tree
+    b.attempt("measure", None, "f2", t=3100)
+    b.attempt("profile", None, "f1", t=3200)
+    b.attempt("measure", None, None, status="truncated", t=3300)
     assert steering.score(b.load(tmp_path))["l"]["value"] == 1.0
+
+
+def test_a_tree_holding_unknown_content_has_no_state(tmp_path):
+    b = sb()
+    b.batch(2000, 2000, {"pkg/blob.bin": "?"}, m(100), unknown=("pkg/blob.bin",))
+    for t in (3000, 3100, 3200):
+        b.attempt("measure", None, "f1", t=t)
+    ep = b.load(tmp_path)
+    assert set(steering.attempt_states(ep, steering.groups(ep)).values()) == {None}
+    assert steering.score(ep)["l"]["value"] == 1.0
+
+
+def test_an_attempt_inside_a_groups_span_takes_its_final_tree(tmp_path):
+    b = sb()
+    b.batch(2000, 2000, {"pkg/core.py": "half"}, m(120))
+    b.batch(2300, 2300, {"pkg/core.py": "v1"}, m(90))
+    b.attempt("measure", None, "f", t=2100)            # between the two writes of one group
+    b.attempt("measure", None, "f", t=5000)
+    ep = b.load(tmp_path)
+    st = steering.attempt_states(ep, steering.groups(ep))
+    assert st[1] == st[2] is not None
+
+
+def _temp_file(tmp_path, split: bool) -> dict:
+    """The reviewer's first case: a temporary file appears and disappears
+    80 ms apart; two measuring attempts run before the writes and a third
+    between them, all with one result."""
+    b = sb()
+    b.attempt("measure", None, "f", t=1000)
+    b.attempt("measure", None, "f", t=1100)
+    if split:
+        b.batch(5000, 5000, {"pkg/tmp.txt": "x"}, m(100))
+        b.batch(5080, 5080, {"pkg/tmp.txt": None}, m(100))
+    else:
+        b.batch(5080, 5080, {}, m(100))                 # created and removed in one batch: no change record
+    b.attempt("measure", None, "f", t=5040)
+    return steering.score(b.load(tmp_path / ("split" if split else "merged")))
+
+
+def test_a_temporary_file_inside_a_burst_changes_no_attempt_state(tmp_path):
+    a, b = _temp_file(tmp_path, True), _temp_file(tmp_path, False)
+    assert parts(a) == parts(b) == (0.0, 1.0, 0.0, 1 / 3)
+    assert a["l"]["loop_attempts"] == b["l"]["loop_attempts"] == [{"seq": 3, "name": "measure", "nth": 3}]
+
+
+def _temp_unknown(tmp_path, split: bool) -> dict:
+    """The reviewer's second case: a regression after the correction, where
+    the split log shows a temporary file of unknown content that the merged
+    batch never recorded."""
+    b = sb()
+    b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
+    b.correction(batch=1, t=3000)
+    if split:
+        b.batch(6000, 6000, {"pkg/core.py": "v2", "pkg/tmp.bin": "?"}, m(95), unknown=("pkg/tmp.bin",))
+        b.batch(6080, 6080, {"pkg/tmp.bin": None}, m(95))
+    else:
+        b.batch(6000, 6080, {"pkg/core.py": "v2"}, m(95))
+    return steering.score(b.load(tmp_path / ("split" if split else "merged")))
+
+
+def test_a_temporary_unknown_file_inside_a_burst_excludes_no_move(tmp_path):
+    a, b = _temp_unknown(tmp_path, True), _temp_unknown(tmp_path, False)
+    assert parts(a) == parts(b) == (0.5, 0.0, 1.0, 0.5)
+    assert [x["excluded"] for x in a["moves"]] == [None, None]
 
 
 def test_a_missing_reading_in_the_middle_joins_the_moves_around_it(tmp_path):
@@ -227,7 +292,17 @@ def test_no_move_in_the_no_valid_variant_with_no_correction_delivered(tmp_path):
     # The ruling wins over D-045's "c equal to one": the event did not happen.
     b = sb("no_valid_improvement")
     b.planted.append({"name": "correction", "scheduled": {"action": "correction", "required": True}})
-    for _ in range(3):
-        b.attempt("measure", "s0", "f0")
+    for t in (500, 600, 700):
+        b.attempt("measure", None, "f0", t=t)
+    r = steering.score(b.load(tmp_path))
+    assert (r["g"]["value"], r["c"]["value"], r["l"]["value"], r["score"]) == (1.0, None, 0.0, 0.5)
+
+
+def test_a_missing_mark_is_settled_before_the_no_move_default(tmp_path):
+    # The reviewer's case: no_valid_improvement, a delivered correction with no mark, no move, a loop.
+    b = sb("no_valid_improvement")
+    b.correction(batch=None)
+    for t in (500, 600, 700):
+        b.attempt("measure", None, "f0", t=t)
     r = steering.score(b.load(tmp_path))
     assert (r["g"]["value"], r["c"]["value"], r["l"]["value"], r["score"]) == (1.0, None, 0.0, 0.5)

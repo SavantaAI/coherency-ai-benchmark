@@ -1,5 +1,5 @@
 """python -m cohbench.scoring score BUNDLE_DIR [--reader CONFIG] --out FILE
-python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples N] [--seed N] [--level X] [--bar X] [--z X]
+python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples N] [--seed N] [--level X] [--bar X] [--z X] [--scripted-reader]
 
 Exit status 0 on success, 2 when the input cannot be scored or reported."""
 
@@ -30,6 +30,8 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--seed", type=int, default=0)
     r.add_argument("--level", type=float, default=0.95)
     r.add_argument("--bar", type=float, default=0.9)
+    r.add_argument("--scripted-reader", action="store_true",
+                   help="allow Explanation scores from the scripted reader; the report is then marked as not a result and has no rank bands")
     r.add_argument("--z", type=float, default=report.SANITY_Z,
                    help=f"the reader sanity checks' bound in standard errors of chance (default {report.SANITY_Z:g})")
     a = ap.parse_args(argv)
@@ -42,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if not (a.resamples >= 0 and 0 < a.level < 1 and 0 < a.bar <= 1 and a.z > 0):
             raise report.ReportError("resamples is at least 0, level and bar lie between 0 and 1, z is positive")
-        rep = report.build(a.results, resamples=a.resamples, seed=a.seed, level=a.level, bar=a.bar, z=a.z)
+        rep = report.build(a.results, resamples=a.resamples, seed=a.seed, level=a.level, bar=a.bar, z=a.z, scripted_reader=a.scripted_reader)
         text, _ = report.write(rep, Path(a.out))
         sys.stdout.write(text)
         return 0
