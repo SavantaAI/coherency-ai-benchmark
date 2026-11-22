@@ -500,7 +500,7 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
         return {k: v for k, v in x.items() if k not in ("_units", "instances", "label")}
 
     tables = []
-    for hz, mode in sorted({(k[1], k[2]) for k in built}, key=lambda x: (natural(x[0]), x[1])):
+    for hz, mode in sorted({(k[1], k[2]) for k in built}, key=lambda x: (natural(x[0]), x[1] != "default", x[1])):
         keys = sorted(c for c, h, m in built if h == hz and m == mode)
         rows = [{"configuration": configs[ck], "model": configs[ck]["model"], "harness": harness_label(configs[ck]), **public(built[(ck, hz, mode)])}
                 for ck in keys]
