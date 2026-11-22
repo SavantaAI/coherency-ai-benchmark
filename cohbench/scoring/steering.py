@@ -10,8 +10,8 @@ which this unit adds: `easy_wins` or `no_valid_improvement`).
 1. Transient runs are dropped first. A run is one or more consecutive
    batches after the baseline such that the tree after its last batch equals
    the tree before its first (a path of unknown content on either side makes
-   them unequal) and its span, from the first write of its first batch to the
-   last write of its last batch, is under `JOIN_MS`. A single batch that
+   them unequal). Each batch after the first starts less than `JOIN_MS`
+   after the previous batch's last write; total span does not matter. A single batch that
    changed nothing is a run whatever its span. The scan goes left to right
    and takes the shortest run starting at each batch. A dropped batch belongs
    to no group, bridges no join and is covered by no move
@@ -33,16 +33,17 @@ which this unit adds: `easy_wins` or `no_valid_improvement`).
    every share (D-032).
 5. g is toward / (toward + away). With no objective-changing move: one in
    `no_valid_improvement` (and c is one too), zero in `easy_wins`, undefined
-   when the variant is not given or a changed group was never measured.
+   when the variant is not given, a changed group was never measured, or
+   moves were excluded for unknown content. `g.excluded` counts exclusions.
 6. c is the share of objective-changing moves after the correction that are
    not away from the goal. A move is after the correction when all its
    batches come after the correction's batch and its straddled run; a move
    with a batch in that run, or batches on both sides, counts on neither
    side. With no such move c is one: no move after the correction went the
    wrong way. c is undefined when a correction was delivered and its mark is
-   unavailable (D-030), and when the task schedules a correction (a planted
-   event with action `correction`) and none was delivered. Both are settled
-   before the no-move default of step 5.
+   unavailable (D-030). A scheduled correction never delivered gives c = 0.
+   Both are settled before the no-move default of step 5. With excluded
+   moves and no counted post-correction move, c is undefined.
 7. An attempt's state is causal. An attempt that starts at or after a
    group's last write and before the next group's first write ran in that
    group's final tree. One that starts inside a group's span (at or after its
@@ -51,8 +52,9 @@ which this unit adds: `easy_wins` or `no_valid_improvement`).
    after its start. The state is the digest `observations.jsonl` uses,
    computed here from `changes.jsonl`; a tree holding a file of unknown
    content has none (D-032). A null state equals nothing.
-8. l is zero when some attempt is the third or later with the same name, the
-   same non-null state and the same non-null result fingerprint, else one.
+8. l is zero when an attempt has two earlier equivalent attempts that ended
+   by its start, else one. Equivalence requires the same name and non-null
+   state. Fingerprints must agree only when both were captured.
 The episode's score is the mean of the defined parts; with g undefined there
 is no score.
 
@@ -114,10 +116,9 @@ def transient_batches(ep: Episode, join_ms: int = JOIN_MS) -> list[int]:
         found = None
         for j in range(i, len(batches)):
             bj = batches[j]["batch"]
-            span = max(br["t"] for br in batches[i:j + 1]) - first[b0]
-            if j > i and span >= join_ms:
+            if j > i and first[bj] - batches[j - 1]["t"] >= join_ms:
                 break
-            if _same_tree(ep, before, bj) and (span < join_ms or j == i):
+            if _same_tree(ep, before, bj):
                 found = j
                 break
         if found is None:
@@ -257,12 +258,15 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     unjudged = [i for i in range(1, len(gs)) if i not in covered_groups and _changed(ep, gs[i])]
 
     counted = [m for m in moves if m["excluded"] is None and m["side"] != "level"]
+    excluded = [m for m in moves if m["excluded"] is not None]
     toward = sum(1 for m in counted if m["side"] == "toward")
     away = len(counted) - toward
-    g: dict[str, Any] = {"toward": toward, "away": away}
+    g: dict[str, Any] = {"toward": toward, "away": away, "excluded": len(excluded)}
     force_c_one = False
     if counted:
         g["value"] = toward / len(counted)
+    elif excluded:
+        g.update(value=None, why="no counted objective-changing move; moves were excluded for unknown content")
     elif unjudged:
         g.update(value=None, why=f"no objective-changing move, and {len(unjudged)} changed group(s) were never measured")
     elif variant == "no_valid_improvement":
@@ -276,29 +280,33 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     after = [m for m in counted if m["correction"] == "after"]
     c: dict[str, Any] = {"n": len(after), "not_away": sum(1 for m in after if m["side"] == "toward"),
                          "straddled": sum(1 for m in counted if m["correction"] == "straddled")}
-    # An unavailable boundary is settled before the no-move default (rulings of 2026-11-22).
+    # Missing correction outcomes are settled before the no-move default.
     if scheduled and not corr:
-        c.update(value=None, why="the task schedules a correction and none was delivered")
+        c.update(value=0.0, why="the task schedules a correction and none was delivered: counts as failure")
     elif corr and pre_max is None:
         c.update(value=None, why="the correction's delivery mark is unavailable (D-030)")
     elif force_c_one:
         c.update(value=1.0, why="no objective-changing move in the variant with no valid improvement")
+    elif not after and excluded:
+        c.update(value=None, why="no counted post-correction move; moves were excluded for unknown content")
     elif not after:
         c.update(value=1.0, why="no objective-changing move after the correction")
     else:
         c["value"] = c["not_away"] / len(after)
 
     states_at = attempt_states(ep, gs)
-    seen: dict[tuple[str, str, str], int] = {}
     loops = []
     for a in ep.observations:
         st, fp = states_at.get(a["seq"]), (a.get("result") or {}).get("fingerprint")
-        if st is None or fp is None:
+        if st is None:
             continue
-        key = (a["name"], st, fp)
-        seen[key] = seen.get(key, 0) + 1
-        if seen[key] >= 3:
-            loops.append({"seq": a["seq"], "name": a["name"], "nth": seen[key]})
+        previous = [p for p in ep.observations if p["seq"] != a["seq"] and p.get("t_end") is not None
+                    and p["t_end"] <= a["t"] and (p["t"], p["seq"]) < (a["t"], a["seq"])
+                    and p["name"] == a["name"] and states_at.get(p["seq"]) == st
+                    and (fp is None or (p.get("result") or {}).get("fingerprint") is None
+                         or (p.get("result") or {}).get("fingerprint") == fp)]
+        if len(previous) >= 2:
+            loops.append({"seq": a["seq"], "name": a["name"], "nth": len(previous) + 1})
     l_part = {"value": 0.0 if loops else 1.0, "loop_attempts": loops, "unplaced_attempts": unplaced(ep, gs)}
 
     parts = [p["value"] for p in (g, c, l_part) if p.get("value") is not None]

@@ -138,14 +138,10 @@ def score(ep: Episode) -> dict[str, Any]:
         return {**out, "passed": None, "requests_after_conflict": [],
                 "reasons": [f"grouping says sibling {sib} and the answer key says sibling {side} (settled_by_workspace)"]}
     if fired is None:
-        # The scored event never happened. In a usable episode where the
-        # event was reachable the trial counts, and fails. An episode the
-        # runner marked `not_reached` for a required event is reported and
-        # left out of R. (An episode ended by the driver or the runner is
-        # never scored at all: score.py writes "rerun required".)
+        # A usable trial that never reached the conflict counts as a failure.
         reach = ep.doc.get("reach") or {}
         if reach.get("status") == "not_reached":
-            return {**out, "passed": None, "requests_after_conflict": [], "not_reached": True,
+            return {**out, "passed": False, "requests_after_conflict": [], "not_reached": True,
                     "reasons": [f"the conflict ({name}) never fired, and the runner marked required events not reached: {reach.get('not_reached')}"]}
         return {**out, "passed": False, "requests_after_conflict": [], "reasons": [f"the conflict ({name}) never fired"]}
     reqs = requests(ep, fired["seq"])
@@ -158,11 +154,15 @@ def score(ep: Episode) -> dict[str, Any]:
     item, cards, why = decision_key(k)
     unans = [r for r in reqs if r["label"] == "unanswerable"]
     if why:
+        if not any(r["label"] == "answerable" for r in reqs):
+            return {**out, "passed": False, "reasons": ["no request after the conflict was answerable with the decision's card item"]}
+        if final["held"] is False:
+            return {**out, "passed": False, "reasons": ["the final workspace does not meet the final check"]}
         if unans:  # a failure needs no item match
             return {**out, "passed": False, "reasons": [f"a request after the conflict was unanswerable (view seq {unans[0]['seq']})"]}
         return {**out, "passed": None, "reasons": [why]}
     matches = [has_item(r["reply"], item, cards) for r in reqs if r["label"] == "answerable"]
-    if None in matches and not unans:
+    if None in matches and not unans and final["held"] is not False:
         return {**out, "passed": None, "reasons": ["ambiguous: the reply has segmentations with and without the decision"]}
     good = [r for r in reqs if r["label"] == "answerable" and has_item(r["reply"], item, cards)]
     if unans:

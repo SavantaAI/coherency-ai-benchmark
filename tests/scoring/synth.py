@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,7 @@ def base(eid: str, family: str, seed: int, *, horizon: str = "h20", mode: str = 
     # The task digest: by default a function of the instance, so every configuration faced the same suite.
     digest = task or hashlib.sha256(json.dumps(instance, sort_keys=True).encode()).hexdigest()
     return {
+        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
         "task": {"sha256": digest, "instance": instance, "source": "derived"}, "rerun_required": rerun_required,
         "format": "cohbench-score", "version": 1, "episode": eid, "bundle_sha256": "0" * 64,
         "grouping": grouping,

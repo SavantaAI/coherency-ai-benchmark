@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from cohbench.scoring import steering
 
 from .build import STEERING_KEY, Bundle
@@ -146,7 +148,7 @@ def test_attempts_that_differ_in_tree_result_or_name_are_no_loop(tmp_path):
     b.attempt("measure", None, "f1", t=3000)           # another tree
     b.attempt("measure", None, "f2", t=3100)
     b.attempt("profile", None, "f1", t=3200)
-    b.attempt("measure", None, None, status="truncated", t=3300)
+    b.attempt("measure", None, "f3", t=3300)
     assert steering.score(b.load(tmp_path))["l"]["value"] == 1.0
 
 
@@ -317,23 +319,23 @@ def test_direction_max(tmp_path):
     assert steering.score(b.load(tmp_path))["moves"][0]["side"] == "toward"
 
 
-def test_a_scheduled_correction_never_delivered_leaves_c_undefined(tmp_path):
+def test_a_scheduled_correction_never_delivered_counts_as_failure(tmp_path):
     b = sb()
     b.planted.append({"name": "correction", "scheduled": {"action": "correction", "required": True}})
     b.batch(2000, 2000, {"pkg/core.py": "v1"}, m(90))
     r = steering.score(b.load(tmp_path))
     assert r["correction"] == {"delivered": False, "scheduled": True}
-    assert r["c"]["value"] is None and r["parts_defined"] == ["g", "l"] and r["score"] == 1.0
+    assert r["c"]["value"] == 0 and r["parts_defined"] == ["g", "c", "l"] and r["score"] == pytest.approx(2 / 3)
 
 
 def test_no_move_in_the_no_valid_variant_with_no_correction_delivered(tmp_path):
-    # The ruling wins over D-045's "c equal to one": the event did not happen.
+    # Not reaching a scheduled correction counts as a failed trial.
     b = sb("no_valid_improvement")
     b.planted.append({"name": "correction", "scheduled": {"action": "correction", "required": True}})
     for t in (500, 600, 700):
         b.attempt("measure", None, "f0", t=t)
     r = steering.score(b.load(tmp_path))
-    assert (r["g"]["value"], r["c"]["value"], r["l"]["value"], r["score"]) == (1.0, None, 0.0, 0.5)
+    assert (r["g"]["value"], r["c"]["value"], r["l"]["value"], r["score"]) == (1.0, 0.0, 0.0, 1 / 3)
 
 
 def test_a_missing_mark_is_settled_before_the_no_move_default(tmp_path):

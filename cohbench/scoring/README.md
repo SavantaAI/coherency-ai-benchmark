@@ -3,11 +3,11 @@
 `cohbench/scoring` turns scoring bundles into per-episode score files, and
 score files into the results report (SPEC.md sections 2, 5, 6 and 7; the
 decisions are D-045, D-018, D-034, D-040, D-042). Python 3.12 or later,
-standard library only.
+standard library only. The release scoring runtime is Python 3.12.
 
 ```sh
 python -m cohbench.scoring score BUNDLE_DIR [--reader CONFIG] [--reader-cache FILE] --out FILE
-python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--judged-bar 0.9] [--plan FILE] [--require-plan] [--z 2] [--scripted-reader]
+python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--judged-bar 0.9] [--plan FILE] [--require-plan] [--allow-mixed-runtimes] [--z 2] [--scripted-reader]
 ```
 
 `score` runs the trajectory unit's bundle validator first and refuses a
@@ -29,6 +29,21 @@ end-to-end test does not. `report` writes `report.json`, `report.md` and
 | `stats.py` | Headline, bootstrap, intervals, rank bands, Spearman, the sanity bound |
 | `rng.py` | SplitMix64 and the option orders |
 | `report.py` | The report's refusals, cells, paired comparisons and the three renderings |
+
+## Scoring runtime
+
+Every score file records `python_version`, its Python major and minor
+version, including rerun markers and unjudged episodes. The report prints
+those versions and refuses to combine different versions unless
+`--allow-mixed-runtimes` is supplied. Such a report is marked
+`not_release: true` and publishes no bands. Older score files with no runtime
+remain readable as `not recorded`, also without release bands; mixing them
+with versioned scores requires the same override.
+
+Regex and Unicode behavior can change between Python versions. Release
+scores use Python 3.12. Ordinary-input regression tests still compare score
+and report bytes across 3.12 and 3.15 and different hash seeds, after
+normalizing the runtime metadata alone.
 
 ## Blindness
 
@@ -71,8 +86,9 @@ is unjudged with reason `no reset`. Its episode remains in planned coverage
 and contributes no R, E, S or eligibility control outcome. New bundles use
 `episode.json.resets`, one outcome per scheduled reset; older bundles use
 the scorer view's `controlled_reset` audit. Reaching the reset event or
-sending a notice alone does not count as performing the reset. A horizon
-label alone does not impose this requirement.
+sending a notice alone does not count as performing the reset. Horizon
+`h80` requires a reset; if its task schedules none, the episode is unjudged
+with reason `no reset scheduled`. This applies to controls as well.
 
 An answer-key `handoff` object names an `event` and `chores`, a list of
 `{id, check}` entries using the existing final-workspace checks. A score
@@ -153,16 +169,17 @@ answerable reply from the named card items' texts joined by single spaces
 splits exactly into texts from `card_texts`, joined by single spaces, with
 `decision_reply` among them. The match is ambiguous when `decision_reply`
 also occurs inside another card text or inside one of `fixed_messages`; the
-sibling is then not judged. Without `card_texts` and `fixed_messages` the
-ambiguity cannot be checked, so a sibling B that would otherwise pass is not
+sibling is then not judged unless a known failure decides it. Without
+`card_texts` and `fixed_messages` the ambiguity cannot be checked, so a sibling B that would otherwise pass is not
 judged. An unanswerable request after the conflict fails the sibling either
-way, since that needs no match.
+way, since that needs no match. A failed final check or the absence of any
+answerable request also decides a failure without a match.
 
-A conflict that never fired makes the sibling fail only when the event was
-reachable. When the runner marked a required event `not_reached`, the
-sibling is not judged and carries `not_reached: true`. Its pair is left out
-of R and listed under R's `not_reached` with both episode ids, and the
-episode also appears in the cell's event reach.
+A conflict that never fired makes a usable sibling fail, including when the
+runner marked it `not_reached`. The score retains `not_reached: true` and
+both episode ids stay in R's reach diagnostics. The pair counts in R as a
+failure, and the episode remains visible in the cell's event reach. The
+report applies this rule to older score files carrying `not_reached` too.
 
 A failing behaviour fails the sibling even when the final check is
 undecided. A passing behaviour with an undecided or missing final check is
@@ -296,7 +313,8 @@ client was.
 `reader_digest`, and `choice`, a letter. Existing requests replay their
 cached choice and new requests append a record. Each score records its
 used requests and choices in `reader_requests`, including reader-based
-controls. The report refuses different choices for the same reader and
+controls. A cache file lock covers lookup, the reader call and append, so
+concurrent scorers reuse the same stored choice. The report refuses different choices for the same reader and
 request digest and names the request and episodes. This also makes sanity
 item deduplication independent of conflicting reader outputs. Configs
 accept only fields used by their kind and scripted rule.
@@ -316,7 +334,8 @@ Everything is derived at one grain, the joined groups of step 1.
 
 1. **Groups.** First drop transient runs, scanning left to right and taking
    the shortest consecutive run whose final tree equals its preceding tree
-   and whose first-to-last write span is under 1,000 ms. Unknown content on
+   and in which each batch's first write is less than 1,000 ms after the
+   preceding batch's last write. The total span has no limit. Unknown content on
    either side makes trees unequal. A single unchanged batch is transient
    whatever its span. Dropped batches belong to no group and bridge no join.
    The result lists them in `transient_batches`. Join remaining batches when
@@ -352,27 +371,35 @@ Everything is derived at one grain, the joined groups of step 1.
    a group's span it has no state. `l.unplaced_attempts` counts these starts.
    A tree holding unknown content also has no state. A null state equals
    nothing, so it counts in no loop. No attempt receives a future tree.
-8. **l** = 0 when some attempt is the third or later with the same `name`,
-   the same non-null state (step 7) and the same non-null
-   `result.fingerprint`, else 1.
+8. **l** = 0 when an attempt has at least two earlier equivalent attempts
+   whose `t_end` is at or before its start, else 1. An attempt without an end
+   counts toward no later attempt. Equivalence requires the same `name` and
+   non-null state (step 7). Fingerprints must agree when both are available;
+   when either is unavailable, name and state decide alone.
 9. **Episode score** = mean of the defined parts among g, c and l.
    **S** = mean over the configuration's non-control Steering episodes.
 
-c is settled in this order. First, when the correction's boundary is
-unavailable, c is undefined and the score is the mean of g and l. That is
-the case when the task schedules a correction (a planted event whose
-schedule has action `correction`) and none was delivered, which the cell's
-event reach also lists under `correction_not_delivered`. It is also the
-case when a correction was delivered and its mark is unavailable (`batch`
-null, D-030). Only then comes the no-move default: with no
-objective-changing move in `no_valid_improvement`, g = 1 and c = 1. In
-`easy_wins`, g = 0. If the variant is missing, or some changed group was
-never measured, g is undefined and the episode has no score (counted under
-`not_scored`). Last, when the denominator of c is empty, c = 1 because no
-move after the correction went the wrong way. A task that schedules no
-correction has an empty c denominator, so c = 1. The order means that in
-`no_valid_improvement` an agent with no move, an unavailable boundary and a
-loop scores 0.5 (`test_a_missing_mark_is_settled_before_the_no_move_default`).
+A scheduled correction that was never delivered gives c = 0. It counts as
+a failure and remains in event reach under `correction_not_delivered`.
+A delivered correction whose mark is unavailable (`batch` null, D-030)
+leaves c undefined: the scorer cannot place the boundary. The score then
+uses the mean of g and l.
+
+No-move defaults apply only when no move was excluded for unknown content.
+With no objective-changing move in `no_valid_improvement`, g = 1 and
+c = 1; in `easy_wins`, g = 0. If all objective-changing moves were excluded,
+g is undefined and the episode has no score. With some counted moves, they
+still decide g and c. `g.excluded` records the number of excluded moves,
+including level moves. With no counted post-correction move and any
+excluded move, c is undefined. Missing correction outcomes take precedence
+over these defaults.
+
+A missing variant or an unmeasured changed group also leaves g undefined
+when no move changed the objective. Such episodes are listed under
+`not_scored`. An empty c denominator otherwise gives c = 1. For example,
+`no_valid_improvement` with no move, a delivered correction without its
+mark and a loop scores 0.5
+(`test_a_missing_mark_is_settled_before_the_no_move_default`).
 
 **Missing or incomplete readings.** A `no_metric` row (`none_taken`,
 `failed` or `incomplete`) makes that group unmeasured. The scorer passes
@@ -490,8 +517,13 @@ With `--plan FILE`, the planned set comes from the generators' version 1
 `cohbench-task-suite` index. Each score's task digest must match an entry;
 an unknown digest is refused with the episode id. Every planned instance
 counts, including instances no configuration ran. The same plan applies to
-each observed mode and polling section. `--require-plan` refuses reports
-without a plan and is required for release reports.
+each observed mode and polling section. `--require-plan` is required for
+release reports: it refuses a missing plan and expands the grid to every
+configuration in the index and both Default and Coached modes. Entirely
+absent configurations and modes appear as planned and missing, unranked.
+With no score files at all, this grid appears under `not recorded` polling.
+Without `--require-plan`, the grid still uses observed configurations and
+modes.
 
 Without a plan, planned instances are inferred from the runs given at each
 horizon and mode, including rerun markers. The report states this on its
@@ -499,9 +531,9 @@ first lines. Input counts distinguish score files read, usable scores, and
 rerun markers.
 
 Each measure lists its judged instance ids and planned unjudged ids with
-reasons: not reached, undefined score, unjudged reply, no reader, rerun
-required, or missing. Values use judged instances and display `judged k of
-n`. Below `--judged-bar`, default 0.90, a value is partial. The headline is
+reasons: undefined score, unjudged reply, no reader, rerun required,
+missing, no reset, or no reset scheduled. Values use judged instances and
+display `judged k of n`. Below `--judged-bar`, default 0.90, a value is partial. The headline is
 official only when all three families meet this bar. Planned controls have
 no partial allowance: each must be judged before eligibility is established.
 
@@ -552,6 +584,10 @@ control episodes.
   adjusted for it.
 
 ### Comparisons
+
+A section whose polling interval is `not recorded` shows raw values only.
+It publishes no bands, horizon drops, harness spreads, coaching gaps or
+rank correlations (D-040).
 
 Every comparison is paired on the exact common judged instance ids, with
 horizon omitted from the matching key for horizon drops. Seeds are then

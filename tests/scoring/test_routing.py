@@ -200,14 +200,14 @@ def test_malformed_check_is_refused():
             checks.parse(bad)
 
 
-def test_a_conflict_not_reached_is_not_judged_and_flagged(tmp_path):
+def test_a_conflict_not_reached_fails_and_is_flagged(tmp_path):
     b = sibling("A")
     b.planted.append({"name": "conflict", "scheduled": {"required": True}})
     b.reach = {"status": "not_reached", "not_reached": ["conflict"]}
     b.out("Done.")
     right_summary(b)
     r = routing.score(b.load(tmp_path))
-    assert r["passed"] is None and r["not_reached"] is True
+    assert r["passed"] is False and r["not_reached"] is True
 
 
 def test_an_episode_ended_outside_the_agent_is_never_scored(tmp_path):

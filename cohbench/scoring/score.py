@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import sys
 from typing import Any
 
 from cohbench.trajectory import episode as TE
@@ -169,15 +170,19 @@ def uses_reader(ep: Episode) -> bool:
     return (ep.family == "explanation" and not ep.grouping.get("control")) or (isinstance(exp, dict) and "reader_true_cause" in exp)
 
 
-def missing_reset(ep: Episode):
+def reset_reason(ep: Episode):
     scheduled = [p["name"] for p in ep.doc.get("planted", []) if p.get("scheduled", {}).get("action") == "reset"]
     if not scheduled:
-        return False
+        return "no reset scheduled" if ep.grouping.get("horizon") in ("h80", "80") else None
     if "resets" in ep.doc:
         performed = {r["event"] for r in ep.doc["resets"] if r.get("performed")}
-        return any(name not in performed for name in scheduled)
+        return "no reset" if any(name not in performed for name in scheduled) else None
     # Older bundles expose completed resets in the scorer view, not episode outcomes.
-    return len(ep.of_type("controlled_reset")) < len(scheduled)
+    return "no reset" if len(ep.of_type("controlled_reset")) < len(scheduled) else None
+
+
+def missing_reset(ep: Episode):
+    return reset_reason(ep) is not None
 
 
 def handoff_diagnostic(ep: Episode):
@@ -207,15 +212,16 @@ def handoff_diagnostic(ep: Episode):
 
 def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None = None) -> dict[str, Any]:
     g = ep.grouping
-    head = {"format": FORMAT, "version": VERSION, "episode": ep.doc["episode"], "bundle_sha256": ep.digest,
+    head = {"python_version": f"{sys.version_info.major}.{sys.version_info.minor}", "format": FORMAT, "version": VERSION, "episode": ep.doc["episode"], "bundle_sha256": ep.digest,
             "grouping": g, "poll_s": ep.doc.get("poll_s"), "task": task_identity(ep), "family": ep.family}
     end = (ep.doc.get("end") or {}).get("reason")
     if end in UNUSABLE_ENDS:
         return {**head, "rerun_required": True, "reason": f"rerun required: the episode ended by {end}, outside the agent (D-034)",
                 "score": None, "control": None, "reported": None, "probes": [], "reader": None}
     head["handoff"] = handoff_diagnostic(ep)
-    if missing_reset(ep):
-        return {**head, "rerun_required": False, "unjudged_reason": "no reset", "score": None, "control": None,
+    no_reset = reset_reason(ep)
+    if no_reset is not None:
+        return {**head, "rerun_required": False, "unjudged_reason": no_reset, "score": None, "control": None,
                 "reported": reported(ep), "probes": probes(ep, None, None), "reader": None, "reader_requests": []}
     recorded = R.RecordedReader(rd) if rd is not None and uses_reader(ep) else None
     if recorded is not None:

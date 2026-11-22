@@ -78,6 +78,14 @@ def read_scores(root: Path) -> list[dict[str, Any]]:
         if doc["episode"] in seen:
             raise ReportError(f"episode {doc['episode']} is scored twice ({seen[doc['episode']]} and {p.relative_to(root)})")
         seen[doc["episode"]] = str(p.relative_to(root))
+        runtime = doc.get("python_version")
+        if runtime is not None and (not isinstance(runtime, str) or not re.fullmatch(r"[0-9]+\.[0-9]+", runtime)):
+            raise ReportError(f"episode {doc['episode']}: python_version must name a major and minor version")
+        score = doc.get("score") or {}
+        if doc.get("family") == "routing" and score.get("not_reached"):
+            # The reach diagnostic also makes older score files readable
+            # under the current rule: a missed conflict is a failed trial.
+            score["passed"] = False
         out.append(doc)
     return sorted(out, key=lambda d: d["episode"])
 
@@ -212,7 +220,7 @@ def units(eps: list[dict[str, Any]]) -> tuple[dict[str, dict[int, list]], dict[s
     pairs: dict[tuple[int, str], dict[str, list[dict[str, Any]]]] = {}
     for d in eps:
         g, s = d["grouping"], d["score"]
-        if d.get("unjudged_reason") == "no reset":
+        if d.get("unjudged_reason") in ("no reset", "no reset scheduled"):
             detail["no_reset"].append(d["episode"])
             continue
         if g.get("control") or rerun(d):
@@ -244,7 +252,6 @@ def units(eps: list[dict[str, Any]]) -> tuple[dict[str, dict[int, list]], dict[s
         if any(x["score"].get("not_reached") for side in ("A", "B") for x in sides[side]):
             detail["not_reached"].append({"seed": seed, "pair": pid, "episodes": eids,
                                           "not_reached": sorted(x["episode"] for side in ("A", "B") for x in sides[side] if x["score"].get("not_reached"))})
-            continue
         a, b = sides["A"][0]["score"]["passed"], sides["B"][0]["score"]["passed"]
         row = {"seed": seed, "pair": pid, "episodes": sorted([sides["A"][0]["episode"], sides["B"][0]["episode"]]), "A": a, "B": b}
         if a is None or b is None:
@@ -462,11 +469,15 @@ def poll_display(k: str) -> str:
 
 
 def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float = 0.95, bar: float = 0.9, z: float = SANITY_Z,
-          scripted_reader: bool = False, plan: str | Path | None = None, require_plan: bool = False, judged_bar: float = 0.9) -> dict[str, Any]:
+          scripted_reader: bool = False, plan: str | Path | None = None, require_plan: bool = False, judged_bar: float = 0.9, allow_mixed_runtimes: bool = False) -> dict[str, Any]:
     root = Path(root)
     index = read_index(root / "index.json")
     scores = read_scores(root)
     reader = check_inputs(scores, index, scripted_reader)
+    versions = sorted({d.get("python_version") or "not recorded" for d in scores})
+    if len(versions) > 1 and not allow_mixed_runtimes:
+        raise ReportError("score files use different Python versions: " + ", ".join(versions) + "; pass --allow-mixed-runtimes for a report that is not a release")
+    runtime_note = "mixed Python runtimes: not a release" if len(versions) > 1 else "Python runtime not recorded: not a release" if "not recorded" in versions else None
     if require_plan and plan is None:
         raise ReportError("a release report requires a plan")
     if not 0 < judged_bar <= 1:
@@ -475,16 +486,21 @@ def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float =
     sanity = reader_sanity(scores, z)
     unscored = sorted(set(index) - {d["episode"] for d in scores})
     scripted = bool(reader and reader.get("kind") == "scripted")
-    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z, "judged_bar": judged_bar}
+    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z, "judged_bar": judged_bar, "require_plan": require_plan, "runtime_note": runtime_note}
     by_poll: dict[str, list[dict[str, Any]]] = {}
     for d in scores:
         by_poll.setdefault(poll_key(d.get("poll_s")), []).append(d)
+    if require_plan and not by_poll:
+        by_poll["not recorded"] = []
     notes = ["Completeness was inferred from the runs given." if plan is None else "Completeness uses the supplied task suite plan."]
     if len(by_poll) > 1:
         notes.append("Episodes ran with different polling intervals (" + ", ".join(poll_display(k) for k in sorted(by_poll, key=natural)) + "). "
                      "Each interval has its own tables, and no table compares runs across them (D-040).")
+    if runtime_note:
+        notes.append(runtime_note + ". No rank bands are published.")
     sections = [_section(poll, by_poll[poll], index, params, reader, scripted, sanity, plan_instances) for poll in sorted(by_poll, key=natural)]
     return {"format": FORMAT, "version": VERSION, "parameters": params, "notes": notes,
+            "python_versions": versions, "not_release": bool(runtime_note) or scripted,
             "reader": reader, "scripted_reader": scripted, "label": SCRIPTED if scripted else None,
             "inputs": {"scored": len(scores), "score_files_read": len(scores), "usable_scores": sum(not rerun(d) for d in scores), "rerun_markers": sum(rerun(d) for d in scores), "indexed": len(index), "indexed_not_scored": unscored,
                        "rerun_required": sorted(d["episode"] for d in scores if rerun(d))},
@@ -549,10 +565,10 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
         reruns.setdefault(k, [])
         (reruns if rerun(d) else cells)[k].append(d)
         by_config.setdefault(ck, []).append(d)
-    configs = {config_key(index[d["episode"]]): index[d["episode"]] for d in scores}
+    configs = {config_key(c): c for c in index.values()} if params["require_plan"] else {config_key(index[d["episode"]]): index[d["episode"]] for d in scores}
     labels = column_labels(configs)
     if plan_instances is not None:
-        modes = sorted({k[2] for k in cells})
+        modes = ["default", "coached"] if params["require_plan"] else sorted({k[2] for k in cells})
         planned = {(inst["horizon"], mode): set() for inst in plan_instances for mode in modes}
         for inst in plan_instances:
             for mode in modes:
@@ -584,6 +600,8 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
         x["headline"].update(measures.coverage(combined, params["judged_bar"]))
         x["headline"]["official"] = all(x[m]["official"] for m in ("R", "E", "S"))
         x["headline"]["partial"] = not x["headline"]["official"]
+        if poll == "not recorded":
+            x["headline"]["unranked_because"].append("polling interval not recorded")
         x["headline"]["ranked"] = not x["headline"]["unranked_because"]
         built[k] = x
 
@@ -601,9 +619,9 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
         correlation = {}
         for ha, rs in sorted(by_harness.items()):
             # Spec section 2: models are compared within one harness, so bands and correlations are per harness.
-            if scripted:
+            if scripted or params["runtime_note"] or poll == "not recorded":
                 for r in rs:
-                    r["headline"]["band_note"] = "no bands: " + SCRIPTED
+                    r["headline"]["band_note"] = "no bands: " + (SCRIPTED if scripted else params["runtime_note"] or "polling interval not recorded")
             else:
                 ranked = [(config_key(r["configuration"]), r["headline"]["value"], r["headline"]["interval"]) for r in rs
                           if r["headline"]["ranked"] and r["headline"]["interval"] is not None]
@@ -614,9 +632,9 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
                         r["headline"]["band_note"] = "no interval, so no band (zero resamples)"
             pts = [(r["headline"]["value"], r["capability"]) for r in rs
                    if r["headline"]["value"] is not None and r["capability"] is not None and r["headline"]["official"]]
-            rho = stats.spearman([p[0] for p in pts], [p[1] for p in pts])
-            correlation[ha] = {"spearman": rho, "n": len(pts), "withheld": WITHHELD if withheld else None,
-                               "label": labels[ha], "between": "headline and pooled capability composite, over configurations of this harness that ran the full planned set"}
+            rho = None if poll == "not recorded" else stats.spearman([p[0] for p in pts], [p[1] for p in pts])
+            correlation[ha] = {"spearman": rho, "n": len(pts), "withheld": "polling interval not recorded" if poll == "not recorded" else WITHHELD if withheld else None,
+                               "label": labels[ha], "between": "headline and pooled capability composite, over configurations of this harness with an official value in each family and a complete capability composite"}
         tables.append({"horizon": hz, "mode": mode, "scripted_reader": scripted, "label": SCRIPTED if scripted else None,
                        "planned_instances": len(planned[(hz, mode)]), "rows": rows, "rank_correlation": correlation})
 
@@ -663,6 +681,8 @@ def _section(poll: str, scores: list[dict[str, Any]], index: dict[str, dict[str,
             cmp = _compare([built[a], built[b]], ("gap", poll, ck, hz), params, withheld, lambda v: v[1] - v[0])
             gaps.append({"model": configs[ck]["model"], "harness": labels[column_key(configs[ck])], "horizon": hz, **cmp})
 
+    if poll == "not recorded":
+        drops, effect, gaps = [], [], []
     return {"poll_s": poll, "poll_display": poll_display(poll), "episodes": len(scores), "reader_sanity": sanity,
             "withheld": WITHHELD if withheld else None,
             "eligibility": {ck: {**pooled[ck], "configuration": configs[ck]} for ck in sorted(pooled)},
@@ -770,6 +790,7 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
          f"Reader sanity bound: {p['sanity_z']:g} standard errors. "
          f"Score files read: {rep['inputs']['score_files_read']}; usable scores: {rep['inputs']['usable_scores']}; rerun markers: {rep['inputs']['rerun_markers']}; "
          f"in the index but not scored: {len(rep['inputs']['indexed_not_scored'])}.", ""]
+    L += ["Scoring Python versions: " + (", ".join(rep["python_versions"]) or NM) + ". Release runtime: Python 3.12.", ""]
     if rep["scripted_reader"]:
         L += ["Every Explanation score here was read by a scripted rule, not by the pinned reader model. This report checks the scorer. "
               "It is not a result, and it prints no rank bands.", ""]
@@ -777,6 +798,8 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
         L += [n, ""]
     for sec in rep["sections"]:
         L += [f"{h2}Polling interval {sec['poll_display']} ({sec['episodes']} episodes){mark}", ""]
+        if sec["poll_s"] == "not recorded":
+            L += ["Polling interval not recorded: raw values only; no bands or comparisons.", ""]
         for k, s in sec["reader_sanity"].items():
             na, bu = s["no_answer"], s["buried"]
             L.append(f"Reader {s['reader']['kind']} {k[:12]}: no answer {_pct(na['accuracy'])} over {na['items']} distinct items "

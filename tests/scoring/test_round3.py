@@ -133,10 +133,11 @@ def test_no_reset_control_does_not_establish_eligibility(tmp_path):
     assert cell["eligibility"]["steering"]["status"] == "not established"
 
 
-def test_long_horizon_label_without_scheduled_reset_is_still_scored(tmp_path):
+def test_long_horizon_without_scheduled_reset_is_unjudged(tmp_path):
     b = Bundle("steering", horizon="h80", baseline_metric={"ops": 100})
     b.out("Done.")
-    assert score_episode(load(b.write(tmp_path), validate=True))["score"] is not None
+    result = score_episode(load(b.write(tmp_path), validate=True))
+    assert result["score"] is None and result["unjudged_reason"] == "no reset scheduled"
 
 
 def chores_bundle(tmp_path, *, unknown=False):
@@ -145,6 +146,10 @@ def chores_bundle(tmp_path, *, unknown=False):
         {"id": "wrong", "check": {"path": "wrong.txt", "regex": "right"}},
         {"id": "missing", "check": {"path": "missing.txt", "regex": "right"}},
     ]}}, horizon="h80", baseline_metric={"ops": 100})
+    b.planted = [{"name": "handoff", "scheduled": {"action": "reset", "required": True}}]
+    seq = b.user("Continue.", kind="reset")
+    b._ev(type="controlled_reset", target=seq, t=b.events[seq]["t"])
+    b.fired("handoff")
     b.batch(2000, 2000, {"done.txt": "right", "wrong.txt": "wrong"}, {"ops": 33}, unknown=("done.txt",) if unknown else ())
     b.t = 2100
     b.out("Done.")

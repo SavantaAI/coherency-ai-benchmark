@@ -120,7 +120,7 @@ def no_mixed_transient_runs(timeline):
     while start < len(writes):
         found = None
         for end in range(start, len(writes)):
-            if writes[end]["t"] - writes[start]["t"] >= 1000:
+            if end > start and writes[end]["t"] - writes[end - 1]["t"] >= 1000:
                 break
             if trees[start] == trees[end + 1]:
                 found = end

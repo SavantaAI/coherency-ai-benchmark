@@ -441,12 +441,12 @@ def test_pooled_eligibility_can_rank_a_cell_with_a_weak_cell_rate(tmp_path):
     assert c["controls"]["routing"]["rate"] == 0.9 and c["eligibility"]["routing"]["rate"] == 0.95 and c["headline"]["ranked"]
 
 
-def test_a_pair_whose_conflict_was_not_reachable_is_left_out_of_r_and_listed(tmp_path):
+def test_legacy_pair_with_missed_conflict_counts_as_failure_and_is_listed(tmp_path):
     nr = S.sibling("a-3", 2, "B", None)
     nr["score"]["not_reached"] = True
     scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True), S.sibling("a-4", 2, "A", True), nr]
     r = rows(build(tmp_path, scores))[0][("m1", "pi")]["R"]
-    assert r["value"] == 1.0 and r["pairs"] == 1
+    assert r["value"] == 0.5 and r["pairs"] == 2
     assert r["not_reached"] == [{"seed": 2, "pair": "p2", "episodes": ["a-3", "a-4"], "not_reached": ["a-3"]}]
 
 

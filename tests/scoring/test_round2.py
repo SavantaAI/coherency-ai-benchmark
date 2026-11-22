@@ -23,7 +23,7 @@ def test_judged_pairs_control_official_values_and_common_set(tmp_path, pairs):
     scores = S.config_set("a", r_pass=pairs - 1, pairs=pairs, e=[1], s=[1], controls=(1, 1))
     scores += S.config_set("ac", r_pass=pairs - 1, pairs=pairs, e=[1], s=[1], controls=(1, 1), mode="coached")
     d = next(d for d in scores if d["episode"] == f"ac-rb{pairs - 1}")
-    d["score"].update(passed=None, not_reached=True)
+    d["score"].update(passed=None)
     rep = build(tmp_path, scores)
     c = rows(rep, mode="coached")[0][("m1", "pi")]
     gap = rep["sections"][0]["coached_gap"][0]["R"]
@@ -31,7 +31,7 @@ def test_judged_pairs_control_official_values_and_common_set(tmp_path, pairs):
     assert (c["R"]["judged"], c["R"]["planned"]) == (pairs - 1, pairs)
     assert c["R"]["official"] is (pairs == 20)
     assert c["headline"]["ranked"] is (pairs == 20)
-    assert c["R"]["unjudged_instances"][0]["reasons"][0]["reason"] == "not reached"
+    assert c["R"]["unjudged_instances"][0]["reasons"][0]["reason"] == "unjudged reply"
     assert gap["n"] == pairs - 1 and gap["left_out_counts"] == [1, 0]
     assert json.loads(gap["left_out"][0][0])["pair"] == f"p{pairs - 1}"
     text = report.render(rep, False)
@@ -52,7 +52,7 @@ def test_comparisons_pair_instances_within_a_seed(tmp_path):
                 d["grouping"]["pair"] = d["task"]["instance"]["pair"] = pair
                 d["task"]["sha256"] = pair + side
                 if prefix == "ac" and pair == "q":
-                    d["score"].update(passed=None, not_reached=True)
+                    d["score"].update(passed=None)
                 scores.append(d)
     rep = build(tmp_path, scores, judged_bar=0.5)
     gap = rep["sections"][0]["coached_gap"][0]["R"]
@@ -229,7 +229,7 @@ def test_correlation_minimum_and_n_are_printed(tmp_path):
 
 
 @pytest.mark.parametrize("pairs", [2, 20])
-def test_judged_pairs_from_validated_bundles(tmp_path, pairs):
+def test_missed_conflicts_from_validated_bundles_count_as_failed_pairs(tmp_path, pairs):
     scores = []
     for prefix, mode in (("a", "default"), ("ac", "coached")):
         for seed in range(pairs):
@@ -252,9 +252,10 @@ def test_judged_pairs_from_validated_bundles(tmp_path, pairs):
     rep = build(tmp_path / "results", scores)
     cell = rows(rep, mode="coached")[0][("m1", "pi")]
     gap = rep["sections"][0]["coached_gap"][0]["R"]
-    assert cell["R"]["official"] is (pairs == 20)
-    assert gap["value"] == (0 if pairs == 20 else None)
-    assert gap["n"] == pairs - 1
+    assert cell["R"]["official"] and cell["R"]["judged"] == pairs
+    assert cell["R"]["value"] == (pairs - 1) / pairs
+    assert cell["R"]["not_reached"] and not cell["R"]["incomplete_pairs"]
+    assert gap["value"] == 0 and gap["n"] == pairs
 
 
 def test_unread_control_from_validated_bundle_stays_incomplete(tmp_path):

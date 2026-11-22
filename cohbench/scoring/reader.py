@@ -24,6 +24,7 @@ into every score file.
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import http.client
 import json
@@ -321,37 +322,53 @@ class RecordedReader:
         self.records = {}
         self.cache = {}
         if path is not None and path.exists():
-            for line in path.read_text(encoding="utf-8").splitlines():
-                try:
-                    row = json.loads(line)
-                    key = (row["reader_digest"], row["request_digest"])
-                    choice = row["choice"]
-                    if not isinstance(choice, str) or len(choice) != 1 or choice not in LETTERS:
-                        raise ValueError
-                    if key in self.cache and self.cache[key] != choice:
-                        raise ReaderError(f"conflicting cached choices for request {key[1]}")
-                    self.cache[key] = choice
-                except (ValueError, KeyError, TypeError):
-                    raise ReaderError("malformed reader cache record") from None
+            with path.open("r", encoding="utf-8") as source:
+                fcntl.flock(source, fcntl.LOCK_SH)
+                self._read_cache(source)
+
+    def _read_cache(self, source):
+        source.seek(0)
+        for line in source:
+            try:
+                row = json.loads(line)
+                key = (row["reader_digest"], row["request_digest"])
+                choice = row["choice"]
+                if not isinstance(choice, str) or len(choice) != 1 or choice not in LETTERS:
+                    raise ValueError
+                if key in self.cache and self.cache[key] != choice:
+                    raise ReaderError(f"conflicting cached choices for request {key[1]}")
+                self.cache[key] = choice
+            except (ValueError, KeyError, TypeError):
+                raise ReaderError("malformed reader cache record") from None
 
     def describe(self):
         return self.reader.describe()
+
+    def _choice(self, key, question, excerpt, shown, out=None):
+        if key not in self.cache:
+            pos = self.reader.choose(question, excerpt, shown)
+            if not isinstance(pos, int) or isinstance(pos, bool) or not 0 <= pos < len(shown):
+                raise ReaderError("the reader returned a position outside the options")
+            choice = LETTERS[pos]
+            if out is not None:
+                out.write(canonical({"request_digest": key[1], "reader_digest": key[0], "choice": choice}) + "\n")
+                out.flush()
+            self.cache[key] = choice
+        return self.cache[key]
 
     def choose(self, question: str, excerpt: str, shown: list[str]):
         request = item_key(question, excerpt, shown)
         digest = self.describe()["config_sha256"]
         key = (digest, request)
-        if key in self.cache:
-            choice = self.cache[key]
+        if self.path is None:
+            choice = self._choice(key, question, excerpt, shown)
         else:
-            pos = self.reader.choose(question, excerpt, shown)
-            if not isinstance(pos, int) or isinstance(pos, bool) or not 0 <= pos < len(shown):
-                raise ReaderError("the reader returned a position outside the options")
-            choice = LETTERS[pos]
-            self.cache[key] = choice
-            if self.path is not None:
-                with self.path.open("a", encoding="utf-8") as out:
-                    out.write(canonical({"request_digest": request, "reader_digest": digest, "choice": choice}) + "\n")
+            # A fresh read under the same lock as the call and append also
+            # observes records written after this reader was constructed.
+            with self.path.open("a+", encoding="utf-8") as out:
+                fcntl.flock(out, fcntl.LOCK_EX)
+                self._read_cache(out)
+                choice = self._choice(key, question, excerpt, shown, out)
         if choice not in LETTERS[:len(shown)]:
             raise ReaderError("cached choice is outside the options")
         self.records[request] = {"request_digest": request, "reader_digest": digest, "choice": choice}
