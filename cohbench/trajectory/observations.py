@@ -30,8 +30,8 @@ record with:
 
 Nothing else from the call: not the command text, not the output, not the
 exit status (no score uses it, and a null against a zero would name the
-harness), not the agent. Equivalent attempts have the same name, the same non-null state and the
-same non-null fingerprint.
+harness), not the agent. Equivalent attempts have the same name and the same non-null state, and
+equal fingerprints when both have one (D-048).
 
 With `by: "output"`, a capture is required. Each whole-line match in any
 shell call is an attempt, with the call's times and tree and the captured
