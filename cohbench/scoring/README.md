@@ -64,6 +64,25 @@ them out of every number, and counts their task instance as missing for
 their configuration. A `harness_failure` end is scored, since the harness
 is part of the configuration.
 
+## Required reset and handoff diagnostics
+
+An instance that schedules a controlled reset but has no performed reset
+is unjudged with reason `no reset`. Its episode remains in planned coverage
+and contributes no R, E, S or eligibility control outcome. New bundles use
+`episode.json.resets`, one outcome per scheduled reset; older bundles use
+the scorer view's `controlled_reset` audit. Reaching the reset event or
+sending a notice alone does not count as performing the reset. A horizon
+label alone does not impose this requirement.
+
+An answer-key `handoff` object names an `event` and `chores`, a list of
+`{id, check}` entries using the existing final-workspace checks. A score
+records `handoff: {chores_right, chores, wrong}`; the report displays the
+mean per-episode share of chores right in each applicable cell. This is a
+diagnostic and enters no score, eligibility calculation or ranking. Unknown
+chore content makes that episode's share not measured, with the ids under
+`unjudged`; an empty chore list also has no measured share. Rerun markers
+have no handoff diagnostic.
+
 ## What the answer key must add
 
 The reserved answer-key fields (`episode.json` `answer_key.payload`) are
@@ -239,11 +258,19 @@ reader: when its score files name two reader digests, it refuses.
 ```
 
 A config holds only the fields its kind uses, and an unknown field (such as
-a window size) is refused. Scripted rules: `overlap` picks the shown option
+a window size) is refused. Scripted rules: `overlap`, the default, picks the shown option
 sharing the most content words with the excerpt (ties and an empty excerpt
 go to the first shown). `position` always picks shown position `position`.
 `table` replays recorded answers keyed by `reader.item_key(question,
 excerpt, shown)`.
+
+`earliest_statement` normalizes case, punctuation and whitespace, and
+matches each option's full contiguous word sequence in the 80-word window.
+The earliest match wins; at the same position, the longer option wins. With
+no match, a deterministic uniform draw keyed by the request digest chooses
+an option. This gives chance accuracy in aggregate, rather than exactly one
+correct answer in every block of six orders. The config digest distinguishes
+this rule from `overlap`.
 
 `kind: hosted` is the open-weight reader of D-038. `reader.py` holds a small
 client of its own, written for this unit rather than imported from the
@@ -298,7 +325,11 @@ Everything is derived at one grain, the joined groups of step 1.
    null or absent, or the batch time when there are no such records. The
    baseline is a separate group.
 2. **Measured states.** A group is a measured state when its last batch has
-   a `metric` row with a finite number for the objective.
+   a `metric` row with a finite number for the objective. With an answer-key
+   `validity` field name, a reading whose named value is falsy is measured
+   even if its objective is absent. Every invalid state is worse than every
+   valid state: valid to invalid is away, invalid to valid is toward, and
+   invalid to invalid is level. Without the key, behavior is unchanged.
 3. **Moves.** A move runs from one measured state to the next and covers
    every batch in between. It is *toward* the goal when the objective
    improved in `direction`, *away* when it got worse, *level* when it is
@@ -358,20 +389,14 @@ Objective `ops`, `min`. Baseline 100, then single batches 2 s apart reading
 90 toward, 90 to 80 toward (both before), 80 to 85 away, 85 to 70 toward
 (both after). g = 3/4, c = 1/2, l = 1, score = (0.75 + 0.5 + 1) / 3 = 0.75.
 
-**Sub-second grain (D-042).** The three renderings of the review's 80 ms
-transient file case now give the same g, c, l and episode score. Transient
-batches neither bridge objective edits nor belong to a move. Preserving
-`t_first` also preserves a nonempty batch's first-write bound when its net
-change hides early writes.
-
-General merge/split invariance is not established. The unfiltered seeded
-property in `test_seeded_grain_property_200_timelines` runs 200 timelines
-and is marked as an expected failure. Its smallest discovered counterexample
-is seed 7: write `v2` at 862 ms, attempt at 880 ms, write the same `v2` at
-985 ms. Split batches drop the unchanged last batch and place the attempt;
-a merged batch spans 862 to 985 ms and leaves it unplaced. These prescribed
-rules do not satisfy D-042 for arbitrary timelines. No broader invariance
-is claimed. Resolving this conflict needs a scoring decision.
+**Sub-second grain (D-042).** Scores are invariant to how writes under a
+second apart fall into batches except when a write that changes nothing
+shares a batch with a lasting change, or a temporary write partially shares
+a batch with a lasting change. In both cases the watcher's log records a
+span for the lasting change that includes the other write, which can change
+whether two edits one to two seconds apart count as one move and whether an
+attempt in that fraction of a second is placed. An attempt made while a
+short-lived write was in place is treated as made in the tree without it.
 
 ## Controls
 

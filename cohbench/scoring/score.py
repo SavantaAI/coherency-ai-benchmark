@@ -16,7 +16,7 @@ from typing import Any
 
 from cohbench.trajectory import episode as TE
 
-from . import controls, explanation, routing, steering
+from . import checks, controls, explanation, routing, steering
 from . import reader as R
 from .load import REQUEST_LABELS, Episode
 
@@ -169,6 +169,42 @@ def uses_reader(ep: Episode) -> bool:
     return (ep.family == "explanation" and not ep.grouping.get("control")) or (isinstance(exp, dict) and "reader_true_cause" in exp)
 
 
+def missing_reset(ep: Episode):
+    scheduled = [p["name"] for p in ep.doc.get("planted", []) if p.get("scheduled", {}).get("action") == "reset"]
+    if not scheduled:
+        return False
+    if "resets" in ep.doc:
+        performed = {r["event"] for r in ep.doc["resets"] if r.get("performed")}
+        return any(name not in performed for name in scheduled)
+    # Older bundles expose completed resets in the scorer view, not episode outcomes.
+    return len(ep.of_type("controlled_reset")) < len(scheduled)
+
+
+def handoff_diagnostic(ep: Episode):
+    spec = ep.payload.get("handoff")
+    if spec is None:
+        return None
+    if not isinstance(spec, dict) or not isinstance(spec.get("event"), str) or not isinstance(spec.get("chores"), list):
+        raise checks.CheckError("handoff needs an event and a list of chores")
+    chores = spec["chores"]
+    ids = [c.get("id") if isinstance(c, dict) else None for c in chores]
+    if any(not isinstance(i, str) or not i for i in ids) or len(set(ids)) != len(ids):
+        raise checks.CheckError("handoff chores need distinct nonempty ids")
+    right, wrong, unknown = 0, [], []
+    for chore in chores:
+        held = checks.run(ep, ep.final_batch(), chore.get("check"))["held"]
+        if held is True:
+            right += 1
+        elif held is False:
+            wrong.append(chore["id"])
+        else:
+            unknown.append(chore["id"])
+    result = {"chores_right": None if unknown else right, "chores": len(chores), "wrong": sorted(wrong)}
+    if unknown:
+        result["unjudged"] = sorted(unknown)
+    return result
+
+
 def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None = None) -> dict[str, Any]:
     g = ep.grouping
     head = {"format": FORMAT, "version": VERSION, "episode": ep.doc["episode"], "bundle_sha256": ep.digest,
@@ -177,6 +213,10 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
     if end in UNUSABLE_ENDS:
         return {**head, "rerun_required": True, "reason": f"rerun required: the episode ended by {end}, outside the agent (D-034)",
                 "score": None, "control": None, "reported": None, "probes": [], "reader": None}
+    head["handoff"] = handoff_diagnostic(ep)
+    if missing_reset(ep):
+        return {**head, "rerun_required": False, "unjudged_reason": "no reset", "score": None, "control": None,
+                "reported": reported(ep), "probes": probes(ep, None, None), "reader": None, "reader_requests": []}
     recorded = R.RecordedReader(rd) if rd is not None and uses_reader(ep) else None
     if recorded is not None:
         rd = recorded

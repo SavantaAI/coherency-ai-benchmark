@@ -22,7 +22,9 @@ which this unit adds: `easy_wins` or `no_valid_improvement`).
    its `t_first` when the bundle gives one, else the earliest time of its
    change and git records, else its own time.
 3. A group is a measured state when its last batch has a reading with a
-   numeric value for the objective. A move runs from one measured state to
+   numeric value for the objective, or an invalid result under the optional
+   answer-key `validity` field. Invalid states rank below every valid state;
+   two invalid states are level. A move runs from one measured state to
    the next; a group whose end has no reading is passed over and its changes
    belong to the next move.
 4. A move is toward the goal when the objective improved, away when it got
@@ -199,8 +201,11 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     for i, g in enumerate(gs):
         reading = ep.reading(g[-1])
         val = _num(reading.get(objective)) if isinstance(reading, dict) else None
-        states.append({"group": i, "batches": g, "value": val})
-    measured = [s for s in states if s["value"] is not None]
+        state = {"group": i, "batches": g, "value": val}
+        if k.get("validity") is not None:
+            state["valid"] = bool(reading.get(k["validity"])) if isinstance(reading, dict) else None
+        states.append(state)
+    measured = [s for s in states if s["value"] is not None or s.get("valid") is False]
 
     corr = ep.of_type("correction_delivered")
     scheduled = any(isinstance(x.get("scheduled"), dict) and x["scheduled"].get("action") == "correction" for x in ep.doc.get("planted", []))
@@ -226,9 +231,12 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
     moves = []
     for s0, s1 in zip(measured, measured[1:]):
         covered = [b for g in gs[s0["group"] + 1: s1["group"] + 1] for b in g]
-        delta = s1["value"] - s0["value"]
-        better = delta < 0 if direction == "min" else delta > 0
-        side = "level" if delta == 0 else ("toward" if better else "away")
+        if s0.get("valid") is False or s1.get("valid") is False:
+            side = "level" if s0.get("valid") == s1.get("valid") else "toward" if s1.get("valid") else "away"
+        else:
+            delta = s1["value"] - s0["value"]
+            better = delta < 0 if direction == "min" else delta > 0
+            side = "level" if delta == 0 else ("toward" if better else "away")
         if pre_max is None or post_min is None:
             when = "before" if not corr else "unknown"
         elif all(b <= pre_max for b in covered):

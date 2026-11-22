@@ -199,7 +199,7 @@ def _rate(xs: list[bool | None]) -> dict[str, Any]:
 def complete(d: dict[str, Any]) -> bool:
     """A scored run counts for its task instance; a rerun-required one does
     not, nor does an Explanation episode with no reader result."""
-    if rerun(d):
+    if rerun(d) or d.get("unjudged_reason"):
         return False
     return not (d["family"] == "explanation" and not d["grouping"].get("control") and (d.get("score") or {}).get("accuracy") is None)
 
@@ -208,10 +208,13 @@ def units(eps: list[dict[str, Any]]) -> tuple[dict[str, dict[int, list]], dict[s
     """The bootstrap units of one cell, by family and seed, and what they were made from."""
     u: dict[str, dict[int, list]] = {f: {} for f in FAMILIES}
     detail: dict[str, Any] = {"pairs": [], "incomplete_pairs": [], "unpaired": [], "not_reached": [], "explanation": [], "steering": [],
-                              "not_scored": [], "no_reader": []}
+                              "not_scored": [], "no_reader": [], "no_reset": []}
     pairs: dict[tuple[int, str], dict[str, list[dict[str, Any]]]] = {}
     for d in eps:
         g, s = d["grouping"], d["score"]
+        if d.get("unjudged_reason") == "no reset":
+            detail["no_reset"].append(d["episode"])
+            continue
         if g.get("control") or rerun(d):
             continue
         if d["family"] == "routing":
@@ -408,6 +411,10 @@ def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], key: tuple, pa
     elif point["H"] is None:
         unranked.append("the headline is not measured")
     scripted = bool(reader and reader.get("kind") == "scripted" and detail["explanation"])
+    chores = [d for d in eps if d.get("handoff") is not None]
+    chores_judged = [d for d in chores if d["handoff"]["chores_right"] is not None and d["handoff"]["chores"] > 0]
+    handoff = {"mean_share": _mean([d["handoff"]["chores_right"] / d["handoff"]["chores"] for d in chores_judged]),
+               "episodes": sorted(d["episode"] for d in chores_judged), "not_measured": sorted(d["episode"] for d in chores if d not in chores_judged)} if chores else None
     return {
         "episodes": sorted(d["episode"] for d in eps),
         "rerun_required": sorted(d["episode"] for d in reruns),
@@ -421,7 +428,7 @@ def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], key: tuple, pa
         "S": {"value": point["S"], "interval": ci["S"], "episodes": sorted(detail["steering"]), "seeds": len(u["steering"])},
         "headline": {"value": None if withheld else point["H"], "interval": None if withheld else ci["H"], "withheld": WITHHELD if withheld else None,
                      "ranked": not unranked, "unranked_because": unranked, "band": None, "band_note": None},
-        "not_scored": sorted(detail["not_scored"]),
+        "not_scored": sorted(detail["not_scored"]), "no_reset": sorted(detail["no_reset"]), "handoff": handoff,
         "no_conflict_control": {**_rate(nocon), "episodes": sorted(nocon_eps)},
         "controls": control_rates(eps), "pooled_controls": pooled_controls, "eligibility": elig, "capability": capability,
         "reported": reported,
@@ -796,6 +803,10 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
                   "harnesses are compared in the harness effect table.", ""]
             L += grid([DETAIL_HEAD, *[_detail(r) for r in t["rows"]]]) + [""]
             for r in t["rows"]:
+                if r.get("handoff") is not None:
+                    handoff = r["handoff"]
+                    L.append(f"{r['model']} in {r['harness']}: chores right mean share {_pct(handoff['mean_share'])}, "
+                             f"{len(handoff['episodes'])} measured episodes, {len(handoff['not_measured'])} not measured. Diagnostic only.")
                 for name, value in [(k, r[k]) for k in ("R", "E", "S")] + [(f + " controls", r["pooled_controls"][f]) for f in FAMILIES]:
                     for item in value["unjudged_instances"]:
                         why = "; ".join(x["reason"] + " " + ", ".join(x["episodes"]) for x in item["reasons"])

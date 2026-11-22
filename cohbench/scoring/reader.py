@@ -34,6 +34,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
+from .rng import stream
+
 LETTERS = "ABCDEF"
 KEY_ENV = "COHBENCH_READER_KEY_FILE"
 CONFIG_FORMAT = "cohbench-reader-config"
@@ -120,13 +122,14 @@ def parse_config(raw: Any) -> Config:
     if extra:
         raise ReaderError(f"a reader config has no field {extra[0]!r} (the window is fixed at {WINDOW_WORDS} words)")
     if kind == "scripted":
-        rule = raw.get("rule")
+        raw = {**raw, "rule": raw.get("rule", "overlap")}
+        rule = raw["rule"]
         if rule == "position" and not (isinstance(raw.get("position"), int) and 0 <= raw["position"] < 6):
             raise ReaderError("a position reader names a position from 0 to 5")
         if rule == "table" and not isinstance(raw.get("table"), dict):
             raise ReaderError("a table reader holds {item key: letter}")
-        if rule not in ("overlap", "position", "table"):
-            raise ReaderError("a scripted reader's rule is overlap, position or table")
+        if rule not in ("overlap", "earliest_statement", "position", "table"):
+            raise ReaderError("a scripted reader's rule is overlap, earliest_statement, position or table")
     elif kind == "hosted":
         e, x, s = raw.get("endpoint"), raw.get("expect"), raw.get("sampling")
         if not (isinstance(e, dict) and isinstance(e.get("base_url"), str) and isinstance(e.get("model"), str) and isinstance(e.get("provider"), dict)):
@@ -185,6 +188,21 @@ class ScriptedReader:
             if not (isinstance(letter, str) and len(letter) == 1 and letter in LETTERS[: len(shown)]):
                 raise ReaderError(f"the table reader has no answer for item {k[:12]}")
             return LETTERS.index(letter)
+        if self.rule == "earliest_statement":
+            excerpt, _ = window(excerpt)
+            words = re.findall(r"[^\W_]+", excerpt.casefold())
+            hits = []
+            for i, option in enumerate(shown):
+                wanted = re.findall(r"[^\W_]+", option.casefold())
+                if not wanted:
+                    continue
+                for start in range(len(words) - len(wanted) + 1):
+                    if words[start:start + len(wanted)] == wanted:
+                        hits.append((start, -len(wanted), i))
+                        break
+            if hits:
+                return min(hits)[2]
+            return stream("earliest-statement", item_key(question, excerpt, shown)).below(len(shown))
         ex = _words(excerpt)
         best, best_n = 0, 0
         for i, o in enumerate(shown):

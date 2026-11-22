@@ -15,6 +15,8 @@ def reason(d, control=False):
         return "missing"
     if d.get("rerun_required"):
         return "rerun required"
+    if d.get("unjudged_reason") == "no reset":
+        return "no reset"
     score = (d.get("control") if control else d.get("score")) or {}
     if score.get("not_reached"):
         return "not reached"

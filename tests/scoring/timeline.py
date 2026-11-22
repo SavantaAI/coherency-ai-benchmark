@@ -70,7 +70,9 @@ def render(tl: list[dict[str, Any]], merge: bool) -> Bundle:
                 tree.pop(e["path"], None)
             else:
                 tree[e["path"]] = e["content"]
-        net = {p: tree.get(p) for p in set(before) | set(tree) if before.get(p) != tree.get(p)}
+        net = {p: tree.get(p) for p in sorted(set(before) | set(tree)) if before.get(p) != tree.get(p)}
+        if not net:
+            continue
         n = b.batch(bt[0]["t"], bt[-1]["t"], net, _tree_metric(tree))
         spans.append((n, bt[0]["t"], bt[-1]["t"]))
     for e in tl:
@@ -83,3 +85,56 @@ def render(tl: list[dict[str, Any]], merge: bool) -> Bundle:
             b.correction(batch=done[-1] if done else 0, straddled=strad[0] if strad else None,
                          straddled_last=strad[-1] if strad else None, t=at)
     return b
+
+
+def no_mixed_unchanged_writes(timeline):
+    """Neither rendering mixes unchanged writes with writes changing the tree."""
+    for merge in (False, True):
+        tree = {"pkg/core.py": "v0"}
+        for batch in batches(timeline, merge):
+            changed = []
+            for event in batch:
+                changed.append(tree.get(event["path"]) != event["content"])
+                if event["content"] is None:
+                    tree.pop(event["path"], None)
+                else:
+                    tree[event["path"]] = event["content"]
+            if any(changed) and not all(changed):
+                return False
+    return True
+
+
+def no_mixed_transient_runs(timeline):
+    """No transient run partially shares a batch with a lasting change."""
+    writes = [e for e in timeline if e["kind"] == "write"]
+    trees = [{"pkg/core.py": "v0"}]
+    for event in writes:
+        tree = dict(trees[-1])
+        if event["content"] is None:
+            tree.pop(event["path"], None)
+        else:
+            tree[event["path"]] = event["content"]
+        trees.append(tree)
+    runs = []
+    start = 0
+    while start < len(writes):
+        found = None
+        for end in range(start, len(writes)):
+            if writes[end]["t"] - writes[start]["t"] >= 1000:
+                break
+            if trees[start] == trees[end + 1]:
+                found = end
+                break
+        if found is None:
+            start += 1
+        else:
+            runs.append(set(range(start, found + 1)))
+            start = found + 1
+    transient = set().union(*runs) if runs else set()
+    indices = {id(event): i for i, event in enumerate(writes)}
+    for merge in (False, True):
+        for batch in batches(timeline, merge):
+            members = {indices[id(event)] for event in batch}
+            if members - transient and any(members & run and members - run for run in runs):
+                return False
+    return True
