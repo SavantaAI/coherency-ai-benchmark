@@ -183,6 +183,7 @@ class Environment:
         self.events: list[dict[str, Any]] = []
         self.instruction_record: dict[str, Any] | None = None
         self.workspace_record: dict[str, Any] | None = None
+        self.image_metadata: dict[str, dict[str, Any]] = {}
         self.removal: list[dict] = []
         self.closed = False
         self._lock = threading.Lock()
@@ -247,6 +248,7 @@ class Environment:
         self._t0 = time.monotonic()
         self.started_utc = utc_now()
         self._check_key_path()
+        self.image_metadata = self.images.metadata()
         bad = wsp.check_names(self.manifest)
         if bad:
             raise GateFailed("task workspace names that name the measurement", bad[:20])
@@ -805,6 +807,8 @@ class Environment:
             "workspace_path": self.workspace_path,
             "workspace": self.workspace_record,
             "images": {"harness": self.images.harness, "gateway": self.images.gateway, "scripted": self.images.scripted, "watcher": self.images.watcher},
+            "image_ids": {role: info["id"] for role, info in self.image_metadata.items()},
+            "image_inputs_digests": {role: info["inputs_digest"] for role, info in self.image_metadata.items()},
             "network_mode": checks.network_mode(),
             "docker_names": dict(self.names),
             "instruction": self.instruction_record,

@@ -1,0 +1,10 @@
+# Keep the root-relative COPY paths used by standalone builds.
+# Send only their source files, never episode output or local tool state.
+*
+!cohbench/scripted/__init__.py
+!cohbench/scripted/__main__.py
+!cohbench/scripted/engine.py
+!cohbench/scripted/ids.py
+!cohbench/scripted/script.py
+!cohbench/scripted/server.py
+!cohbench/scripted/wire.py

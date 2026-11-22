@@ -1,5 +1,13 @@
-# Build context is the repository root; send only the gateway package.
+# Keep the root-relative COPY paths used by standalone builds.
+# Send exactly the modules and configuration listed in the Dockerfile.
 *
-!gateway/*.py
+!gateway/__init__.py
+!gateway/__main__.py
+!gateway/config.py
 !gateway/config.json
-gateway/verify_topology.py
+!gateway/proxy.py
+!gateway/records.py
+!gateway/screen.py
+!gateway/summary.py
+!gateway/tls.py
+!gateway/usage.py

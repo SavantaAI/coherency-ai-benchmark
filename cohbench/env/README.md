@@ -19,6 +19,86 @@ the images that record says its call built or pulled.
 An episode removes its own containers, networks, volumes and snapshot
 (probe copy) images, by exact name.
 
+### Image input fingerprints
+
+Every locally built image carries a SHA-256 recipe fingerprint in the
+`cohbench.inputs` image label. Before reuse, `images._ensure_image` compares
+that label with `build_inputs.inputs_digest`. A missing image, missing label
+or different digest triggers a build under the same tag. `rebuild=True`
+still forces the harness and base builds. `provision` also keeps its existing
+`rebuild_harness` and `rebuild_services` switches. Both default to false, so
+unchanged images are reused. A service that was rebuilt is listed in the
+provisioning record's `built` list, including when its tag already existed.
+
+The digest covers the Dockerfile, active ignore file, every context file
+after Docker ignore rules, build arguments, and the input digests of locally
+built parent images. Both harnesses include their base's digest. Changing
+the base therefore invalidates a harness even if its own context excludes
+the base files. External parent references remain in the Dockerfile or build
+arguments. Resolving changes behind registry tags or remote package versions
+is outside this fingerprint.
+
+Context records are sorted by relative POSIX path. They include entry types,
+permission bits, file bytes and symlink target strings. They exclude host
+paths, owners and timestamps. Symlinks in the context are not followed.
+Dockerfile-specific ignore rules take precedence over a context's
+`.dockerignore`. The Dockerfile and active ignore file are fingerprinted even
+when those rules exclude them. Unsupported special files and invalid ignore
+patterns raise an error instead of producing a partial fingerprint.
+
+The label is deliberate. Image labels are Docker metadata, not files or
+environment variables visible inside the agent container. No recipe marker
+is added to the container's filesystem, and image tags keep their existing
+names.
+
+The provisioning record stores `inputs_digests` alongside `ids`, by image
+role. At episode start, the environment captures the inspected image IDs
+and label values together. `environment.json` saves them as `image_ids` and
+`image_inputs_digests`, so later tag changes do not rewrite this record.
+A manually supplied image without the label has a null input digest.
+
+Every Dockerfile has an adjacent `Dockerfile.dockerignore` that excludes
+everything except its `COPY` sources. The base and harnesses use `docker/`
+as the context root. Services use the repository root because their `COPY`
+paths and standalone builders use repository-relative source paths. The
+ignore files narrow what Docker receives without changing those existing
+commands. Gateway and scripted list the exact source files; watcher keeps
+the same Python-file glob as its Dockerfile. The Dockerfile and active ignore
+file also reach Docker as build controls.
+
+`runs/`, `.git/`, virtual environments, caches, test output, and unrelated
+packages are excluded from both the build and the digest. Excluded trees
+are skipped before stat calls, so their files can appear or disappear while
+provisioning. Actual build inputs must still remain unchanged while Docker
+builds. The fingerprint is computed before Docker reads those inputs.
+
+Docker-free coverage lives in `tests/env/test_images.py`. It checks a fixed
+digest on Python 3.12 and 3.15, file and mode changes, ignored paths, symlinks,
+build arguments, parent propagation, reuse and force decisions, build and
+inspect errors, and saved episode metadata against fake Docker calls.
+`tests/env/test_build_contexts.py` also checks every real Dockerfile's context
+against its `COPY` sources. It creates, changes and deletes its own scratch
+output under the real `runs/` directory, and tests unrelated files and copied
+source changes in isolated copies of the repository layout.
+
+`tests/env/live_images.py` is an opt-in pytest plugin for live checks. Put
+`tests/env` on `PYTHONPATH`, set `PYTEST_PLUGINS=live_images` and select a host
+JSON output file with `IMAGE_AUDIT_PATH`. It records successful real build
+calls and inspects the five images used by Pi episodes, checking each input
+label against the current recipe. `IMAGE_EXPECT_BUILDS` can specify a JSON
+list of the exact tags that should build, including an empty list for reuse.
+
+Live verification on 2026-11-22 used Docker Desktop 27.4.0 and the runner's
+demo integration test on Python 3.12. All three runs passed. The first built
+base, Pi, gateway, scripted and watcher. The second made no build calls and
+kept all five image IDs and labels. After appending a temporary comment to
+the base Dockerfile, the third rebuilt only base and Pi; service IDs and
+labels stayed unchanged. Every run inspected all five input labels against
+the current recipes. The comment was removed and the original Dockerfile
+bytes restored, then base and Pi were refreshed for the restored recipe.
+Local audit records are in `runs/image-keying-live-QWSSiO/`. The environment
+unit suite passed 71 tests on each of Python 3.12 and 3.15.
+
 ## What one episode gets
 
 ```

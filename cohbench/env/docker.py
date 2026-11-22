@@ -795,4 +795,4 @@ def copy_out(container: str, src: str, dest_dir: Path, *, key: KeySource | None 
 
 def image_info(tag: str) -> dict:
     data = json.loads(run(["image", "inspect", tag], timeout=60).stdout)[0]
-    return {"tag": tag, "id": data["Id"], "created": data.get("Created")}
+    return {"tag": tag, "id": data["Id"], "created": data.get("Created"), "labels": (data.get("Config") or {}).get("Labels") or {}}

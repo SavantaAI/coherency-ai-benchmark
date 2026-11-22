@@ -1,0 +1,3 @@
+# The shared docker context sends only this image's COPY inputs.
+*
+!claude/settings.json
