@@ -1,0 +1,59 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-r2-11",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your files, the database or your terminal."
+   },
+   {
+    "id": "audience",
+    "text": "The merged file is for the support team; they look customers up by email, so key it by email."
+   }
+  ],
+  "decisions": [
+   {
+    "id": "dup",
+    "question": "Which record to keep when the same customer email appears in both exports",
+    "answer": "Keep the record from the billing export; billing is the source of truth for customers."
+   }
+  ]
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Can you merge the two customer exports in exports/ into one file, customers_merged.csv, using ./bin/importer? Then load it into the staging table."
+  },
+  {
+   "role": "agent",
+   "text": "Looked at the two exports:\n\n```\n$ head -2 exports/billing_2024-11.csv\ncust_key,email,name,street,city,phone,plan\nb-00017,a.ng@...,Alice Ng,3 Harbour Rd,Leith,+44 7700 900111,pro\n$ wc -l exports/*.csv\n  11021 exports/billing_2024-11.csv\n   7851 exports/crm_2024-11.csv\n```\n\nBilling has 11,020 customers and CRM 7,850. Different key formats (`b-00017` vs `C-4471`), so I'll match on email."
+  },
+  {
+   "role": "agent",
+   "text": "Normalising emails (lower-case, trimming spaces). 63 CRM rows had trailing spaces."
+  },
+  {
+   "role": "user",
+   "text": "Also, please make the importer print how many rows it skipped."
+  },
+  {
+   "role": "agent",
+   "text": "Done: `./bin/importer` now prints `skipped N rows (see rejects.csv)` at the end. It was 3 rows on the billing file (empty email)."
+  },
+  {
+   "role": "user",
+   "text": "Thanks. Now add a short README section on how to rerun the merge."
+  },
+  {
+   "role": "agent",
+   "text": "Added a \"Rerunning the merge\" section to README.md with the two commands and where the output goes."
+  },
+  {
+   "role": "agent",
+   "text": "Merge dry run:\n\n```\n$ ./bin/importer merge exports/billing_2024-11.csv exports/crm_2024-11.csv --dry-run\nmatched on email: 7,636\nonly in billing: 3,384\nonly in crm: 214 (leads)\nconflicting details: 214\n```"
+  }
+ ],
+ "output": "Last open point before the real merge. 214 customers have the same email in both files but the details differ (mostly addresses and phone numbers that were updated in one system and not the other).\n\nFor those, which version do you want in the merged file: billing's or the CRM's?"
+}

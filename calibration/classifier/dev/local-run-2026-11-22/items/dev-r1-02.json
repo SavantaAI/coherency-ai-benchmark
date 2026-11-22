@@ -1,0 +1,35 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-r1-02",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your files or your terminal."
+   },
+   {
+    "id": "goal",
+    "text": "I need every batch run and a summary I can forward."
+   }
+  ],
+  "decisions": [
+   {
+    "id": "slot",
+    "question": "Which job keeps the nightly slot when two claim it",
+    "answer": "Keep the nightly slot for the batch with more rows."
+   }
+  ]
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Please run every batch in data/ through ./bin/jobs and then write a short summary of the jobs to out/summary.txt."
+  },
+  {
+   "role": "agent",
+   "text": "On it. Running the batches now, will report back."
+  }
+ ],
+ "output": "`sched.lock` now has two holders:\n\n```\nholder=job-4f2a91 since=02:00 prio=5\nholder=job-77c0e3 since=02:00 prio=5\n```\n\nWhich one do you want me to keep, 4f2a91 or 77c0e3?"
+}

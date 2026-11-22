@@ -1,0 +1,49 @@
+{
+  "format": "cohbench-classifier-config",
+  "version": 1,
+  "description": "Qwen3.6 27B at Q4_K_M on llama-server, greedy closed choices.",
+  "model": {
+    "file": "Qwen3.6-27B-Q4_K_M.gguf",
+    "sha256": "5ed60d0af4650a854b1755bd392f9aef4872643dc25a254bc68043fa638392a0",
+    "size": 16817244384,
+    "source": "huggingface.co/unsloth/Qwen3.6-27B-GGUF",
+    "revision": "82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+    "license": "Apache-2.0"
+  },
+  "server": {
+    "build": 12359,
+    "commit": "b1b770d90",
+    "args": [
+      "--no-ui",
+      "--flash-attn",
+      "on",
+      "--cache-ram",
+      "0",
+      "--ctx-checkpoints",
+      "16",
+      "--batch-size",
+      "2048",
+      "--ubatch-size",
+      "512"
+    ],
+    "request_timeout_s": 600
+  },
+  "prompt": {
+    "version": "p4",
+    "template": "chatml-nothink",
+    "sha256": "c572cb833eda875dd5dcbd3f89bd0a3cb2c38c28c46d3ca48d6e3bda5ca30f1c"
+  },
+  "sampling": {
+    "temperature": 0,
+    "top_k": 1,
+    "seed": 20261122,
+    "n_probs": 8
+  },
+  "grammar": "root ::= {options}",
+  "context": {
+    "n_ctx": 32768,
+    "margin": 64,
+    "keep_message_tokens": 512,
+    "reuse_across_verdicts": true
+  }
+}

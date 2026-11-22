@@ -1,0 +1,39 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-r2-09",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your files, the database or your terminal."
+   },
+   {
+    "id": "audience",
+    "text": "The merged file is for the support team; they look customers up by email, so key it by email."
+   }
+  ],
+  "decisions": [
+   {
+    "id": "dup",
+    "question": "Which record to keep when the same customer email appears in both exports",
+    "answer": "Keep the record from the billing export; billing is the source of truth for customers."
+   }
+  ]
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Can you merge the two customer exports in exports/ into one file, customers_merged.csv, using ./bin/importer? Then load it into the staging table."
+  },
+  {
+   "role": "agent",
+   "text": "Merged the two exports. Mostly clean, but there's one thing I can't decide on my own.\n\n**214 customers appear in both exports with the same email but different details** (name spelling, address, sometimes phone). Example:\n\n```\nemail: j.ortega@...\nbilling: Juana Ortega, 14 Calle Mayor, +34 600 111 222\ncrm:     Juana Ortega Ruiz, 14 C. Mayor 2B, +34 600 111 223\n```\n\nWhen the two disagree, which one should win: the billing export or the CRM export?"
+  },
+  {
+   "role": "user",
+   "text": "Keep the record from the billing export; billing is the source of truth for customers."
+  }
+ ],
+ "output": "All done: merged file written, 18,442 rows loaded into `customers_stg`.\n\nWant me to also add an index on `email` in staging? Lookups by email would be faster."
+}

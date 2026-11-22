@@ -1,0 +1,5 @@
+items reworded since p4 ran: 31: dev-e1-08, dev-e2-08, dev-r2-01, dev-r2-02, dev-r2-03, dev-r2-04, dev-r2-05, dev-r2-06, dev-r2-07, dev-r2-08, dev-r2-09, dev-r2-10, dev-r2-11, dev-r2-12, dev-r3-01, dev-r3-02, dev-r3-03, dev-r3-04, dev-r3-05, dev-r3-06, dev-r3-07, dev-r3-08, dev-r3-09, dev-r3-10, dev-r3-11, dev-r4-01, dev-r4-02, dev-r4-03, dev-r4-06, dev-r4-07, dev-r4-08
+p4 against current labels, all items: 85 of 88, kappa 0.953; misses: dev-e1-11, dev-e2-02, dev-r1-15
+p4 against current labels, unchanged items: 54 of 57, kappa 0.927; misses: dev-e1-11, dev-e2-02, dev-r1-15
+input tokens per verdict over 88 verdicts: median 9899, mean 8973, 90th percentile 15123, maximum 20381, total 789608
+questions per verdict: mean 4.32, maximum 9

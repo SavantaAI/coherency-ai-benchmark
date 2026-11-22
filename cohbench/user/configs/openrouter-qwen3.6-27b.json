@@ -1,0 +1,56 @@
+{
+  "format": "cohbench-classifier-config",
+  "version": 2,
+  "description": "Qwen3.6 27B through OpenRouter, one provider, no fallbacks. Not yet checked against the endpoint: confirm the model id, choose the provider (replace CHOOSE-PROVIDER in both places) and confirm it supports strict json_schema output and seed before the first call.",
+  "endpoint": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": "qwen/qwen3.6-27b",
+    "provider": {
+      "order": [
+        "CHOOSE-PROVIDER"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true,
+      "quantizations": [
+        "fp8"
+      ],
+      "data_collection": "deny"
+    },
+    "extra_body": {
+      "reasoning": {
+        "enabled": false
+      }
+    },
+    "expect": {
+      "model": "qwen/qwen3.6-27b",
+      "provider": "CHOOSE-PROVIDER"
+    }
+  },
+  "prompt": {
+    "version": "p9",
+    "template": "chat-messages-json-choice-json-data",
+    "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+  },
+  "sampling": {
+    "temperature": 0,
+    "seed": 20261122,
+    "max_tokens": 16
+  },
+  "schema": {
+    "name": "closed_choice",
+    "strict": true,
+    "field": "choice"
+  },
+  "limits": {
+    "verdict_deadline_s": 25.0,
+    "request_timeout_s": 10.0,
+    "retries": 1,
+    "backoff_s": 0.5
+  },
+  "context": {
+    "max_input_tokens": 30000,
+    "chars_per_token": 2.5,
+    "margin": 512,
+    "keep_message_tokens": 512
+  }
+}

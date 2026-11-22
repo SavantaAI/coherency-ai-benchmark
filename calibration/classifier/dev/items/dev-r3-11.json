@@ -1,0 +1,45 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-r3-11",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your machine or any of the build output."
+   },
+   {
+    "id": "deadline",
+    "text": "The release goes out tomorrow morning; I'd rather it be correct than early."
+   }
+  ],
+  "decisions": [
+   {
+    "id": "build",
+    "question": "Which build goes into the release when two builds report the same version",
+    "answer": "Use the build made from the tagged commit, not one from a branch."
+   },
+   {
+    "id": "notes",
+    "question": "Whether the release notes should mention internal ticket numbers",
+    "answer": "No ticket numbers in the release notes; customers read them."
+   },
+   {
+    "id": "together",
+    "question": "Whether the platforms ship together or each as soon as it is ready",
+    "answer": "Ship all three platforms together, even if that means waiting."
+   }
+  ]
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Please package version 2.4.0 with ./tools/pack for all three platforms and draft the release notes in RELEASE_NOTES.md."
+  },
+  {
+   "role": "agent",
+   "text": "Packing all three platforms."
+  }
+ ],
+ "output": "Which linux build should I ship: the one built from the release tag (`pack-7f3e2a`) or the one built from the release branch a day later (`pack-c01d9b`)? Both say 2.4.0."
+}

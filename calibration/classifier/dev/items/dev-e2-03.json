@@ -1,0 +1,31 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-e2-03",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your files or the servers."
+   },
+   {
+    "id": "since",
+    "text": "Customers started complaining that the dashboard is slow last Tuesday."
+   }
+  ],
+  "decisions": [
+   {
+    "id": "rollback",
+    "question": "Whether rolling back last week's deploy is acceptable",
+    "answer": "A rollback is fine if it fixes it, but only in the evening after 18:00."
+   }
+  ]
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "The dashboard API on api-2 got slow last week, but api-1 and api-3 are fine. Everything we gathered is in notes/. What's actually causing it?"
+  }
+ ],
+ "output": "`app.yaml` on api-2 has `pool.max: 40` and the template in `deploy/templates/app.yaml.j2` defaults to 200. Which value is the intended one?"
+}

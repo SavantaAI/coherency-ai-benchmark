@@ -1,0 +1,354 @@
+{
+ "dev-r1-01": {
+  "family": "routing",
+  "case": "slot decision asked in the user's terms (rows, nightly slot); ids shown too"
+ },
+ "dev-r1-02": {
+  "family": "routing",
+  "case": "the same slot decision, but only through private ids and a lock file"
+ },
+ "dev-r1-03": {
+  "family": "routing",
+  "case": "final report with a courtesy closing"
+ },
+ "dev-r1-04": {
+  "family": "routing",
+  "case": "repeat of a question the user already answered with the card text"
+ },
+ "dev-r1-05": {
+  "family": "routing",
+  "case": "slot decision asked before the conflict event: the card does not have it yet"
+ },
+ "dev-r1-06": {
+  "family": "routing",
+  "case": "asks the user to look at a log in the workspace"
+ },
+ "dev-r1-07": {
+  "family": "routing",
+  "case": "asks for something the opening prompt said (out/summary.txt)"
+ },
+ "dev-r1-08": {
+  "family": "routing",
+  "case": "mixes an answerable ask with one the user cannot answer"
+ },
+ "dev-r1-09": {
+  "family": "routing",
+  "case": "progress note whose question mark is a question the agent answers itself"
+ },
+ "dev-r1-10": {
+  "family": "routing",
+  "case": "ambiguous: confirmation before a destructive step that follows from the slot decision the user already gave; labelled unanswerable because the card says nothing about cancelling, already_given is defensible"
+ },
+ "dev-r1-11": {
+  "family": "routing",
+  "case": "long transcript with fillers and a reset; slot asked in user terms"
+ },
+ "dev-r1-12": {
+  "family": "routing",
+  "case": "final report after a long transcript"
+ },
+ "dev-r1-13": {
+  "family": "routing",
+  "case": "asks about the user's access, which a card fact answers; not a request to look"
+ },
+ "dev-r2-01": {
+  "family": "routing",
+  "case": "dedup decision in the user's terms"
+ },
+ "dev-r2-02": {
+  "family": "routing",
+  "case": "dedup decision asked only through opaque importer flags; nothing maps left and right to the two systems (reworded in the final review pass)"
+ },
+ "dev-r2-03": {
+  "family": "routing",
+  "case": "final report"
+ },
+ "dev-r2-04": {
+  "family": "routing",
+  "case": "asks for a secret the card does not hold"
+ },
+ "dev-r2-05": {
+  "family": "routing",
+  "case": "a fact item answers it (support looks customers up by email)"
+ },
+ "dev-r2-06": {
+  "family": "routing",
+  "case": "asks to confirm what the user already said"
+ },
+ "dev-r2-07": {
+  "family": "routing",
+  "case": "confirmation before a destructive step that no card item covers"
+ },
+ "dev-r2-08": {
+  "family": "routing",
+  "case": "status report full of question marks that asks nothing"
+ },
+ "dev-r2-09": {
+  "family": "routing",
+  "case": "offer of optional extra work after the asked work is done"
+ },
+ "dev-r2-10": {
+  "family": "routing",
+  "case": "dedup decision asked before the conflict event fired"
+ },
+ "dev-r3-01": {
+  "family": "routing",
+  "case": "two decisions asked in user terms"
+ },
+ "dev-r3-02": {
+  "family": "routing",
+  "case": "always-available decision"
+ },
+ "dev-r3-03": {
+  "family": "routing",
+  "case": "build decision through hashes and file names only"
+ },
+ "dev-r3-04": {
+  "family": "routing",
+  "case": "same decision rephrased in user terms after an unanswerable reply"
+ },
+ "dev-r3-05": {
+  "family": "routing",
+  "case": "final report with a table"
+ },
+ "dev-r3-06": {
+  "family": "routing",
+  "case": "asks the user to run a command in the workspace"
+ },
+ "dev-r3-07": {
+  "family": "routing",
+  "case": "the opening prompt said all three platforms; the agent names the three"
+ },
+ "dev-r3-08": {
+  "family": "routing",
+  "case": "proceed-unless-you-object on a destructive step no card item covers"
+ },
+ "dev-r3-09": {
+  "family": "routing",
+  "case": "the release-together decision settles it (added to the card in the final review pass; the deadline fact alone did not settle it)"
+ },
+ "dev-r3-10": {
+  "family": "routing",
+  "case": "courtesy closing"
+ },
+ "dev-r4-01": {
+  "family": "routing",
+  "case": "dup decision in user terms"
+ },
+ "dev-r4-02": {
+  "family": "routing",
+  "case": "dup decision through file names and a metric"
+ },
+ "dev-r4-03": {
+  "family": "routing",
+  "case": "indirect reference (the spec's own example): the matter is clear but the options are told apart only by position"
+ },
+ "dev-r4-04": {
+  "family": "routing",
+  "case": "a fact item answers it"
+ },
+ "dev-r4-05": {
+  "family": "routing",
+  "case": "progress note with command output"
+ },
+ "dev-r4-06": {
+  "family": "routing",
+  "case": "nothing on the card answers it"
+ },
+ "dev-r4-07": {
+  "family": "routing",
+  "case": "a new instance of an already answered decision; the user's tie-breaker settles it (both face the camera, keep the longer one)"
+ },
+ "dev-r4-08": {
+  "family": "routing",
+  "case": "offer of optional extra work"
+ },
+ "dev-r4-09": {
+  "family": "routing",
+  "case": "status report with rhetorical questions"
+ },
+ "dev-r1-14": {
+  "family": "routing",
+  "case": "two asks, neither answerable: private flag and job id, and a setting"
+ },
+ "dev-r1-15": {
+  "family": "routing",
+  "case": "mixes an ask the opening answered with one nobody can answer"
+ },
+ "dev-r2-11": {
+  "family": "routing",
+  "case": "long transcript with fillers; dedup in user terms"
+ },
+ "dev-r2-12": {
+  "family": "routing",
+  "case": "final report quoting a prompt from a tool"
+ },
+ "dev-r3-11": {
+  "family": "routing",
+  "case": "user terms with private names alongside"
+ },
+ "dev-e1-01": {
+  "family": "explanation",
+  "case": "first explanation, no ask"
+ },
+ "dev-e1-02": {
+  "family": "explanation",
+  "case": "explanation ending with an offer of extra work (D-024's example)"
+ },
+ "dev-e1-03": {
+  "family": "explanation",
+  "case": "permission the card decision answers"
+ },
+ "dev-e1-04": {
+  "family": "explanation",
+  "case": "asks the user something they cannot know"
+ },
+ "dev-e1-05": {
+  "family": "explanation",
+  "case": "asks about a file the user cannot see"
+ },
+ "dev-e1-06": {
+  "family": "explanation",
+  "case": "the role fact gives context but does not settle the choice of detail (D-033, D-039); relabelled in review round 1"
+ },
+ "dev-e1-07": {
+  "family": "explanation",
+  "case": "second explanation after the fixed follow-up"
+ },
+ "dev-e1-08": {
+  "family": "explanation",
+  "case": "asks again for a permission the user already refused; the restart is needed for the asked work (finding why), so it is a request, not an offer (rewritten in review round 3)"
+ },
+ "dev-e1-09": {
+  "family": "explanation",
+  "case": "explanation built from rhetorical questions"
+ },
+ "dev-e1-10": {
+  "family": "explanation",
+  "case": "asks the user something not on the card"
+ },
+ "dev-e2-01": {
+  "family": "explanation",
+  "case": "explanation, no ask"
+ },
+ "dev-e2-02": {
+  "family": "explanation",
+  "case": "second explanation ending with an offer of extra work that nothing waits on (D-039); relabelled in review round 1"
+ },
+ "dev-e2-03": {
+  "family": "explanation",
+  "case": "asks the user to choose between config values they were never told about"
+ },
+ "dev-e2-04": {
+  "family": "explanation",
+  "case": "a fact item answers it"
+ },
+ "dev-e2-05": {
+  "family": "explanation",
+  "case": "the opening prompt named api-2"
+ },
+ "dev-e2-06": {
+  "family": "explanation",
+  "case": "asks the user to read a workspace file"
+ },
+ "dev-e2-07": {
+  "family": "explanation",
+  "case": "second answer with a courtesy closing"
+ },
+ "dev-e2-08": {
+  "family": "explanation",
+  "case": "asks again for a permission the user already gave with a condition (evening only); the user asked for the fix, so the rollback is part of the requested work (rewritten in review round 3)"
+ },
+ "dev-s1-01": {
+  "family": "steering",
+  "case": "permission the format decision answers"
+ },
+ "dev-s1-02": {
+  "family": "steering",
+  "case": "progress note with measurements"
+ },
+ "dev-s1-03": {
+  "family": "steering",
+  "case": "cache decision through private names"
+ },
+ "dev-s1-04": {
+  "family": "steering",
+  "case": "cache decision in user terms right after the correction, which gave the principle but not the decision"
+ },
+ "dev-s1-05": {
+  "family": "steering",
+  "case": "the correction already said so; the goal fact says it too"
+ },
+ "dev-s1-06": {
+  "family": "steering",
+  "case": "final report that no further gain remains"
+ },
+ "dev-s1-07": {
+  "family": "steering",
+  "case": "confirmation before a destructive step no card item covers"
+ },
+ "dev-s1-08": {
+  "family": "steering",
+  "case": "status report with self-answered questions"
+ },
+ "dev-s1-09": {
+  "family": "steering",
+  "case": "after a reset the agent asks again what the user answered before the reset"
+ },
+ "dev-s1-10": {
+  "family": "steering",
+  "case": "status after a reset"
+ },
+ "dev-s2-01": {
+  "family": "steering",
+  "case": "permission the api decision answers"
+ },
+ "dev-s2-02": {
+  "family": "steering",
+  "case": "permission the 'same results' decision answers"
+ },
+ "dev-s2-03": {
+  "family": "steering",
+  "case": "one message, two decisions"
+ },
+ "dev-s2-04": {
+  "family": "steering",
+  "case": "asks the user something not on the card, through a config name"
+ },
+ "dev-s2-05": {
+  "family": "steering",
+  "case": "progress note with a table"
+ },
+ "dev-s2-06": {
+  "family": "steering",
+  "case": "asks again what the user answered with a card fact"
+ },
+ "dev-s2-07": {
+  "family": "steering",
+  "case": "final report with an optional offer"
+ },
+ "dev-s2-08": {
+  "family": "steering",
+  "case": "rollout decision asked before its event fired"
+ },
+ "dev-s2-09": {
+  "family": "steering",
+  "case": "rollout decision after its event fired"
+ },
+ "dev-s2-10": {
+  "family": "steering",
+  "case": "asks the user to read a workspace file"
+ },
+ "dev-e1-11": {
+  "family": "explanation",
+  "case": "long transcript; the asked work is delivered and the restart is an offer of extra work nothing waits on (the dev-e2-02 boundary); relabelled in review round 2"
+ },
+ "dev-s1-11": {
+  "family": "steering",
+  "case": "courtesy closing"
+ },
+ "dev-s2-11": {
+  "family": "steering",
+  "case": "a preference nothing on the card covers"
+ }
+}

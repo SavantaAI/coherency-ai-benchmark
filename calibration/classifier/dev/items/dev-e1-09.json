@@ -1,0 +1,31 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-e1-09",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see the machines' files or logs; I only see what you tell me."
+   },
+   {
+    "id": "role",
+    "text": "I manage the team that uses these machines, but I'm not a sysadmin."
+   }
+  ],
+  "decisions": [
+   {
+    "id": "restart",
+    "question": "Whether you may restart or change anything on the machines",
+    "answer": "Don't restart or change anything yet. Just find out why and tell me."
+   }
+  ]
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "m3 is way slower than m1, m2 and m4 at the nightly build, even though they're supposed to be identical. Everything we collected is in investigation/. Why is m3 slow?"
+  }
+ ],
+ "output": "So why only m3, if the four machines are supposed to be identical? Because they stopped being identical in March: m3 is the one that got the extra nightly job that keeps 30 days of build caches (`/etc/cron.d/keep-caches`), and that's what filled its disk.\n\nWhy didn't anyone notice? The disk alert threshold is 98%, and m3 has been sitting at 96 to 97% for weeks.\n\nThat's the whole story: the extra cache job filled m3's disk, and a nearly full disk makes every write slow."
+}

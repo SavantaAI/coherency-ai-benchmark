@@ -1,0 +1,25 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-r4-04",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your files or the render output."
+   },
+   {
+    "id": "purpose",
+    "text": "The video is for my sister's wedding slideshow."
+   }
+  ],
+  "decisions": []
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Use ./bin/clipper to cut the raw footage in footage/ into 20 to 30 second clips and put the keepers in selects/. Then build a rough cut with ./bin/assemble."
+  }
+ ],
+ "output": "What's the video for, roughly? It changes how I'd pace the rough cut (a 3 minute recap vs. something people watch from start to finish)."
+}

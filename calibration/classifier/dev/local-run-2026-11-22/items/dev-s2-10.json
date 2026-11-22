@@ -1,0 +1,49 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-s2-10",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your files or your terminal."
+   },
+   {
+    "id": "goal",
+    "text": "Search has to answer more queries per second; that's the number from ./bin/bench I care about."
+   }
+  ],
+  "decisions": [
+   {
+    "id": "api",
+    "question": "Whether the public search API may change",
+    "answer": "No changes to the public API; other teams call it."
+   },
+   {
+    "id": "same",
+    "question": "Whether search may return slightly different results",
+    "answer": "Results must stay exactly the same as now."
+   },
+   {
+    "id": "rollout",
+    "question": "When to roll out the faster version",
+    "answer": "Roll it out on Monday, not before."
+   }
+  ]
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Our search service in service/ is too slow. Can you speed it up? ./bin/bench gives you the numbers."
+  },
+  {
+   "role": "agent",
+   "text": "Baseline from `./bin/bench`:\n\n```\nqps: 412\np50: 2.1ms  p99: 31.8ms\n```\n\nProfile says 60% of the time is in `rank.score_all`, which scores every document even when only the top 10 are returned."
+  },
+  {
+   "role": "agent",
+   "text": "qps is now 701 on the replay, results identical."
+  }
+ ],
+ "output": "Rollout plan is in `service/ROLLOUT.md`. Can you read it and tell me if the canary percentages look right?"
+}

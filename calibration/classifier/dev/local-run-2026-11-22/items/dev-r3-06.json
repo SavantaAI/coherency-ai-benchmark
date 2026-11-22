@@ -1,0 +1,35 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-r3-06",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your machine or any of the build output."
+   },
+   {
+    "id": "deadline",
+    "text": "The release goes out tomorrow morning; I'd rather it be correct than early."
+   }
+  ],
+  "decisions": [
+   {
+    "id": "notes",
+    "question": "Whether the release notes should mention internal ticket numbers",
+    "answer": "No ticket numbers in the release notes; customers read them."
+   }
+  ]
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Please package version 2.4.0 with ./tools/pack for all three platforms and draft the release notes in RELEASE_NOTES.md."
+  },
+  {
+   "role": "agent",
+   "text": "Packing."
+  }
+ ],
+ "output": "The windows package fails signature verification here but I think it's my environment. Can you run `./tools/pack --verify dist/pack-2.4.0-win.zip` on your side and paste the output?"
+}

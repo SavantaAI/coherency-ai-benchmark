@@ -1,0 +1,29 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-r1-09",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your files or your terminal."
+   },
+   {
+    "id": "goal",
+    "text": "I need every batch run and a summary I can forward."
+   }
+  ],
+  "decisions": []
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Please run every batch in data/ through ./bin/jobs and then write a short summary of the jobs to out/summary.txt."
+  },
+  {
+   "role": "agent",
+   "text": "Starting with batch1."
+  }
+ ],
+ "output": "Why did batch2 fail the first time? The CSV starts with a UTF-8 BOM, so the header came through as `\\ufeffid` and the importer rejected it.\n\nStripped the BOM (copy in `data/batch2.clean.csv`, original untouched) and it went through:\n\n```\nqueued job-2d7e11 (1,904 rows)\n```\n\nRunning batch3 and batch4 next."
+}

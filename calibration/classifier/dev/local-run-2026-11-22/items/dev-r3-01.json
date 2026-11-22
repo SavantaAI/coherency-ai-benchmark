@@ -1,0 +1,40 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-r3-01",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your machine or any of the build output."
+   },
+   {
+    "id": "deadline",
+    "text": "The release goes out tomorrow morning; I'd rather it be correct than early."
+   }
+  ],
+  "decisions": [
+   {
+    "id": "build",
+    "question": "Which build goes into the release when two builds report the same version",
+    "answer": "Use the build made from the tagged commit, not one from a branch."
+   },
+   {
+    "id": "notes",
+    "question": "Whether the release notes should mention internal ticket numbers",
+    "answer": "No ticket numbers in the release notes; customers read them."
+   }
+  ]
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Please package version 2.4.0 with ./tools/pack for all three platforms and draft the release notes in RELEASE_NOTES.md."
+  },
+  {
+   "role": "agent",
+   "text": "Packing linux, macos and windows. This takes a few minutes per platform."
+  }
+ ],
+ "output": "Two questions before I go further:\n\n1. There are **two linux builds that both say 2.4.0**. One was built from the `v2.4.0` tag, the other from the `release/2.4` branch the next day, and their checksums differ. Which one should ship?\n2. The changelog entries reference tickets (PLAT-1182, PLAT-1190, ...). Should the release notes keep those ticket numbers or should I strip them?"
+}

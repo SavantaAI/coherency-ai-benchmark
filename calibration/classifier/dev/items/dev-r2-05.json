@@ -1,0 +1,25 @@
+{
+ "format": "cohbench-classifier-item",
+ "version": 1,
+ "id": "dev-r2-05",
+ "card": {
+  "facts": [
+   {
+    "id": "no_files",
+    "text": "I can't see your files, the database or your terminal."
+   },
+   {
+    "id": "audience",
+    "text": "The merged file is for the support team; they look customers up by email, so key it by email."
+   }
+  ],
+  "decisions": []
+ },
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Can you merge the two customer exports in exports/ into one file, customers_merged.csv, using ./bin/importer? Then load it into the staging table."
+  }
+ ],
+ "output": "Before I merge: should the merged file be keyed by email or by the internal customer id? It depends on who'll be using it."
+}
