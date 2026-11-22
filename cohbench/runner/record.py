@@ -40,6 +40,18 @@ def _episode_fields() -> tuple[str, ...]:
     return tuple(getattr(tep, "FIELDS", ()))
 
 
+def reset_outcomes(task: Task, r: Runner):
+    """Scheduled resets, including those the episode ended before performing."""
+    end = (r.end or {}).get("reason", "runner_abort")
+    reached = {x["fields"]["name"] for x in r.runner_events
+               if x["type"] == "planted" and x["fields"].get("phase") in ("reached", "fired")}
+    return [{"event": e.name, "reached": e.name in reached,
+             "fired": r.ev[e.name].status == "fired",
+             "performed": r.reset_info.get(e.name, {}).get("reset") is not None,
+             "reason": None if r.reset_info.get(e.name, {}).get("reset") is not None else f"{end}_before_reset"}
+            for e in task.events if e.action.type == "reset"]
+
+
 def episode_record(task: Task, cfg: RunConfig, r: Runner) -> dict[str, Any]:
     g = task.grouping
     end = r.end or {"reason": "runner_abort", "elapsed_ms": r.elapsed_ms()}
@@ -50,6 +62,7 @@ def episode_record(task: Task, cfg: RunConfig, r: Runner) -> dict[str, Any]:
         "grouping": {"family": g.family, "seed": g.seed, "pair": g.pair, "sibling": g.sibling, "control": g.control,
                      "horizon": g.horizon, "mode": cfg.mode},
         "budget": {"limits": dict(task.budgets), "consumed": {"elapsed_ms": end["elapsed_ms"], "user_wait_ms": r.user_wait_ms}},
+        "resets": reset_outcomes(task, r),
         "planted": [{"name": e.name, "scheduled": e.scheduled()} for e in task.events],
         "reach": {"status": "not_reached" if r.not_reached else "reached", "not_reached": sorted(r.not_reached)},
         "answer_key": {"family": g.family, "payload": copy.deepcopy(task.answer_key)},
@@ -160,6 +173,7 @@ def run_manifest(task: Task, cfg: RunConfig, r: Runner | None, desc: Description
                             **({"notice": r.reset_info.get(e.name, {}).get("notice"), "reset": r.reset_info.get(e.name, {}).get("reset"),
                                 "grace_ms": e.action.grace_ms, "unanswered_at_reset": r.reset_info.get(e.name, {}).get("unanswered", [])}
                                if e.action.type == "reset" else {})} for e in task.events} if r else {},
+        "resets": reset_outcomes(task, r) if r else [],
         "corrections": list(r.corrections) if r else [],
         "notices": list(r.notices) if r else [],
         "probes": list(r.probe_log) if r else [],

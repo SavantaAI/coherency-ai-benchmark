@@ -629,3 +629,17 @@ def test_a_reset_takes_an_optional_grace(tmp_path: Path, grace, ok) -> None:
         assert task.events[0].action.grace_ms == (grace or 120_000)
     else:
         assert any("grace_ms" in e for e in errs), errs
+
+
+@pytest.mark.parametrize("spec, valid", [
+    ({"name": "profile", "regex": "profile", "capture": "^PROFILE (.+)$", "by": "output"}, True),
+    ({"name": "profile", "regex": "profile", "by": "output"}, False),
+    ({"name": "profile", "regex": "profile", "capture": "^PROFILE (.+)$", "by": "command"}, False),
+    ({"name": "profile", "regex": "profile", "capture": "^PROFILE (.+)$", "by": None}, False),
+])
+def test_attempt_output_admission(tmp_path, spec, valid):
+    def edit(d):
+        d["scoring"]["observations"] = {"attempts": [spec]}
+    task, errors, _ = check(write_task(tmp_path, edit))
+    assert (task is not None) is valid, errors
+    assert bool(errors) is not valid

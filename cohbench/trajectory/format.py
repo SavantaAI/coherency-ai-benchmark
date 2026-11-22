@@ -119,7 +119,7 @@ UNJUDGED_REASONS = ("cutoff",)
 # A hand-back (D-024, D-028): the agent handed control back by finishing its
 # turn, or by a pending request (a question or secret request through a
 # tool, the main agent's or a child's, which pauses the run).
-HANDBACK_KINDS = ("finished", "pending")
+HANDBACK_KINDS = ("finished", "pending", "interrupted")
 # Which edges of a command's output the harness or driver cut away: the
 # beginning (head), the end (tail), the middle (head and tail kept), none.
 CLIP_EDGES = ("none", "head", "tail", "middle", "both")  # "both": head and tail

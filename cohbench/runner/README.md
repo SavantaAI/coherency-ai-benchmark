@@ -211,8 +211,7 @@ the key file; it passes the path on.
    what the drain returns goes through the one replay (below), clipped to
    the deadline; every output since the notice keeps its verdict, and no
    reply goes to that context. At a hand-back the due probes are taken at
-   that now idle boundary (probes due at a grace reset wait for the next
-   hand-back), the turn cap is checked, and after the return delay the
+   that now idle boundary (including probes due at a grace reset), the turn cap is checked, and after the return delay the
    driver resets (D-010). The continuation message is composed by the same function as
    any message, at its dispatch instant: the continuation text, then the
    corrections and fixed messages due by then. A context reset is the
@@ -489,7 +488,7 @@ telling word or the canary (`words.py`).
 | `budgets` | `elapsed_ms`, `tokens`, `user_wait_ms`. Each may be absent or null for no limit. |
 | `reachability` | `max_reopens`: how many reopen messages the episode may send in total; at least 1 when any event is required. |
 | `events` | The schedule, below. |
-| `scoring` | `answer_key` (the per-family payload, D-018, checked at load: Routing `conflict`, `settled_by_workspace`, `expected_decision`, `criterion`; Explanation `options`, `true_cause`, `follow_up`, `buried_control`; Steering `objective`, `direction`, `proxy`, `correction_rule`), `control` (null, or `{"expected": {...}}` exactly when `grouping.control` is true), `identifiers` (the trajectory unit's `TaskIdentifiers`), `observations` (`{"attempts": [{"name", "regex", "capture"}]}`; `capture` has exactly one group and its captured text is the attempt's result fingerprint, D-022). |
+| `scoring` | `answer_key` (the per-family payload, D-018, checked at load: Routing `conflict`, `settled_by_workspace`, `expected_decision`, `criterion`; Explanation `options`, `true_cause`, `follow_up`, `buried_control`; Steering `objective`, `direction`, `proxy`, `correction_rule`), `control` (null, or `{"expected": {...}}` exactly when `grouping.control` is true), `identifiers` (the trajectory unit's `TaskIdentifiers`), `observations` (`{"attempts": [{"name", "regex", "capture", "by"}]}`; `capture` has exactly one group and its captured text is the attempt's result fingerprint, D-022. Optional `by: "output"` requires `capture` and emits one attempt per whole-line output match, independent of the shell command. If output is unavailable, `regex` selects one attempt with no fingerprint). |
 | `awareness` | Null, or `{"question": "..."}`, asked after the episode ends. |
 
 The user card is what the policy receives, as a deep copy:
@@ -602,17 +601,18 @@ own counters, and the episode clock.
 |---|---|
 | `{"path_exists": GLOB}` | a matching path exists as of the instant: from its batch's first write (D-030, D-037) |
 | `{"content_matches": {"path": GLOB, "regex": RE}}` | a stored file whose path matches has content the regex finds in the tree in effect as of the instant (from its batch's last write); the regex is line-oriented (MULTILINE), so `^` and `$` match at each line |
-| `{"changes": {"path": GLOB, "at_least": N}}` | at least N committed change records after the baseline touched a matching path, each counting from its batch's first write; a move whose source and destination both match counts once. The watcher keeps one net record per path within a batch, and batches are closed by the file activity alone, so the count does not depend on how often the runner looks |
+| `{"changes": {"path": GLOB, "at_least": N, "unit": "record" or "batch"}}` | With `record` (the default), at least N committed change records after the baseline touched a matching path, each counting from its batch's first write; a move whose source and destination both match counts once. The watcher keeps one net record per path within a batch, and batches are closed by the file activity alone, so the count does not depend on how often the runner looks. With `batch`, count distinct committed batches with at least one matching record. Three matching paths in one batch count as one |
 | `{"metric": {"name": NAME, "op": "lt", "value": 5, "reading": "latest"}}` | the latest (or, with `"any"`, any) committed metric reading after the baseline compares true; ops `lt le gt ge eq ne` |
 | `{"turns": {"at_least": N}}` | at least N turns finished: the agent ended its turn. A pause on a pending question or secret request is not a finished turn |
-| `{"handbacks": {"at_least": N}}` | at least N hand-backs: finished turns plus pauses on a pending request. A message-tool text mid-turn is not one. With `"since"` naming a reset event, the hand-backs after the reset was performed (its continuation sent); the hand-back at which the reset came is not one of them |
+| `{"handbacks": {"at_least": N}}` | at least N hand-backs: finished turns, pauses on a pending request, and the silent interruption at a reset grace. A message-tool text mid-turn is not one. With `"since"` naming a reset event, the hand-backs after the reset was performed (its continuation sent); the hand-back at which the reset came is not one of them |
 | `{"outputs": {"at_least": N}}` | at least N user-channel outputs, message-tool texts mid-turn included |
 | `{"verdicts": {"label": L, "at_least": N}}` | at least N verdicts with label L |
 | `{"elapsed_ms": {"at_least": N}}` | the episode clock reached N ms |
 | `{"fired": EVENT}` | that event fired |
+| `{"count": {"of": [T, ...], "at_least": N}}` | at least N listed triggers hold at the instant of evaluation. It nests with every trigger kind. Zero holds even for an empty list; more than the list length does not hold |
 | `{"all": [...]}`, `{"any": [...]}`, `{"not": T}` | as named |
 
-Every counting trigger takes an optional `"since": EVENT`, false until that
+Every counter trigger and `changes`, `metric` and `verdicts` take an optional `"since": EVENT`, false until that
 event has fired. Counters count from their values when it fired, and the
 clock from its reading then; for an event a message causes, the clock is
 read at the message's dispatch. Watcher-derived counts start from the first
@@ -1387,10 +1387,37 @@ What the unit does not do, or does only within these bounds, as of
   exports only after that change. `notice` and `reset_at` on
   `controlled_reset`, and the `notice_delivered` event, wait for the table in
   the same way; the run manifest has all of it now.
-- D-046: probes due when the reset comes at the grace are not taken there
-  (there is no hand-back); they wait for the next hand-back, after the
-  continuation. No test covers a probe due at a grace reset.
 - D-046: a notice steered but not yet taken by the harness when the agent
   hands back does not make that hand-back the reset's; the reset waits for
   the notice's delivery and then for the next hand-back or the grace. Not
   seen on the real driver (not measured).
+
+
+### Test identity and reset outcomes
+
+`RunConfig.scorer_id` optionally supplies the scorer episode id for tests and
+replays. It must be `e` followed by exactly 16 lower-case hex digits. When
+omitted, the runner generates a random opaque id as before. A caller label
+still belongs only to the run manifest and directory. Tests comparing bytes
+can supply the same id for repeated inputs.
+
+The episode record, its bundle copy in `episode.json`, and the run manifest
+carry `resets`, one outcome per scheduled reset. Each entry names `event`
+and has boolean `reached`, `fired`, and `performed` fields. `reached` means
+the trigger held. `fired` means the reset event fired. `performed` means the
+controlled handoff happened, including one whose continuation was unsent.
+When performed, `reason` is null. Otherwise it is the episode end reason
+followed by `_before_reset`, for example `finished_before_reset`. The
+schedule remains in `planted[].scheduled`; an absent `resets` field denotes
+an older record. This records the absence of a reset without changing its
+timing or the episode's reachability result.
+
+At the reset grace the interruption is a silent hand-back at the grace
+instant. It increments the hand-back counter, not the finished-turn counter.
+Its due probes run at that boundary and its reset wait starts there.
+
+A Steering correction can combine a batch-count trigger with a finished-turn
+fallback after its base event. If the agent ends a turn after the base without
+making enough edits, the correction goes with the next message. This also
+covers a variant with no valid improvement, where doing no edits is correct.
+The hand-back where the reset occurs does not count after that reset.

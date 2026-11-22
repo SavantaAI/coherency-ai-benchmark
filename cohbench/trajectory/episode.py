@@ -71,7 +71,7 @@ ANSWER_KEY_RESERVED = {
 # two configurations ran the same tasks; task-owned, the same for every
 # configuration that ran the instance. Null only in a record from before it.
 FIELDS = ("format", "version", "episode", "grouping", "budget", "planted", "reach", "answer_key", "control", "probes", "answers", "awareness", "end", "poll_s",
-          "task_sha256")
+          "task_sha256", "resets")
 # `event`: the planted event the probe was scheduled with. `deferred`: the
 # runner's word that the copy was taken at a later hand-back than the first
 # one at or after that event (D-028), recorded as given (null when unknown).
@@ -284,10 +284,35 @@ def unanswerable_wait_ms(view: Trajectory) -> int:
     return total
 
 
+def _reset_errors(doc, view):
+    if "resets" not in doc:
+        return []  # records predating the reset outcomes remain readable
+    rows = doc["resets"]
+    scheduled = {p["name"] for p in doc["planted"] if p["scheduled"].get("action") == "reset"}
+    if not isinstance(rows, list) or any(not isinstance(r, dict) or set(r) != {"event", "reached", "fired", "performed", "reason"}
+                                       or not isinstance(r["event"], str) or any(not isinstance(r[k], bool) for k in ("reached", "fired", "performed")) for r in rows):
+        return ["resets: event, reached, fired, performed and reason for each scheduled reset"]
+    errors = []
+    if len(rows) != len(scheduled) or {r["event"] for r in rows} != scheduled:
+        errors.append("resets: one outcome per scheduled reset")
+    for r in rows:
+        reason = None if r["performed"] else f"{doc['end'].get('reason')}_before_reset"
+        if r["reason"] != reason or (r["fired"] and not r["performed"]) or (r["performed"] and not r["reached"]):
+            errors.append("resets: inconsistent outcome or reason")
+    if view is not None:
+        fired = {x.get("name") for x in view.events if x.get("type") == "planted" and x.get("phase") == "fired"}
+        reached = {x.get("name") for x in view.events if x.get("type") == "planted" and x.get("phase") in ("reached", "fired")}
+        if any(r["fired"] != (r["event"] in fired) or r["reached"] != (r["event"] in reached) for r in rows):
+            errors.append("resets: reached and fired disagree with the view")
+        if sum(r["performed"] for r in rows) != sum(x.get("type") == "controlled_reset" for x in view.events):
+            errors.append("resets: performed disagrees with the view")
+    return errors
+
+
 def validate(doc: Any, view: Trajectory | None = None, changes: Any = None, observations: Any = None) -> list[str]:
     e: list[str] = []
     late = {"poll_s": "the runner's polling interval is required (D-040)", "task_sha256": "the task instance's digest is required (D-046)"}
-    if not isinstance(doc, dict) or set(doc) - set(FIELDS) or set(FIELDS) - set(doc) - set(late):
+    if not isinstance(doc, dict) or set(doc) - set(FIELDS) or set(FIELDS) - set(doc) - set(late) - {"resets"}:
         return [f"episode.json: fields must be exactly {list(FIELDS)}"]
     # `task_sha256` absent: a bundle made before the field existed (D-046),
     # read back as such; `bundle.make` requires it of a current record.
@@ -346,6 +371,8 @@ def validate(doc: Any, view: Trajectory | None = None, changes: Any = None, obse
             e.append(f"planted: names repeat: {sorted({n for n in all_names if all_names.count(n) > 1})}")
         if any("required" in p["scheduled"] and not isinstance(p["scheduled"]["required"], bool) for p in planted):
             e.append("planted: scheduled.required is a boolean")
+    if planted_ok and isinstance(doc.get("end"), dict):
+        e += _reset_errors(doc, view)
     r = doc["reach"]
     reach_ok = isinstance(r, dict) and set(r) == {"status", "not_reached"} and r.get("status") in REACH and isinstance(r.get("not_reached"), list) \
         and all(isinstance(x, str) for x in r["not_reached"]) and (r["status"] == "not_reached") == bool(r["not_reached"])

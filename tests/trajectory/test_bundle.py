@@ -2370,3 +2370,16 @@ def test_the_record_carries_the_task_digest_and_answers_after(pair, tmp_path):
     assert any("'nowhere' is not a planted event" in e for e in episode.validate(doc))
     doc["answer_key"]["payload"]["answers_after"] = "conflict"
     assert not any("answers_after" in e for e in episode.validate(doc))
+
+
+def test_scheduled_reset_not_performed_survives_bundle_roundtrip(pair, tmp_path):
+    rec = runner_record()
+    rec["planted"].append({"name": "handoff", "scheduled": {"trigger": {"path_exists": "never-created"}, "action": "reset", "required": False}})
+    rec["resets"] = [{"event": "handoff", "reached": False, "fired": False, "performed": False, "reason": "finished_before_reset"}]
+    b = make(pair[0], tmp_path, "a", record=rec)
+    bundle.write(b, tmp_path / "reset-outcome")
+    saved = bundle.read(tmp_path / "reset-outcome")
+    assert saved.episode["resets"] == rec["resets"]
+    assert bundle.validate(saved)["ok"]
+    saved.episode["resets"][0]["performed"] = True
+    assert any("resets:" in error for error in episode.validate(saved.episode, saved.view))

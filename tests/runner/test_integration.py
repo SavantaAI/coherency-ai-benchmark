@@ -284,3 +284,41 @@ def test_reset_mid_turn_steers_the_notice_and_resets_at_the_hand_back() -> None:
     assert any(r.get("type") == "change" and r.get("path") == "NOTES.md" for r in changes)
     md = (d / "transcript.md").read_text()
     assert NOTES_NOTICE in md and "Picked up from NOTES.md." in md
+
+
+def _reset_then_correct(doc):
+    _reset_on_the_draft(doc)
+    doc["events"].append({"name": "correction", "required": False,
+                          "trigger": {"handbacks": {"at_least": 1, "since": "handoff"}},
+                          "action": {"type": "correction", "text": "Please include the release date."}})
+
+
+def _assert_rebuild(path):
+    from cohbench.trajectory.replay import verify
+
+    result = verify(path)
+    assert result["ok"], result
+
+
+def test_correction_with_next_message_after_reset():
+    out = _short(_out_root("reset-correction"), "reset-correction-run.json", "rreset-correction-1", edit=_reset_then_correct)
+    run, ep, view, changes = check_bundle(out.path)
+    assert run["corrections"][0]["delivery"] == "next_message"
+    assert run["events"]["handoff"]["reset"]["continuation"] == "launched"
+    correction = next(e for e in view if e.get("type") == "correction_delivered")
+    mark = next(e for e in changes if e.get("type") == "mark" and e["mark"] == correction["mark"])
+    assert mark["t"] == correction["t"]
+    _assert_rebuild(out.path)
+
+
+def test_reset_at_grace_records_silent_handback_and_rebuilds():
+    def edit(doc):
+        _reset_on_the_draft(doc)
+        doc["events"][0]["action"]["grace_ms"] = 3000
+    out = _short(_out_root("reset-grace"), "reset-grace-run.json", "rreset-grace-1", edit=edit)
+    run, ep, view, _ = check_bundle(out.path)
+    assert run["events"]["handoff"]["reset"]["at"] == "grace"
+    silent = [e for e in view if e.get("type") == "handback" and e.get("target") is None]
+    wait = next(e for e in view if e.get("type") == "wait" and "reset" in wait_causes(e))
+    assert any(e["t"] == wait["t"] for e in silent)
+    _assert_rebuild(out.path)

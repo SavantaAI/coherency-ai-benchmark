@@ -497,6 +497,12 @@ class _Builder:
         prev_done: datetime | None = None
         for n, (run, items, um, boundary, declared, continues) in enumerate(plans):
             starts = [_ts(x) for x in [run.get("requestedAt"), run.get("startedAt")] + [i.get("startedAt") for i in items[:1]] if x]
+            # A next-message correction opens this turn at the runner's
+            # recorded delivery, before T3 may have stamped the dispatch.
+            if um is not None:
+                delivery = _first(self.delivered, um.get("messageId"), um.get("id"))
+                if delivery is not None:
+                    starts.append(delivery)
             ts0 = min(starts) if starts else None
             # A queued run (a message T3 accepted while the previous run was
             # still going, such as a refusal queued after a declined secret
@@ -677,7 +683,10 @@ class _Builder:
             t, src = _ts(run.get("startedAt")), "restarted run start"
         else:
             t, src = queued, "unknown: queue time used"
-        t = max(t, queued)
+        # The runner and watcher name one delivery instant. T3 may record
+        # the message later, after dispatch, and must not move that instant.
+        if src != "runner":
+            t = max(t, queued)
         self.m["steering"].append({"_message": item["id"], "mechanism": "restart" if ctx["restart"] else ("native" if item.get("inputIntent") == "steer" else "other"),
                                    "queued_utc": _iso(queued), "delivered_utc": _iso(t), "delivery_source": src, "kind": kind})
         return t

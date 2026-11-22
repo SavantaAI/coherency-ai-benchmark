@@ -38,6 +38,13 @@ class RunConfig:
     max_turns: int = 1000  # a safety bound on hand-backs, not a budget: reaching it is a runner abort
     awareness_timeout_s: float = 600.0
     usage_grace_s: float = 60.0  # with a token limit: unavailable or incomplete usage for longer is a driver failure
+    scorer_id: str | None = None  # test and replay identity; random when omitted
+
+    def __post_init__(self):
+        import re
+
+        if self.scorer_id is not None and (not isinstance(self.scorer_id, str) or re.fullmatch(r"e[0-9a-f]{16}", self.scorer_id) is None):
+            raise ValueError("scorer_id: e followed by exactly 16 lower-case hex digits")
 
 
 class _Ended(Exception):
@@ -175,6 +182,8 @@ def _has_metric(t: Any) -> bool:
     (k, v), = t.items()
     if k == "metric":
         return True
+    if k == "count":
+        return any(_has_metric(x) for x in v["of"])
     if k in ("all", "any"):
         return any(_has_metric(x) for x in v)
     return k == "not" and _has_metric(v)
@@ -188,7 +197,7 @@ class Runner:
     def __init__(self, task: Task, cfg: RunConfig, ep: EpisodePort, policy: UserPolicy, log: EventLog,
                  *, sleep: Callable[[float], None] = time.sleep, utcnow: Callable[[], datetime] = lambda: datetime.now(timezone.utc)):
         self.task, self.cfg, self.ep, self.policy, self.log = task, cfg, ep, policy, log
-        self.scorer_id = "e" + secrets.token_hex(8)  # the id in the scorer record: generated, opaque, never the caller's label
+        self.scorer_id = cfg.scorer_id if cfg.scorer_id is not None else "e" + secrets.token_hex(8)  # the id in the scorer record: generated, opaque, never the caller's label
         self.sleep, self.utcnow = sleep, utcnow
         log.set_clock(self._log_clock)
         self.ctx = triggers.Context()
@@ -925,9 +934,17 @@ class Runner:
         self.agent, self.pending, self._final_unconfirmed, self._drained_handback = "finished", None, False, None
         self._hb_at = g
         self._reset_how = {"at": "grace", "utc": utc_us(g), "stopped_utc": stopped}
-        hb = _HB(self.ctx.handbacks, list(self.seen), [], None, False, None)
+        self.ctx.handbacks += 1
+        h = self.ctx.handbacks
+        self.closing[h] = None
+        self.corrections_held = False
+        self._shared_wait = False
+        self.handback_log.append({"utc": utc_us(g), "handback": h, "closing": None, "kind": "interrupted"})
+        self.log.write("hand_back", handback=h, turns=self.ctx.turns, state="interrupted", closing=None, utc=utc_us(g))
+        self._evaluate(h, as_of=g)
+        hb = _HB(h, list(self.seen), [], None, False, None)
         self.seen = []
-        self._do_reset(hb, self._budget_candidates(), probes=False)
+        self._do_reset(hb, self._budget_candidates())
 
     def _set_end_bound(self, end: datetime) -> None:
         """The episode's end is known (an elapsed deadline): no runner event is
@@ -1088,6 +1105,9 @@ class Runner:
             (k, v), = t.items()
             if k in ("all", "any"):
                 for x in v:
+                    walk(x)
+            elif k == "count":
+                for x in v["of"]:
                     walk(x)
             elif k == "not":
                 walk(v)

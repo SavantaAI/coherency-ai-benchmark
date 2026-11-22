@@ -237,3 +237,100 @@ def test_check_collects_dependencies() -> None:
     triggers.check({"all": [{"fired": "a"}, {"turns": {"at_least": 1, "since": "b"}}]}, "t", {"a", "b"}, err, deps)
     assert err == [] and deps == {"a", "b"}
     assert triggers.depends_on({"all": [{"fired": "a"}, {"handbacks": {"at_least": 1, "since": "b"}}]}) == {"a", "b"}
+
+
+@pytest.mark.parametrize("inner", [
+    {"path_exists": "README.md"},
+    {"content_matches": {"path": "README.md", "regex": "hello"}},
+    {"changes": {"path": "*", "at_least": 0}},
+    {"metric": {"name": "ops", "op": "ge", "value": 0}},
+    *[{k: {"at_least": 0}} for k in triggers.COUNTERS],
+    {"verdicts": {"label": "no_request", "at_least": 0}},
+    {"fired": "e"}, {"all": [{"fired": "e"}]},
+    {"any": [{"fired": "e"}]}, {"not": {"path_exists": "missing"}},
+    {"count": {"of": [], "at_least": 0}},
+])
+def test_count_nests_every_inner_kind(w, inner):
+    fw, ctx = w
+    fw.write("out.txt", "x")
+    fw.metric({"ops": 2})
+    refresh(fw, ctx)
+    fire(ctx, "e", fw)
+    t = {"all": [{"count": {"of": [inner, {"path_exists": "missing"}], "at_least": 1}}]}
+    err, deps = [], set()
+    triggers.check(t, "t", {"e"}, err, deps)
+    assert err == []
+    assert holds(t, ctx)
+
+
+@pytest.mark.parametrize("size, threshold, expected", [(0, 0, True), (1, 0, True), (0, 1, False), (1, 2, False)])
+def test_count_zero_and_more_than_the_list(size, threshold, expected):
+    t = {"count": {"of": [{"elapsed_ms": {"at_least": 0}}] * size, "at_least": threshold}}
+    err = []
+    triggers.check(t, "t", set(), err, set())
+    assert not err
+    assert holds(t, Context()) is expected
+
+
+@pytest.mark.parametrize("body", [{}, {"of": {}, "at_least": 1}, {"of": [], "at_least": True},
+                                   {"of": [], "at_least": -1}, {"of": [], "at_least": 2**53 + 1},
+                                   {"of": [{"bad": 1}], "at_least": 1}, {"of": [], "at_least": 1, "extra": 0}])
+def test_count_validation(body):
+    err = []
+    triggers.check({"count": body}, "t", set(), err, set())
+    assert err
+
+
+def test_count_dependencies_and_prerequisites():
+    branches = [{"fired": "a"}, {"fired": "a"}, {"fired": "b"}]
+    t = {"count": {"of": branches, "at_least": 2}}
+    assert triggers.depends_on(t) == {"a", "b"}
+    assert triggers.prerequisites(t) == {"a"}
+    assert triggers.prerequisites({"count": {"of": branches, "at_least": 0}}) == set()
+    assert triggers.prerequisites({"count": {"of": branches, "at_least": 3}}) == {"a", "b"}
+
+
+def test_changes_batch_counts_one_for_three_paths_and_since(w):
+    fw, ctx = w
+    fw.commit_delay_s = 0.1
+    for n in range(3):
+        fw.write(f"out/{n}.txt", "x")
+    fw.clock.sleep(0.2)
+    fw.tick()
+    refresh(fw, ctx)
+    def t(n, **extra):
+        return {"changes": {"path": "out/**", "at_least": n, "unit": "batch", **extra}}
+    assert holds(t(1), ctx) and not holds(t(2), ctx)
+    assert holds({"changes": {"path": "out/**", "at_least": 3}}, ctx)
+    fire(ctx, "e", fw)
+    assert not holds(t(1, since="e"), ctx)
+    fw.clock.sleep(1)
+    fw.write("out/new.txt", "new")
+    fw.clock.sleep(0.2)
+    fw.tick()
+    refresh(fw, ctx)
+    assert holds(t(1, since="e"), ctx)
+    assert not holds(t(2, since="e"), ctx)
+    assert not holds(t(0, since="missing"), ctx)
+
+
+@pytest.mark.parametrize("unit", ["files", None, [], True])
+def test_changes_rejects_unknown_unit(unit):
+    err = []
+    triggers.check({"changes": {"path": "*", "at_least": 1, "unit": unit}}, "t", set(), err, set())
+    assert err
+
+
+def test_count_recurses_for_metric_coverage_and_depth_limit():
+    from cohbench.runner.runner import _has_metric
+
+    t = {"count": {"of": [{"metric": {"name": "ops", "op": "lt", "value": 1}}], "at_least": 1}}
+    assert _has_metric(t)
+    err = []
+    triggers.check(t, "t", set(), err, set(), has_metric=False)
+    assert any("no metric command" in x for x in err)
+    for _ in range(34):
+        t = {"count": {"of": [t], "at_least": 1}}
+    err = []
+    triggers.check(t, "t", set(), err, set())
+    assert any("nested too deep" in x for x in err)

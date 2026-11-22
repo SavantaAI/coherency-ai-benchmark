@@ -33,6 +33,12 @@ exit status (no score uses it, and a null against a zero would name the
 harness), not the agent. Equivalent attempts have the same name, the same non-null state and the
 same non-null fingerprint.
 
+With `by: "output"`, a capture is required. Each whole-line match in any
+shell call is an attempt, with the call's times and tree and the captured
+text's hash. Available output without a whole match yields no attempt.
+Unavailable output falls back to the command regex and has no fingerprint.
+Without `by`, command selection and its one record per call are unchanged.
+
 A further kind adds a record type to `KINDS` with its own fields and an
 extractor in `build`.
 """
@@ -66,6 +72,7 @@ class AttemptPattern:
     name: str
     regex: str
     capture: str | None = None
+    by: str | None = None
 
 
 @dataclass
@@ -74,7 +81,12 @@ class TaskObservations:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "TaskObservations":
-        out = cls([AttemptPattern(a["name"], a["regex"], a.get("capture")) for a in d.get("attempts", [])])
+        for a in d.get("attempts", []):
+            if "by" in a and a["by"] != "output":
+                raise ValueError("attempt pattern by: output")
+            if a.get("by") == "output" and not isinstance(a.get("capture"), str):
+                raise ValueError("attempt pattern by output requires a capture")
+        out = cls([AttemptPattern(a["name"], a["regex"], a.get("capture"), a.get("by")) for a in d.get("attempts", [])])
         for a in out.attempts:
             if not NAME.match(a.name):
                 raise ValueError(f"attempt pattern name {a.name!r}: lower-case word")
@@ -133,14 +145,14 @@ def tree_digest(changes: ChangeLog | None, batch: int | None) -> str | None:
     return digest(sorted([p, *v] for p, v in changes.tree(batch).items()))
 
 
-def whole_match(cap: re.Pattern[str], text: str, clipped: str, last_line_whole: bool = False) -> re.Match[str] | None:
-    """The first match of the capture on a whole line: one that does not
+def whole_matches(cap: re.Pattern[str], text: str, clipped: str, last_line_whole: bool = False):
+    """Every match of the capture on a whole line: one that does not
     touch a clipped edge. When the tail was cut, the line ends with a line
     break inside the retained text, or it is the last line and the adapter
     recorded that it ended with one before cleanup (`last_line_whole`).
     Nothing is whole when the middle was cut."""
     if clipped == "middle":
-        return None
+        return
     for m in cap.finditer(text):
         if m.group(1) is None:
             continue  # the group did not take part: no result here
@@ -152,8 +164,11 @@ def whole_match(cap: re.Pattern[str], text: str, clipped: str, last_line_whole: 
             continue
         if "\n" in text[m.start():m.end()]:
             continue
-        return m
-    return None
+        yield m
+
+
+def whole_match(cap: re.Pattern[str], text: str, clipped: str, last_line_whole: bool = False):
+    return next(whole_matches(cap, text, clipped, last_line_whole), None)
 
 
 def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations) -> Observations:
@@ -178,35 +193,45 @@ def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations) -
         if e["type"] != "tool_call" or e["class"] != "shell" or (end_us is not None and e["us"] > end_us):
             continue
         cmd = e["input"].get("command") or ""
-        match = next(((a, cap) for a, rx, cap in pats if rx.search(cmd)), None)
+        out = e["output"]
+        match = None
+        for a, rx, cap in pats:
+            if a.by == "output" and out["available"]:
+                matches = list(whole_matches(cap, out["text"], out["clipped"], out["last_line_whole"]))
+                if matches:
+                    match = (a, cap, matches)
+                    break
+            elif rx.search(cmd):
+                match = (a, cap, [None])
+                break
         if match is None:
             continue
-        a, cap = match
-        out = e["output"]
+        a, cap, matches = match
         unfinished = e["status"] == "open" or e["us_end"] is None or (end_us is not None and e["us_end"] > end_us)
         t = clock(e["us"], f"attempt (trajectory seq {e['seq']})")
         t_end = None if unfinished else clock(e["us_end"], f"the end of attempt (trajectory seq {e['seq']})")
-        if unfinished:
-            result = {"status": "unfinished", "fingerprint": None}
-        elif e["status"] == "cancelled":
-            result = {"status": "cancelled", "fingerprint": None}
-        elif not out["available"]:
-            result = {"status": "unavailable", "fingerprint": None}
-        elif cap is not None:
-            # The task's result decides: a whole captured line is the result,
-            # whatever else of the output the harness kept.
-            m = whole_match(cap, out["text"], out["clipped"], out["last_line_whole"])
-            if m:
-                result = {"status": "complete", "fingerprint": hashlib.sha256(m.group(1).encode("utf-8")).hexdigest()}
+        for captured in matches:
+            if unfinished:
+                result = {"status": "unfinished", "fingerprint": None}
+            elif e["status"] == "cancelled":
+                result = {"status": "cancelled", "fingerprint": None}
+            elif not out["available"]:
+                result = {"status": "unavailable", "fingerprint": None}
+            elif cap is not None:
+                # The task's result decides: a whole captured line is the result,
+                # whatever else of the output the harness kept.
+                m = captured or whole_match(cap, out["text"], out["clipped"], out["last_line_whole"])
+                if m:
+                    result = {"status": "complete", "fingerprint": hashlib.sha256(m.group(1).encode("utf-8")).hexdigest()}
+                else:
+                    result = {"status": "truncated" if out["truncated"] else "complete", "fingerprint": None}
             else:
-                result = {"status": "truncated" if out["truncated"] else "complete", "fingerprint": None}
-        else:
-            status = "truncated" if out["truncated"] else "complete"
-            fp = hashlib.sha256(out["text"].encode("utf-8")).hexdigest() if status == "complete" else None
-            result = {"status": status, "fingerprint": fp}
-        b0 = batch_at(e["us"])
-        recs.append({"_src": e["seq"], "_us": e["us"], "_us_end": None if unfinished else e["us_end"], "type": "attempt", "name": a.name, "t": t, "t_end": t_end,
-                     "state": tree_digest(changes, b0), "state_unknown": bool(changes is not None and b0 is not None and changes.unknown(b0)), "batch_start": b0, "batch_end": batch_at(e["us_end"]) if changes and not unfinished else None, "result": result})
+                status = "truncated" if out["truncated"] else "complete"
+                fp = hashlib.sha256(out["text"].encode("utf-8")).hexdigest() if status == "complete" else None
+                result = {"status": status, "fingerprint": fp}
+            b0 = batch_at(e["us"])
+            recs.append({"_src": e["seq"], "_us": e["us"], "_us_end": None if unfinished else e["us_end"], "type": "attempt", "name": a.name, "t": t, "t_end": t_end,
+                         "state": tree_digest(changes, b0), "state_unknown": bool(changes is not None and b0 is not None and changes.unknown(b0)), "batch_start": b0, "batch_end": batch_at(e["us_end"]) if changes and not unfinished else None, "result": result})
     recs.sort(key=lambda r: (r["_us"], r["_us_end"] if r["_us_end"] is not None else r["_us"], r["name"]))
     sources, wall = {}, {}
     for n, r in enumerate(recs, 1):

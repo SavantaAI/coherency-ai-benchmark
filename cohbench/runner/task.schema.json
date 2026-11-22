@@ -244,12 +244,35 @@
       "notes": {
        "description": "Text the user knows from the start, or a list of such texts and notes that apply once an event has fired.",
        "oneOf": [
-        {"$ref": "#/$defs/text"},
-        {"type": "array", "minItems": 1, "items": {"oneOf": [
-         {"$ref": "#/$defs/text"},
-         {"type": "object", "additionalProperties": false, "required": ["text"],
-          "properties": {"text": {"$ref": "#/$defs/text"}, "available_after": {"$ref": "#/$defs/name"}}}
-        ]}}
+        {
+         "$ref": "#/$defs/text"
+        },
+        {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "oneOf": [
+           {
+            "$ref": "#/$defs/text"
+           },
+           {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+             "text"
+            ],
+            "properties": {
+             "text": {
+              "$ref": "#/$defs/text"
+             },
+             "available_after": {
+              "$ref": "#/$defs/name"
+             }
+            }
+           }
+          ]
+         }
+        }
        ]
       }
      }
@@ -442,7 +465,15 @@
           "type": "string",
           "minLength": 1,
           "description": "one group; the captured text is the attempt's result fingerprint (D-022)"
+         },
+         "by": {
+          "const": "output"
          }
+        },
+        "dependentRequired": {
+         "by": [
+          "capture"
+         ]
         }
        }
       }
@@ -583,6 +614,13 @@
         },
         "since": {
          "$ref": "#/$defs/since"
+        },
+        "unit": {
+         "enum": [
+          "record",
+          "batch"
+         ],
+         "default": "record"
         }
        }
       }
@@ -768,6 +806,34 @@
      "properties": {
       "not": {
        "$ref": "#/$defs/trigger"
+      }
+     }
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "count"
+     ],
+     "properties": {
+      "count": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "of",
+        "at_least"
+       ],
+       "properties": {
+        "of": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/trigger"
+         }
+        },
+        "at_least": {
+         "$ref": "#/$defs/count"
+        }
+       }
       }
      }
     }

@@ -703,7 +703,7 @@ def _observations(v: _V, d: Any) -> None:
     names: set[str] = set()
     for n, r in enumerate(rows):
         q = f"{p}.attempts[{n}]"
-        if v.obj(r, q, {"name", "regex"}, {"capture"}):
+        if v.obj(r, q, {"name", "regex"}, {"capture", "by"}):
             if not isinstance(r.get("name"), str) or not NAME.match(r["name"]):
                 v.err.append(f"{q}.name: a lower-case word")
             elif r["name"] in names:
@@ -711,8 +711,18 @@ def _observations(v: _V, d: Any) -> None:
             else:
                 names.add(r["name"])
             v.regex(r.get("regex"), f"{q}.regex")
+            if "by" in r and r["by"] != "output":
+                v.err.append(f"{q}.by: output")
+            if r.get("by") == "output" and "capture" not in r:
+                v.err.append(f"{q}.capture: required with by output")
             if "capture" in r:
+                before = len(v.err)
                 v.regex(r["capture"], f"{q}.capture", groups=1)
+                if r.get("by") == "output" and len(v.err) == before:
+                    from cohbench.trajectory.observations import _required_group
+
+                    if not _required_group(r["capture"]):
+                        v.err.append(f"{q}.capture: the captured group must take part in every match")
 
 
 def _cycles(deps: dict[str, set[str]], v: _V) -> None:

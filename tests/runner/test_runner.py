@@ -2811,3 +2811,85 @@ def test_a_steered_notice_is_never_a_correction(run_factory, order) -> None:
     assert "straddled" in rec and "straddled_last" in rec
     assert _reset_record(r)["reset"]["at"] == "handback" and r.planted("correction") == ["reached", "fired"]
     assert r.fake.handoff_problems == []
+
+
+def test_correction_after_reset_uses_one_delivery_and_mark_instant(run_factory):
+    def edit(d):
+        _reset_mid_turn(d, trigger={"handbacks": {"at_least": 1}})
+        d["events"].append({"name": "correction", "required": False,
+                            "trigger": {"handbacks": {"at_least": 1, "since": "handoff"}},
+                            "action": {"type": "correction", "text": CORRECTION}})
+    r = run_factory([Act(duration_s=2, final=x) for x in ("Started.", "Notes left.", "Done.", "Corrected.", "Nothing unusual.")], edit=edit).go()
+    (c,) = r.run_json["corrections"]
+    assert c["delivery"] == "next_message"
+    (delivery,) = r.events("correction_delivered")
+    marks = [json.loads(line) for f in r.fake.watcher_dirs() for line in (f / "events.jsonl").read_text().splitlines()]
+    mark = next(x for x in marks if x.get("kind") == "mark" and x.get("label") == c["mark"])
+    assert dt(mark["at"]) == dt(delivery["utc"]) == dt(c["delivered_utc"])
+    assert r.run_json["events"]["handoff"]["reset"]["continuation"] == "launched"
+    assert r.fake.handoff_problems == []
+
+
+def test_unperformed_scheduled_reset_is_explicit_in_episode_record(run_factory):
+    def edit(d):
+        _reset_mid_turn(d, trigger={"path_exists": "never-created"})
+    r = run_factory([Act(duration_s=2, final="Done."), Act()], edit=edit).go()
+    expected = [{"event": "handoff", "reached": False, "fired": False, "performed": False, "reason": "finished_before_reset"}]
+    assert r.record["resets"] == r.run_json["resets"] == expected
+    assert r.record["planted"][0]["scheduled"]["action"] == "reset"
+    assert r.events("controlled_reset") == []
+
+
+def test_grace_reset_records_handback_and_takes_due_probe(run_factory):
+    def edit(d):
+        _reset_mid_turn(d, grace_ms=30_000)
+        d["events"].append({"name": "checkpoint", "trigger": {"changes": {"path": "out/**", "at_least": 1}}, "required": False,
+                            "action": {"type": "observe"}, "probe": {"about": "change", "question": "What file changed?", "expected": "out/step1.txt"}})
+    r = run_factory([Act(duration_s=300, writes=[(2, "out/step1.txt", "one")]), Act(duration_s=2, final="Done."), Act()], edit=edit).go()
+    handback = r.run_json["handback_log"][0]
+    assert handback["kind"] == "interrupted" and handback["closing"] is None
+    wait = r.events("wait")[0]
+    assert dt(wait["utc"]) == dt(handback["utc"])
+    assert r.run_json["probes"][0]["handback"] == handback["handback"]
+    assert r.fake.handoff_problems == []
+    assert r.record["resets"][0] == {"event": "handoff", "reached": True, "fired": True, "performed": True, "reason": None}
+
+
+def test_fixed_scorer_id_produces_identical_episode_record_bytes(tmp_path):
+    from dataclasses import replace
+
+    runs = []
+    for n in range(2):
+        r = Run(tmp_path / str(n), [Act(duration_s=2, final="Done."), Act()], edit=no_events)
+        r.cfg = replace(r.cfg, scorer_id="e0123456789abcdef")
+        r.go()
+        runs.append((r.dir / "episode-record.json").read_bytes())
+    assert runs[0] == runs[1]
+
+
+@pytest.mark.parametrize("value", ["", "e123", "f0123456789abcdef", "e0123456789ABCDEf", "e0123456789abcdef0", 1, True])
+def test_scorer_id_shape_is_validated(run_factory, value):
+    from dataclasses import replace
+
+    r = run_factory([], edit=no_events)
+    with pytest.raises(ValueError, match="scorer_id"):
+        replace(r.cfg, scorer_id=value)
+
+
+def test_count_elapsed_threshold_replays_at_its_own_instant(run_factory):
+    def edit(d):
+        no_events(d)
+        d["events"] = [{"name": "tick", "required": False, "action": {"type": "observe"},
+                        "trigger": {"count": {"of": [{"elapsed_ms": {"at_least": 2500}}], "at_least": 1}}}]
+    r = run_factory([Act(duration_s=10, final="Done."), Act()], edit=edit, poll_s=5).go()
+    assert dt(r.run_json["events"]["tick"]["fired_utc"]) == dt("2026-11-22T12:00:02.500Z")
+
+
+def test_reset_outcome_ignores_a_trigger_discarded_after_the_end(run_factory):
+    from types import SimpleNamespace
+    from cohbench.runner.record import reset_outcomes
+
+    r = run_factory([], edit=_reset_mid_turn)
+    state = SimpleNamespace(end={"reason": "finished"}, runner_events=[], reset_info={},
+                            ev={"handoff": SimpleNamespace(status="idle", reached_utc="2026-11-22T12:00:10Z")})
+    assert reset_outcomes(r.task, state) == [{"event": "handoff", "reached": False, "fired": False, "performed": False, "reason": "finished_before_reset"}]

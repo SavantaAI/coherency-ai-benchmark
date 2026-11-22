@@ -7,7 +7,7 @@ A trigger is a JSON object with exactly one key:
 |---|---|
 | `{"path_exists": GLOB}` | a path matches that exists: in the committed tree, or created by a batch that has begun (from its first write, D-030) |
 | `{"content_matches": {"path": GLOB, "regex": RE}}` | a stored file whose path matches has content the regex finds; `^` and `$` match at line ends (MULTILINE) |
-| `{"changes": {"path": GLOB, "at_least": N, "since": EVENT?}}` | at least N committed change records touched a matching path (a move counts once) |
+| `{"changes": {"path": GLOB, "at_least": N, "since": EVENT?, "unit": "record" or "batch"}}` | at least N committed change records touched a matching path (default `record`, a move counts once); `batch` counts distinct committed batches with at least one matching record |
 | `{"metric": {"name": NAME, "op": OP, "value": NUMBER, "reading": "latest" or "any", "since": EVENT?}}` | the latest (or any) committed reading after the baseline compares true |
 | `{"turns": {"at_least": N, "since": EVENT?}}` | at least N turns finished (the agent ended its turn; a pending question is not a finished turn) |
 | `{"handbacks": {"at_least": N, "since": EVENT?}}` | at least N hand-backs: finished turns plus pauses on a pending question or secret request |
@@ -15,6 +15,7 @@ A trigger is a JSON object with exactly one key:
 | `{"verdicts": {"label": LABEL, "at_least": N, "since": EVENT?}}` | at least N verdicts with that label |
 | `{"elapsed_ms": {"at_least": N, "since": EVENT?}}` | the episode clock reached N ms (since the event fired, if given) |
 | `{"fired": EVENT}` | that event has fired |
+| `{"count": {"of": [T, ...], "at_least": N}}` | at least N listed triggers hold now; zero always holds, more than the list never holds |
 | `{"all": [T, ...]}`, `{"any": [T, ...]}`, `{"not": T}` | as named |
 
 `since` counts from the moment the named event fired, and is false until it
@@ -38,7 +39,7 @@ VERDICT_LABELS = ("answerable", "already_given", "unanswerable", "no_request")
 OPS = {"lt": lambda a, b: a < b, "le": lambda a, b: a <= b, "gt": lambda a, b: a > b, "ge": lambda a, b: a >= b,
        "eq": lambda a, b: a == b, "ne": lambda a, b: a != b}
 COUNTERS = ("turns", "handbacks", "outputs", "elapsed_ms")
-KINDS = ("path_exists", "content_matches", "changes", "metric", *COUNTERS, "verdicts", "fired", "all", "any", "not")
+KINDS = ("path_exists", "content_matches", "changes", "metric", *COUNTERS, "verdicts", "fired", "all", "any", "count", "not")
 
 
 @dataclass(frozen=True)
@@ -139,7 +140,9 @@ def check(t: Any, path: str, names: set[str], err: list[str], deps: set[str], *,
             glob(v["path"], f"{p}.path")
             regex_problem(v["regex"], f"{p}.regex", err)
     elif k == "changes":
-        if keys(v, {"path", "at_least"}, {"since"}):
+        if keys(v, {"path", "at_least"}, {"since", "unit"}):
+            if v.get("unit", "record") not in ("record", "batch"):
+                err.append(f"{p}.unit: record or batch")
             glob(v["path"], f"{p}.path")
             at_least(v)
             since(v)
@@ -174,6 +177,14 @@ def check(t: Any, path: str, names: set[str], err: list[str], deps: set[str], *,
         else:
             for n, sub in enumerate(v):
                 check(sub, f"{p}[{n}]", names, err, deps, has_metric=has_metric, depth=depth + 1)
+    elif k == "count":
+        if keys(v, {"of", "at_least"}):
+            at_least(v)
+            if not isinstance(v["of"], list):
+                err.append(f"{p}.of: a list of triggers")
+            else:
+                for n, sub in enumerate(v["of"]):
+                    check(sub, f"{p}.of[{n}]", names, err, deps, has_metric=has_metric, depth=depth + 1)
     elif k == "not":
         check(v, p, names, err, deps, has_metric=has_metric, depth=depth + 1)
     else:
@@ -213,6 +224,12 @@ def prerequisites(t: Any) -> set[str]:
     if k == "any":
         sets = [prerequisites(s) for s in v]
         return set.intersection(*sets) if sets else set()
+    if k == "count":
+        if v["at_least"] == 0 or v["at_least"] > len(v["of"]):
+            return set()
+        sets = [prerequisites(s) for s in v["of"]]
+        # A name is required when too few branches can hold without it.
+        return {name for name in set().union(*sets) if sum(name not in s for s in sets) < v["at_least"]}
     if k == "not":
         return set()
     return {v["since"]} if isinstance(v, dict) and "since" in v else set()
@@ -226,6 +243,8 @@ def _names(t: Any) -> set[str]:
         return {v}
     if k in ("all", "any"):
         return set().union(*(_names(s) for s in v))
+    if k == "count":
+        return set().union(*(_names(s) for s in v["of"]))
     if k == "not":
         return _names(v)
     return {v["since"]} if isinstance(v, dict) and "since" in v else set()
@@ -254,14 +273,18 @@ def holds(t: dict[str, Any], ctx: Context) -> bool:
         return all(holds(s, ctx) for s in v)
     if k == "any":
         return any(holds(s, ctx) for s in v)
+    if k == "count":
+        return sum(holds(s, ctx) for s in v["of"]) >= v["at_least"]
     if k == "not":
         return not holds(v, ctx)
     base = ctx.fired.get(v["since"]) if "since" in v else None
     if "since" in v and base is None:
         return False
     if k == "changes":
-        return sum(1 for c in ctx.work.changes if (base is None or (c.pos > base.pos and c.pos not in base.skip))
-                   and any(glob_match(v["path"], x) for x in c.paths)) >= v["at_least"]
+        matches = [c for c in ctx.work.changes if (base is None or (c.pos > base.pos and c.pos not in base.skip))
+                   and any(glob_match(v["path"], x) for x in c.paths)]
+        count = len({c.pos for c in matches}) if v.get("unit", "record") == "batch" else len(matches)
+        return count >= v["at_least"]
     if k == "metric":
         vals = [r.metrics[v["name"]] for r in ctx.work.readings if (base is None or (r.pos > base.pos and r.pos not in base.skip)) and _num(r.metrics.get(v["name"]))]
         if not vals:
