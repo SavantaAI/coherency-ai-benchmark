@@ -136,7 +136,7 @@ def test_a_third_equivalent_attempt_is_a_loop(tmp_path):
     for t in (3000, 3100, 3200):
         b.attempt("measure", "ignored", "f1", t=t)
     r = steering.score(b.load(tmp_path))
-    assert r["l"] == {"value": 0.0, "loop_attempts": [{"seq": 3, "name": "measure", "nth": 3}], "unplaced_attempts": 0, "unplaced": [],
+    assert r["l"] == {"value": 0.0, "ratio": {"numerator": 0, "denominator": 1}, "loop_attempts": [{"seq": 3, "name": "measure", "nth": 3}], "unplaced_attempts": 0, "unplaced": [],
                       "unknown_log_states": 0, "observations": {"shell": 3, "log": 0, "log_state_unknown": 0}}
     assert parts(r) == (1.0, 1.0, 0.0, 2 / 3)
 

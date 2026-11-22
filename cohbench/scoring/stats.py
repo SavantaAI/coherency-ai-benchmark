@@ -26,14 +26,15 @@ def headline(r: float | None, e: float | None, s: float | None) -> float | None:
     """100 * (max(R, 0.05) * max(E, 0.05) * max(S, 0.05)) ^ (1/3); None when a sub-score is not measured."""
     if r is None or e is None or s is None:
         return None
-    return 100 * (max(r, FLOOR) * max(e, FLOOR) * max(s, FLOOR)) ** (1 / 3)
+    product = math.prod(max(Fraction(v), Fraction(1, 20)) for v in (r, e, s))
+    return 100 * float(product) ** (1 / 3)
 
 
 def quantile(sorted_xs: list[float], q: float) -> float:
     """Linear interpolation between order statistics (the common type 7 rule)."""
     if not sorted_xs:
         raise ValueError("no values")
-    h = (len(sorted_xs) - 1) * q
+    h = (len(sorted_xs) - 1) * Fraction(str(q))
     lo = math.floor(h)
     hi = min(lo + 1, len(sorted_xs) - 1)
     return sorted_xs[lo] + (h - lo) * (sorted_xs[hi] - sorted_xs[lo])
@@ -43,7 +44,7 @@ def interval(draws: list[float], level: float) -> list[float] | None:
     xs = sorted(d for d in draws if d is not None)
     if not xs:
         return None
-    a = (1 - level) / 2
+    a = (1 - Fraction(str(level))) / 2
     return [quantile(xs, a), quantile(xs, 1 - a)]
 
 

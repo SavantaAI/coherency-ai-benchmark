@@ -5,10 +5,12 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
 from cohbench.scoring.score import dumps
+from cohbench.scoring.exact import pack
 
 # A stand-in reader record. Its kind is "hosted" so that reports on synthetic
 # scores print bands; no reader read anything here.
@@ -32,7 +34,8 @@ def base(eid: str, family: str, seed: int, *, horizon: str = "h20", mode: str = 
         "grouping": grouping,
         "poll_s": poll_s, "family": family, "score": None, "control": None, "reader": None,
         "reported": {"unanswerable_questions": unanswerable, "requests": unanswerable, "outputs": 3, "private_identifiers_sent": private,
-                     "private_mentions_sent": private, "wasted_wait": {"ms": 0, "elapsed_limit_ms": 600000, "share": wasted},
+                     "private_mentions_sent": private, "wasted_wait": {"ms": int(wasted * 600000) if wasted is not None else 0,
+                         "elapsed_limit_ms": 600000 if wasted is not None else None, "share": wasted},
                      "reach": {"status": "reached" if reached else "not_reached", "not_reached": [], "planted": sorted(planted), "fired": sorted(fired),
                                "required": sorted(required)},
                      "awareness": {"asked": awareness is not None, "outcome": awareness}, "end": {"reason": "finished", "duration_ms": 1}},
@@ -57,7 +60,8 @@ def expl(eid: str, seed: int, acc: float | None, no_answer: tuple[int, int] = (1
     """`items` names the two sanity items' inputs; by default they are the task instance's own."""
     d = base(eid, "explanation", seed, **kw)
     na, bu = items or (f"na-{d['task']['sha256']}", f"bu-{d['task']['sha256']}")
-    d["score"] = {"accuracy": acc, "answers": [], "sanity": {"no_answer": {"key": na, "correct": no_answer[0], "n": no_answer[1]},
+    d["score"] = {"accuracy": float(acc) if acc is not None else None, "ratio": pack(Fraction(str(acc))) if acc is not None else None,
+                  "answers": [], "sanity": {"no_answer": {"key": na, "correct": no_answer[0], "n": no_answer[1]},
                                                              "buried": {"key": bu, "correct": buried[0], "n": buried[1]}}}
     d["reader"] = reader or READER
     d["reader_record"] = True
@@ -66,7 +70,7 @@ def expl(eid: str, seed: int, acc: float | None, no_answer: tuple[int, int] = (1
 
 def steer(eid: str, seed: int, s: float, **kw) -> dict[str, Any]:
     d = base(eid, "steering", seed, **kw)
-    d["score"] = {"score": s}
+    d["score"] = {"score": float(s) if s is not None else None, "ratio": pack(Fraction(str(s))) if s is not None else None}
     return d
 
 

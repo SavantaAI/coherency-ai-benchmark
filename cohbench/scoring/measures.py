@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from fractions import Fraction
 
+from . import exact
+
 FAMILIES = ("routing", "explanation", "steering")
 
 
@@ -61,10 +63,10 @@ def collect(eps, planned, *, control=False, pooled=False, no_conflict=False):
         if inst["family"] == "routing" and not control and not no_conflict:
             if {json.loads(k).get("sibling") for k in keys} != {"A", "B"}:
                 reasons.append({"instance": inst, "reason": "missing", "episodes": []})
-            value = None if reasons else float(all(d["score"]["passed"] for d in docs))
+            value = None if reasons else Fraction(int(all(d["score"]["passed"] for d in docs)))
         else:
             field = "passed" if control or no_conflict else "accuracy" if inst["family"] == "explanation" else "score"
-            value = None if reasons else float(docs[0]["control" if control else "score"][field])
+            value = None if reasons else Fraction(int(docs[0]["control"][field])) if control else exact.measurement(inst["family"], docs[0]["score"])
         result[inst["family"]][key] = {"value": value, "seed": inst["seed"], "reasons": reasons,
                                       "episodes": sorted(d["episode"] for d in docs if d)}
     return result

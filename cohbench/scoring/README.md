@@ -27,6 +27,7 @@ end-to-end test does not. `report` writes `report.json`, `report.md` and
 | `controls.py` | Eligibility controls judged by their expected values |
 | `score.py` | One episode's score file: the above plus reported metrics, probe rows and the task identity |
 | `stats.py` | Headline, bootstrap, intervals, rank bands, Spearman, the sanity bound |
+| `exact.py` | Integer ratios and exact aggregation inputs |
 | `rng.py` | SplitMix64 and the option orders |
 | `report.py` | The report's refusals, cells, paired comparisons and the three renderings |
 
@@ -159,6 +160,7 @@ without a bundle format change:
 | Routing | `fixed_messages` | Sibling B: every fixed message the task can send the agent (an empty list when there are none). |
 | Routing | `conflict_event` | The planted event that is the conflict. Default `conflict`. |
 | Steering | `variant` | `easy_wins` or `no_valid_improvement`. |
+| Steering | `ignore_paths` | Optional list of path globs outside the measured job, such as `admin/**`. Matching change records play no part in Steering. |
 
 Generators must not produce a card in which the decision's text occurs
 inside another card item's text or inside a fixed message: such a sibling B
@@ -426,6 +428,15 @@ uses the measuring tool's own log when the task declares it and its
 collection record is present. Tree placement applies only to attempts
 without that record.
 
+Before the grain rules, remove change records whose path matches
+`ignore_paths`. This also removes those paths from tree equality, legacy
+attempt state and unknown-content exclusions. Leave out batches containing
+only ignored changes, listing their ids in `ignored_batches`. For a batch
+mixing ignored and retained changes, use the times of the retained change
+and git records for its span. Other batches keep their recorded spans.
+The original bundle and the final workspace used by chore checks stay intact.
+An absent or empty `ignore_paths` keeps the existing behavior.
+
 1. **Groups.** First drop transient runs, scanning left to right and taking
    the shortest consecutive run whose final tree equals its preceding tree
    and in which each batch's first write is less than 1,000 ms after the
@@ -614,6 +625,7 @@ Before anything is computed, the report refuses (exit status 2) when:
   error names both episode ids; version 0 plans one run, and the index has
   no way to declare replicates);
 - the score files name more than one reader config;
+- a measured Explanation or Steering score lacks exact counts;
 - the reader is the scripted one and `--scripted-reader` was not given.
 
 Episodes are then split by `poll_s` exactly as the runner recorded it
@@ -638,7 +650,9 @@ the watcher leaves out of the tree.
 
 With `--plan FILE`, the planned set comes from the generators' version 1
 `cohbench-task-suite` index. Each score's task digest must match an entry;
-an unknown digest is refused with the episode id. Every planned instance
+an unknown digest is refused with the episode id. A repeated instance key
+under different digests is refused with the instance and both digests named.
+Every planned instance
 counts, including instances no configuration ran. The same plan applies to
 each observed mode and polling section. `--require-plan` is required for
 release reports: it refuses a missing plan and expands the grid to every
@@ -668,14 +682,32 @@ lists its episodes, its rerun-required episodes, the pair rows behind R
 with both episode ids, the episodes behind E and S, and each family's
 control episodes.
 
+Explanation and Steering score objects carry `ratio`, an integer
+`{numerator, denominator}` pair, or null for an unjudged result. Explanation
+also records `correct` and `n` for each answer. A missing answer has zero
+correct votes and the configured number of orders in its denominator.
+Steering records a ratio for each of g, c and l, alongside toward, away and
+post-correction counts. A defined default has denominator one; an undefined
+part has a null ratio. The score ratio is the exact mean of its defined parts.
+Routing retains its boolean pass outcome.
+
+The report aggregates these exact ratios, never the rounded `accuracy`,
+`score` or part `value` fields kept for people. Means, resampling, sub-score
+gaps and ranges use exact fractions. The headline converts the exact product
+to floating point for its cube root. Publication rounds final numbers only.
+Older measured Explanation or Steering files without a ratio are refused
+with their episode id; rescore their saved bundles. Wait and chore means
+also use their recorded counts rather than displayed shares.
+
 - **Headline**: `100 * (max(R, 0.05) * max(E, 0.05) * max(S, 0.05)) ^ (1/3)`.
   Not measured when any sub-score is not measured.
 - **Intervals**: percentile intervals from `--resamples` bootstrap draws.
   Each draw resamples, independently per family, the seeds of that family
   with replacement. A seed carries every scored item of that seed, so a
   sibling pair is always drawn whole. Each family's stream is named only
-  by the release seed, family and sorted planned instance ids. Cells over
-  the same planned population use the same draws. Paired comparisons use
+  by the release seed, family and sorted instance ids that enter the draw.
+  The plan decides coverage only. Cells over the same judged population
+  use the same draws. Paired comparisons use
   the common judged instance ids, after matching horizons when needed.
   Model names, harness names, index order and score file paths do not enter
   these streams. Changing another family's population does not change a
@@ -806,13 +838,16 @@ each. Any number with no scored episode or no defined value is written as
 ## Determinism
 
 Score files and reports are JSON with sorted keys, ASCII escapes and floats
-rounded to six places, so a last-bit difference in a platform's `pow`
-cannot change a file. `poll_s` is the exception: it is a recorded parameter
+rounded to six places. `poll_s` is the exception: it is a recorded parameter
 and is written exactly. Option orders and bootstrap draws come from
 SplitMix64 seeded from sha256 of their names (`rng.py`), not from `random`.
-The tests compare outputs across processes with different hash seeds. On
-2026-11-22 the same score and report files came out byte-identical under
-Python 3.12 and 3.15 on one machine. Other platforms are not measured.
+Within one runtime, the same inputs produce byte-identical files across
+processes and hash seeds. Without normalization, score files across runtimes
+differ in the recorded Python version. Reports built from those files also
+differ in runtime metadata and release eligibility. Tests normalize those fields and patch
+the release-runtime constant when comparing arithmetic across Python 3.12
+and 3.15. Those normalized outputs are byte-identical on the test machine.
+Other platforms are not measured.
 
 ## Limits
 

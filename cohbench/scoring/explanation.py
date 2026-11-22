@@ -10,9 +10,11 @@ text). An answer never given is wrong and stays in the denominator (D-034).
 from __future__ import annotations
 
 import hashlib
+from fractions import Fraction
 from typing import Any
 
 from . import reader as R
+from . import exact
 from .load import Episode
 from .rng import option_orders
 
@@ -57,17 +59,19 @@ def score(ep: Episode, rd: R.Reader | None, cfg: R.Config | None) -> dict[str, A
     question = ep.opening_question()
     answers = answer_texts(ep)
     if rd is None or cfg is None:
-        return {"accuracy": None, "why": "no reader was given", "answers": [
+        return {"accuracy": None, "ratio": None, "why": "no reader was given", "answers": [
             {"which": a["which"], "seq": a["seq"], "given": a["text"] is not None} for a in answers], "sanity": None, "reader": None}
     rows = []
     for a in answers:
         if a["text"] is None:
             rows.append({"which": a["which"], "seq": a["seq"], "given": False, "excerpt": None, "words": 0, "accuracy": 0.0, "items": [],
+                         "correct": 0, "n": cfg.orders[0],
                          "why": "never given: counts as wrong (D-034)"})
             continue
         excerpt, words = R.window(a["text"])
         items = read_items(rd, cfg, question, excerpt, options, true_cause)
-        rows.append({"which": a["which"], "seq": a["seq"], "given": True, "excerpt": excerpt, "words": words, "accuracy": _accuracy(items), "items": items})
+        rows.append({"which": a["which"], "seq": a["seq"], "given": True, "excerpt": excerpt, "words": words, "accuracy": _accuracy(items), "items": items,
+                     "correct": sum(x["correct"] for x in items), "n": len(items)})
     bc = k["buried_control"]
     buried_excerpt, _ = R.window(bc["filler"] + " " + bc["sentence"])
     none_items = read_items(rd, cfg, question, "", options, true_cause)
@@ -79,8 +83,8 @@ def score(ep: Episode, rd: R.Reader | None, cfg: R.Config | None) -> dict[str, A
         "buried": {"key": input_key(question, buried_excerpt, options, true_cause), "correct": sum(x["correct"] for x in buried_items),
                    "n": len(buried_items), "excerpt": buried_excerpt, "items": buried_items},
     }
-    acc = (rows[0]["accuracy"] + rows[1]["accuracy"]) / 2
-    return {"accuracy": acc, "answers": rows, "sanity": sanity, "reader": rd.describe()}
+    acc = sum(Fraction(row["correct"], row["n"]) for row in rows) / len(rows)
+    return {"accuracy": float(acc), "ratio": exact.pack(acc), "answers": rows, "sanity": sanity, "reader": rd.describe()}
 
 
 def answer_accuracy(ep: Episode, which: int, rd: R.Reader, cfg: R.Config) -> float | None:

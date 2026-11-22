@@ -32,7 +32,7 @@ from fractions import Fraction
 from pathlib import Path
 from typing import Any, Callable
 
-from . import stats, measures
+from . import exact, stats, measures
 from .rng import stream
 from .score import dumps as score_dumps
 from .score import tidy
@@ -121,13 +121,20 @@ def read_plan(path, scores):
         if doc["format"] != "cohbench-task-suite" or doc["version"] != 1 or not isinstance(doc["instances"], list):
             raise ValueError
         entries = {}
+        instances = {}
         for row in doc["instances"]:
             inst = {k: row.get(k) for k in ("family", "seed", "pair", "sibling", "control", "horizon")}
             if inst["family"] not in FAMILIES or not isinstance(inst["seed"], int) or not isinstance(inst["horizon"], str):
                 raise ValueError
             if not isinstance(row["digest"], str) or row["digest"] in entries:
                 raise ValueError
+            identity = measures.identity(inst)
+            if identity in instances:
+                raise ReportError(f"plan repeats task instance {identity}: digests {instances[identity]} and {row['digest']}")
+            instances[identity] = row["digest"]
             entries[row["digest"]] = inst
+    except ReportError:
+        raise
     except (OSError, ValueError, KeyError, TypeError):
         raise ReportError("the plan must be a version 1 task suite index with distinct task digests") from None
     for d in scores:
@@ -158,6 +165,11 @@ def check_inputs(scores: list[dict[str, Any]], index: dict[str, dict[str, Any]],
         raise ReportError(f"{len(missing)} scored episode(s) are not in the index, the first {missing[0]}")
     tasks: dict[str, dict[str, list[str]]] = {}
     for d in scores:
+        if not d["grouping"].get("control") and not rerun(d):
+            try:
+                exact.measurement(d["family"], d.get("score"))
+            except (ValueError, KeyError, TypeError) as exc:
+                raise ReportError(f"episode {d['episode']}: {exc}") from None
         if not isinstance(d.get("task"), dict) or not isinstance(d["task"].get("sha256"), str):
             raise ReportError(f"score file of episode {d['episode']} has no task identity; score it again with this version")
         tasks.setdefault(instance_key(d), {}).setdefault(d["task"]["sha256"], []).append(d["episode"])
@@ -245,13 +257,13 @@ def units(eps: list[dict[str, Any]]) -> tuple[dict[str, dict[int, list]], dict[s
             if s is None or s.get("accuracy") is None:
                 detail["no_reader"].append(d["episode"])
                 continue
-            u["explanation"].setdefault(g["seed"], []).append(s["accuracy"])
+            u["explanation"].setdefault(g["seed"], []).append(exact.measurement("explanation", s))
             detail["explanation"].append(d["episode"])
         elif d["family"] == "steering":
             if s is None or s.get("score") is None:
                 detail["not_scored"].append(d["episode"])
                 continue
-            u["steering"].setdefault(g["seed"], []).append(s["score"])
+            u["steering"].setdefault(g["seed"], []).append(exact.measurement("steering", s))
             detail["steering"].append(d["episode"])
     for (seed, pid), sides in sorted(pairs.items(), key=lambda kv: (kv[0][0], kv[0][1])):
         eids = sorted(x["episode"] for side in ("A", "B") for x in sides[side])
@@ -275,14 +287,14 @@ def units(eps: list[dict[str, Any]]) -> tuple[dict[str, dict[int, list]], dict[s
 
 def subscores(draw: dict[str, list[list]]) -> dict[str, float | None]:
     flat = {f: [x for unit in draw.get(f, []) for x in unit] for f in FAMILIES}
-    r = (sum(1 for x in flat["routing"] if x) / len(flat["routing"])) if flat["routing"] else None
+    r = Fraction(sum(1 for x in flat["routing"] if x), len(flat["routing"])) if flat["routing"] else None
     e = _mean(flat["explanation"])
     s = _mean(flat["steering"])
     return {"R": r, "E": e, "S": s, "H": stats.headline(r, e, s)}
 
 
 def sampling_streams(seed, population):
-    """One independent stream per family, named only by its planned instances."""
+    """One independent stream per family, named only by the instances drawn."""
     return {f: stream("bootstrap", seed, f, config_key(sorted(population[f]))) for f in FAMILIES}
 
 
@@ -376,7 +388,8 @@ def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], population, pa
          withheld: bool, reader: dict[str, Any] | None) -> dict[str, Any]:
     u, detail = units(eps)
     point = subscores({f: list(u[f].values()) for f in FAMILIES})
-    rng = sampling_streams(params["seed"], population)
+    drawn_ids = {f: [i for i, row in population[f].items() if row["value"] is not None] for f in FAMILIES}
+    rng = sampling_streams(params["seed"], drawn_ids)
     seed_units = {f: [u[f][s] for s in sorted(u[f])] for f in FAMILIES}
     draws = stats.bootstrap(seed_units, subscores, rng, params["resamples"]) if params["resamples"] > 0 else []
     ci = {k: (stats.interval([d[k] for d in draws], params["level"]) if point[k] is not None and draws else None) for k in ("R", "E", "S", "H")}
@@ -390,7 +403,8 @@ def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], population, pa
 
     routing_eps = [d for d in eps if d["family"] == "routing" and not d["grouping"].get("control")]
     rep = [d["reported"] for d in routing_eps]
-    shares = [x["wasted_wait"]["share"] for x in rep if x["wasted_wait"]["share"] is not None]
+    shares = [Fraction(x["wasted_wait"]["ms"], x["wasted_wait"]["elapsed_limit_ms"]) for x in rep
+              if isinstance(x["wasted_wait"].get("elapsed_limit_ms"), int) and x["wasted_wait"]["elapsed_limit_ms"] > 0]
     priv = [x["private_identifiers_sent"] for x in rep if isinstance(x["private_identifiers_sent"], int)]
     reported = {
         "routing_episodes": len(rep),
@@ -445,7 +459,7 @@ def cell(eps: list[dict[str, Any]], reruns: list[dict[str, Any]], population, pa
     scripted = bool(reader and reader.get("kind") == "scripted" and detail["explanation"])
     chores = [d for d in eps if d.get("handoff") is not None]
     chores_judged = [d for d in chores if d["handoff"]["chores_right"] is not None and d["handoff"]["chores"] > 0]
-    handoff = {"mean_share": _mean([d["handoff"]["chores_right"] / d["handoff"]["chores"] for d in chores_judged]),
+    handoff = {"mean_share": _mean([Fraction(d["handoff"]["chores_right"], d["handoff"]["chores"]) for d in chores_judged]),
                "episodes": sorted(d["episode"] for d in chores_judged), "not_measured": sorted(d["episode"] for d in chores if d not in chores_judged)} if chores else None
     long_routing = [d for d in eps if d["family"] == "routing" and d["grouping"]["horizon"] in ("h80", "80")]
     ordering = {side: sorted(d["episode"] for d in long_routing if (d.get("conflict_vs_reset") or "not_measured") == side)
@@ -544,12 +558,12 @@ def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float =
     if nonrelease_note:
         notes.append(nonrelease_note + ". No rank bands are published.")
     sections = [_section(poll, by_poll[poll], index, params, reader, scripted, sanity, plan_instances) for poll in sorted(by_poll, key=natural)]
-    return {"format": FORMAT, "version": VERSION, "parameters": params, "notes": notes,
+    return exact.native({"format": FORMAT, "version": VERSION, "parameters": params, "notes": notes,
             "python_versions": versions, "not_release": bool(nonrelease_note) or scripted,
             "reader": reader, "scripted_reader": scripted, "label": SCRIPTED if scripted else None,
             "inputs": {"scored": len(scores), "score_files_read": len(scores), "usable_scores": sum(not rerun(d) for d in scores), "rerun_markers": sum(rerun(d) for d in scores), "indexed": len(index), "indexed_not_scored": unscored,
                        "rerun_required": sorted(d["episode"] for d in scores if rerun(d))},
-            "sections": sections}
+            "sections": sections})
 
 
 def _compare(members: list[dict[str, Any]], params: dict[str, Any], withheld: bool, fn: Callable[[list[float]], float],

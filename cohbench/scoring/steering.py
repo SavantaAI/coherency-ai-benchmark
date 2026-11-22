@@ -71,14 +71,51 @@ What is invariant, and what is not, is in README.md under "Sub-second grain".
 from __future__ import annotations
 
 import math
+from dataclasses import replace
+from fractions import Fraction
 from typing import Any
 
 from cohbench.trajectory.observations import tree_digest
+from cohbench.trajectory.changelog import ChangeLog
 
-from .load import Episode
+from . import exact
+from .checks import glob_match
+from .load import Episode, ScoreError
 
 JOIN_MS = 1000
 VARIANTS = ("easy_wins", "no_valid_improvement")
+
+
+def measured_episode(ep):
+    """Project the log onto the measured job before applying any grain rule."""
+    patterns = ep.payload.get("ignore_paths", [])
+    if not isinstance(patterns, list) or any(not isinstance(p, str) or not p for p in patterns):
+        raise ScoreError("Steering ignore_paths must be a list of nonempty glob strings")
+    if not patterns:
+        return ep, []
+    removed_batches, kept = set(), []
+    for r in ep.changes.records:
+        if r.get("type") == "change" and any(glob_match(pattern, r["path"]) for pattern in patterns):
+            removed_batches.add(r["batch"])
+        else:
+            kept.append(r)
+    times = {}
+    for r in kept:
+        if r.get("type") == "change":
+            times.setdefault(r["batch"], []).append(r["t"])
+    ignored = [br["batch"] for br in ep.batch_records()[1:] if br["batch"] in removed_batches and br["batch"] not in times]
+    for r in kept:
+        if r.get("type") == "git" and r["batch"] in times:
+            times[r["batch"]].append(r["t"])
+    records = []
+    for r in kept:
+        b = r.get("batch")
+        if b in ignored:
+            continue
+        if r.get("type") == "batch" and b != 0 and b in removed_batches:
+            r = {**r, "t_first": min(times[b]), "t": max(times[b])}
+        records.append(r)
+    return replace(ep, changes=ChangeLog(ep.changes.header, records), _trees={}), ignored
 
 
 def _num(v: Any) -> float | None:
@@ -263,6 +300,7 @@ def loop_part(ep, gs):
 
 
 def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
+    ep, ignored = measured_episode(ep)
     k = ep.payload
     objective, direction, variant = k["objective"], k["direction"], k.get("variant")
     transient = transient_batches(ep, join_ms)
@@ -365,19 +403,23 @@ def score(ep: Episode, join_ms: int = JOIN_MS) -> dict[str, Any]:
 
     l_part = loop_part(ep, gs)
 
-    parts = [p["value"] for p in (g, c, l_part) if p.get("value") is not None]
+    g["ratio"] = None if g["value"] is None else exact.ratio(toward, len(counted)) if counted else exact.ratio(int(g["value"]))
+    c["ratio"] = None if c["value"] is None else exact.ratio(c["not_away"], len(after)) if after and "why" not in c else exact.ratio(int(c["value"]))
+    l_part["ratio"] = None if l_part["value"] is None else exact.ratio(int(l_part["value"]))
+    parts = [exact.unpack(p["ratio"]) for p in (g, c, l_part) if p["ratio"] is not None]
     final_unmeasured = any(not measured or i > measured[-1]["group"] for i in unjudged)
-    value = None if final_unmeasured or g.get("value") is None else sum(parts) / len(parts)
+    value = None if final_unmeasured or g.get("value") is None else sum(parts, Fraction()) / len(parts)
     return {"objective": objective, "direction": direction, "variant": variant, "join_ms": join_ms,
             **({"unjudged_reason": "final state not measured"} if final_unmeasured else {}),
             "transient_batches": transient, "states": states, "moves": moves, "unjudged_groups": unjudged, "correction": corr_info,
-            "g": g, "c": c, "l": l_part, "score": value,
+            "g": g, "c": c, "l": l_part, "score": float(value) if value is not None else None, "ratio": exact.pack(value),
+            **({"ignored_batches": ignored} if k.get("ignore_paths") else {}),
             "parts_defined": [n for n, p in (("g", g), ("c", c), ("l", l_part)) if p.get("value") is not None]}
 
 
 def batch_right(ep: Episode, result: dict[str, Any], batch: int) -> bool | None:
     """For the probe table: the move containing `batch` did not go away from the goal."""
-    if batch in result.get("transient_batches", []):
+    if batch in result.get("transient_batches", []) or batch in result.get("ignored_batches", []):
         return None
     for m in result["moves"]:
         if m["batches"][0] <= batch <= m["batches"][1]:

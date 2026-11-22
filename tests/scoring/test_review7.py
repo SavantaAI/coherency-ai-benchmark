@@ -28,7 +28,7 @@ def write_release(path, scores, configs):
 
 def test_equal_published_headlines_share_a_band(tmp_path):
     scores, configs = [], {}
-    for model, e, s in (("a", 1 / 3, 7 / 12), ("b", 7 / 12, 1 / 3)):
+    for model, e, s in (("a", Fraction(1, 3), Fraction(7, 12)), ("b", Fraction(7, 12), Fraction(1, 3))):
         for suffix, mode in (("", "default"), ("c", "coached")):
             prefix = model + suffix
             configs[prefix] = full_config(model=model)
@@ -38,7 +38,7 @@ def test_equal_published_headlines_share_a_band(tmp_path):
     assert not rep["not_release"]
     for table in rep["sections"][0]["tables"]:
         for row in table["rows"]:
-            assert row["headline"]["interval"] == [21.342975, 21.342975]
+            assert row["headline"]["interval"] == [21.342986, 21.342986]
             assert row["headline"]["band"]["ranks"] == "1-2"
 
 

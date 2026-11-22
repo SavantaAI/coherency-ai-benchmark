@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from fractions import Fraction
 from typing import Any
 
 from cohbench.trajectory import episode as TE
@@ -32,8 +33,8 @@ def tidy(obj: Any) -> Any:
     """Floats rounded to DIGITS places, so a last-bit difference in a
     platform's arithmetic cannot change a written file. Values under a key
     in EXACT are recorded parameters and pass through as they are."""
-    if isinstance(obj, float):
-        return published(obj)
+    if isinstance(obj, (float, Fraction)):
+        return published(float(obj))
     if isinstance(obj, dict):
         return {k: (v if k in EXACT else tidy(v)) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
