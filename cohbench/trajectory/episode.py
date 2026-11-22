@@ -67,7 +67,11 @@ ANSWER_KEY_RESERVED = {
 # `poll_s`: the runner's polling interval, a fixed benchmark parameter
 # (D-040), so a report can refuse to compare runs that differ in it; null
 # only in a record from before the runner carried it.
-FIELDS = ("format", "version", "episode", "grouping", "budget", "planted", "reach", "answer_key", "control", "probes", "answers", "awareness", "end", "poll_s")
+# `task_sha256`: the task instance's digest (D-046), so a report can tell that
+# two configurations ran the same tasks; task-owned, the same for every
+# configuration that ran the instance. Null only in a record from before it.
+FIELDS = ("format", "version", "episode", "grouping", "budget", "planted", "reach", "answer_key", "control", "probes", "answers", "awareness", "end", "poll_s",
+          "task_sha256")
 # `event`: the planted event the probe was scheduled with. `deferred`: the
 # runner's word that the copy was taken at a later hand-back than the first
 # one at or after that event (D-028), recorded as given (null when unknown).
@@ -102,6 +106,7 @@ class EpisodeInput:
     probes: list[ProbeInput] = field(default_factory=list)
     awareness: dict[str, Any] = field(default_factory=lambda: {"asked": False, "outcome": None})
     poll_s: float | None = None
+    task_sha256: str | None = None
 
 
 def _opaque(v: Any) -> bool:
@@ -125,7 +130,7 @@ def reach(planted: list[dict[str, Any]], view: Trajectory) -> dict[str, Any]:
     return {"status": "not_reached" if missing else "reached", "not_reached": missing}
 
 
-def _key_errors(family: str, k: dict[str, Any]) -> list[str]:
+def _key_errors(family: str, k: dict[str, Any], doc_planted: list[dict[str, Any]] | None = None) -> list[str]:
     e = []
     if family == "routing":
         if set(ANSWER_KEY_RESERVED["routing"]) - set(k):
@@ -146,6 +151,13 @@ def _key_errors(family: str, k: dict[str, Any]) -> list[str]:
                 e.append("answer_key.payload.true_cause: an index into the six options")
             if not (isinstance(k["follow_up"], str) and k["follow_up"].strip()):
                 e.append("answer_key.payload.follow_up: the fixed follow-up text")
+            aa = k.get("answers_after")
+            if not (aa is None or (isinstance(aa, str) and aa)):
+                e.append("answer_key.payload.answers_after: the name of a planted event, or absent")
+            elif isinstance(aa, str) and doc_planted and aa not in {p.get("name") for p in doc_planted if isinstance(p, dict)}:
+                # (Checked when the record's planted events are given: a
+                # caller validating the answer key alone passes none.)
+                e.append(f"answer_key.payload.answers_after: {aa!r} is not a planted event")
             bc = k["buried_control"]
             if not (isinstance(bc, dict) and set(bc) == {"filler", "sentence"} and isinstance(bc["filler"], str)
                     and len(bc["filler"].split()) >= BURIED_WORDS and isinstance(bc["sentence"], str) and bc["sentence"].strip()):
@@ -189,18 +201,46 @@ def _closing(h: dict[str, Any]) -> int | None:
     return h.get("target") if h.get("type") == "handback" else h.get("closed_by")
 
 
-def explanation_answers(view: Trajectory) -> list[int | None]:
+def answer_handbacks(view: Trajectory, after: str | None = None, planted: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """The hand-backs Explanation scores (D-046). With the answer key's
+    `answers_after` naming an event: the hand-backs after it, for a reset
+    event after the reset was performed (its continuation's send, the view's
+    `controlled_reset` and the message it names), for any other event after
+    it fired. An episode that ended before that has none. Without it, every
+    hand-back of the episode."""
+    hb = handbacks(view)
+    if not after:
+        return hb
+    ev = view.events
+    fired = next((e for e in ev if e.get("type") == "planted" and e.get("name") == after and e.get("phase") == "fired"), None)
+    if fired is None:
+        return []
+    is_reset = any(isinstance(p, dict) and p.get("name") == after and isinstance(p.get("scheduled"), dict) and p["scheduled"].get("action") == "reset"
+                   for p in planted or [])
+    bound = fired["seq"]
+    if is_reset:
+        cr = next((e for e in ev[fired["seq"] + 1:] if e.get("type") == "controlled_reset"), None)
+        if cr is None:
+            return []
+        bound = max(cr["seq"], cr["target"] if _int(cr.get("target")) else cr["seq"])
+    return [h for h in hb if h["seq"] > bound]
+
+
+def explanation_answers(view: Trajectory, after: str | None = None, planted: list[dict[str, Any]] | None = None) -> list[int | None]:
     """The two scored answers: the outputs that closed the first and second
-    hand-backs, as far as the episode got."""
-    return [_closing(h) for h in handbacks(view)[:2]]
+    scored hand-backs (`answer_handbacks`), as far as the episode got."""
+    return [_closing(h) for h in answer_handbacks(view, after, planted)[:2]]
 
 
 def _explanation_errors(doc: dict[str, Any], view: Trajectory) -> list[str]:
     e = []
-    want = explanation_answers(view)
+    payload = doc["answer_key"]["payload"]
+    after = payload.get("answers_after") if isinstance(payload.get("answers_after"), str) else None
+    planted = doc["planted"] if isinstance(doc.get("planted"), list) else []
+    want = explanation_answers(view, after, planted)
     if doc["answers"] != want:
-        e.append(f"answers: the outputs that closed the first two hand-backs are {want}, not {doc['answers']}")
-    hb = handbacks(view)
+        e.append(f"answers: the outputs that closed the first two scored hand-backs are {want}, not {doc['answers']}")
+    hb = answer_handbacks(view, after, planted)
     follow = doc["answer_key"]["payload"].get("follow_up")
     if hb and isinstance(follow, str):
         # Searched between the first and the second hand-back only (m5 of round 11).
@@ -243,13 +283,21 @@ def unanswerable_wait_ms(view: Trajectory) -> int:
 
 def validate(doc: Any, view: Trajectory | None = None, changes: Any = None, observations: Any = None) -> list[str]:
     e: list[str] = []
-    if not isinstance(doc, dict) or set(doc) - set(FIELDS) or set(FIELDS) - set(doc) - {"poll_s"}:
+    late = {"poll_s": "the runner's polling interval is required (D-040)", "task_sha256": "the task instance's digest is required (D-046)"}
+    if not isinstance(doc, dict) or set(doc) - set(FIELDS) or set(FIELDS) - set(doc) - set(late):
         return [f"episode.json: fields must be exactly {list(FIELDS)}"]
-    if "poll_s" not in doc:
-        # Reported, and the rest still checked (a caller that validates one
-        # part of a record, the runner's answer-key check, sees its errors).
-        e.append("poll_s: missing; the runner's polling interval is required (D-040)")
-        doc = {**doc, "poll_s": None}
+    # `task_sha256` absent: a bundle made before the field existed (D-046),
+    # read back as such; `bundle.make` requires it of a current record.
+    if "task_sha256" not in doc:
+        doc = {**doc, "task_sha256": None}
+    for k, why in late.items():
+        if k not in doc:
+            # Reported, and the rest still checked (a caller that validates one
+            # part of a record, the runner's answer-key check, sees its errors).
+            e.append(f"{k}: missing; {why}")
+            doc = {**doc, k: None}
+    if not (doc["task_sha256"] is None or (isinstance(doc["task_sha256"], str) and re.fullmatch(r"[0-9a-f]{64}", doc["task_sha256"]))):
+        e.append("task_sha256: the task instance's SHA-256 digest, 64 lower-case hex digits (null only in a record from before it was carried)")
     if doc["format"] != F.EPISODE_FORMAT or doc["version"] != F.VERSION:
         e.append("episode.json: format or version")
     if not _opaque(doc["episode"]):
@@ -308,7 +356,7 @@ def validate(doc: Any, view: Trajectory | None = None, changes: Any = None, obse
     else:
         if g_ok and ak["family"] != g["family"]:
             e.append("answer_key.family is the grouping's family")
-        e += _key_errors(ak["family"], ak["payload"])
+        e += _key_errors(ak["family"], ak["payload"], doc["planted"] if isinstance(doc.get("planted"), list) else None)
     c = doc["control"]
     if g_ok and isinstance(g["control"], bool):
         if g["control"] != (c is not None):

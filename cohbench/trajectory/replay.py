@@ -213,12 +213,19 @@ def rebuild(run_dir: str | Path, task: str | Path | None = None, *, verdicts_at_
     record = _object(run_dir / "episode-record.json", {})
     # Recorded before the runner carried its polling interval (D-040).
     record.setdefault("poll_s", None)
+    # ... and before it carried the task instance's digest (D-046). The
+    # bundle made then had no such key; the rebuild leaves it out again, as
+    # the readback allows, so the stored bundle compares equal.
+    undigested = "task_sha256" not in record
+    record.setdefault("task_sha256", None)
     seed = (record.get("grouping") or {}).get("seed")
     if isinstance(seed, str) and seed[:1] == "s" and seed[1:].isdigit():
         # Recorded before the seed was a number: "s17" is seed 17.
         record["grouping"] = {**record["grouping"], "seed": int(seed[1:])}
     b = bundle.make(res, watchers, TaskIdentifiers.from_dict(scoring["identifiers"]), TaskObservations.from_dict(scoring["observations"]),
                     episode_record=record, probe_targets=targets, end_mark=m["end_mark"])
+    if undigested:
+        del b.episode["task_sha256"]
     return res, b
 
 

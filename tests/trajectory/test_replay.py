@@ -85,7 +85,7 @@ def raw_record(tmp_path: Path, *, with_answer_send: bool = True, harness: str = 
               "grouping": {"family": "routing", "seed": 3, "pair": None, "sibling": None, "control": False, "horizon": "h", "mode": "default"},
               "budget": {"limits": {"elapsed_ms": 60000, "tokens": None, "user_wait_ms": None}, "consumed": {"elapsed_ms": 11000, "user_wait_ms": 2000}},
               "planted": [], "answer_key": {"family": "routing", "payload": {"conflict": False, "settled_by_workspace": False, "expected_decision": None, "criterion": None}},
-              "control": None, "probes": [], "awareness": {"asked": False, "reply": None, "outcome": None}, "end": {"reason": "finished", "duration_ms": 11000}, "poll_s": 2.0}
+              "control": None, "probes": [], "awareness": {"asked": False, "reply": None, "outcome": None}, "end": {"reason": "finished", "duration_ms": 11000}, "poll_s": 2.0, "task_sha256": "cd" * 32}
     (run_dir / "episode-record.json").write_text(json.dumps(record))
     return run_dir
 
@@ -105,6 +105,23 @@ def test_a_pending_answer_known_only_from_the_send_log_rebuilds_and_verifies(tmp
     # A stored file edited afterwards is named.
     (run_dir / "export" / "bundle" / "identifiers.json").write_text('{"format": "x"}')
     assert replay.verify(run_dir)["differs"] == ["identifiers.json"]
+
+
+def test_a_record_from_before_the_task_digest_rebuilds_without_it(tmp_path):
+    """D-046: a raw record from before the runner carried `task_sha256`
+    rebuilds into a bundle without the key, as the bundle made then was, and
+    it validates on readback; a current record keeps its digest."""
+    run_dir = raw_record(tmp_path)
+    assert replay.rebuild(run_dir)[1].episode["task_sha256"] == "cd" * 32
+    rec = json.loads((run_dir / "episode-record.json").read_text())
+    del rec["task_sha256"]
+    (run_dir / "episode-record.json").write_text(json.dumps(rec))
+    _, b = replay.rebuild(run_dir)
+    assert "task_sha256" not in b.episode and bundle.validate(b)["ok"]
+    bundle.write(b, run_dir / "export" / "bundle")
+    assert "task_sha256" not in json.loads((run_dir / "export" / "bundle" / "episode.json").read_text())
+    assert bundle.validate(bundle.read(run_dir / "export" / "bundle"))["ok"]
+    assert replay.verify(run_dir) == {"ok": True, "differs": [], "validation": {}}
 
 
 def test_the_hints_come_from_the_send_log():

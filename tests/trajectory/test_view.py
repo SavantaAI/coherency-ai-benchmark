@@ -1045,3 +1045,157 @@ def test_a_resets_continuation_is_audit_only():
     assert check_runner_inputs(ok) == []
     bad = Hints(runner=[RunnerEvent("controlled_reset", mini.ts(1), {"message": "m"}, {"continuation": "maybe"})])
     assert any("continuation" in e for e in check_runner_inputs(bad))
+
+
+def _reset_explanation(after_reset=True):
+    """An Explanation episode across a controlled reset (D-046): the agent
+    hands back once to leave its notes (3 s), the reset event fires (3.5 s)
+    and is performed with the continuation (5 s, a fresh context); then the
+    two scored answers (7 s and 11 s) with the follow-up between them (9 s)."""
+    th = mini.thread()
+    r1 = mini.run_rec(th["id"], 1, 0, 3)
+    notes = mini.assistant(r1, 3, "Notes are in NOTES.md.")
+    items = [mini.user(r1, 0, "Why is the build machine slow?"), notes]
+    evs = [RunnerEvent("verdict", mini.ts(3), {"item": notes["id"]}, {"label": "no_request", "reply": None}),
+           RunnerEvent("handback", mini.ts(3), {"item": notes["id"]}, {"kind": "finished"}),
+           RunnerEvent("planted", mini.ts(3.5), None, {"name": "reset", "phase": "fired"})]
+    runs = [r1]
+    if after_reset:
+        r2 = mini.run_rec(th["id"], 2, 5, 7, fresh=True)
+        cont = mini.user(r2, 5, "Picking this back up. Continue where you left off.")
+        a1 = mini.assistant(r2, 7, "The disk is full.")
+        r3 = mini.run_rec(th["id"], 3, 9, 11)
+        a2 = mini.assistant(r3, 11, "A log rotation job holds the disk.")
+        items += [cont, a1, mini.user(r3, 9, "I don't follow.\n\nWhat is the actual reason?"), a2]
+        runs += [r2, r3]
+        evs += [RunnerEvent("controlled_reset", mini.ts(5), {"message": cont["messageId"]}, {}),
+                RunnerEvent("verdict", mini.ts(7), {"item": a1["id"]}, {"label": "no_request", "reply": None}),
+                RunnerEvent("handback", mini.ts(7), {"item": a1["id"]}, {"kind": "finished"}),
+                RunnerEvent("verdict", mini.ts(11), {"item": a2["id"]}, {"label": "no_request", "reply": None}),
+                RunnerEvent("handback", mini.ts(11), {"item": a2["id"]}, {"kind": "finished"})]
+    evs.append(RunnerEvent("episode_end", mini.ts(12 if after_reset else 4), None, {"reason": "finished"}))
+    res = run([Segment(t3.from_export(mini.export([(th, runs, items)])))], hints=Hints(runner=evs, episode_start_utc=mini.ts(0)))
+    return scorer_view(res.trajectory)
+
+
+def test_explanation_answers_follow_the_named_event():
+    """D-046: with `answers_after` naming the reset, the two scored answers are
+    the first two hand-backs after the reset was performed; the hand-back at
+    which the agent left its notes is not one. Without the field, the first
+    two hand-backs of the episode. An episode that ends before the reset was
+    performed has no answers. The follow-up is checked between the two
+    scored answers, a multi-part follow-up matched whole."""
+    from cohbench.trajectory import episode
+
+    v = _reset_explanation()
+    assert validate_view(v).ok, validate_view(v).errors
+    outs = {e["text"]: e["seq"] for e in v.events if e["type"] == "to_user"}
+    planted = [{"name": "reset", "scheduled": {"action": "reset", "required": True}}]
+    assert episode.explanation_answers(v) == [outs["Notes are in NOTES.md."], outs["The disk is full."]]
+    assert episode.explanation_answers(v, "reset", planted) == [outs["The disk is full."], outs["A log rotation job holds the disk."]]
+    # Any other event: after it fired (here 3.5 s, so the same two).
+    assert episode.explanation_answers(v, "reset", [{"name": "reset", "scheduled": {"action": "message"}}]) == [outs["The disk is full."], outs["A log rotation job holds the disk."]]
+    doc = {"answers": episode.explanation_answers(v, "reset", planted), "planted": planted,
+           "answer_key": {"payload": {"follow_up": "I don't follow.\n\nWhat is the actual reason?", "answers_after": "reset"}}}
+    assert episode._explanation_errors(doc, v) == []
+    assert any("closed the first two scored hand-backs" in e for e in episode._explanation_errors({**doc, "answers": episode.explanation_answers(v)}, v))
+    early = _reset_explanation(after_reset=False)
+    assert episode.explanation_answers(early, "reset", planted) == [] and episode.explanation_answers(early) == [outs["Notes are in NOTES.md."]]
+
+
+NOTICE = "I have to close this session in a moment. Leave yourself notes for whoever picks this up."
+
+
+def _reset_notice(route, notes_end):
+    """A reset notice delivered mid-turn the way a correction is (D-046): by
+    native steering into the running turn, by interrupting and restarting
+    with the notice, or queued behind the running turn. The reset event fires
+    as the notice is sent (2 s). The agent sends its notes (3.1 s) and either
+    hands back (4 s) or is interrupted at the grace (5 s); the runner then
+    performs the reset with the continuation (6 s), and the two scored
+    answers follow (8 s, 11 s)."""
+    th = mini.thread()
+    grace = notes_end == "grace"
+    status = "interrupted" if grace else "completed"
+    end = 5 if grace else 4
+    if route == "steer":
+        r1 = mini.run_rec(th["id"], 1, 0, end, status=status)
+        opening = mini.user(r1, 0, "Why is the build machine slow?")
+        notice = mini.user(r1, 2, NOTICE, inputIntent="steer")
+        runs, nr, at = [r1], r1, 2
+    elif route == "restart":
+        r1 = mini.run_rec(th["id"], 1, 0, 2, status="interrupted")
+        opening = mini.user(r1, 0, "Why is the build machine slow?")
+        nr = mini.run_rec(th["id"], 2, 2, end, status=status)
+        notice = mini.user(nr, 2, NOTICE)
+        runs, at = [r1, nr], 2
+    else:
+        r1 = mini.run_rec(th["id"], 1, 0, 2.5)
+        opening = mini.user(r1, 0, "Why is the build machine slow?")
+        nr = mini.run_rec(th["id"], 2, 2, end, status=status)
+        notice = mini.user(nr, 2.6, NOTICE, inputIntent="queued_turn")
+        runs, at = [r1, nr], 2.6
+    work = mini.command(r1, 1, 1.5, "df -h", "/ 100%\n")
+    notes = mini.dynamic(nr, 3, 3.1, "mcp__t3-code__send_to_user", {"message": "Notes are in NOTES.md."}, {"content": [], "structuredContent": {"sentMessage": "Notes are in NOTES.md."}})
+    items = [opening, work, notice, notes]
+    evs = [RunnerEvent("planted", mini.ts(at), None, {"name": "reset", "phase": "fired"}),
+           RunnerEvent("correction_delivered", mini.ts(at), {"message": notice["messageId"]}, {"mark": None}),
+           RunnerEvent("verdict", mini.ts(3.1), {"item": notes["id"]}, {"label": "no_request", "reply": None})]
+    if not grace:
+        closing = mini.assistant(nr, 4, "Stopping here.")
+        items.append(closing)
+        evs += [RunnerEvent("verdict", mini.ts(4), {"item": closing["id"]}, {"label": "no_request", "reply": None}),
+                RunnerEvent("handback", mini.ts(4), {"item": closing["id"]}, {"kind": "finished"})]
+    r3 = mini.run_rec(th["id"], len(runs) + 1, 6, 8, fresh=True)
+    cont = mini.user(r3, 6, "Picking this back up. Continue where you left off.")
+    a1 = mini.assistant(r3, 8, "The disk is full.")
+    r4 = mini.run_rec(th["id"], len(runs) + 2, 9, 11)
+    a2 = mini.assistant(r4, 11, "A log rotation job holds the disk.")
+    items += [cont, a1, mini.user(r4, 9, "I don't follow.\n\nWhat is the actual reason?"), a2]
+    runs += [r3, r4]
+    evs += [RunnerEvent("controlled_reset", mini.ts(6), {"message": cont["messageId"]}, {}),
+            RunnerEvent("verdict", mini.ts(8), {"item": a1["id"]}, {"label": "no_request", "reply": None}),
+            RunnerEvent("handback", mini.ts(8), {"item": a1["id"]}, {"kind": "finished"}),
+            RunnerEvent("verdict", mini.ts(11), {"item": a2["id"]}, {"label": "no_request", "reply": None}),
+            RunnerEvent("handback", mini.ts(11), {"item": a2["id"]}, {"kind": "finished"}),
+            RunnerEvent("episode_end", mini.ts(12), None, {"reason": "finished"})]
+    hints = Hints(runner=evs, episode_start_utc=mini.ts(0), user_kinds={notice["messageId"]: "correction"})
+    return run([Segment(t3.from_export(mini.export([(th, runs, items)])))], hints=hints)
+
+
+@pytest.mark.parametrize("notes_end", ["handback", "grace"])
+@pytest.mark.parametrize("route", ["steer", "restart", "queued"])
+def test_a_reset_notice_is_delivered_mid_turn_like_a_correction(route, notes_end):
+    """D-046: the notice reaches the agent by any correction route and is a
+    correction in the view, dated at its delivery. Outputs between the notice
+    and the reset are judged and replied to by no one (no wait). The notes
+    turn ends at the agent's hand-back, or by the runner's interrupt at the
+    grace; the reset turn follows. The notes hand-back is an ordinary
+    hand-back and, with `answers_after` naming the reset, not an answer."""
+    from cohbench.trajectory import episode
+
+    res = _reset_notice(route, notes_end)
+    assert validate(res.trajectory).ok, validate(res.trajectory).errors
+    v = scorer_view(res.trajectory)
+    assert validate_view(v).ok, validate_view(v).errors
+    ev = v.events
+    notice = next(e for e in ev if e["type"] == "user_message" and e["text"] == NOTICE)
+    assert notice["kind"] == "correction" and notice["t"] == (2600 if route == "queued" else 2000)
+    cd = next(e for e in ev if e["type"] == "correction_delivered")
+    assert cd["target"] == notice["seq"] and cd["t"] == notice["t"]
+    reset = next(e for e in ev if e["type"] == "controlled_reset")
+    notes = next(e for e in ev if e["type"] == "to_user" and e["text"] == "Notes are in NOTES.md.")
+    assert any(e["type"] == "verdict" and e["target"] == notes["seq"] for e in ev)
+    between = [e for e in ev if notice["seq"] < e["seq"] < reset["seq"]]
+    assert not any(e["type"] == "wait" or (e["type"] == "user_message" and e["kind"] != "reset") for e in between)
+    notes_turn_end = next(e for e in ev if e["type"] == "turn_end" and e["turn"] == notice["turn"])
+    assert notes_turn_end["end"] == ("interrupted" if notes_end == "grace" else "finished")
+    assert notes_turn_end["t"] == (5000 if notes_end == "grace" else 4000)
+    assert notes_turn_end["seq"] < reset["seq"]
+    hb = [e for e in ev if e["type"] == "handback"]
+    assert len(hb) == (2 if notes_end == "grace" else 3)
+    outs = {e["text"]: e["seq"] for e in ev if e["type"] == "to_user"}
+    planted = [{"name": "reset", "scheduled": {"action": "reset", "required": True}}]
+    assert episode.explanation_answers(v, "reset", planted) == [outs["The disk is full."], outs["A log rotation job holds the disk."]]
+    if notes_end == "handback":
+        assert episode.explanation_answers(v)[0] == outs["Stopping here."]

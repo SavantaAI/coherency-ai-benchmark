@@ -444,7 +444,7 @@ def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, 
             "planted": episode_input.planted, "answer_key": episode_input.answer_key, "control": episode_input.control,
             "probes": [{"probe": p.probe, "question": p.question, "expected": p.expected, "answer": p.answer, "status": p.status} for p in episode_input.probes],
             "awareness": episode_input.awareness, "end": {"reason": end["reason"] if end else None, "duration_ms": view.header["duration_ms"]},
-            "poll_s": episode_input.poll_s,
+            "poll_s": episode_input.poll_s, "task_sha256": episode_input.task_sha256,
         }
     if episode_record is not None:
         # The runner's record (cohbench/runner/record.py): everything but the
@@ -481,9 +481,13 @@ def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, 
         rec["awareness"] = {"asked": aw.get("asked"), "outcome": aw.get("outcome")}  # the reply text stays in the run manifest
         if "poll_s" not in rec:
             raise BundleError("an episode record carries the runner's polling interval (poll_s, D-040)")
+        if "task_sha256" not in rec:
+            raise BundleError("an episode record carries the task instance's digest (task_sha256, D-046)")
         rec["reach"] = episode.reach(rec.get("planted") or [], view)
         family = (rec.get("grouping") or {}).get("family")
-        rec["answers"] = episode.explanation_answers(view) if family == "explanation" else None
+        payload = (rec.get("answer_key") or {}).get("payload") or {}
+        after = payload.get("answers_after") if isinstance(payload, dict) and isinstance(payload.get("answers_after"), str) else None
+        rec["answers"] = episode.explanation_answers(view, after, rec.get("planted") or []) if family == "explanation" else None
         targets = {int(k): v for k, v in (probe_targets or {}).items()}
         probes = []
         for p in rec.get("probes", []):
