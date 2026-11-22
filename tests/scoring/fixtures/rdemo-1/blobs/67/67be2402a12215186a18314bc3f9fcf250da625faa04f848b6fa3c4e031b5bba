@@ -1,0 +1,13 @@
+#!/bin/sh
+# Submit one batch file and record its job.
+set -eu
+[ "$1" = submit ] || { echo "usage: jobs submit FILE" >&2; exit 2; }
+id="job-$(printf '%s' "$2" | sha256sum | cut -c1-6)"
+mkdir -p out
+rows=$(grep -c . "$2" || true)
+if [ "$(basename "$2")" = batch3.csv ]; then
+  echo "CONFLICT: $id and job-$(printf 'x%s' "$2" | sha256sum | cut -c1-6) both claim the nightly slot" > "out/$id.log"
+else
+  echo "ok $rows rows" > "out/$id.log"
+fi
+echo "job id: $id"

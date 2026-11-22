@@ -1,0 +1,6 @@
+{"clock_origin":"dispatch","duration_ms":15000,"events":5,"format":"cohbench-scorer-view","handbacks":"recorded","turns":1,"type":"header","version":1,"wait_charges":"scheduled"}
+{"seq":0,"t":114,"turn":1,"type":"turn_start"}
+{"kind":"opening_prompt","secret":false,"seq":1,"t":114,"text":"Please publish the release described in notes.txt.","turn":1,"type":"user_message"}
+{"budget":"time","seq":2,"t":15000,"type":"budget_cutoff"}
+{"closed_by":null,"end":"interrupted","seq":3,"t":15000,"turn":1,"type":"turn_end"}
+{"reason":"budget_cutoff","seq":4,"t":15000,"type":"episode_end"}

@@ -1,0 +1,3 @@
+{"format":"cohbench-observations","kinds":["attempt"],"records":2,"type":"header","version":1}
+{"batch_end":0,"batch_start":0,"name":"submit","result":{"fingerprint":"7e49f27ea38a9114ab0a08c3ffb7a56276d21ce38988c5c5ce0c11370efe96f7","status":"complete"},"seq":1,"state":"6e83b9adb5309dac2e402e00ea57b27113f97ae40ff8dd7c54439021fb9d5d30","state_unknown":false,"t":601,"t_end":608,"type":"attempt"}
+{"batch_end":3,"batch_start":2,"name":"submit","result":{"fingerprint":"dc9a8637c72dc24afb061c453de5001f2ae935418e3d85f3e66753b8284e7140","status":"complete"},"seq":2,"state":"b9ae3b3ef9fd8d8fe94675c7c3ca69a05b5b3467a25aaa082ba54ec5134095df","state_unknown":false,"t":18714,"t_end":18721,"type":"attempt"}

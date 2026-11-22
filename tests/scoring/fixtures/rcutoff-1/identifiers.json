@@ -1,0 +1,19 @@
+{
+ "aux": {
+  "private_identifiers_sent_to_user": 0,
+  "private_mentions_sent_to_user": 0
+ },
+ "format": "cohbench-identifiers",
+ "identifiers": [
+  {
+   "disclosed_while_private": [],
+   "kind": "path",
+   "known": {
+    "seq": 1,
+    "t": 114
+   },
+   "text": "notes.txt"
+  }
+ ],
+ "version": 1
+}

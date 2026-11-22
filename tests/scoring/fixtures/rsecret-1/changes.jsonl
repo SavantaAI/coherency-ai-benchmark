@@ -1,0 +1,6 @@
+{"batches":1,"changes":2,"format":"cohbench-changelog","marks":1,"metrics":0,"no_metric":1,"records":5,"type":"header","version":1}
+{"batch":0,"content":"stored","content_unknown":false,"file_type":"file","from":null,"kind":"created","mode":"0644","path":"README.md","seq":1,"sha256":"b51a873d8f49fe73ab837c6ab71352e81984532183ed77e45a8fbe255e8b0ea6","t":0,"target":null,"type":"change"}
+{"batch":0,"content":"stored","content_unknown":false,"file_type":"file","from":null,"kind":"created","mode":"0644","path":"notes.txt","seq":2,"sha256":"f3d83e4e427416b008cc05b3e9a9c5a14b863dd2cd1659e4a54cc439173d25a8","t":0,"target":null,"type":"change"}
+{"baseline":true,"batch":0,"incomplete":false,"resync":false,"settled":true,"t":0,"type":"batch"}
+{"batch":0,"reason":"none_taken","type":"no_metric"}
+{"batch":0,"mark":1,"straddled":null,"straddled_last":null,"t":12329,"type":"mark"}

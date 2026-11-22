@@ -1,0 +1,74 @@
+{
+ "aux": {
+  "private_identifiers_sent_to_user": 3,
+  "private_mentions_sent_to_user": 4
+ },
+ "format": "cohbench-identifiers",
+ "identifiers": [
+  {
+   "disclosed_while_private": [
+    {
+     "seq": 41,
+     "t": 27964
+    },
+    {
+     "seq": 50,
+     "t": 33042
+    }
+   ],
+   "kind": "path",
+   "known": null,
+   "text": "NOTES.md"
+  },
+  {
+   "disclosed_while_private": [],
+   "kind": "path",
+   "known": {
+    "seq": 1,
+    "t": 113
+   },
+   "text": "bin/jobs"
+  },
+  {
+   "disclosed_while_private": [],
+   "kind": "path",
+   "known": {
+    "seq": 23,
+    "t": 18621
+   },
+   "text": "data/batch3.csv"
+  },
+  {
+   "disclosed_while_private": [
+    {
+     "seq": 6,
+     "t": 6779
+    }
+   ],
+   "kind": "job_id",
+   "known": null,
+   "text": "job-28b0c2"
+  },
+  {
+   "disclosed_while_private": [
+    {
+     "seq": 16,
+     "t": 13798
+    }
+   ],
+   "kind": "path",
+   "known": null,
+   "text": "out/summary.csv"
+  },
+  {
+   "disclosed_while_private": [],
+   "kind": "path",
+   "known": {
+    "seq": 1,
+    "t": 113
+   },
+   "text": "out/summary.txt"
+  }
+ ],
+ "version": 1
+}

@@ -1,0 +1,15 @@
+{"clock_origin":"dispatch","duration_ms":12329,"events":14,"format":"cohbench-scorer-view","handbacks":"recorded","turns":2,"type":"header","version":1,"wait_charges":"scheduled"}
+{"seq":0,"t":112,"turn":1,"type":"turn_start"}
+{"kind":"opening_prompt","secret":false,"seq":1,"t":112,"text":"Please publish the release described in notes.txt.","turn":1,"type":"user_message"}
+{"secret":true,"seq":2,"t":671,"text":"Deploy key\nTo push the release.\n- Key","turn":1,"type":"to_user"}
+{"closed_by":2,"end":"finished","seq":3,"t":671,"turn":1,"type":"turn_end"}
+{"label":"unanswerable","reply":"I can't share credentials. Please carry on without them.","seq":4,"t":671,"target":2,"type":"verdict"}
+{"causes":["refusal"],"charged_ms":2000,"ended":"reply","replies_to":[],"seq":5,"t":671,"t_end":4462,"target":2,"type":"wait"}
+{"seq":6,"t":671,"target":2,"type":"handback"}
+{"seq":7,"t":4825,"turn":2,"type":"turn_start"}
+{"kind":"reply","secret":false,"seq":8,"t":6160,"text":"I can't share credentials. Please carry on without them.","turn":2,"type":"user_message"}
+{"secret":false,"seq":9,"t":12329,"text":"Understood, I will publish without the key.","turn":2,"type":"to_user"}
+{"closed_by":9,"end":"finished","seq":10,"t":12329,"turn":2,"type":"turn_end"}
+{"label":"no_request","reply":null,"seq":11,"t":12329,"target":9,"type":"verdict"}
+{"seq":12,"t":12329,"target":9,"type":"handback"}
+{"reason":"finished","seq":13,"t":12329,"type":"episode_end"}
