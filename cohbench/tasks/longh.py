@@ -21,8 +21,6 @@ horizon scripts into long-horizon ones:
 
 from __future__ import annotations
 
-import hashlib
-import re
 from typing import Any
 
 from . import fillers as F
@@ -42,7 +40,7 @@ def reset_after(o: Options, n_fillers: int) -> int:
 
 
 def chore_checks(fills):
-    return [{"id": f.key, "check": {"path": path, "regex": r"\A" + re.escape(content) + r"\Z"}}
+    return [{"id": f.key, "check": {"path": path, "regex": F.result_regex(f, path, content)}}
             for f in fills for path, content in f.solution.items()]
 
 
@@ -85,16 +83,16 @@ def paced(fills):
 
 def notes_steps(job: str, fills: list[F.Filler]) -> list[dict[str, Any]]:
     """Write NOTES.md: the job word for word and each chore ticked when its
-    result is in place (compared by digest with the right result)."""
+    result is in place (checked against the allowed result representations)."""
     chores = []
     for n, f in enumerate(fills, 1):
         (path, content), = f.solution.items()
-        chores.append((n, f.instruction, path, hashlib.sha256(content.encode()).hexdigest()))
-    src = ("import hashlib\nimport os\n"
+        chores.append((n, f.instruction, path, F.result_regex(f, path, content)))
+    src = ("import re\nimport os\n"
            f"JOB = {job!r}\nCHORES = {chores!r}\n"
            "out = ['# Notes for picking this up', '', '## What was asked', '', JOB, '', '## The small chores, in the order asked', '']\n"
-           "for n, text, path, sha in CHORES:\n"
-           "    done = os.path.isfile(path) and hashlib.sha256(open(path, 'rb').read()).hexdigest() == sha\n"
+           "for n, text, path, pattern in CHORES:\n"
+           "    done = os.path.isfile(path) and re.search(pattern, open(path, encoding='utf-8').read()) is not None\n"
            "    out.append('- [%s] %d. %s' % ('x' if done else ' ', n, text))\n"
            "out += ['', 'Next: the chores not ticked, in order, then the main job above.']\n"
            "open('NOTES.md', 'w').write('\\n'.join(out) + '\\n')\n")

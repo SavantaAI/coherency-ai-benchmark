@@ -10,7 +10,10 @@ long horizon's reset trigger one count over `admin/**`."""
 
 from __future__ import annotations
 
+import csv
+import io
 import json
+import re
 from datetime import date as Date
 from dataclasses import dataclass, field
 
@@ -47,6 +50,25 @@ class Filler:
             out.append(write(p, c))
         out.append(bash("cat " + " ".join(self.solution)))
         return out
+
+
+def result_regex(filler, path, content):
+    """Accept the representation choices left open by the chore text."""
+    tail = "" if filler.key == "trailing" else r"[ \t]*"
+    if path.endswith(".csv"):
+        lines = []
+        for row in csv.reader(io.StringIO(content)):
+            fields = []
+            for value in row:
+                quoted = '"' + value.replace('"', '""') + '"'
+                forms = [re.escape(quoted)]
+                if not any(c in value for c in ',"\r\n'):
+                    forms.append(re.escape(value))
+                fields.append("(?:" + "|".join(forms) + ")")
+            lines.append(",".join(fields) + tail)
+    else:
+        lines = [re.escape(line.rstrip(" \t")) + tail for line in content.rstrip("\n").split("\n")]
+    return r"\A" + r"\r?\n".join(lines) + r"(?:\r?\n" + tail + r")*\Z"
 
 
 def _people(r: Rng, n: int) -> list[tuple[str, str]]:

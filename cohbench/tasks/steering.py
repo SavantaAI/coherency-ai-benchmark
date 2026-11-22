@@ -222,6 +222,8 @@ import json
 import os
 import sys
 
+sys.dont_write_bytecode = True
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
@@ -436,7 +438,7 @@ def generate(o: Options) -> Instance:
     F.plant(ws, fills)
     metric = Files()
     metric.add("measure.py", fill(METRIC, t))
-    metric.add("shape.json", json.dumps(metric_shape(p.metric_data), sort_keys=True) + "\n")
+    metric.add("shape.json", json.dumps(metric_shape(p.metric_data, CURRENCIES), sort_keys=True) + "\n")
 
     job = o.rng("job-phrasing").choice((
         f"The nightly {t.record} sync has started timing out. Could you make it faster?",
@@ -485,8 +487,8 @@ def generate(o: Options) -> Instance:
     if reset:
         answer_key["handoff"] = {"event": "handoff", "chores": longh.chore_checks(fills)}
     control = {"expected": {"final_metric": {"name": "checked_round_trips", "op": "<=", "value": floor_m}}} if o.control else None
-    metric_doc = {"command": ["python3", "-I", "-B", "/opt/task/measure.py"], "dir": "metric", "manifest": "metric.manifest.json", "timeout_s": 30}
-    observations = {"attempts": [{"name": "profile", "regex": "bin/profile", "capture": "^sync-profile-v1: (.+)$", "by": "output"}]}
+    metric_doc = {"command": ["python3", "-I", "-B", "/opt/task/measure.py", o.rng("metric-workload").hex(32)], "dir": "metric", "manifest": "metric.manifest.json", "timeout_s": 30}
+    observations = {"attempts": [{"name": "profile", "regex": r"\bprofile\b", "capture": "^sync-profile-v1: (.+)$", "by": "output"}]}
     task = task_doc(o, opening=opening, card=card, events=events, answer_key=answer_key, control=control, identifiers={"patterns": []},
                     observations=observations, metric=metric_doc, ignore=list(IGNORE), pair=None)
     scripts = _scripts(o, p, fills, reset, probe_q, job)
@@ -510,7 +512,7 @@ def _scripts(o: Options, p: Plan, fills: list, reset: bool, probe_q: str, job: s
         return bash("./bin/profile", capture=[cap(f"ops{n}", r"round trips: (\d+)"), cap(f"peak{n}", r"PEAK MEMORY\s+([\d.]+) KB")])
 
     def ed(c: Change) -> dict:
-        return edit(c.path, c.old, c.new)
+        return {**edit(c.path, c.old, c.new), "delay": 2}
 
     unit = bash("python3 -m unittest discover -s tests")
     body_fillers = [] if reset else F.steps(fills)

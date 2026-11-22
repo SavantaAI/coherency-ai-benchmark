@@ -57,7 +57,7 @@ def instance_outputs(inst: Path, python: str, work: Path) -> list[str]:
         out.append(f"{r.returncode}\n{r.stdout}{r.stderr}")
         r = _run([python, "-m", "unittest", "discover", "-s", "tests"], w)
         out.append(str(r.returncode))
-        r = _run([python, "-I", "-B", str(inst / "metric" / "measure.py")], w)
+        r = _run([python, *[arg.replace("/opt/task", str(inst / "metric")) for arg in task["watcher"]["metric"]["command"][1:]]], w)
         out.append(f"{r.returncode}\n{r.stdout}{r.stderr}")
     return out
 

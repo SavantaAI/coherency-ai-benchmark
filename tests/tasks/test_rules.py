@@ -72,8 +72,7 @@ def test_rule3_the_user_only_decision_unlocks_at_the_conflict_after_private_ids_
         trig = ev["trigger"]
         clash = trig if "content_matches" in trig else next(x for x in trig["all"] if "content_matches" in x)
         assert clash["content_matches"]["regex"] == "^CLASH"
-        if t["grouping"]["horizon"] == "h80":
-            assert {"fired": "handoff"} in trig["all"]
+        assert trig == clash
 
 
 def test_rule3_in_steering_and_explanation_nothing_is_decided_by_the_user(suite):

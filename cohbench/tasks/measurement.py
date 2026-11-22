@@ -52,7 +52,7 @@ SERVICE = r'''
 """Own the service data and counter outside the measured package process."""
 import json
 import os
-import secrets
+import hashlib
 import socket
 import subprocess
 import sys
@@ -60,21 +60,47 @@ import sys
 CLIENT_RUN = __CLIENT_RUN__
 
 
+def workload_key():
+    if len(sys.argv) == 2:
+        # The watcher supplies argv only. Re-execute without the seed in argv
+        # before starting a package that can inspect its parent's command.
+        reader, writer = os.pipe()
+        os.write(writer, bytes.fromhex(sys.argv[1]))
+        os.close(writer)
+        os.set_inheritable(reader, True)
+        os.execv(sys.executable, [sys.executable, "-I", "-B", __file__, "seed-fd", str(reader)])
+    if len(sys.argv) != 3 or sys.argv[1] != "seed-fd":
+        raise ValueError("missing workload key")
+    with os.fdopen(int(sys.argv[2]), "rb") as stream:
+        key = stream.read()
+    if len(key) != 16:
+        raise ValueError("invalid workload key")
+    return key
+
+
 def main():
+    key = workload_key()
     with open(os.path.join(os.path.dirname(__file__), "shape.json"), encoding="utf-8") as fh:
         shape = json.load(fh)
-    # Only lengths and public record fields are stored. Actual amounts and
-    # rates exist only in this process and in counted responses.
-    def number(width):
-        low = 10 ** (width - 1)
-        return low + secrets.randbelow(9 * low)
+    counter = 0
+
+    def below(limit):
+        nonlocal counter
+        ceiling = (1 << 256) - ((1 << 256) % limit)
+        while True:
+            value = int.from_bytes(hashlib.sha256(key + counter.to_bytes(8, "big")).digest(), "big")
+            counter += 1
+            if value < ceiling:
+                return value % limit
+
     records = shape["records"]
     for position, record in enumerate(records):
-        width = record.pop("id_width")
-        record["id"] = str(position).zfill(4) + secrets.token_hex(width)[0:width - 4]
-        record["amount"] = number(record.pop("amount_width"))
+        prefix = record.pop("id_prefix")
+        record["id"] = prefix + "-" + str(10000 + position * 7 + below(7))
+        low, high = record.pop("amount_range")
+        record["amount"] = low + below(high - low + 1)
     rates = shape["rates"]
-    rates["rates"] = {code: number(width) for code, width in rates["rates"].items()}
+    rates["rates"] = {code: low + below(high - low + 1) for code, (low, high) in rates["rates"].items()}
     index = {record["id"]: record for record in records}
     expected = {}
     for record in records:
@@ -142,12 +168,13 @@ def source():
     return SERVICE.replace("__CLIENT_RUN__", repr(CLIENT_RUN))
 
 
-def shape(data):
+def shape(data, currencies):
     return {
         "records": [
             {**{k: v for k, v in record.items() if k not in ("amount", "id")},
-             "amount_width": len(str(record["amount"])), "id_width": len(record["id"])}
+             "amount_range": [max(500, 10 ** (len(str(record["amount"])) - 1)), min(50000, 10 ** len(str(record["amount"])) - 1)],
+             "id_prefix": record["id"].rsplit("-", 1)[0]}
             for record in data["records"]
         ],
-        "rates": {**data["rates"], "rates": {k: len(str(v)) for k, v in data["rates"]["rates"].items()}},
+        "rates": {**data["rates"], "rates": {code: [low, high] for code, low, high in currencies}},
     }

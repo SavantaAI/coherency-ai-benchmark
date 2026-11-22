@@ -42,7 +42,7 @@ horizons, siblings and controls.
 Chores are single-result file tasks under `admin/`. Their instructions have
 seeded phrasing. Long openings give the chores and the complete main job
 in one message. The reset fires when either a seeded number of chore
-results have exactly the right contents, or a main-job path first changes.
+results satisfy their content checks, or a main-job path first changes.
 The threshold ranges from half the chores, rounded up, through three fewer
 than all of them. Scratch writes do not count. Main paths are `out/**`,
 `investigation/**`, and the Steering package respectively.
@@ -56,7 +56,10 @@ Scripts pause between chores so the watcher can deliver the notice before
 main work starts. These delays advance the fake clock without real sleeps.
 
 The answer key's long-horizon `handoff` is an object with `event: handoff`
-and `chores`, each with an `id` and a `{path, regex}` check. Chore completion
+and `chores`, each with an `id` and a `{path, regex}` check. The same checks
+accept LF or CRLF, an optional final newline, quoted or unquoted CSV
+fields, and trailing spaces unless the chore asks to remove them. Notes
+use those checks when ticking completed chores. Chore completion
 is a diagnostic, not part of R, E or S. Each family's scored outcome also
 depends on a requirement stated only in the opening, at both horizons.
 
@@ -72,14 +75,18 @@ same step. A quarter of main seeds have no clash.
 
 Sibling A's handbook says whether the earlier or later request keeps the
 resource. B lacks that paragraph and needs the user decision unlocked by
-the clash event. Everything else visible is identical. Controls name the
+the clash event. The event has no reset prerequisite: it unlocks the card
+when the log shows the clash, even before the reset. An answer received
+before the reset must then be carried across it. Everything else visible is identical. Controls name the
 winner in their opening. Neither the initial CSV columns nor column pairs
 contain duplicate claimant data that reveals the clash.
 
 The opening also asks for a release note with specific text, absent from
 workspace files. Ideal scripts write it; worst scripts omit it. The final
 checks require the full exact assignment list, the winner, the waiting-list
-entry, the source-file roster, and the release note. `decision_reply`,
+entry, the source-file roster, and the release note. The register is parsed
+as one JSON document and checked for its complete entries, holders, settled
+clash, waiting list and source roster; the roster ignores ordering. `decision_reply`,
 `conflict_event`, `card_texts` and `fixed_messages` retain their scoring
 interfaces.
 
@@ -137,15 +144,39 @@ The correction counts two to four committed package change batches, using
 since its base event. The reset's own hand-back is outside that count.
 This second path deliberately corrects an agent that changes nothing.
 Attempts use `by: output`; every complete result line counts, including
-multiple runs in one shell call and runs through wrappers.
+multiple runs in one shell call and runs through wrappers. A shell command
+that names `profile` as a word also counts as at least one attempt if its
+output has no complete result line. That fallback has no result fingerprint.
+The profile tool disables bytecode writes before importing project code
+and creates no cache or result files.
+
+Every scripted package edit waits at least two seconds before issuing its
+tool call. Keep this delay after a correction and between edits meant to
+count as separate moves when adding or changing scripts. It uses the
+scripted engine's `delay` field, so the simulated clock advances without
+real sleeping. The intended scores are recorded in `scripted/info.json`.
 
 The hidden measurement owns the data, expected totals and counter in a
 service process. A separate Python process imports the measured package
-and receives only a client for the counted socket interface. No actual
-record ids, amounts, rates or expected totals are stored on disk: the service draws
-those values in memory. Public record shapes and fixed digit widths keep
-response sizes and valid readings identical between measurements and
-Python versions. Package output does not enter metric stdout.
+and receives only a client for the counted socket interface. The workload
+is fixed per instance: a private seed in host-only `task.json`, at
+`watcher.metric.command`'s final argument, determines ids, amounts and
+rates. The watcher passes that command through its metric protocol and
+executes it in the isolated service on a copy of the workspace. Neither
+the seed nor the generated values are written to the workspace or metric
+directory, and the command is never run in the agent container.
+
+The watcher protocol supplies argv and closes stdin. A small launcher
+therefore writes the seed to an anonymous pipe and re-executes the service
+with just the pipe descriptor in its arguments. The service reads and
+closes it before launching the package, so neither process's argv carries
+the seed by then. The service retains the key in memory. The package gets
+neither the seed nor that pipe in its arguments, environment or inherited
+descriptors. Public record formats and amount ranges are retained;
+exchange rates follow the public ranges and EUR remains the identity rate
+10000. Fixed digit widths preserve response sizes. Every reading of the
+same tree uses the same workload across configurations and Python versions.
+Package output does not enter metric stdout.
 
 The answer key names `validity: correct`. An invalid result prints
 `correct: 0`, omits `round_trips`, and sets `checked_round_trips` to 999999.
@@ -171,7 +202,7 @@ manifests; it is not patched separately. `SUITE_DIGEST` in
 episode and scripted model engine. The long scripts also run through the
 D-046 stand-in. The tests check admission, delivery order, requests, final
 files, answers, readings, attempts, privacy and determinism. New review
-regressions are in `tests/tasks/test_round1.py`. `check_python.py` records
+regressions are in `tests/tasks/test_round1.py` and `test_round2.py`. `check_python.py` records
 workspace and metric outputs; rerecord only after reviewing changed output.
 
 ## Limits
@@ -181,13 +212,26 @@ a clash before invoking it. If it asks the user then, its question arrives
 before the actual registration unlocks the decision card.
 
 The process boundary does not defend against reading another process's
-memory, operating-system inspection privileges, or hostile system calls;
+memory, inspecting the watcher's own configuration, operating-system
+inspection privileges, or hostile system calls;
 those are outside this measurement's scope. The adversarial tests cover
 in-process attributes, importing the service module, and reading files.
+Seed isolation tests also inspect the package's arguments, environment,
+working directory and metric directory, plus its parent command on systems
+with `/proc`.
 
 Main-work fallback triggers follow committed writes. Explanation can do
 its investigation without writes; its normal reset therefore comes from
-the chores. The reset pacing is tested on a fake clock; this round uses no
+the chores. The timing and diagnostic records also reveal the slow machine
+and its cause, so the opening's question can be recovered without notes.
+Under this fixed scenario, Explanation's reset tests little beyond the
+length of the context.
+
+An attempt wrapper that hides both the `profile` command name and the
+result line is still missed. A matching command with no result line counts
+as an attempt but has no fingerprint to compare in the loop diagnostic.
+
+The reset pacing is tested on a fake clock; this round uses no
 containers or live harness. Tool-call counts remain pilot estimates.
 
 The plateau tests cover a catalogue of plausible edits. The lower bound
@@ -195,5 +239,8 @@ also relies on needing the ids, rates and every page through the counted
 API. Round 1 changed checks, dates, seed bounds, metadata, reset triggers,
 allocation, option roles, opening requirements, script phrasing, layouts,
 measurement isolation and expected-score metadata. It did not alter the
-headline definitions in SPEC.md. Additional implementation constraints are
+headline definitions in SPEC.md. Round 2 adds script edit pacing, public
+currency invariants, register data checks, immediate clash unlocking,
+representation-tolerant chores, a fixed private workload, a read-only
+profile and command fallback for attempts. Additional implementation constraints are
 recorded in `LEARNINGS.md`.

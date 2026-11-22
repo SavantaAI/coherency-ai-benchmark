@@ -505,7 +505,23 @@ def final_check(p: Plan) -> list[dict[str, Any]]:
         out.append({"path": d.deliverable, "regex": _line(d, p.loser.value, p.loser), "negate": True})
     out.append({"path": d.deliverable, "regex": r"\A" + re.escape(final_list(p)) + r"\Z"})
     roster = [p.path(i) for i in range(1, len(p.files) + 1)]
-    out.append({"path": "out/register.json", "regex": r'"files":\s*\[\s*' + r",\s*".join(re.escape('"' + f + '"') for f in roster) + r"\s*\]"})
+    ids = {(e.name, e.owner): ident(d, p.salt, e.name, e.owner) for rows in p.files for e in rows}
+    holders = {e.value: ids[(e.name, e.owner)] for rows in p.files for e in rows}
+    entries = {ids[(e.name, e.owner)]: {"name": e.name, "owner": e.owner, "value": e.value,
+               "received": e.received, "file": p.path(e.file)} for rows in p.files for e in rows}
+    waiting, clashes = [], []
+    if p.conflict:
+        winner = ids[(p.winner.name, p.winner.owner)]
+        holders[p.first.value] = winner
+        waiting = [ids[(p.loser.name, p.loser.owner)]]
+        clashes = [{"value": p.first.value, "ids": [ids[(p.first.name, p.first.owner)], ids[(p.second.name, p.second.owner)]], "kept": winner}]
+    out.append({"path": "out/register.json", "json": [
+        {"pointer": "/files", "set_equals": roster},
+        {"pointer": "/entries", "equals": entries},
+        {"pointer": "/holders", "equals": holders},
+        {"pointer": "/clashes", "equals": clashes},
+        {"pointer": "/waiting", "set_equals": waiting},
+    ]})
     out.append({"path": "out/release.txt", "regex": r"\A" + re.escape(release(p)) + r"\Z"})
     return out
 
@@ -603,7 +619,7 @@ def generate(o: Options) -> Instance:
     card: dict[str, Any] = {"facts": [dict(NO_FILES), {"id": "role", "text": d.role}], "decisions": []}
     if conflict:
         clash = {"content_matches": {"path": "out/log/*.txt", "regex": "^CLASH"}}
-        events.append({"name": "conflict", "trigger": {"all": [{"fired": "handoff"}, clash]} if reset else clash,
+        events.append({"name": "conflict", "trigger": clash,
                        "action": {"type": "observe"}, "required": True,
                        "reopen": f"Please make sure every file in {d.in_dir}/ has been added.",
                        "probe": {"question": f"Has the user been shown the name {a_id}? Answer yes or no.",
