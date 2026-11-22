@@ -10,7 +10,7 @@ FROM ${NODE_IMAGE}
 ARG T3_VERSION=0.1.12-nightly.20261121.5051
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates git procps \
+ && apt-get install -y --no-install-recommends ca-certificates git procps python3 \
  && rm -rf /var/lib/apt/lists/*
 
 # The npm package is a small launcher. The first run downloads the
