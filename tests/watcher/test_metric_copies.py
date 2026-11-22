@@ -221,3 +221,38 @@ def test_classify_link_cases():
     assert classify_link("x", "/work/project/../project/a", ws, m2) == "a"
     assert classify_link("x", "/work/projectx/a", ws, m2) is None
     assert classify_link("x", "/../work/project", ws, m2) == ""
+
+
+def test_each_invocation_has_fresh_writable_storage(rig, tmp_path):
+    import json
+    from pathlib import Path
+
+    outside = tmp_path / 'persistent-cache'
+    code = r'''
+import json, os
+from pathlib import Path
+paths = [Path(os.environ[k]) / 'totals' for k in ('HOME', 'TMPDIR', 'XDG_CACHE_HOME', 'XDG_DATA_HOME', 'XDG_CONFIG_HOME', 'XDG_STATE_HOME')]
+paths += [Path.cwd() / 'totals', Path('/tmp/profile-totals'), Path('/var/tmp/profile-totals'), Path('/dev/shm/profile-totals'), Path(OUTSIDE)]
+seen, written = 0, []
+for p in set(paths):
+    if p.exists():
+        seen += 1
+    try:
+        p.write_text('cached totals')
+        written.append(str(p))
+    except (PermissionError, OSError):
+        pass
+print(json.dumps({'calls': 0 if seen else 6, 'written': written, 'home': os.environ['HOME']}))
+'''.replace('OUTSIDE', repr(str(outside)))
+    rig.runner.cmd = [PY, '-c', code]
+    homes = []
+    for batch, text in enumerate((b'first', b'comment changed')):
+        rec = rig.runner.run_once(batch, Manifest.of({'package.py': rig.F(text)}), 'change')
+        assert rec['ok'], rec
+        assert rec['metrics']['calls'] == 6, rec
+        assert rec['metrics']['written']
+        home = rec['metrics']['home']
+        homes.append(home)
+        assert not Path(home).exists()
+        assert not outside.exists()
+    assert homes[0] != homes[1]

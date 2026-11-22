@@ -488,7 +488,7 @@ class Environment:
 
     # ----- handoff (D-010) ---------------------------------------------------------------
 
-    def handoff(self, *, on_stopped: Callable[[Container], Any] | None = None) -> dict[str, Any]:
+    def handoff(self, *, on_stopped: Callable[[Container], Any] | None = None, on_stopping: Callable[[Container], Any] | None = None) -> dict[str, Any]:
         """The caller has passed the idle gate. In order: stop T3; stop the
         container; ask the watcher for a final mark; key-scan the container;
         `on_stopped(container)` (the caller's capture from the stopped
@@ -505,6 +505,9 @@ class Environment:
             rec["stop_server"] = self.stop_server(old.container)
             if not rec["stop_server"]["stopped"]:
                 raise GateFailed("t3 serve did not stop", rec["stop_server"])
+            if on_stopping is not None:
+                stage = "collection"
+                on_stopping(old.container)
             # The watcher's contract: the agent's container is stopped before the
             # final mark, so no write can race it.
             stage = "stop container"
@@ -975,13 +978,21 @@ def start_watcher(vol: str, out: Path, spec: WatcherSpec, image: str, registry: 
         raise ValueError("WatcherSpec.ignore_names and ignore_git_refs must be given (D-026); the driver fills them from its harness descriptions")
     args += ["--ignore-names", json.dumps(list(spec.ignore_names)), "--ignore-git-refs", json.dumps(list(spec.ignore_git_refs)),
              "--workspace-path", spec.workspace_path, "--metric-isolation", spec.metric_isolation]
+    command_file = None
     if spec.metric_cmd:
-        args += ["--metric-cmd", json.dumps(list(spec.metric_cmd))]
+        # /srv/w is private to the watcher user. The child metric user
+        # cannot traverse it; the watcher removes this file after reading.
+        command_file = out / ".metric-command.json"
+        command_file.write_text(json.dumps(list(spec.metric_cmd)), encoding="utf-8")
+        os.chmod(command_file, 0o644)
+        args += ["--metric-cmd-file", f"{WATCHER_OUT}/.metric-command.json"]
     if spec.metric_timeout_s is not None:
         args += ["--metric-timeout-s", str(spec.metric_timeout_s)]
     try:
         run(args, timeout=120)
     except BaseException:
+        if command_file is not None:
+            command_file.unlink(missing_ok=True)
         registry.remove("container", name)
         raise
     end = time.monotonic() + bounded(timeout_s)

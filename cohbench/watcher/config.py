@@ -35,6 +35,7 @@ class Config:
     max_delay_ms: int = 2000
     # argv run on a copy of every committed batch. None: no metrics.
     metric_cmd: list[str] | None = None
+    metric_cmd_file: str | None = None
     metric_timeout_s: float = 30.0
     # At shutdown, how long the metric queue is drained (plus the run in
     # progress, at most metric_timeout_s); what is left is recorded as not
@@ -70,6 +71,11 @@ class Config:
             raise ValueError("max_blob_bytes must be >= 0")
         if self.quiet_ms < 0 or self.max_delay_ms < self.quiet_ms:
             raise ValueError("need 0 <= quiet_ms <= max_delay_ms")
+        if self.metric_cmd_file is not None:
+            if not isinstance(self.metric_cmd_file, str) or not self.metric_cmd_file:
+                raise ValueError("metric_cmd_file must be a path")
+            if self.metric_cmd is not None:
+                raise ValueError("choose metric_cmd or metric_cmd_file")
         if self.metric_cmd is not None:
             if not isinstance(self.metric_cmd, list) or not self.metric_cmd or not all(isinstance(a, str) for a in self.metric_cmd):
                 raise ValueError("metric_cmd must be a non-empty list of strings")

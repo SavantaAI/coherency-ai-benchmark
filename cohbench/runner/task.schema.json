@@ -468,6 +468,10 @@
          },
          "by": {
           "const": "output"
+         },
+         "log": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
          }
         },
         "dependentRequired": {
@@ -499,6 +503,28 @@
      }
     }
    ]
+  },
+  "collect": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "name",
+     "path"
+    ],
+    "properties": {
+     "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+     },
+     "path": {
+      "type": "string",
+      "pattern": "^(~/|/)",
+      "description": "Outside /work/project after path normalization; checked at admission and when read."
+     }
+    }
+   }
   }
  },
  "$defs": {

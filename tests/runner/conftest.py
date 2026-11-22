@@ -99,7 +99,7 @@ class Run:
             if factory_error:
                 raise factory_error
             self.spec = spec
-            self.fake = FakeEpisode(acts, tmp / f"driver-{episode}", self.clock, **fake_kw)
+            self.fake = FakeEpisode(acts, tmp / f"driver-{episode}", self.clock, collect=spec.collect, **fake_kw)
             return self.fake
 
         self.factory = factory

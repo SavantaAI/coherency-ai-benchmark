@@ -356,3 +356,26 @@ def test_correction_due_before_reset_has_its_own_delivery_in_bundle():
     mark = next(e for e in changes if e.get("type") == "mark" and e["mark"] == correction["mark"])
     assert mark["t"] == correction["t"] >= reset["t"]
     _assert_rebuild(out.path)
+
+
+def test_home_log_collection_across_reset_and_rebuild():
+    def edit(doc):
+        _reset_on_the_draft(doc)
+        doc["collect"] = [{"name": "attempts", "path": "~/.local/state/profile/runs.jsonl"}]
+        doc["scoring"]["observations"] = {"attempts": [{"name": "profile", "regex": "python3 profile.py", "log": "attempts"}]}
+    out = _short(_out_root("collection"), "collection-run.json", "rcollection-1", edit=edit)
+    run, ep, _, changes = check_bundle(out.path)
+    assert ep["resets"][0]["performed"]
+    record = ep["collected"]["attempts"]
+    assert record["status"] == "collected"
+    sha = record["sha256"]
+    raw = out.path / "export" / "collected" / "blobs" / sha[:2] / sha
+    blob = out.path / "export" / "bundle" / "blobs" / sha[:2] / sha
+    assert raw.read_bytes() == blob.read_bytes()
+    log = [json.loads(s) for s in blob.read_text().splitlines()]
+    assert [r["result"] for r in log] == ["first", "second"]
+    assert log[0]["end_ms"] <= log[1]["start_ms"]
+    obs = lines(out.path / "export" / "bundle" / "observations.jsonl")[1:]
+    assert [r["source"] for r in obs].count("log") == 2
+    assert all(".local/state" not in r.get("path", "") for r in changes)
+    _assert_rebuild(out.path)

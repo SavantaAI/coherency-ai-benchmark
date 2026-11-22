@@ -224,7 +224,7 @@ def test_secret_request_is_refused(run_factory) -> None:
                     edit=no_events, pol=pol).go()
     assert r.fake.received[1] == ("refuse_secret", REFUSAL)
     (v,) = [e for e in r.events("verdict") if e["ref"] == {"item": "item-run-1-secret"}]
-    assert v["fields"] == {"label": "unanswerable", "reply": REFUSAL}
+    assert v["fields"] == {"label": "unanswerable", "reply": REFUSAL, "answer_ids": []}
     assert waits(r)[0] == (2000, "reply", "refusal")
     assert r.fake.handoff_problems == []
 
@@ -556,7 +556,7 @@ def test_fixed_follow_up_is_charged_as_a_fixed_message(run_factory) -> None:
                         "action": {"type": "message", "text": "I don't follow. What's the actual reason?"}}]
     r = run_factory([Act(final="It is the disk. Which queue?"), Act(final="The disk is full.")], edit=edit, pol=policy(default="unanswerable")).go()
     assert r.fake.received[1] == ("reply", "I don't follow. What's the actual reason?")
-    assert r.events("verdict")[0]["fields"] == {"label": "unanswerable", "reply": None}
+    assert r.events("verdict")[0]["fields"] == {"label": "unanswerable", "reply": None, "answer_ids": []}
     assert waits(r)[0] == (2000, "reply", "fixed_message")
 
 

@@ -7,7 +7,7 @@
 | `changes.jsonl` | `changelog.build` from the watcher | task state by batch, marks, metric readings |
 | `observations.jsonl` | `observations.build` from the trajectory and the change log | task-declared attempts with their state and result |
 | `episode.json` | `make`, from the runner's episode record | grouping keys, budgets, planted events and reach, the answer key, controls, probes, the awareness outcome, the end |
-| `blobs/<two hex>/<sha256>` | `write`, from the watcher's content store | exactly the file contents the change log's stored records name |
+| `blobs/<two hex>/<sha256>` | `write`, from the watcher's content store | exactly the contents named by the change log and collected records |
 
 `make` is the one function the runner calls. `write` copies the referenced
 blobs out of the watcher's store, checking each digest. `validate` checks each
@@ -176,6 +176,7 @@ class Bundle:
     own_store: bool = False  # the store is the bundle's own blobs/ (nothing else may be in it)
     notes: list[str] = field(default_factory=list, compare=False)  # for the run manifest and the report; never written
     directory: Path | None = field(default=None, compare=False)  # the directory a read bundle came from
+    extra_blobs: dict[str, bytes] = field(default_factory=dict, compare=False, repr=False)
 
 
 def _stores(store: Any) -> list[Path]:
@@ -290,6 +291,8 @@ def _resolve_runner_target(pid: Any, tgt: Any, manifest: dict[str, Any], view: T
         return {"kind": "change", "ref": m["batch"], "boundary": m["batch"]}
     done = []
     for o in obs.records:
+        if o.get("source", "shell") != "shell":
+            continue
         if o["t_end"] is None or o["result"]["status"] == "unfinished":
             continue
         end_us = obs.wall.get(o["seq"], (None, None))[1]
@@ -391,7 +394,7 @@ def _notices(traj: Trajectory, changes: ChangeLog | None) -> tuple[list[dict[str
 
 
 def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, identifiers_task: TaskIdentifiers | None = None, observations_task: TaskObservations | None = None,
-         episode_input: EpisodeInput | None = None, *, episode_record: dict[str, Any] | None = None, probe_targets: dict[Any, dict[str, Any]] | None = None,
+         episode_input: EpisodeInput | None = None, *, episode_record: dict[str, Any] | None = None, collected=None, legacy_source=False, probe_targets: dict[Any, dict[str, Any]] | None = None,
          end_mark: str | None = None) -> Bundle:
     """The bundle for one episode, from the normaliser's result (trajectory and
     manifest), the watcher's output, the task's declarations and the runner's
@@ -473,7 +476,7 @@ def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, 
         if m["batch"] in changes.unsettled:
             notes.append(f"the end mark falls on unsettled batch {m['batch']}")
     ids = scorer_identifiers(view, changes, identifiers_task, traj.header["workspace"])
-    obs = observations.build(traj, changes, observations_task or TaskObservations())
+    obs = observations.build(traj, changes, observations_task or TaskObservations(), collected=collected, origin=manifest.get("episode_start_utc"), legacy_source=legacy_source)
     doc = None
     if episode_input is not None:
         episode_record = {
@@ -494,6 +497,11 @@ def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, 
             # bundle on another origin would disagree with it by the delivery delay.
             raise BundleError("an episode record needs the episode clock's origin, the opening prompt's dispatch (Hints.episode_start_utc)")
         rec = dict(episode_record)
+        if collected is not None:
+            rec["collected"] = collected.records
+        logs_by_attempt = {a.name: a.log for a in (observations_task or TaskObservations()).attempts if a.log}
+        if logs_by_attempt:
+            rec["attempt_logs"] = logs_by_attempt
         duration = view.header["duration_ms"]
         for where, got in (("end.duration_ms", (rec.get("end") or {}).get("duration_ms")),
                            ("budget.consumed.elapsed_ms", ((rec.get("budget") or {}).get("consumed") or {}).get("elapsed_ms"))):
@@ -542,11 +550,15 @@ def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, 
         doc = rec
     if notes:
         manifest.setdefault("bundle_notes", []).extend(notes)
-    return Bundle(view, ids, changes, obs, doc, [w.store for w in logs if w.store is not None] or None, False, notes)
+    return Bundle(view, ids, changes, obs, doc, [w.store for w in logs if w.store is not None] or None, False, notes, extra_blobs=collected.blobs if collected is not None else {})
 
 
 def stored_hashes(changes: ChangeLog) -> set[str]:
     return {r["sha256"] for r in changes.records if r.get("type") == "change" and r.get("content") == "stored" and isinstance(r.get("sha256"), str)}
+
+
+def blob_hashes(b):
+    return stored_hashes(b.changes) | {r["sha256"] for r in (b.episode or {}).get("collected", {}).values() if r.get("status") == "collected"}
 
 
 def dumps(b: Bundle) -> dict[str, str]:
@@ -567,17 +579,17 @@ def write(b: Bundle, directory: str | Path) -> None:
     place, so no stale file (an old `episode.json`, a stray blob) survives and
     nothing is published when a blob is missing or wrong."""
     d = Path(directory)
-    need = stored_hashes(b.changes)
-    if need and b.store is None:
+    need = blob_hashes(b)
+    if need - set(b.extra_blobs) and b.store is None:
         raise BundleError("the change log names stored contents, and no content store was given")
     stores = _stores(b.store)
     srcs = {}
     for sha in sorted(need):
         src = _blob(stores, sha)
-        data = src.read_bytes() if src is not None else None
+        data = b.extra_blobs.get(sha) if sha in b.extra_blobs else src.read_bytes() if src is not None else None
         if data is None or hashlib.sha256(data).hexdigest() != sha:
             raise BundleError(f"blob {sha} is missing from the store or does not match its digest")
-        srcs[sha] = src
+        srcs[sha] = b.extra_blobs[sha] if sha in b.extra_blobs else src
     d.parent.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix=f".{d.name}.staging-", dir=d.parent))
     try:
@@ -585,7 +597,10 @@ def write(b: Bundle, directory: str | Path) -> None:
             dest = stage / "blobs" / sha[:2] / sha
             dest.parent.mkdir(parents=True, exist_ok=True)
             # A copy, not a hard link: a change to the bundle's file must never reach the watcher's store.
-            shutil.copyfile(src, dest)
+            if isinstance(src, bytes):
+                dest.write_bytes(src)
+            else:
+                shutil.copyfile(src, dest)
             if hashlib.sha256(dest.read_bytes()).hexdigest() != sha:
                 raise BundleError(f"blob {sha} changed while it was copied")
         if not need:
@@ -633,15 +648,22 @@ def _directory_errors(b: Bundle) -> list[str]:
 
 
 def _store_errors(b: Bundle) -> list[str]:
-    need = stored_hashes(b.changes)
+    need = blob_hashes(b)
     errors = []
     stores = [d for d in _stores(b.store) if d.is_dir()]
-    if not stores:
+    if not stores and not b.extra_blobs:
         return [f"{len(need)} stored contents and no content store"] if need else []
     for sha in sorted(need):
         p = _blob(stores, sha)
-        if p is None or hashlib.sha256(p.read_bytes()).hexdigest() != sha:
+        data = b.extra_blobs.get(sha) if sha in b.extra_blobs else p.read_bytes() if p else None
+        if data is None or hashlib.sha256(data).hexdigest() != sha:
             errors.append(f"blob {sha} missing or not matching its digest")
+    for name, r in (b.episode or {}).get("collected", {}).items():
+        if r.get("status") == "collected":
+            p = _blob(stores, r["sha256"])
+            data = b.extra_blobs.get(r["sha256"]) if r["sha256"] in b.extra_blobs else p.read_bytes() if p else None
+            if data is None or len(data) != r["bytes"]:
+                errors.append(f"collected.{name}: blob byte count differs")
     if b.own_store:
         allowed = {f"{h[:2]}/{h}" for h in need}
         extra = sorted(p.relative_to(stores[0]).as_posix() for p in stores[0].rglob("*") if p.is_file() and p.relative_to(stores[0]).as_posix() not in allowed)

@@ -56,7 +56,7 @@ FIRST_HANDBACK = {"handbacks": {"at_least": 1}}  # the trigger of Explanation's 
 INSTRUCTION_FILES = ("CLAUDE.md", "AGENTS.md")  # the harnesses' instruction files; never task files (D-026)
 
 TOP = {"format", "version", "instance", "canary", "grouping", "workspace", "watcher", "prompt", "user", "budgets", "reachability", "events", "scoring", "awareness"}
-TOP_OPTIONAL: set[str] = set()
+TOP_OPTIONAL: set[str] = {"collect"}
 
 
 class TaskError(ValueError):
@@ -182,6 +182,7 @@ class Task:
     observations: dict[str, Any]
     awareness: str | None
     digest: str
+    collect: tuple[dict[str, str], ...] = ()
     warnings: tuple[str, ...] = ()
 
     def event(self, name: str) -> Event:
@@ -703,13 +704,17 @@ def _observations(v: _V, d: Any) -> None:
     names: set[str] = set()
     for n, r in enumerate(rows):
         q = f"{p}.attempts[{n}]"
-        if v.obj(r, q, {"name", "regex"}, {"capture", "by"}):
+        if v.obj(r, q, {"name", "regex"}, {"capture", "by", "log"}):
             if not isinstance(r.get("name"), str) or not NAME.match(r["name"]):
                 v.err.append(f"{q}.name: a lower-case word")
             elif r["name"] in names:
                 v.err.append(f"{q}.name: {r['name']} is used twice")
             else:
                 names.add(r["name"])
+            if "log" in r:
+                from cohbench.trajectory.collection import NAME as COLLECT_NAME
+                if not isinstance(r["log"], str) or not COLLECT_NAME.fullmatch(r["log"]):
+                    v.err.append(f"{q}.log: a collect name")
             v.regex(r.get("regex"), f"{q}.regex")
             if "by" in r and r["by"] != "output":
                 v.err.append(f"{q}.by: output")
@@ -764,6 +769,12 @@ def check(directory: str | Path, host_files: dict[str, str | Path] | None = None
     if not isinstance(doc, dict):
         return None, ["task: must be an object"], []
     v.obj(doc, "task", TOP, TOP_OPTIONAL)
+    from cohbench.trajectory.collection import specs as collection_specs
+    collected = ()
+    try:
+        collected = collection_specs(doc.get("collect", []))
+    except ValueError as exc:
+        v.err.append(str(exc))
     if doc.get("format") != FORMAT or doc.get("version") != VERSION:
         v.err.append(f"task.format and task.version: {FORMAT!r} and {VERSION}")
     v.opaque(doc.get("instance"), "task.instance")
@@ -964,6 +975,9 @@ def check(directory: str | Path, host_files: dict[str, str | Path] | None = None
             v.err.append("scoring.control: present exactly when grouping.control is true")
         _identifiers(v, s.get("identifiers"))
         _observations(v, s.get("observations"))
+        for a in (s.get("observations") or {}).get("attempts", []) if isinstance(s.get("observations"), dict) and isinstance(s["observations"].get("attempts", []), list) else []:
+            if isinstance(a, dict) and "log" in a and a["log"] not in [r["name"] for r in collected]:
+                v.err.append("scoring.observations: log names a declared collect item")
 
     if grouping is not None and grouping.family == "explanation" and isinstance(s, dict) and isinstance(s.get("answer_key"), dict):
         # One source for the fixed follow-up (D-024): the answer key's text,
@@ -1004,7 +1018,7 @@ def check(directory: str | Path, host_files: dict[str, str | Path] | None = None
         workspace=workspace, watcher=watcher, opening=pr["opening"], coached_sentence=pr["coached_sentence"],
         card=copy.deepcopy(u["card"]), return_delay_ms=u["return_delay_ms"], replies=replies,
         budgets=budgets, max_reopens=max_reopens, events=tuple(events),
-        answer_key=s["answer_key"], control=s["control"], identifiers=s["identifiers"], observations=s["observations"],
+        answer_key=s["answer_key"], control=s["control"], identifiers=s["identifiers"], observations=s["observations"], collect=collected,
         awareness=aw["question"] if aw else None, digest=h.hexdigest(), warnings=tuple(v.warn),
     )
     return task, [], v.warn

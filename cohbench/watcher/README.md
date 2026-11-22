@@ -381,6 +381,32 @@ the workspace are pointed at the copy, keeping every component of the
 target so a link that is broken in the batch stays broken; this mode is
 not isolated.
 
+Every executed reading gets a fresh home and temporary storage. `HOME`,
+`TMPDIR`, `TMP`, `TEMP` and the XDG home variables point into its private
+run directory, removed after the command. On Linux both executors enter
+private user and mount namespaces with the existing container permissions.
+All existing mounts become read-only; `/tmp`, `/var/tmp` and `/dev/shm`
+receive fresh tmpfs mounts; only this invocation's home and workspace are
+attached as writable copies. Namespace capabilities are dropped before
+executing the command. These mounts disappear when its processes exit.
+No additional container capability or security option is used. The kernel
+must support unprivileged user namespaces and the `open_tree`, `move_mount`
+and `mount_setattr` APIs; failure starts no measured command and records a
+failed reading. macOS development runs use its system sandbox to restrict
+writes to the fresh home and workspace. Offline `complete-metrics` uses
+the same executor and storage rules. Reused readings execute no command.
+
+The environment passes the metric argv in a one-shot JSON file under the
+watcher's private `/srv/w/out`. The watcher reads and removes it before
+starting metrics. The metric user cannot traverse `/srv/w`. The server
+re-executes with a clean argv and environment before receiving commands
+over its private pipes. Thus the startup command is not in its ancestors'
+argv or environment. `metric_cmd_file` (`--metric-cmd-file`) exposes this
+startup channel; `--metric-cmd` remains available for tests and offline
+invocations, but is not the environment's route. A measurement service
+that imports agent code must also consume its private arguments and clear
+its own argv before that import.
+
 A reading is a reading of the tree only when it is `complete`: the command
 ran and the copy held every readable tracked file. A file left out because
 it is larger than `max_blob_bytes` (5 MiB by default), or whose blob is
@@ -597,7 +623,8 @@ A JSON file (`--config`) with these keys, or the flags. Flags win.
 | `max_blob_bytes` | `--max-blob-bytes` | 5 MiB | larger files are hashed, not stored |
 | `quiet_ms` | `--quiet-ms` | 100 | |
 | `max_delay_ms` | `--max-delay-ms` | 2000 | |
-| `metric_cmd` | `--metric-cmd` (JSON list) | null | argv |
+| `metric_cmd` | `--metric-cmd` (JSON list) | null | argv for tests and offline use |
+| `metric_cmd_file` | `--metric-cmd-file` | null | one-shot private JSON argv file, removed after reading |
 | `metric_timeout_s` | `--metric-timeout-s` | 30 | |
 | `metric_drain_s` | `--metric-drain-s` | 45 | shutdown drain of the metric queue; the job in progress gets `metric_timeout_s` more |
 | `metric_copy_mtime` | `--metric-copy-mtime` | 946684800 | mtime of every entry in a metric copy |

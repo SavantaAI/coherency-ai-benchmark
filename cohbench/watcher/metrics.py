@@ -488,15 +488,19 @@ class Materializer:
 
 def clean_env(home: str) -> dict:
     """The metric command's whole environment, the same in every executor."""
-    return {"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": home, "LANG": "C.UTF-8", "PYTHONDONTWRITEBYTECODE": "1"}
+    return {"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": home, "TMPDIR": home, "TMP": home, "TEMP": home,
+            "XDG_CACHE_HOME": home, "XDG_CONFIG_HOME": home, "XDG_DATA_HOME": home, "XDG_STATE_HOME": home,
+            "LANG": "C.UTF-8", "PYTHONDONTWRITEBYTECODE": "1"}
 
 
-def execute(cmd: list[str], cwd: str, timeout: float, stdout_max: int, stderr_max: int, env: dict | None = None) -> dict:
+def execute(cmd: list[str], cwd: str, timeout: float, stdout_max: int, stderr_max: int, env: dict | None = None, writable: list[str] | None = None) -> dict:
     timed_out = False
     with tempfile.TemporaryFile() as fo, tempfile.TemporaryFile() as fe:
         try:
-            proc = subprocess.Popen(cmd, cwd=cwd, stdin=subprocess.DEVNULL, stdout=fo, stderr=fe, start_new_session=True, close_fds=True, env=env)
-        except OSError as e:
+            from .storage import command
+            argv = command(cmd, writable) if writable is not None else cmd
+            proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=fo, stderr=fe, start_new_session=True, close_fds=True, env=env)
+        except (OSError, subprocess.SubprocessError) as e:
             return dict(exit=None, timed_out=False, ok=False, metrics=None, error=f"could not start: {e}", parse_error=None, stderr="", stderr_truncated=False)
         try:
             code = proc.wait(timeout=timeout)
@@ -579,7 +583,8 @@ class LocalExecutor:
             self.mat.discard()
             return dict(exit=None, timed_out=False, ok=False, metrics=None, error=f"copy verification failed: {e}", parse_error=None, stderr="", stderr_truncated=False, absent=absent, links_outside=outside)
         try:
-            r = execute(cmd, tree, timeout, stdout_max, stderr_max, env=clean_env(self.mat.work))
+            with tempfile.TemporaryDirectory(prefix="run-", dir=self.mat.work) as storage:
+                r = execute(cmd, tree, timeout, stdout_max, stderr_max, env=clean_env(storage), writable=[storage, tree])
         finally:
             self.mat.discard()
         r.update(absent=absent, links_outside=outside, cwd=tree)
@@ -666,7 +671,6 @@ def serve(from_watcher: int, to_watcher: int, workspace: str, work_dir: str, kil
     copy_path = os.path.realpath(workspace)
     os.makedirs(copy_path, mode=0o755, exist_ok=True)
     mat = Materializer(work_dir, copy_path, workspace, rewrite_absolute=False)
-    env = clean_env(work_dir)
     while True:
         try:
             job = json.loads(_recv(from_watcher))
@@ -694,9 +698,12 @@ def serve(from_watcher: int, to_watcher: int, workspace: str, work_dir: str, kil
                 _send(to_watcher, json.dumps(r).encode())
                 continue
             try:
-                r = execute(job["cmd"], workspace, job["timeout"], job["stdout_max"], job["stderr_max"], env=env)
+                with tempfile.TemporaryDirectory(prefix="run-", dir=work_dir) as storage:
+                    try:
+                        r = execute(job["cmd"], workspace, job["timeout"], job["stdout_max"], job["stderr_max"], env=clean_env(storage), writable=[storage, workspace])
+                    finally:
+                        r_killed = kill_other_processes_of_my_uid() if kill_strays else 0
             finally:
-                r_killed = kill_other_processes_of_my_uid() if kill_strays else 0
                 mat.discard()
             r.update(absent=absent, links_outside=outside, cwd=workspace, stragglers_killed=r_killed)
         except EOFError:

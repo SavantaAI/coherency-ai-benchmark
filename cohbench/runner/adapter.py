@@ -123,7 +123,7 @@ class DriverEpisode:
                               task_dir=spec.metric_dir, metric_timeout_s=spec.metric_timeout_s)
         self.ep = (episode_cls or Episode)(
             spec.harness, model=spec.model, upstream=upstream, images=images, workspace=spec.workspace_dir, manifest=spec.workspace_manifest,
-            out_dir=spec.out_dir, mode=spec.mode, coached_sentence=spec.coached_sentence, watcher=watcher, driver_events=DRIVER_EVENTS)
+            out_dir=spec.out_dir, mode=spec.mode, coached_sentence=spec.coached_sentence, watcher=watcher, driver_events=DRIVER_EVENTS, collect=spec.collect)
         self._sent: dict[str, Any] = {}  # message id -> the driver's Sent, for correction_delivery
         self._pending: dict[str, Any] = {}  # item id -> the driver's Question or SecretRequest
         self.started = False
@@ -395,6 +395,9 @@ class DriverEpisode:
     def describe(self) -> Description:
         d = self.ep.describe()
         return Description(d["harness"], d.get("harness_version"), d.get("t3_version"), d.get("driver_version"), d["model"])
+
+    def collect(self):
+        return self._call(self.ep.collect)
 
     def export(self, dest: Path, handoff: ExportHandoff) -> ExportResult:
         from cohbench.driver import ExportFailed, TaskInfo

@@ -1150,7 +1150,7 @@ class Runner:
         # classifier row and the judging instant are all the driver's delivery
         # time of the item, never the time the runner read it.
         utc = utc_us(t) if o.delivered_utc else self._stamp()
-        verdict = self._rev("verdict", utc, {"item": o.item_id}, label=j.label, reply=None)  # type: ignore[dict-item]
+        verdict = self._rev("verdict", utc, {"item": o.item_id}, label=j.label, reply=None, answer_ids=list(j.answer_ids))  # type: ignore[dict-item]
         self.ctx.verdicts[j.label] += 1
         self.seen.append(_Seen(o, j.label, reply, verdict))
         self._line(AGENT, o.text, o.delivered_utc or utc, label=j.label, output_kind=o.kind, item=o.item_id)

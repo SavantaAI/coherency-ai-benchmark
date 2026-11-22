@@ -209,7 +209,7 @@ def check_runner_inputs(hints: Hints, probe_targets: dict[Any, Any] | None = Non
         if extra:
             errors.append(f"{where}: undeclared field(s) {sorted(extra)}")
         for k, typ in spec.items():
-            if k in ("target", "t_end", "replies_to"):
+            if k in ("target", "t_end", "replies_to") or (k == "answer_ids" and k not in fields_in):
                 continue
             _type_ok(fields_in.get(k), typ, f"{where}.{k}", errors)
         if r.type == "wait":
@@ -1015,7 +1015,7 @@ class _Builder:
             if r.ref and "target" not in spec:
                 raise NormaliseError(f"runner event {r.type} takes no reference")
             kept = F.RUNNER_EVENT_FIELDS[r.type]
-            fields = {k: given.get(k) for k in kept if k not in ("target", "t_end", "replies_to")}
+            fields = {k: given.get(k) for k in kept if k not in ("target", "t_end", "replies_to") and (k != "answer_ids" or k in given)}
             if "target" in spec:
                 fields["target"] = None
             if "t_end" in spec:

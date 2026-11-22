@@ -488,9 +488,17 @@ def main_run(cfg: Config) -> int:
             raise RuntimeError("started as root: metric_isolation must be users (or start as the watcher user)")
         from .isolate import launch
 
-        executor = launch(cfg.root, cfg.out, bool(cfg.metric_cmd), cfg.watcher_user, cfg.metric_user, cfg.workspace_path)
+        executor = launch(cfg.root, cfg.out, bool(cfg.metric_cmd or cfg.metric_cmd_file), cfg.watcher_user, cfg.metric_user, cfg.workspace_path)
     elif mode == "users":
         raise RuntimeError("metric_isolation users needs the watcher to start as root with SETUID and SETGID")
+    if cfg.metric_cmd_file is not None:
+        path = cfg.metric_cmd_file
+        try:
+            with open(path, encoding="utf-8") as f:
+                cfg.metric_cmd = json.load(f)
+        finally:
+            os.unlink(path)
+        cfg.metric_cmd_file = None
     cfg.metric_isolation = mode
     w = Watcher(cfg, executor=executor)
     w.install_signals()

@@ -495,6 +495,7 @@ class Episode:
         title: str = "task",
         workspace_path: str = WORKSPACE,
         driver_events: tuple[str, ...] = DRIVER_EVENTS,
+        collect: tuple[dict[str, str], ...] = (),
     ):
         if mode not in ("default", "coached"):
             raise ValueError("mode is default or coached")
@@ -559,6 +560,8 @@ class Episode:
         self.reads = 0  # tree reads `wait` attempted, for tests and diagnosis
         self.reads_ok = 0  # of those, the ones that returned the main thread's projection
         self._tree_cache: dict[str, tuple[dict[str, Any], tuple]] = {}  # settled children, by shell key (read_tree)
+        from cohbench.trajectory.collection import Collector
+        self.collector = Collector(collect)
         self._usage_interrupts: list[dict[str, str]] = []
         self._usage_snapshot: dict[str, Any] | None = None
         self._interrupted = False  # interrupt stopped something; the next hand-back is interrupted
@@ -608,6 +611,28 @@ class Episode:
         if self._usage_snapshot is None:
             return self.env.usage()
         return settled_usage(self._usage_snapshot, self._usage_interrupts)
+
+    def collect(self):
+        from .collection import read
+        from .export import ExportFailed
+
+        try:
+            if self.collector.specs:
+                self.collector.capture(self.segment, lambda path: read(self.env.harness, path))
+            return self.collector.result()
+        except Exception as exc:
+            self.collector.error = f"collection read failed: {type(exc).__name__}"
+            raise ExportFailed("collection", [self.collector.error]) from exc
+
+    def _collect_before_reset(self, container):
+        from .collection import read
+
+        try:
+            self.collector.capture(self.segment, lambda path: read(container, path))
+        except Exception as exc:
+            # The old container is about to go. Keep the failure for export,
+            # which rejects the episode even if a later segment reads well.
+            self.collector.error = f"collection before reset failed: {type(exc).__name__}"
 
     def _prepare(self, c: Container, role: str) -> None:
         """Run in every harness container before the checks: the settings this
@@ -1946,7 +1971,7 @@ class Episode:
 
             try:
                 with docker_deadline(at):
-                    rec = self.env.handoff(on_stopped=on_stopped)
+                    rec = self.env.handoff(on_stopped=on_stopped, **({"on_stopping": self._collect_before_reset} if self.collector.specs else {}))
             except HandoffFailed as exc:
                 raise self._fail(f"the handoff stopped part way, at {exc.stage}: {type(exc.cause).__name__}: {exc.cause}"[:400]) from exc
             except Exception as exc:

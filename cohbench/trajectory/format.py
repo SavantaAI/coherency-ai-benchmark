@@ -159,7 +159,7 @@ COMMON_FIELDS = {"seq": T.INT, "t": T.INT, "us": T.INT, "type": T.STR, "agent": 
 
 # The runner's events as the trajectory keeps them.
 RUNNER_EVENT_FIELDS: dict[str, dict[str, Any]] = {
-    "verdict": {"target": T.INT, "label": enum(VERDICT_LABELS), "reply": T.OPT_STR},
+    "verdict": {"target": T.INT, "label": enum(VERDICT_LABELS), "reply": T.OPT_STR, "answer_ids": "answer_ids"},
     # `replies_to`: every output whose verdict reply the wait carries (null
     # when the runner did not say, allowed only without an episode record).
     "wait": {"target": T.OPT_INT, "t_end": T.OPT_INT, "charged_ms": T.OPT_INT, "ended": enum(WAIT_ENDS), "causes": "causes", "replies_to": "seqs?"},

@@ -267,9 +267,12 @@ class EpisodeSpec:
     metric_manifest: dict[str, Any] | None
     metric_timeout_s: float | None
     out_dir: Path  # the driver's working directory inside the episode's staging directory
+    collect: tuple[dict[str, str], ...] = ()
 
 
 class EpisodePort(Protocol):
+    def collect(self) -> Any: ...
+
     def start(self, text: str) -> Sent: ...
 
     def wait(self, timeout_s: float) -> Turn: ...

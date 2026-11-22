@@ -25,8 +25,7 @@ record with:
   inside the retained text when the tail was cut; nothing counts when the
   middle was cut, since the cut's place is not known. Without a capture, the
   status is the output's (`truncated` when cut) and the fingerprint the hash
-  of the whole output when complete. Only `complete` carries a fingerprint,
-  and a null fingerprint equals nothing.
+  of the whole output when complete. Only `complete` carries a fingerprint.
 
 Nothing else from the call: not the command text, not the output, not the
 exit status (no score uses it, and a null against a zero would name the
@@ -35,9 +34,14 @@ equal fingerprints when both have one (D-048).
 
 With `by: "output"`, a capture is required. Each whole-line match in any
 shell call is an attempt, with the call's times and tree and the captured
-text's hash. Available output without a whole match yields no attempt.
-Unavailable output falls back to the command regex and has no fingerprint.
+text's hash. A command match supplies one fallback attempt when no whole
+result line survives, including unavailable output, with no fingerprint.
 Without `by`, command selection and its one record per call are unchanged.
+
+A declared `log` adds one observation per valid collected line. Its source
+is `log`, its input digest is `log_state`, and its complete result hashes
+the recorded string. The line's wall stamps decide its placement and end
+membership. Shell observations retain `source: "shell"` for probes.
 
 A further kind adds a record type to `KINDS` with its own fields and an
 extractor in `build`.
@@ -73,6 +77,7 @@ class AttemptPattern:
     regex: str
     capture: str | None = None
     by: str | None = None
+    log: str | None = None
 
 
 @dataclass
@@ -82,12 +87,17 @@ class TaskObservations:
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "TaskObservations":
         for a in d.get("attempts", []):
+            if "log" in a and a["log"] is None:
+                raise ValueError("attempt log: a collect name")
             if "by" in a and a["by"] != "output":
                 raise ValueError("attempt pattern by: output")
             if a.get("by") == "output" and not isinstance(a.get("capture"), str):
                 raise ValueError("attempt pattern by output requires a capture")
-        out = cls([AttemptPattern(a["name"], a["regex"], a.get("capture"), a.get("by")) for a in d.get("attempts", [])])
+        out = cls([AttemptPattern(a["name"], a["regex"], a.get("capture"), a.get("by"), a.get("log")) for a in d.get("attempts", [])])
         for a in out.attempts:
+            from .collection import NAME as COLLECT_NAME
+            if a.log is not None and (not isinstance(a.log, str) or not COLLECT_NAME.fullmatch(a.log)):
+                raise ValueError("attempt log: a collect name")
             if not NAME.match(a.name):
                 raise ValueError(f"attempt pattern name {a.name!r}: lower-case word")
             re.compile(a.regex)
@@ -171,7 +181,7 @@ def whole_match(cap: re.Pattern[str], text: str, clipped: str, last_line_whole: 
     return next(whole_matches(cap, text, clipped, last_line_whole), None)
 
 
-def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations) -> Observations:
+def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations, *, collected=None, origin=None, legacy_source=False) -> Observations:
     """Decided on wall microseconds (start, end, the cutoff, the batch in
     force), written in episode milliseconds."""
     pats = [(a, re.compile(a.regex), re.compile(a.capture, re.M) if a.capture else None) for a in task.attempts]
@@ -232,13 +242,63 @@ def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations) -
                 b0 = batch_at(e["us"])
                 recs.append({"_src": e["seq"], "_us": e["us"], "_us_end": None if unfinished else e["us_end"], "type": "attempt", "name": a.name, "t": t, "t_end": t_end,
                              "state": tree_digest(changes, b0), "state_unknown": bool(changes is not None and b0 is not None and changes.unknown(b0)), "batch_start": b0, "batch_end": batch_at(e["us_end"]) if changes and not unfinished else None, "result": result})
+    malformed = {}
+    if collected is not None and any(a.log for a in task.attempts):
+        from datetime import datetime, timezone
+        if origin is None:
+            raise ValueError("log observations need the recorded episode origin")
+        delta = datetime.fromisoformat(origin.replace("Z", "+00:00")) - datetime(1970, 1, 1, tzinfo=timezone.utc)
+        origin_us = (delta.days * 86400 + delta.seconds) * 1000000 + delta.microseconds
+        parsed = {}
+        for name in sorted({a.log for a in task.attempts if a.log}):
+            parsed[name], malformed[name] = [], 0
+            data = collected.content(name)
+            if data is None:
+                continue
+            lines = data.split(b"\n")
+            if lines[-1] == b"":
+                lines.pop()
+            for raw in lines:
+                try:
+                    line = json.loads(raw)
+                    if (not isinstance(line, dict) or set(line) != {"start_ms", "end_ms", "state", "result"}
+                        or not _int(line["start_ms"]) or not _int(line["end_ms"])
+                        or line["start_ms"] < 0 or line["end_ms"] < line["start_ms"]
+                        or not isinstance(line["state"], str) or not re.fullmatch(r"[0-9a-f]+", line["state"])
+                        or not isinstance(line["result"], str)):
+                        raise ValueError("invalid log line")
+                    line["result"].encode("utf-8")
+                except (ValueError, UnicodeError, RecursionError):
+                    malformed[name] += 1
+                    continue
+                start, finish = line["start_ms"] * 1000 - origin_us, line["end_ms"] * 1000 - origin_us
+                # A log line describes a completed attempt. An attempt ending
+                # after the scored end belongs outside this record.
+                if finish < 0 or start < 0 or (end_us is not None and finish > end_us):
+                    continue
+                start = clock.inside(start).us if clock.inside(start) else start
+                finish = clock.inside(finish).us if clock.inside(finish) else finish
+                parsed[name].append((start, finish, line))
+        for a in task.attempts:
+            for start, finish, line in parsed.get(a.log, []):
+                recs.append({"_src": None, "_us": start, "_us_end": finish, "type": "attempt", "name": a.name,
+                             "source": "log", "log_state": line["state"], "t": clock(start), "t_end": clock(finish),
+                             "state": None, "state_unknown": False, "batch_start": None, "batch_end": None,
+                             "result": {"status": "complete", "fingerprint": hashlib.sha256(line["result"].encode()).hexdigest()}})
+    if not legacy_source:
+        for r in recs:
+            r.setdefault("source", "shell")
     recs.sort(key=lambda r: (r["_us"], r["_us_end"] if r["_us_end"] is not None else r["_us"], r["name"]))
     sources, wall = {}, {}
     for n, r in enumerate(recs, 1):
         r["seq"] = n
-        sources[n] = r.pop("_src")
+        src = r.pop("_src")
+        if src is not None:
+            sources[n] = src
         wall[n] = (r.pop("_us"), r.pop("_us_end"))
     header = {"type": "header", "format": F.OBSERVATIONS_FORMAT, "version": F.VERSION, "kinds": sorted(KINDS), "records": len(recs)}
+    if malformed:
+        header["malformed_logs"] = malformed
     return Observations(header, recs, sources, wall)
 
 
@@ -263,16 +323,25 @@ def validate(obs: Observations, changes: ChangeLog | None = None) -> list[str]:
     errors = []
     h = obs.header
     if not isinstance(h, dict) or h.get("type") != "header" or h.get("format") != F.OBSERVATIONS_FORMAT or h.get("version") != F.VERSION \
-            or h.get("kinds") != sorted(KINDS) or h.get("records") != len(obs.records) or set(h) != {"type", "format", "version", "kinds", "records"}:
+            or h.get("kinds") != sorted(KINDS) or h.get("records") != len(obs.records) or set(h) - {"malformed_logs"} != {"type", "format", "version", "kinds", "records"}:
         errors.append("observations: header")
+    if "malformed_logs" in h and (not isinstance(h["malformed_logs"], dict) or any(not isinstance(k, str) or not _int(v) or v < 0 for k, v in h["malformed_logs"].items())):
+        errors.append("observations: malformed_logs counts")
     batches = {r["batch"] for r in changes.records if r.get("type") == "batch"} if changes else None
     last = None
     for n, r in enumerate(obs.records, 1):
         where = f"observation {n}"
         typ = r.get("type") if isinstance(r, dict) else None
-        if not isinstance(typ, str) or typ not in KINDS or set(r) != set(KINDS[typ]):
+        if not isinstance(typ, str) or typ not in KINDS or set(r) - {"source", "log_state"} != set(KINDS[typ]):
             errors.append(f"{where}: fields differ from the {typ!r:.20} schema")
             continue
+        source = r.get("source", "shell")
+        if source not in ("shell", "log") or (source == "shell" and "log_state" in r):
+            errors.append(f"{where}: source and log_state")
+        if source == "log" and (not isinstance(r.get("log_state"), str) or not re.fullmatch(r"[0-9a-f]+", r["log_state"])
+                                or r["state"] is not None or r["state_unknown"] or r["batch_start"] is not None or r["batch_end"] is not None
+                                or not isinstance(r.get("result"), dict) or r["result"].get("status") != "complete" or r.get("result", {}).get("fingerprint") is None):
+            errors.append(f"{where}: a complete log attempt has log_state and no tree placement")
         if r["seq"] != n or not _int(r["t"]) or r["t"] < 0 or (last is not None and r["t"] < last):
             errors.append(f"{where}: seq or time out of order")
             continue
@@ -302,7 +371,7 @@ def validate(obs: Observations, changes: ChangeLog | None = None) -> list[str]:
                 errors.append(f"{where}: {k} is an integer or null")
             elif batches is not None and r[k] is not None and r[k] not in batches:
                 errors.append(f"{where}: {k} {r[k]} is not a batch of the change log")
-        if changes is not None and _int(r["t"]):
+        if changes is not None and _int(r["t"]) and source == "shell":
             # Milliseconds cannot order a batch and an attempt that share one;
             # the batch must be in force at that time, ties either way.
             if not _in_force(changes, r["batch_start"], r["t"]) or (_int(r["t_end"]) and not _in_force(changes, r["batch_end"], r["t_end"])):

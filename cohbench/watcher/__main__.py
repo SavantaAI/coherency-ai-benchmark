@@ -41,6 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--quiet-ms", type=int)
     r.add_argument("--max-delay-ms", type=int)
     r.add_argument("--metric-cmd", help="argv as a JSON list")
+    r.add_argument("--metric-cmd-file", help="private file holding argv; read once and removed")
     r.add_argument("--metric-timeout-s", type=float)
     r.add_argument("--metric-drain-s", type=float, help="at shutdown, how long the metric queue is drained (default 45)")
     r.add_argument("--metric-copy-mtime", type=int, help="mtime (Unix seconds) of every entry in a metric copy (default 946684800)")
@@ -91,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
         cfg = load(args.config, {
             "root": args.root, "out": args.out, "ignore": args.ignore,
             "max_blob_bytes": args.max_blob_bytes, "quiet_ms": args.quiet_ms, "max_delay_ms": args.max_delay_ms,
-            "metric_cmd": metric_cmd, "metric_timeout_s": args.metric_timeout_s, "metric_stdout_max": args.metric_stdout_max,
+            "metric_cmd": metric_cmd, "metric_cmd_file": args.metric_cmd_file, "metric_timeout_s": args.metric_timeout_s, "metric_stdout_max": args.metric_stdout_max,
             "metric_drain_s": args.metric_drain_s, "metric_copy_mtime": args.metric_copy_mtime,
             "metric_stderr_max": args.metric_stderr_max, "heartbeat_s": args.heartbeat_s, "work_dir": args.work_dir,
             "ignore_names": json.loads(args.ignore_names) if args.ignore_names is not None else None,

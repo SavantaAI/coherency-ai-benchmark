@@ -115,7 +115,7 @@ def spec_for(task: Task, cfg: RunConfig, out_dir: Path, metric_dir: Path | None 
         workspace_dir=task.workspace.dir, workspace_manifest=task.workspace.manifest(),
         watcher_ignore=task.watcher.ignore, metric_command=m.command if m else None,
         metric_dir=(metric_dir or m.dir) if m else None,
-        metric_manifest=copy.deepcopy(m.manifest_doc) if m else None, metric_timeout_s=m.timeout_s if m else None, out_dir=out_dir,
+        metric_manifest=copy.deepcopy(m.manifest_doc) if m else None, metric_timeout_s=m.timeout_s if m else None, out_dir=out_dir, collect=task.collect,
     )
 
 
@@ -251,6 +251,7 @@ def _drive(task: Task, cfg: RunConfig, s: _State, policy: Any, log: EventLog, d:
         s.export_info = {"ok": False, "error": repr(exc)}
         log.write("error", where="export", error=repr(exc), traceback=traceback.format_exc())
         s.fail("export_failed", repr(exc))
+    _write_json(d.path("episode-record.json"), rec)
     try:
         s.excluded = list(ep.excluded())  # again, so the manifest has the export's own interval
     except Exception as exc:  # noqa: BLE001

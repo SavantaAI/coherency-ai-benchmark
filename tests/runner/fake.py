@@ -263,7 +263,10 @@ class FakeEpisode:
                  close_error: bool = False, no_item_ids: bool = False, delivery_mark: bool = True, usage_seq: list[int] | None = None,
                  delivery_skew_us: int = 0, mark_settled: bool | None = None, delivery_at_s: float | None = None,
                  fail_marks: tuple[str, ...] = (), unaccepted_marks: int = 0, finish_s: float = 0.0, drain_never_stops: bool = False,
-                 slow_usage: tuple[float, float] | None = None, dispatch_s: float = 0.0, hand_back_lag_s: float = 0.0, metric_delay_s: float = 0.0):
+                 slow_usage: tuple[float, float] | None = None, dispatch_s: float = 0.0, hand_back_lag_s: float = 0.0, metric_delay_s: float = 0.0, collect=(), collected_files=None):
+        from cohbench.trajectory.collection import Collector
+        self.collector = Collector(collect)
+        self.collected_files = dict(collected_files or {})
         self.acts = list(acts)
         self.out = Path(out)
         self.c = clock
@@ -502,6 +505,11 @@ class FakeEpisode:
         self._check("reset")
         if self.cur is not None or self.pending is not None:
             raise EpisodeFailure("reset needs an idle turn boundary")
+        try:
+            self.collect()
+        except ExportRejected as exc:
+            self.collector.error = str(exc)
+        self.collected_files = {}
         w0 = iso(self.c.wall)
         self.c.advance(30, excluded=True)
         self.excluded_list.append(Interval(w0, iso(self.c.wall), "handoff"))
@@ -722,8 +730,26 @@ class FakeEpisode:
         outputs.append(Output(st, p.text(), p.item_id or None, run, self._when()))
         return Turn(st, run, tuple(outputs), pending=p, closing=p.item_id or None, at=iso_us(self.c.wall))
 
+    def collect(self):
+        from cohbench.trajectory.collection import captured
+
+        def read(path):
+            value = self.collected_files.get(path)
+            if isinstance(value, Exception):
+                raise value
+            return captured(value.encode() if isinstance(value, str) else value)
+        try:
+            self.collector.capture(self.segment, read)
+            return self.collector.result()
+        except Exception as exc:
+            raise ExportRejected("collection", [str(exc)]) from exc
+
     def export(self, dest: Path, handoff: ExportHandoff) -> ExportResult:
         self.handoff = handoff
+        collected = self.collect()
+        if collected.records:
+            handoff.episode_record["collected"] = collected.records
+            collected.write(dest / "collected" / "blobs")
         w0 = iso(self.c.wall)
         self.c.advance(5, excluded=True)
         self.excluded_list.append(Interval(w0, iso(self.c.wall), "export"))

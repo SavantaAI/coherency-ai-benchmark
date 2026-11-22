@@ -63,6 +63,7 @@ def episode_record(task: Task, cfg: RunConfig, r: Runner) -> dict[str, Any]:
                      "horizon": g.horizon, "mode": cfg.mode},
         "budget": {"limits": dict(task.budgets), "consumed": {"elapsed_ms": end["elapsed_ms"], "user_wait_ms": r.user_wait_ms}},
         "resets": reset_outcomes(task, r),
+        **({"attempt_logs": {a["name"]: a["log"] for a in task.observations.get("attempts", []) if "log" in a}} if any("log" in a for a in task.observations.get("attempts", [])) else {}),
         "planted": [{"name": e.name, "scheduled": e.scheduled()} for e in task.events],
         "reach": {"status": "not_reached" if r.not_reached else "reached", "not_reached": sorted(r.not_reached)},
         "answer_key": {"family": g.family, "payload": copy.deepcopy(task.answer_key)},

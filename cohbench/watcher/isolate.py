@@ -23,7 +23,7 @@ import os
 import stat
 import sys
 
-from .metrics import IsolatedExecutor, serve
+from .metrics import IsolatedExecutor, clean_env
 
 
 def parse_user(spec: str) -> tuple[int, int]:
@@ -149,7 +149,7 @@ def launch(root: str, out: str, need_metrics: bool, watcher_user: str, metric_us
                 work = os.path.join("/tmp", "m")
                 os.makedirs(work, mode=0o700, exist_ok=True)
                 os.chmod(work, 0o700)
-                serve(to_r, from_w, workspace, os.path.join(work, "work"), kill_strays=True)
+                exec_server(to_r, from_w, workspace, os.path.join(work, "work"))
             except BaseException as e:  # never fall back into the watcher's code
                 print(f"metric server: {type(e).__name__}: {e}", file=sys.stderr)
                 os._exit(1)
@@ -166,3 +166,11 @@ def launch(root: str, out: str, need_metrics: bool, watcher_user: str, metric_us
     ex = IsolatedExecutor(to_w, from_r, blobs=None, workspace=workspace)
     ex.server_pid = pid
     return ex
+
+
+def exec_server(in_fd, out_fd, workspace, work_dir, kill_strays=True):
+    """Replace inherited argv and environment before receiving any commands."""
+    os.set_inheritable(in_fd, True)
+    os.set_inheritable(out_fd, True)
+    script = os.path.join(os.path.dirname(__file__), "metric_server.py")
+    os.execve(sys.executable, [sys.executable, script, str(in_fd), str(out_fd), workspace, work_dir, str(int(kill_strays))], clean_env(work_dir))

@@ -251,6 +251,11 @@ def _export(ep: "Episode", dest: Path, *, progress: dict[str, str], task: "TaskI
     stopped = env.stop_server()
     if not stopped["stopped"]:
         reasons.append(f"t3 serve did not stop: {stopped}")
+    progress["stage"] = "collection"
+    collected = ep.collect()
+    if collected.records and task.episode is not None:
+        task.episode["collected"] = collected.records
+    progress["stage"] = "quiesce"
     try:
         # The watcher's contract: the agent's container is stopped before
         # the final mark, so no write races it.
@@ -312,7 +317,7 @@ def _export(ep: "Episode", dest: Path, *, progress: dict[str, str], task: "TaskI
 
     try:
         manifest: dict[str, Any] = {
-            "format": "cohbench-episode-raw", "version": 2, "written_utc": utc_now(),
+            "format": "cohbench-episode-raw", "version": 2, "observation_sources": True, "written_utc": utc_now(),
             "episode_start_utc": ep.clock.start_utc, "environment_start_utc": env.started_utc, "episode_end_utc": end_utc,
             # The episode clock at the episode's end (which may precede this
             # export, D-035); the export's own interval is still open here and
@@ -329,6 +334,10 @@ def _export(ep: "Episode", dest: Path, *, progress: dict[str, str], task: "TaskI
             "quiesce": {"server": stopped, "site": site_stop},
             "runner_events": ep.runner_events, "user_waits": ep.user_waits, "gateway_usage": None, "describe": described,
         }
+        if collected.records:
+            manifest["collected"] = collected.records
+            for sha, data in collected.blobs.items():
+                put(f"collected/blobs/{sha[:2]}/{sha}", data)
         for role, tag in manifest["images"].items():
             manifest["image_ids"][role] = image_info(tag)["id"]
         for n in sorted(captured):
@@ -460,7 +469,7 @@ def _export(ep: "Episode", dest: Path, *, progress: dict[str, str], task: "TaskI
         # the trajectory unit; the runner's end mark bounds the final state.
         try:
             watchers = [tbundle.WatcherInput.from_dir(stage / "watcher" / f"segment-{n}") for n in sorted(captured)] if env.watcher_spec is not None else None
-            b = tbundle.make(res, watchers, task.identifiers, task.observations, None, episode_record=task.episode, probe_targets=probe_targets, end_mark=bundle_end)
+            b = tbundle.make(res, watchers, task.identifiers, task.observations, None, episode_record=task.episode, probe_targets=probe_targets, end_mark=bundle_end, collected=collected if collected.records else None)
         except Exception as exc:
             raise ExportFailed("bundle", [f"{type(exc).__name__}: {exc}"], report) from None
         bcheck = tbundle.validate(b, require_episode=task.episode is not None, instruction_files=instruction_files(), driver_ref_namespaces=DRIVER_REF_NAMESPACES)
@@ -522,11 +531,11 @@ def _write_bundle(tbundle: Any, b: Any, d: Path, keys: list) -> None:
 
     for name, text in tbundle.dumps(b).items():
         write_scanned(d / name, text, keys)
-    need = tbundle.stored_hashes(b.changes)
+    need = tbundle.blob_hashes(b)
     stores = [Path(x) for x in (b.store if isinstance(b.store, (list, tuple)) else [b.store])] if b.store is not None else []
     for sha in sorted(need):
         src = next((s / sha[:2] / sha for s in stores if (s / sha[:2] / sha).is_file()), None)
-        data = src.read_bytes() if src is not None else None
+        data = b.extra_blobs.get(sha) if sha in b.extra_blobs else src.read_bytes() if src is not None else None
         if data is None or hashlib.sha256(data).hexdigest() != sha:
             raise ExportFailed("bundle", [f"blob {sha} is missing from the watcher store or does not match its digest"])
         write_scanned(d / "blobs" / sha[:2] / sha, data, keys)

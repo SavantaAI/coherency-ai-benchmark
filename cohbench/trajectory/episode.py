@@ -71,7 +71,7 @@ ANSWER_KEY_RESERVED = {
 # two configurations ran the same tasks; task-owned, the same for every
 # configuration that ran the instance. Null only in a record from before it.
 FIELDS = ("format", "version", "episode", "grouping", "budget", "planted", "reach", "answer_key", "control", "probes", "answers", "awareness", "end", "poll_s",
-          "task_sha256", "resets")
+          "task_sha256", "resets", "collected", "attempt_logs")
 # `event`: the planted event the probe was scheduled with. `deferred`: the
 # runner's word that the copy was taken at a later hand-back than the first
 # one at or after that event (D-028), recorded as given (null when unknown).
@@ -312,8 +312,17 @@ def _reset_errors(doc, view):
 def validate(doc: Any, view: Trajectory | None = None, changes: Any = None, observations: Any = None) -> list[str]:
     e: list[str] = []
     late = {"poll_s": "the runner's polling interval is required (D-040)", "task_sha256": "the task instance's digest is required (D-046)"}
-    if not isinstance(doc, dict) or set(doc) - set(FIELDS) or set(FIELDS) - set(doc) - set(late) - {"resets"}:
+    if not isinstance(doc, dict) or set(doc) - set(FIELDS) or set(FIELDS) - set(doc) - set(late) - {"resets", "collected", "attempt_logs"}:
         return [f"episode.json: fields must be exactly {list(FIELDS)}"]
+    from .collection import validate as validate_collected, NAME as COLLECT_NAME
+    if "collected" in doc:
+        e.extend(validate_collected(doc["collected"]))
+    if "attempt_logs" in doc:
+        logs = doc["attempt_logs"]
+        if not isinstance(logs, dict) or any(not isinstance(k, str) or not isinstance(v, str) or not COLLECT_NAME.fullmatch(v) for k, v in logs.items()):
+            e.append("attempt_logs: attempt names map to collect names")
+        elif "collected" in doc and isinstance(doc["collected"], dict) and any(v not in doc["collected"] for v in logs.values()):
+            e.append("attempt_logs: a collect name has no collection record")
     # `task_sha256` absent: a bundle made before the field existed (D-046),
     # read back as such; `bundle.make` requires it of a current record.
     if "task_sha256" not in doc:

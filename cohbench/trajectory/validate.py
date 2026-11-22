@@ -62,6 +62,8 @@ def _type_ok(value: Any, spec: Any, where: str, errors: list[str]) -> None:
         ok = isinstance(value, list) and all(
             isinstance(i, dict) and set(i) == {"us", "us_end", "reason"} and _is_int(i["us"]) and _is_int(i["us_end"]) and i["us_end"] > i["us"] and i["reason"] in ("handoff", "probe", "export")
             for i in value)
+    elif spec == "answer_ids":
+        ok = isinstance(value, list) and all(isinstance(x, str) and bool(x) for x in value) and len(value) == len(set(value))
     elif spec == "seqs":
         ok = isinstance(value, list) and all(_is_int(x) for x in value) and value == sorted(set(value))
     elif spec == "causes":
@@ -96,6 +98,8 @@ def _type_ok(value: Any, spec: Any, where: str, errors: list[str]) -> None:
 
 def _check_keys(obj: dict[str, Any], spec: dict[str, Any], where: str, errors: list[str]) -> bool:
     missing = set(spec) - set(obj)
+    if obj.get("type") == "verdict":
+        missing.discard("answer_ids")
     extra = set(obj) - set(spec)
     if missing:
         errors.append(f"{where}: missing {sorted(missing)}")
