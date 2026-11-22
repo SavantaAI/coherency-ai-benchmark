@@ -49,7 +49,7 @@ loop source is recorded as not measured.
 Steering instances. One combines its three identical profile steps into one
 shell call. The other filters out the result line from every profile output,
 retaining the human-readable captures needed by the script. Each must keep
-all eight profile log attempts and match its unmodified script exactly.
+all nine profile log attempts and match its unmodified script exactly.
 These 48 runs have scores in `variants/` and stay out of the two-model report.
 
 `checks.json` compares exact values from `scripted/info.json.expected` with
@@ -78,10 +78,10 @@ five live cases include the four original ideal episodes and a long Steering
 worst episode. Both live Steering cases require collected log observations
 to decide the loop score. Long episodes also check the performed reset.
 Results are written after each episode to `results.json`.
-On 2026-11-22 all five passed, taking 82.799, 96.124, 108.471, 223.963
-and 300.652 seconds in the module's case order. The live Steering ideal and
-worst bundles held four and eight log attempts respectively; both loop
-scores selected those log observations.
+On 2026-11-22 all five passed, taking 82.4, 95.7, 106.7, 218.3 and 302.7
+seconds in the module's case order. The live Steering ideal and worst
+bundles held four and nine log attempts respectively; both loop scores
+selected those log observations.
 
 ```sh
 uv run --isolated --python 3.12 python -m tests.pipeline.real runs/self-check-ROOT/suite runs/self-check-ROOT/first runs/self-check-live

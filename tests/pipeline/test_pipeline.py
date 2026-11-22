@@ -170,7 +170,7 @@ def test_steering_variants_match_unmodified_worst(completed):
     for row in variants:
         original = baseline[row["instance"]]
         assert observed(read(output / row["score_file"])) == observed(read(output / original["score_file"]))
-        assert row["profile_runs"] == original["profile_runs"] == 8
+        assert row["profile_runs"] == original["profile_runs"] == 9
         saved = bundle.read(Path(row["path"]) / "export" / "bundle")
         shell = [a for a in saved.observations.records if a["source"] == "shell"]
         if row["script_variant"] == "cut":
