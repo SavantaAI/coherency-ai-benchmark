@@ -16,6 +16,7 @@ def test_watcher_start_has_no_metric_command_in_argv_or_environment(tmp_path, mo
         calls.append(args)
         assert marker not in json.dumps([args, kwargs])
         if args[0] == 'run':
+            assert 'seccomp=builtin' in args
             assert '--metric-cmd' not in args and '--metric-cmd-file' in args
             p = out / '.metric-command.json'
             assert json.loads(p.read_text()) == list(command)

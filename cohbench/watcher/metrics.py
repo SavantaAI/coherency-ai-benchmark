@@ -670,6 +670,8 @@ def serve(from_watcher: int, to_watcher: int, workspace: str, work_dir: str, kil
         pass  # not the main thread (tests run the server in a thread)
     copy_path = os.path.realpath(workspace)
     os.makedirs(copy_path, mode=0o755, exist_ok=True)
+    from .storage import writable_roots, clean_owned
+    roots = writable_roots() if kill_strays else []
     mat = Materializer(work_dir, copy_path, workspace, rewrite_absolute=False)
     while True:
         try:
@@ -677,6 +679,8 @@ def serve(from_watcher: int, to_watcher: int, workspace: str, work_dir: str, kil
         except EOFError:
             return
         try:
+            if mat is None:
+                mat = Materializer(work_dir, copy_path, workspace, rewrite_absolute=False)
             m = Manifest.of({p: entry_from(dict(f, seq=0)) for p, f in job["entries"]})
             if job.get("git"):
                 m.git = {"head": None, "refs": {}, "backend": None}
@@ -710,6 +714,13 @@ def serve(from_watcher: int, to_watcher: int, workspace: str, work_dir: str, kil
             return
         except Exception as e:
             r = dict(exit=None, timed_out=False, ok=False, metrics=None, error=f"internal (metric server): {type(e).__name__}: {e}", parse_error=None, stderr="", stderr_truncated=False, trace=traceback.format_exc()[-4000:])
+        if kill_strays:
+            try:
+                clean_owned(roots)
+                mat = None
+            except Exception as exc:
+                _send(to_watcher, json.dumps(dict(r, ok=False, error=f"metric storage cleanup failed: {exc}")).encode())
+                return  # Do not run another command with a failed cleanup.
         _send(to_watcher, json.dumps(r).encode())
 
 

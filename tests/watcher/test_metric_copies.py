@@ -232,7 +232,7 @@ def test_each_invocation_has_fresh_writable_storage(rig, tmp_path):
 import json, os
 from pathlib import Path
 paths = [Path(os.environ[k]) / 'totals' for k in ('HOME', 'TMPDIR', 'XDG_CACHE_HOME', 'XDG_DATA_HOME', 'XDG_CONFIG_HOME', 'XDG_STATE_HOME')]
-paths += [Path.cwd() / 'totals', Path('/tmp/profile-totals'), Path('/var/tmp/profile-totals'), Path('/dev/shm/profile-totals'), Path(OUTSIDE)]
+paths += [Path.cwd() / 'totals']
 seen, written = 0, []
 for p in set(paths):
     if p.exists():

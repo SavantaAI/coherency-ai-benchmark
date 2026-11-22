@@ -1452,7 +1452,9 @@ legacy first-match extraction.
 
 A task may declare `"collect": [{"name": "attempts", "path":
 "~/.local/state/profile/runs.jsonl"}]`. Names match `[a-z0-9_]+` and are
-unique. Paths are absolute or start with `~/`; admission rejects relative
+unique. Paths are absolute or start with `~/`. Here `~` is the agent account home
+from the container user database, independent of `HOME`. The agent
+container has no `XDG_STATE_HOME` override. Admission rejects relative
 paths and paths inside `/work/project`, including dot-component aliases.
 The driver also rejects a path that resolves into the workspace at read
 time. An attempt spec's optional `"log": "attempts"` must name a declared

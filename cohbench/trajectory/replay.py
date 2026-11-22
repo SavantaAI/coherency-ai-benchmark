@@ -226,7 +226,7 @@ def rebuild(run_dir: str | Path, task: str | Path | None = None, *, verdicts_at_
     collected = Collected.read(m["collected"], ex / "collected" / "blobs") if "collected" in m else None
     legacy_source = not m.get("observation_sources", False)
     b = bundle.make(res, watchers, TaskIdentifiers.from_dict(scoring["identifiers"]), TaskObservations.from_dict(scoring["observations"]),
-                    episode_record=record, probe_targets=targets, end_mark=m["end_mark"], collected=collected, legacy_source=legacy_source)
+                    episode_record=record, probe_targets=targets, end_mark=m["end_mark"], collected=collected, legacy_source=legacy_source, keep_log_lines=m.get("observation_log_lines", False))
     if undigested:
         del b.episode["task_sha256"]
     return res, b

@@ -383,18 +383,32 @@ not isolated.
 
 Every executed reading gets a fresh home and temporary storage. `HOME`,
 `TMPDIR`, `TMP`, `TEMP` and the XDG home variables point into its private
-run directory, removed after the command. On Linux both executors enter
-private user and mount namespaces with the existing container permissions.
-All existing mounts become read-only; `/tmp`, `/var/tmp` and `/dev/shm`
-receive fresh tmpfs mounts; only this invocation's home and workspace are
-attached as writable copies. Namespace capabilities are dropped before
-executing the command. These mounts disappear when its processes exit.
-No additional container capability or security option is used. The kernel
-must support unprivileged user namespaces and the `open_tree`, `move_mount`
-and `mount_setattr` APIs; failure starts no measured command and records a
-failed reading. macOS development runs use its system sandbox to restrict
-writes to the fresh home and workspace. Offline `complete-metrics` uses
-the same executor and storage rules. Reused readings execute no command.
+run directory, removed after the command. Production uses one cleanup
+route on every host. The metric server discovers writable storage mounts
+and directories once, without following links or treating `/proc` and
+`/sys` as file storage. After each invocation it kills leftover processes
+of the dedicated metric user and removes that user's entries from every
+writable location, including temporary files, shared memory and message
+queues. The mirror is rebuilt for the next invocation. Failed cleanup
+ends the server rather than running another command with leftover files.
+Offline `complete-metrics` uses this same executor. Reused readings execute
+no command.
+
+The production contract is that nothing a measured process wrote is
+readable by a later one. Development executors share the host user, so
+they remove only their own run storage and workspace copies. macOS keeps
+its existing write restriction to those paths. Linux development runs are
+not a substitute for the dedicated-user production cleanup check.
+
+Non-privileged container launches select `--security-opt seccomp=builtin`,
+which chooses
+Docker's built-in profile even when the daemon defaults to unconfined.
+The Linux test script selects it explicitly and includes a separate
+container phase with a dedicated metric uid. No namespace setup or added
+container privileges are needed. The existing user-switch capabilities
+remain unchanged. The existing privileged bridge-flush helper retains its
+prior configuration: Docker 27.4.0 rejects `seccomp=builtin` combined with
+`--privileged`. That setup helper runs no measured command.
 
 The environment passes the metric argv in a one-shot JSON file under the
 watcher's private `/srv/w/out`. The watcher reads and removes it before

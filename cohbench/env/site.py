@@ -250,7 +250,7 @@ def start_site(label: str, upstream: Upstream, out_dir: Path, registry: Registry
         sname = registry.add("container", opaque_name())
         names["scripted_server"] = sname
         scripted_log = _host_dir(out_dir / "scripted")
-        run(["run", "-d", "--name", sname, "--network", up_net, "--read-only", "--tmpfs", "/tmp:rw,size=16m",
+        run(["run", "-d", "--security-opt", "seccomp=builtin", "--name", sname, "--network", up_net, "--read-only", "--tmpfs", "/tmp:rw,size=16m",
              "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
              "-v", f"{scripted_log}:/var/log/scripted", scripted_image], timeout=120)
         scripted = Container(sname, scripted_image)
@@ -270,7 +270,7 @@ def start_site(label: str, upstream: Upstream, out_dir: Path, registry: Registry
         secret = upstream.provider.placeholder()
     gw = registry.add("container", opaque_name())
     names["gateway"] = gw
-    run(["create", "--name", gw, "--network", up_net,
+    run(["create", "--security-opt", "seccomp=builtin", "--name", gw, "--network", up_net,
          "-v", f"{log_dir}:/var/log/gateway",
          "-v", f"{cfg_path.resolve()}:/etc/gw/config.json:ro",
          "-e", "GATEWAY_CONFIG=/etc/gw/config.json",

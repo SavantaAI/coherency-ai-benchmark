@@ -181,7 +181,7 @@ def whole_match(cap: re.Pattern[str], text: str, clipped: str, last_line_whole: 
     return next(whole_matches(cap, text, clipped, last_line_whole), None)
 
 
-def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations, *, collected=None, origin=None, legacy_source=False) -> Observations:
+def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations, *, collected=None, origin=None, legacy_source=False, keep_log_lines=True) -> Observations:
     """Decided on wall microseconds (start, end, the cutoff, the batch in
     force), written in episode milliseconds."""
     pats = [(a, re.compile(a.regex), re.compile(a.capture, re.M) if a.capture else None) for a in task.attempts]
@@ -243,6 +243,7 @@ def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations, *
                 recs.append({"_src": e["seq"], "_us": e["us"], "_us_end": None if unfinished else e["us_end"], "type": "attempt", "name": a.name, "t": t, "t_end": t_end,
                              "state": tree_digest(changes, b0), "state_unknown": bool(changes is not None and b0 is not None and changes.unknown(b0)), "batch_start": b0, "batch_end": batch_at(e["us_end"]) if changes and not unfinished else None, "result": result})
     malformed = {}
+    retained = {}
     if collected is not None and any(a.log for a in task.attempts):
         from datetime import datetime, timezone
         if origin is None:
@@ -251,20 +252,20 @@ def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations, *
         origin_us = (delta.days * 86400 + delta.seconds) * 1000000 + delta.microseconds
         parsed = {}
         for name in sorted({a.log for a in task.attempts if a.log}):
-            parsed[name], malformed[name] = [], 0
+            parsed[name], malformed[name], retained[name] = [], 0, []
             data = collected.content(name)
             if data is None:
                 continue
             lines = data.split(b"\n")
             if lines[-1] == b"":
                 lines.pop()
-            for raw in lines:
+            for index, raw in enumerate(lines):
                 try:
                     line = json.loads(raw)
                     if (not isinstance(line, dict) or set(line) != {"start_ms", "end_ms", "state", "result"}
                         or not _int(line["start_ms"]) or not _int(line["end_ms"])
                         or line["start_ms"] < 0 or line["end_ms"] < line["start_ms"]
-                        or not isinstance(line["state"], str) or not re.fullmatch(r"[0-9a-f]+", line["state"])
+                        or not (line["state"] is None or isinstance(line["state"], str) and re.fullmatch(r"[0-9a-f]+", line["state"]))
                         or not isinstance(line["result"], str)):
                         raise ValueError("invalid log line")
                     line["result"].encode("utf-8")
@@ -278,9 +279,11 @@ def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations, *
                     continue
                 start = clock.inside(start).us if clock.inside(start) else start
                 finish = clock.inside(finish).us if clock.inside(finish) else finish
-                parsed[name].append((start, finish, line))
+                parsed[name].append((start, finish, index, line))
+            parsed[name].sort(key=lambda row: row[:3])
+            retained[name] = [row[2] for row in parsed[name]]
         for a in task.attempts:
-            for start, finish, line in parsed.get(a.log, []):
+            for start, finish, index, line in parsed.get(a.log, []):
                 recs.append({"_src": None, "_us": start, "_us_end": finish, "type": "attempt", "name": a.name,
                              "source": "log", "log_state": line["state"], "t": clock(start), "t_end": clock(finish),
                              "state": None, "state_unknown": False, "batch_start": None, "batch_end": None,
@@ -299,6 +302,8 @@ def build(traj: Trajectory, changes: ChangeLog | None, task: TaskObservations, *
     header = {"type": "header", "format": F.OBSERVATIONS_FORMAT, "version": F.VERSION, "kinds": sorted(KINDS), "records": len(recs)}
     if malformed:
         header["malformed_logs"] = malformed
+        if keep_log_lines:
+            header["log_lines"] = retained
     return Observations(header, recs, sources, wall)
 
 
@@ -323,10 +328,12 @@ def validate(obs: Observations, changes: ChangeLog | None = None) -> list[str]:
     errors = []
     h = obs.header
     if not isinstance(h, dict) or h.get("type") != "header" or h.get("format") != F.OBSERVATIONS_FORMAT or h.get("version") != F.VERSION \
-            or h.get("kinds") != sorted(KINDS) or h.get("records") != len(obs.records) or set(h) - {"malformed_logs"} != {"type", "format", "version", "kinds", "records"}:
+            or h.get("kinds") != sorted(KINDS) or h.get("records") != len(obs.records) or set(h) - {"malformed_logs", "log_lines"} != {"type", "format", "version", "kinds", "records"}:
         errors.append("observations: header")
     if "malformed_logs" in h and (not isinstance(h["malformed_logs"], dict) or any(not isinstance(k, str) or not _int(v) or v < 0 for k, v in h["malformed_logs"].items())):
         errors.append("observations: malformed_logs counts")
+    if "log_lines" in h and (not isinstance(h["log_lines"], dict) or any(not isinstance(k, str) or not isinstance(v, list) or any(not _int(n) or n < 0 for n in v) or len(v) != len(set(v)) for k, v in h["log_lines"].items())):
+        errors.append("observations: log_lines indexes")
     batches = {r["batch"] for r in changes.records if r.get("type") == "batch"} if changes else None
     last = None
     for n, r in enumerate(obs.records, 1):
@@ -338,7 +345,7 @@ def validate(obs: Observations, changes: ChangeLog | None = None) -> list[str]:
         source = r.get("source", "shell")
         if source not in ("shell", "log") or (source == "shell" and "log_state" in r):
             errors.append(f"{where}: source and log_state")
-        if source == "log" and (not isinstance(r.get("log_state"), str) or not re.fullmatch(r"[0-9a-f]+", r["log_state"])
+        if source == "log" and ("log_state" not in r or not (r["log_state"] is None or isinstance(r["log_state"], str) and re.fullmatch(r"[0-9a-f]+", r["log_state"]))
                                 or r["state"] is not None or r["state_unknown"] or r["batch_start"] is not None or r["batch_end"] is not None
                                 or not isinstance(r.get("result"), dict) or r["result"].get("status") != "complete" or r.get("result", {}).get("fingerprint") is None):
             errors.append(f"{where}: a complete log attempt has log_state and no tree placement")

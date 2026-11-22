@@ -153,7 +153,7 @@ def bridge_addresses(net: dict) -> tuple[bool, str]:
         subprocess.run(["docker", "pull", "-q", HELPER_IMAGE], capture_output=True)
     try:
         out = subprocess.run(
-            ["docker", "run", "--rm", "--net=host", HELPER_IMAGE, "ip", "-o", "addr", "show", "dev", name],
+            ["docker", "run", "--rm", "--security-opt", "seccomp=builtin", "--net=host", HELPER_IMAGE, "ip", "-o", "addr", "show", "dev", name],
             capture_output=True, text=True,
         )
     finally:

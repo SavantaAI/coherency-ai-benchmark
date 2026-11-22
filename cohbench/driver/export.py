@@ -317,7 +317,7 @@ def _export(ep: "Episode", dest: Path, *, progress: dict[str, str], task: "TaskI
 
     try:
         manifest: dict[str, Any] = {
-            "format": "cohbench-episode-raw", "version": 2, "observation_sources": True, "written_utc": utc_now(),
+            "format": "cohbench-episode-raw", "version": 2, "observation_sources": True, "observation_log_lines": True, "written_utc": utc_now(),
             "episode_start_utc": ep.clock.start_utc, "environment_start_utc": env.started_utc, "episode_end_utc": end_utc,
             # The episode clock at the episode's end (which may precede this
             # export, D-035); the export's own interval is still open here and

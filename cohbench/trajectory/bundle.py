@@ -394,7 +394,7 @@ def _notices(traj: Trajectory, changes: ChangeLog | None) -> tuple[list[dict[str
 
 
 def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, identifiers_task: TaskIdentifiers | None = None, observations_task: TaskObservations | None = None,
-         episode_input: EpisodeInput | None = None, *, episode_record: dict[str, Any] | None = None, collected=None, legacy_source=False, probe_targets: dict[Any, dict[str, Any]] | None = None,
+         episode_input: EpisodeInput | None = None, *, episode_record: dict[str, Any] | None = None, collected=None, legacy_source=False, keep_log_lines=True, probe_targets: dict[Any, dict[str, Any]] | None = None,
          end_mark: str | None = None) -> Bundle:
     """The bundle for one episode, from the normaliser's result (trajectory and
     manifest), the watcher's output, the task's declarations and the runner's
@@ -476,7 +476,7 @@ def make(result: Any, watcher: WatcherInput | list[WatcherInput] | None = None, 
         if m["batch"] in changes.unsettled:
             notes.append(f"the end mark falls on unsettled batch {m['batch']}")
     ids = scorer_identifiers(view, changes, identifiers_task, traj.header["workspace"])
-    obs = observations.build(traj, changes, observations_task or TaskObservations(), collected=collected, origin=manifest.get("episode_start_utc"), legacy_source=legacy_source)
+    obs = observations.build(traj, changes, observations_task or TaskObservations(), collected=collected, origin=manifest.get("episode_start_utc"), legacy_source=legacy_source, keep_log_lines=keep_log_lines)
     doc = None
     if episode_input is not None:
         episode_record = {
@@ -793,6 +793,57 @@ def _attempts_by_the_end(obs: Observations, view: Trajectory) -> list[str]:
                    if isinstance(r, dict) and isinstance(r.get("t"), int) and r["t"] > d]
 
 
+def _collected_observations(b):
+    """Check content and selection here; wall-clock placement needs raw export."""
+    from collections import Counter
+    from .collection import Collected
+
+    bindings = (b.episode or {}).get("attempt_logs", {})
+    records = (b.episode or {}).get("collected")
+    if records is None:
+        return []
+    stores = _stores(b.store)
+    blobs = {}
+    for row in records.values():
+        if row["status"] == "collected":
+            sha = row["sha256"]
+            path = _blob(stores, sha)
+            blobs[sha] = b.extra_blobs[sha] if sha in b.extra_blobs else path.read_bytes()
+    spec = TaskObservations.from_dict({"attempts": [{"name": name, "regex": "(?!)", "log": log} for name, log in bindings.items()]})
+    expected = observations.build(Trajectory({"excluded": []}, []), None, spec,
+                                  collected=Collected(records, blobs), origin="1970-01-01T00:00:00Z")
+    errors = []
+    if b.observations.header.get("malformed_logs", {name: 0 for name in bindings.values()}) != expected.header.get("malformed_logs", {}):
+        errors.append("collected logs: malformed counts differ from the blobs")
+    selected = b.observations.header.get("log_lines")
+    if selected is not None and set(selected) != set(bindings.values()):
+        errors.append("collected logs: log_lines names differ from the declared logs")
+    actual = [r for r in b.observations.records if r.get("source") == "log"]
+    if any(r["name"] not in bindings for r in actual):
+        errors.append("collected logs: observation names an undeclared log attempt")
+    def value(row):
+        return row["log_state"], row["result"]
+    for name, log in bindings.items():
+        rows = [r for r in expected.records if r["name"] == name]
+        got = [value(r) for r in actual if r["name"] == name]
+        indexes = expected.header["log_lines"][log]
+        if selected is not None:
+            by_line = dict(zip(indexes, rows))
+            wanted = selected.get(log, [])
+            if any(i not in by_line for i in wanted) or got != [value(by_line[i]) for i in wanted if i in by_line]:
+                errors.append(f"collected log {log}: observation count, order, state or result differs from selected lines")
+        else:
+            # Exclusions can collapse times into ties and change their order.
+            # Older bundles lack indexes, so check content and multiplicity.
+            def key(item):
+                state, result = item
+                return state, result["status"], result["fingerprint"]
+            available = Counter(key(value(r)) for r in rows)
+            if Counter(key(v) for v in got) - available:
+                errors.append(f"collected log {log}: observations are not a subset of the blob")
+    return errors
+
+
 def validate(b: Bundle, require_episode: bool = True, instruction_files: tuple[str, ...] = DEFAULT_INSTRUCTION_FILES,
              driver_ref_namespaces: tuple[str, ...] = DEFAULT_DRIVER_REF_NAMESPACES) -> dict[str, Any]:
     errors: dict[str, list[str]] = {}
@@ -830,6 +881,8 @@ def validate(b: Bundle, require_episode: bool = True, instruction_files: tuple[s
     if view_ok and changes_ok:
         errors["scorer.jsonl"] += guarded("scorer.jsonl", lambda: _correction_errors(b.view, b.changes))
         errors["changes.jsonl"] += guarded("changes.jsonl", lambda: _changes_by_the_end(b.changes, b.view))
+    if b.episode is not None and not errors["episode.json"] and not errors["observations.jsonl"] and not errors["blobs"]:
+        errors["observations.jsonl"] += guarded("observations.jsonl", lambda: _collected_observations(b))
     scans = {
         "scorer.jsonl": lambda: scan_view(b.view),
         "identifiers.json": lambda: scan_doc(b.identifiers, CONTENT["identifiers.json"]),

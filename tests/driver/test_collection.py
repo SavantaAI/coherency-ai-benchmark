@@ -41,3 +41,18 @@ def test_reader_failure_is_not_absence(tmp_path):
 def test_reader_rejects_workspace_path_before_opening():
     with pytest.raises(ValueError, match='collection read failed'):
         read(Container(), '/work/project/missing.jsonl')
+
+
+def test_tilde_uses_account_home_even_with_a_different_environment_home(tmp_path, monkeypatch):
+    from cohbench.driver.collection import READ
+    import json
+
+    # Replace only the account lookup in the container script, keeping the
+    # real path expansion and file read. No file is put in the host home.
+    account = tmp_path / 'account'
+    account.mkdir()
+    (account / 'runs.jsonl').write_text('record\n')
+    monkeypatch.setenv('HOME', str(tmp_path / 'elsewhere'))
+    code = READ.replace('pwd.getpwuid(os.getuid()).pw_dir', repr(str(account)))
+    result = subprocess.run([sys.executable, '-c', code, '~/runs.jsonl', str(LIMIT)], capture_output=True, text=True, check=True)
+    assert json.loads(result.stdout)['status'] == 'collected'

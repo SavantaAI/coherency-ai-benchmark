@@ -930,7 +930,7 @@ def start_harness(image: str, site: Site, vol: str, registry: Registry, *, works
     name = registry.add("container", opaque_name())
     p = site.upstream.provider
     args = [
-        "create", "--init", "--name", name, "--hostname", CONTAINER_HOSTNAME,
+        "create", "--security-opt", "seccomp=builtin", "--init", "--name", name, "--hostname", CONTAINER_HOSTNAME,
         "--network", site.agent_network,
         "--add-host", f"{p.api_host}:{site.gateway_ip}",
         "-e", f"NODE_EXTRA_CA_CERTS={CA_PATH}",
@@ -942,6 +942,9 @@ def start_harness(image: str, site: Site, vol: str, registry: Registry, *, works
         run(args, timeout=120)
         cp_in(name, str(Path(CA_PATH).parent), one_file_tar(Path(CA_PATH).name, site.ca_pem))
         run(["start", name], timeout=120)
+        # Collection resolves the account home. Keep the tool's XDG override
+        # absent from the container configuration on every fresh context.
+        Container(name, image).exec(["python3", "-c", "import os; assert 'XDG_STATE_HOME' not in os.environ"], user="node", timeout=30)
     except BaseException:
         registry.remove("container", name)
         raise
@@ -964,7 +967,7 @@ def start_watcher(vol: str, out: Path, spec: WatcherSpec, image: str, registry: 
     os.chmod(out, 0o777)
     name = registry.add("container", opaque_name())
     args = [
-        "run", "-d", "--name", name, "--network", "none", "--read-only", "--tmpfs", f"/tmp:rw,exec,nosuid,nodev,size={spec.tmp_size}",
+        "run", "-d", "--security-opt", "seccomp=builtin", "--name", name, "--network", "none", "--read-only", "--tmpfs", f"/tmp:rw,exec,nosuid,nodev,size={spec.tmp_size}",
         "--cap-drop", "ALL", "--cap-add", "SETUID", "--cap-add", "SETGID", "--security-opt", "no-new-privileges",
         "--mount", f"type=volume,src={vol},dst={WATCHER_LIVE},readonly,volume-nocopy",
         "--mount", f"type=bind,src={out.resolve()},dst={WATCHER_OUT}",

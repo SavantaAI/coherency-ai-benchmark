@@ -6,8 +6,11 @@ import json
 from cohbench.trajectory.collection import LIMIT
 
 READ = '''
-import base64, json, os, stat, sys
-path = os.path.realpath(os.path.expanduser(sys.argv[1]))
+import base64, json, os, pwd, stat, sys
+path = sys.argv[1]
+if path.startswith("~/"):
+    path = os.path.join(pwd.getpwuid(os.getuid()).pw_dir, path[2:])
+path = os.path.realpath(path)
 limit = int(sys.argv[2])
 if path == "/work/project" or path.startswith("/work/project/"):
     raise ValueError("collection path resolves inside the workspace")

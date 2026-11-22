@@ -20,7 +20,7 @@ def _helper(image: str, mounts: list[str], script: str, *, input_bytes: bytes | 
     """One shell script in a throwaway container: no network, root,
     entrypoint replaced. Registered by name before it is created."""
     name = registry.add("container", opaque_name())
-    args = ["run", "--rm", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "sh"]
+    args = ["run", "--rm", "--security-opt", "seccomp=builtin", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "sh"]
     if input_bytes is not None:
         args.append("-i")
     for m in mounts:
@@ -65,7 +65,7 @@ def listing(volume: str, image: str, registry: Registry) -> list[str]:
     and a content hash; for comparing two volumes."""
     name = registry.add("container", opaque_name())
     try:
-        proc = run(["run", "--rm", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "sh", "--mount", f"type=volume,src={volume},dst=/v,readonly,volume-nocopy", image, "-c", LISTING], check=False, timeout=600)
+        proc = run(["run", "--rm", "--security-opt", "seccomp=builtin", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "sh", "--mount", f"type=volume,src={volume},dst=/v,readonly,volume-nocopy", image, "-c", LISTING], check=False, timeout=600)
     finally:
         registry.remove("container", name)
     if proc.returncode != 0:
@@ -77,7 +77,7 @@ def worker(volume: str, image: str, registry: Registry, *, path: str, uid: int =
     """A long-lived helper with the volume at `path`, as the agent's user, no
     network: for Git work on a clone. The caller removes it."""
     name = registry.add("container", opaque_name())
-    run(["run", "-d", "--name", name, "--network", "none", "--user", f"{uid}:{uid}", "--entrypoint", "sleep",
+    run(["run", "-d", "--security-opt", "seccomp=builtin", "--name", name, "--network", "none", "--user", f"{uid}:{uid}", "--entrypoint", "sleep",
          "--mount", f"type=volume,src={volume},dst={path},volume-nocopy", image, "infinity"], timeout=120)
     return Container(name, image)
 
@@ -112,7 +112,7 @@ def scan_git_objects_tar(tar_bytes: bytes, image: str, registry: Registry, needl
 
     name = registry.add("container", opaque_name())
     try:
-        res = scan_with_input(["run", "--rm", "-i", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "sh", image,
+        res = scan_with_input(["run", "--rm", "--security-opt", "seccomp=builtin", "-i", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "sh", image,
                                "-c", "set -e; mkdir -p /x; tar -x -f - -C /x; " + GIT_OBJECTS], tar_bytes, needles, timeout=900)
     finally:
         registry.remove("container", name)
@@ -125,7 +125,7 @@ def scan_git_objects_volume(vol: str, image: str, registry: Registry, needles: d
 
     name = registry.add("container", opaque_name())
     try:
-        res = scan_command(["run", "--rm", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "sh",
+        res = scan_command(["run", "--rm", "--security-opt", "seccomp=builtin", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "sh",
                             "--mount", f"type=volume,src={vol},dst=/x,readonly,volume-nocopy", image, "-c", GIT_OBJECTS], needles, timeout=900)
     finally:
         registry.remove("container", name)
@@ -139,7 +139,7 @@ def scan_files(vol: str, image: str, registry: Registry, key) -> dict:
 
     name = registry.add("container", opaque_name())
     try:
-        return scan_tar_stream(["run", "--rm", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "tar",
+        return scan_tar_stream(["run", "--rm", "--security-opt", "seccomp=builtin", "--name", name, "--network", "none", "--user", "0", "--entrypoint", "tar",
                                 "--mount", f"type=volume,src={vol},dst=/v,readonly,volume-nocopy", image, "-c", "-f", "-", "-C", "/v", "."], key)
     finally:
         registry.remove("container", name)

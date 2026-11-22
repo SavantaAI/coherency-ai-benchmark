@@ -118,3 +118,65 @@ def test_old_raw_export_rebuild_keeps_shell_source_absent(tmp_path):
     assert all('answer_ids' not in e for e in b.view.events if e['type'] == 'verdict')
     bundle.write(b, root / 'export' / 'bundle')
     assert replay.verify(root) == {'ok': True, 'differs': [], 'validation': {}}
+
+
+def logged_bundle(tmp_path):
+    root = raw_record(tmp_path)
+    data = collect(line(state=None) + b'bad\n' + line(start=3000, end=4000, result='next') + line(start=30000, end=31000))
+    ex = root / 'export'
+    data.write(ex / 'collected' / 'blobs')
+    manifest = json.loads((ex / 'manifest.json').read_text())
+    manifest.update(collected=data.records, observation_sources=True, observation_log_lines=True)
+    (ex / 'manifest.json').write_text(json.dumps(manifest))
+    task = tmp_path / 'task' / 'task.json'
+    doc = json.loads(task.read_text())
+    doc['scoring']['observations']['attempts'] = [{'name': 'profile', 'regex': 'profile', 'log': 'attempts'}]
+    task.write_text(json.dumps(doc))
+    return root, replay.rebuild(root)[1]
+
+
+def test_null_state_through_make_validate_round_trip_and_rebuild(tmp_path):
+    root, b = logged_bundle(tmp_path)
+    assert b.observations.records[0]['log_state'] is None
+    assert b.observations.header['malformed_logs'] == {'attempts': 1}
+    assert b.observations.header['log_lines'] == {'attempts': [0, 2]}
+    assert bundle.validate(b)['ok']
+    bundle.write(b, root / 'export/bundle')
+    assert bundle.validate(bundle.read(root / 'export/bundle'))['ok']
+    assert replay.verify(root) == {'ok': True, 'differs': [], 'validation': {}}
+
+
+@pytest.mark.parametrize('edit', ['state', 'result', 'delete', 'order', 'malformed'])
+def test_standalone_bundle_checks_log_observations_against_blob(tmp_path, edit):
+    root, b = logged_bundle(tmp_path)
+    bundle.write(b, root / 'export/bundle')
+    back = bundle.read(root / 'export/bundle')
+    rows = back.observations.records
+    if edit == 'state':
+        rows[0]['log_state'] = 'cd' * 32
+    elif edit == 'result':
+        rows[0]['result']['fingerprint'] = 'cd' * 32
+    elif edit == 'delete':
+        rows.pop()
+        back.observations.header['records'] -= 1
+    elif edit == 'order':
+        rows[0]['log_state'], rows[1]['log_state'] = rows[1]['log_state'], rows[0]['log_state']
+        rows[0]['result'], rows[1]['result'] = rows[1]['result'], rows[0]['result']
+    else:
+        back.observations.header['malformed_logs']['attempts'] = 0
+    report = bundle.validate(back)
+    assert not report['ok'] and any('collected log' in e for e in report['errors']['observations.jsonl']), report
+
+
+def test_legacy_log_without_indexes_accepts_order_from_excluded_ties():
+    from types import SimpleNamespace
+
+    data = collect(line(10500, 11000, result='late') + line(10000, 10400, result='early'))
+    spec = observations.TaskObservations.from_dict({'attempts': [{'name': 'profile', 'regex': 'profile', 'log': 'attempts'}]})
+    traj = Trajectory({'excluded': [{'us': 9000000, 'us_end': 12000000, 'reason': 'handoff'}]}, [{'seq': 0, 'type': 'episode_end', 'us': 20000000}])
+    obs = observations.build(traj, None, spec, collected=data, origin=mini.T0, keep_log_lines=False)
+    assert [(r['t'], r['t_end']) for r in obs.records] == [(9000, 9000), (9000, 9000)]
+    b = SimpleNamespace(episode={'collected': data.records, 'attempt_logs': {'profile': 'attempts'}}, store=None, extra_blobs=data.blobs, observations=obs)
+    assert bundle._collected_observations(b) == []
+    obs.records.append(obs.records[0])
+    assert bundle._collected_observations(b)

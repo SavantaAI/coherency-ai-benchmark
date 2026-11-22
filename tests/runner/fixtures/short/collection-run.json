@@ -13,7 +13,7 @@
      {
       "do": "write",
       "path": "/work/project/profile.py",
-      "content": "import json, os, pathlib, time\np = pathlib.Path.home() / \".local/state/profile/runs.jsonl\"\np.parent.mkdir(parents=True, exist_ok=True)\nstart = time.time_ns() // 1000000\nlabel = \"second\" if pathlib.Path(\"NOTES.md\").exists() else \"first\"\nrow = {\"start_ms\": start, \"end_ms\": time.time_ns() // 1000000, \"state\": \"ab\" * 32, \"result\": label}\nfd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)\nos.write(fd, (json.dumps(row) + \"\\n\").encode())\nos.close(fd)\nprint(\"PROFILE \" + label)\n"
+      "content": "import json, os, pathlib, pwd, time\np = pathlib.Path(pwd.getpwuid(os.getuid()).pw_dir) / \".local/state/profile/runs.jsonl\"\np.parent.mkdir(parents=True, exist_ok=True)\nstart = time.time_ns() // 1000000\nlabel = \"second\" if pathlib.Path(\"NOTES.md\").exists() else \"first\"\nrow = {\"start_ms\": start, \"end_ms\": time.time_ns() // 1000000, \"state\": \"ab\" * 32, \"result\": label}\nfd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)\nos.write(fd, (json.dumps(row) + \"\\n\").encode())\nos.close(fd)\nprint(\"PROFILE \" + label)\n"
      },
      {
       "do": "bash",
@@ -61,7 +61,7 @@
      },
      {
       "do": "bash",
-      "command": "cd /work/project && python3 profile.py"
+      "command": "cd /work/project && HOME=$(mktemp -d) python3 profile.py"
      }
     ],
     "final": "Picked up from NOTES.md. The release is published."
