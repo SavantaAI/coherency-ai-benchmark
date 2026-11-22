@@ -334,3 +334,75 @@ def test_count_recurses_for_metric_coverage_and_depth_limit():
     err = []
     triggers.check(t, "t", set(), err, set())
     assert any("nested too deep" in x for x in err)
+
+
+@pytest.mark.parametrize('unit', ['record', 'batch'])
+def test_changes_exclude_before_counting_records_batches_and_since(w, unit):
+    fw, ctx = w
+    fw.commit_delay_s = .1
+
+    def batch(*paths):
+        for path in paths:
+            fw.write(path, 'changed')
+        fw.clock.sleep(.2)
+        fw.tick()
+        refresh(fw, ctx)
+
+    def t(n, **extra):
+        return {'changes': {'path': '**/*.py', 'at_least': n, 'unit': unit, **extra}}
+
+    excluded = {'exclude': ['admin/**', '**/generated.py']}
+    batch('admin/a.py', 'admin/nested/b.py')
+    assert not holds(t(1, **excluded), ctx)
+    raw = 2 if unit == 'record' else 1
+    assert holds(t(raw), ctx) and holds(t(raw, exclude=[]), ctx)
+    assert not holds(t(raw + 1), ctx) and not holds(t(raw + 1, exclude=[]), ctx)
+    batch('src/a.py', 'root.py', 'admin/c.py', 'notes.txt')
+    kept = 2 if unit == 'record' else 1
+    assert holds(t(kept, **excluded), ctx) and not holds(t(kept + 1, **excluded), ctx)
+    assert not holds(t(0, since='e', **excluded), ctx)
+    fire(ctx, 'e', fw)
+    assert not holds(t(1, since='e', **excluded), ctx)
+    batch('src/generated.py', 'admin/d.py')
+    assert not holds(t(1, since='e', **excluded), ctx)
+    batch('src/after.py', 'admin/after.py')
+    assert holds(t(1, since='e', **excluded), ctx)
+    assert not holds(t(2, since='e', **excluded), ctx)
+    assert holds(t(kept + 1, **excluded), ctx)
+    assert not holds(t(kept + 2, **excluded), ctx)
+
+
+@pytest.mark.parametrize('unit', ['record', 'batch'])
+@pytest.mark.parametrize('source,dest,expected', [
+    ('src/a.py', 'admin/a.py', True),
+    ('admin/a.py', 'src/a.py', True),
+    ('admin/a.py', 'admin/b.py', False),
+    ('src/a.py', 'src/b.py', True),
+    ('src/a.txt', 'admin/a.py', False),
+    ('admin/a.py', 'src/a.txt', False),
+])
+def test_changes_exclude_moves_filter_each_endpoint(tmp_path, unit, source, dest, expected):
+    fw = FakeWatcher(tmp_path / 's', {source: 'x'}, FakeClock())
+    fw._rec({'kind': 'moved', 'from': source, 'path': dest, 'type': 'file'})
+    fw._close('settled')
+    ctx = Context()
+    refresh(fw, ctx)
+    body = {'path': '**/*.py', 'exclude': ['admin/**'], 'at_least': 1, 'unit': unit}
+    assert holds({'changes': body}, ctx) is expected
+    assert not holds({'changes': dict(body, at_least=2)}, ctx)
+
+
+@pytest.mark.parametrize('kind', ['count', 'any', 'all'])
+def test_changes_exclude_nested_triggers(w, kind):
+    fw, ctx = w
+    inner = {'changes': {'path': '**/*.py', 'exclude': ['admin/**'], 'at_least': 1}}
+    t = {'count': {'of': [inner], 'at_least': 1}} if kind == 'count' else {kind: [inner]}
+    errors = []
+    triggers.check(t, 't', set(), errors, set())
+    assert errors == []
+    fw.write('admin/chore.py', 'x')
+    refresh(fw, ctx)
+    assert not holds(t, ctx)
+    fw.write('main.py', 'x')
+    refresh(fw, ctx)
+    assert holds(t, ctx)

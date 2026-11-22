@@ -7,7 +7,7 @@ A trigger is a JSON object with exactly one key:
 |---|---|
 | `{"path_exists": GLOB}` | a path matches that exists: in the committed tree, or created by a batch that has begun (from its first write, D-030) |
 | `{"content_matches": {"path": GLOB, "regex": RE}}` | a stored file whose path matches has content the regex finds; `^` and `$` match at line ends (MULTILINE) |
-| `{"changes": {"path": GLOB, "at_least": N, "since": EVENT?, "unit": "record" or "batch"}}` | at least N committed change records touched a matching path (default `record`, a move counts once); `batch` counts distinct committed batches with at least one matching record |
+| `{"changes": {"path": GLOB, "exclude": [GLOB, ...]?, "at_least": N, "since": EVENT?, "unit": "record" or "batch"}}` | at least N committed change records touched a path matching `path` and no `exclude` glob (default `record`); a move counts once if either its source or destination qualifies; `batch` counts distinct committed batches with at least one qualifying record |
 | `{"metric": {"name": NAME, "op": OP, "value": NUMBER, "reading": "latest" or "any", "since": EVENT?}}` | the latest (or any) committed reading after the baseline compares true |
 | `{"turns": {"at_least": N, "since": EVENT?}}` | at least N turns finished (the agent ended its turn; a pending question is not a finished turn) |
 | `{"handbacks": {"at_least": N, "since": EVENT?}}` | at least N hand-backs: finished turns plus pauses on a pending question or secret request |
@@ -140,10 +140,16 @@ def check(t: Any, path: str, names: set[str], err: list[str], deps: set[str], *,
             glob(v["path"], f"{p}.path")
             regex_problem(v["regex"], f"{p}.regex", err)
     elif k == "changes":
-        if keys(v, {"path", "at_least"}, {"since", "unit"}):
+        if keys(v, {"path", "at_least"}, {"since", "unit", "exclude"}):
             if v.get("unit", "record") not in ("record", "batch"):
                 err.append(f"{p}.unit: record or batch")
             glob(v["path"], f"{p}.path")
+            if "exclude" in v:
+                if not isinstance(v["exclude"], list):
+                    err.append(f"{p}.exclude: a list of non-empty globs")
+                else:
+                    for n, pattern in enumerate(v["exclude"]):
+                        glob(pattern, f"{p}.exclude[{n}]")
             at_least(v)
             since(v)
     elif k == "metric":
@@ -282,7 +288,7 @@ def holds(t: dict[str, Any], ctx: Context) -> bool:
         return False
     if k == "changes":
         matches = [c for c in ctx.work.changes if (base is None or (c.pos > base.pos and c.pos not in base.skip))
-                   and any(glob_match(v["path"], x) for x in c.paths)]
+                   and any(glob_match(v["path"], x) and not any(glob_match(g, x) for g in v.get("exclude", [])) for x in c.paths)]
         count = len({c.pos for c in matches}) if v.get("unit", "record") == "batch" else len(matches)
         return count >= v["at_least"]
     if k == "metric":

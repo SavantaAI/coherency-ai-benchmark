@@ -647,6 +647,12 @@
           "batch"
          ],
          "default": "record"
+        },
+        "exclude": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/glob"
+         }
         }
        }
       }

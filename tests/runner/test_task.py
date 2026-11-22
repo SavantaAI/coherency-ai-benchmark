@@ -151,6 +151,9 @@ def test_schema_file_matches_the_validator() -> None:
     trig = schema["$defs"]["trigger"]["oneOf"]
     keys = {next(iter(t["required"])) for t in trig}
     assert keys == set(triggers.KINDS)
+    changes = next(t["properties"]["changes"] for t in trig if "changes" in t["properties"])
+    assert changes["properties"]["exclude"] == {"type": "array", "items": {"$ref": "#/$defs/glob"}}
+    assert "exclude" not in changes["required"]
     assert set(schema["$defs"]["event"]["properties"]["probe"]["oneOf"][1]["properties"]["about"]["enum"]) == set(PROBE_ABOUT)
     metric = schema["properties"]["watcher"]["properties"]["metric"]["oneOf"][1]
     assert set(metric["required"]) == {"command", "dir", "manifest"}
@@ -643,3 +646,18 @@ def test_attempt_output_admission(tmp_path, spec, valid):
     task, errors, _ = check(write_task(tmp_path, edit))
     assert (task is not None) is valid, errors
     assert bool(errors) is not valid
+
+
+@pytest.mark.parametrize('exclude', [None, 'admin/**', {}, 1, True, [None], [1], [''], ['admin/**', ''], ['/admin/**'], ['a/[z-a]']])
+def test_changes_exclude_rejected_at_admission(tmp_path, exclude):
+    def edit(doc):
+        doc['events'][0]['trigger'] = {'changes': {'path': '**/*.py', 'exclude': exclude, 'at_least': 1}}
+    assert any('trigger.changes.exclude' in e for e in problems(tmp_path, edit))
+
+
+@pytest.mark.parametrize('exclude', [[], ['admin/**'], ['admin/**', '**/generated.py']])
+def test_changes_exclude_admitted(tmp_path, exclude):
+    def edit(doc):
+        doc['events'][0]['trigger'] = {'changes': {'path': '**/*.py', 'exclude': exclude, 'at_least': 1}}
+    task = load(write_task(tmp_path, edit))
+    assert task.events[0].trigger['changes']['exclude'] == exclude
