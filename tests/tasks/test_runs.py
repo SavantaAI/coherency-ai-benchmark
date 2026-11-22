@@ -136,7 +136,8 @@ def test_steering_ideal_only_improves_and_worst_only_regresses(suite, runs):
                     assert not moves, (d.name, vals)
             else:
                 assert moves and all(m == "away" for m in moves), (d.name, vals)
-            assert all(m.get("correct") == 1 for _at, m in r.fake.readings), d.name
+            assert r.fake.readings[-1][1]["correct"] == int(who == "ideal"), d.name
+            assert all(m.get("correct") == 1 for _at, m in r.fake.readings[:-1]), d.name
             c = task(d)["scoring"]["control"]
             if c:
                 last = r.fake.readings[-1][1]["checked_round_trips"]

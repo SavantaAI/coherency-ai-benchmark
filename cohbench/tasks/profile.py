@@ -23,17 +23,18 @@ READ_PATHS = set()
 CONSUMED = {}
 READING_INPUTS = False
 UNCERTAIN = False
+ABSENT = "absent"
 
 
 def workspace_files():
-    return {path.resolve() for path in ROOT.rglob("*") if path.is_file()
-            and not {"__pycache__", ".git"}.intersection(path.relative_to(ROOT).parts)
-            and path.suffix not in (".pyc", ".pyo")}
+    return {path.resolve() for path in ROOT.rglob("*") if path.is_file()}
 
 
 def signature(path):
     try:
         return hashlib.sha256(path.read_bytes()).digest()
+    except FileNotFoundError:
+        return ABSENT
     except OSError:
         return None
 
@@ -92,23 +93,24 @@ sys.addaudithook(track_reads)
 def state_digest():
     if UNCERTAIN:
         return None
-    paths = set(READ_PATHS) | set(CONSUMED)
-    paths.update(ROOT / "sample" / name for name in ("records.json", "rates.json", "expected.json"))
-    package = ROOT / "__PKG__"
-    paths.update(path for path in BEFORE if path.is_relative_to(package))
-    paths.update(path for path in workspace_files() if path.is_relative_to(package))
+    paths = set(READ_PATHS)
     digest = hashlib.sha256()
     for path in sorted(paths):
         try:
             data = path.read_bytes()
+        except FileNotFoundError:
+            data = None
         except OSError:
             return None
-        value = hashlib.sha256(data).digest()
-        if BEFORE.get(path) != value or CONSUMED.get(path, value) != value:
+        value = ABSENT if data is None else hashlib.sha256(data).digest()
+        if BEFORE.get(path, ABSENT) != value or CONSUMED.get(path, value) != value:
             return None
         name = path.relative_to(ROOT).as_posix().encode("utf-8")
         digest.update(len(name).to_bytes(8, "big") + name)
-        digest.update(len(data).to_bytes(8, "big") + data)
+        if data is None:
+            digest.update(((1 << 64) - 1).to_bytes(8, "big"))
+        else:
+            digest.update(len(data).to_bytes(8, "big") + data)
     return digest.hexdigest()
 
 

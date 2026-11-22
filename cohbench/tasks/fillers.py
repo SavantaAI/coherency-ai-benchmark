@@ -55,6 +55,9 @@ class Filler:
 def result_regex(filler, path, content):
     """Accept the representation choices left open by the chore text."""
     tail = "" if filler.key == "trailing" else r"[ \t]*"
+    if filler.key == "changelog":
+        lines = [re.escape(line.rstrip(" \t")) + tail for line in content.splitlines() if line.strip()]
+        return r"\A" + r"(?:\r?\n[ \t]*)+".join(lines) + r"(?:\r?\n[ \t]*)*\Z"
     if path.endswith(".csv"):
         lines = []
         for row in csv.reader(io.StringIO(content)):

@@ -194,6 +194,8 @@ def test_long_steering_moves_and_correction(suite, long_runs):
             mv = [m for m in moves(after) if m != "level"]
             if who == "worst":
                 assert mv and all(m == "away" for m in mv), (d.name, after)
+                invalid = [at for at, m in r.readings if m.get("correct") == 0]
+                assert invalid and min(invalid) > r.fired["handoff"], d.name
             else:
                 assert all(m == "toward" for m in mv), (d.name, who, after)
                 last = r.readings[-1][1]["round_trips"]

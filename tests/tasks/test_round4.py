@@ -91,8 +91,11 @@ def test_r601_save_during_run_is_not_assigned_the_later_revision(tmp_path, tool_
     rows = history(tool_home)
     revision_b = rows[-1]
     assert all(isinstance(row["state"], str) for row in (revision_a, *rows[-2:]))
-    assert revision_a["state"] != revision_b["state"]
-    assert raced["state"] is None
+    if target in ("added", "deleted"):
+        assert revision_a["state"] == raced["state"] == revision_b["state"]
+    else:
+        assert revision_a["state"] != revision_b["state"]
+        assert raced["state"] is None
     assert rows[-2]["state"] == revision_b["state"]
     assert len({row["result"] for row in rows}) == 1
 

@@ -50,8 +50,8 @@ def test_b02_edit_spacing_survives_fast_tools_and_correction(tmp_path, monkeypat
     boundaries += [at for text, (at, _) in zip(result.fake.turn_texts, result.fake.started_acts) if "To be clear" in text]
     assert len(boundaries) == 1
     boundary = boundaries[0]
-    readings = [(0, {"round_trips": inst.task["scoring"]["answer_key"]["baseline"]}), *result.fake.readings]
-    moves = [(at, b["round_trips"] - a["round_trips"]) for (_, a), (at, b) in zip(readings, readings[1:]) if b["round_trips"] != a["round_trips"]]
+    readings = [(0, {"checked_round_trips": inst.task["scoring"]["answer_key"]["baseline"]}), *result.fake.readings]
+    moves = [(at, b["checked_round_trips"] - a["checked_round_trips"]) for (_, a), (at, b) in zip(readings, readings[1:]) if b["checked_round_trips"] != a["checked_round_trips"]]
     assert all(b[0] - a[0] >= 2 for a, b in zip(moves, moves[1:]))
     after = [(at, delta) for at, delta in moves if at > boundary]
     assert after and after[0][0] - boundary >= 2
@@ -220,12 +220,12 @@ def test_s03_seed_is_only_in_host_command_and_not_package_inputs(tmp_path):
         d = tmp_path / str(seed)
         inst = generate_to(Options("steering", seed, "h20"), d)
         command = inst.task["watcher"]["metric"]["command"]
-        secret = command[-1]
+        secret = command[-2]
         seeds.append(secret)
         assert len(secret) == 32
         for horizon, control in (("h80", False), ("h20", True), ("h80", True)):
             other = generate(Options("steering", seed, horizon, control=control))
-            assert other.task["watcher"]["metric"]["command"][-1] == secret
+            assert other.task["watcher"]["metric"]["command"][-2] == secret
         assert secret in (d / "task.json").read_text()
         for root in (d / "workspace", d / "metric"):
             assert all(secret not in p.read_text() for p in root.rglob("*") if p.is_file())

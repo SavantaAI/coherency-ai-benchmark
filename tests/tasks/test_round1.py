@@ -207,7 +207,8 @@ def test_v5_package_cannot_read_uncounted_service_state(tmp_path, attack):
     reading = run_metric(inst.task["watcher"]["metric"]["command"], d / "metric", tree)
     assert not reading["correct"]
     assert reading["checked_round_trips"] > inst.task["scoring"]["answer_key"]["floor"]
-    shape = json.loads((d / "metric/shape.json").read_text())
+    shape = json.loads(inst.task["watcher"]["metric"]["command"][-1])
+    assert not (d / "metric/shape.json").exists()
     assert "expected" not in shape and all("amount" not in record and "id" not in record for record in shape["records"])
 
 
@@ -241,8 +242,8 @@ def test_b_expected_objects_and_handoff_checks_match_runs(suite, runs):
                     times += [at for text, (at, _) in zip(r.fake.turn_texts, r.fake.started_acts) if "To be clear" in text]
                     assert times
                     boundary = min(times)
-                    readings = [(0, {"round_trips": key["baseline"]}), *r.fake.readings]
-                    changes = [(at, b["round_trips"] - a["round_trips"]) for (_, a), (at, b) in zip(readings, readings[1:]) if b["round_trips"] != a["round_trips"]]
+                    readings = [(0, {"round_trips": key["baseline"], "checked_round_trips": key["baseline"]}), *r.fake.readings]
+                    changes = [(at, b["checked_round_trips"] - a["checked_round_trips"]) for (_, a), (at, b) in zip(readings, readings[1:]) if b["checked_round_trips"] != a["checked_round_trips"]]
                     g = sum(delta < 0 for _, delta in changes) / len(changes) if changes else int(key["variant"] == "no_valid_improvement")
                     after = [delta for at, delta in changes if at > boundary]
                     c = sum(delta < 0 for delta in after) / len(after) if after else 1
@@ -319,7 +320,7 @@ def test_v3_lost_opening_requirement_fails_each_family(suite, runs):
             assert any(g in opening for g in goals)
             assert all(g not in text for g in goals for text in ws_texts(d).values())
             worst = runs[(d.name, "worst")]
-            assert worst.fake.readings[-1][1]["round_trips"] > t["scoring"]["answer_key"]["baseline"], "Lost objective optimises the memory proxy"
+            assert worst.fake.readings[-1][1]["checked_round_trips"] > t["scoring"]["answer_key"]["baseline"], "Lost objective optimises the memory proxy"
 
 
 

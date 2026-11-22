@@ -1,7 +1,7 @@
 """Host service and a separate package process connected by a counted protocol."""
 
 CLIENT_RUN = r'''
-import importlib.util
+import importlib
 import json
 import os
 import socket
@@ -25,6 +25,9 @@ class Client:
     def list_ids(self):
         return exchange({"op": "list_ids"})
 
+    def get_snapshot(self):
+        return exchange({"op": "get_snapshot"})
+
     def get_rates(self):
         return exchange({"op": "get_rates"})
 
@@ -38,11 +41,7 @@ class Client:
 try:
     name = sys.argv[2]
     sys.path.insert(0, os.getcwd())
-    root = os.path.join(os.getcwd(), name)
-    spec = importlib.util.spec_from_file_location(name, os.path.join(root, "__init__.py"), submodule_search_locations=[root])
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
+    mod = importlib.import_module(name)
     result = mod.run(Client())
     wire.write((json.dumps({"result": result}) + "\n").encode())
     wire.flush()
@@ -62,28 +61,34 @@ import sys
 CLIENT_RUN = __CLIENT_RUN__
 
 
-def workload_key():
-    if len(sys.argv) == 2:
+def workload():
+    if len(sys.argv) == 3 and sys.argv[1] != "seed-fd":
         # The watcher supplies argv only. Re-execute without the seed in argv
         # before starting a package that can inspect its parent's command.
         reader, writer = os.pipe()
-        os.write(writer, bytes.fromhex(sys.argv[1]))
+        payload = json.dumps({"key": sys.argv[1], "shape": json.loads(sys.argv[2])}).encode()
+        writer_pid = os.fork()
+        if writer_pid == 0:
+            os.close(reader)
+            with os.fdopen(writer, "wb") as stream:
+                stream.write(payload)
+            os._exit(0)
         os.close(writer)
         os.set_inheritable(reader, True)
-        os.execv(sys.executable, [sys.executable, "-I", "-B", __file__, "seed-fd", str(reader)])
-    if len(sys.argv) != 3 or sys.argv[1] != "seed-fd":
+        os.execv(sys.executable, [sys.executable, "-I", "-B", __file__, "seed-fd", str(reader), str(writer_pid)])
+    if len(sys.argv) != 4 or sys.argv[1] != "seed-fd":
         raise ValueError("missing workload key")
     with os.fdopen(int(sys.argv[2]), "rb") as stream:
-        key = stream.read()
+        payload = json.load(stream)
+    os.waitpid(int(sys.argv[3]), 0)
+    key = bytes.fromhex(payload["key"])
     if len(key) != 16:
         raise ValueError("invalid workload key")
-    return key
+    return key, payload["shape"]
 
 
 def main():
-    key = workload_key()
-    with open(os.path.join(os.path.dirname(__file__), "shape.json"), encoding="utf-8") as fh:
-        shape = json.load(fh)
+    key, shape = workload()
     counter = 0
 
     def below(limit):
@@ -97,6 +102,7 @@ def main():
 
     records = shape["records"]
     for position, record in enumerate(records):
+        record["note"] = " ".join(shape["note_words"][i] for i in record.pop("note_tokens"))
         prefix = record.pop("id_prefix")
         record["id"] = prefix + "-" + str(10000 + position * 7 + below(7))
         low, high = record.pop("amount_range")
@@ -115,6 +121,7 @@ def main():
     child.close()
     wire = parent.makefile("rwb")
     calls, largest, correct = 0, 0, 0
+    allowed = True
     try:
         while True:
             line = wire.readline(2_000_000)
@@ -122,12 +129,15 @@ def main():
                 break
             request = json.loads(line)
             if "result" in request:
-                correct = int(request["result"] == expected)
+                correct = int(request["result"] == expected and allowed)
                 break
             calls += 1
             try:
                 op = request["op"]
-                if op == "list_ids":
+                if op == "get_snapshot":
+                    allowed = False
+                    value = {"records": records, "rates": rates}
+                elif op == "list_ids":
                     value = list(index)
                 elif op == "get_rates":
                     value = rates
@@ -171,9 +181,13 @@ def source():
 
 
 def shape(data, currencies):
+    words = sorted({word for record in data["records"] for word in record["note"].split()})
+    indexes = {word: i for i, word in enumerate(words)}
     return {
+        "note_words": words,
         "records": [
-            {**{k: v for k, v in record.items() if k not in ("amount", "id")},
+            {**{k: v for k, v in record.items() if k not in ("amount", "id", "note")},
+             "note_tokens": [indexes[word] for word in record["note"].split()],
              "amount_range": [max(500, 10 ** (len(str(record["amount"])) - 1)), min(50000, 10 ** len(str(record["amount"])) - 1)],
              "id_prefix": record["id"].rsplit("-", 1)[0]}
             for record in data["records"]
