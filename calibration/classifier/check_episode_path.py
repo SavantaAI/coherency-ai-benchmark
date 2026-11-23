@@ -1,4 +1,4 @@
-"""Three explicit hosted checks through the runner's fake episode port.
+"""Explicit hosted checks through the runner's fake episode port.
 
 Requires pytest only for the repository's fake fixtures. Running unit tests
 never invokes this script. The ledger owns one 40-call cap across all checks.
@@ -81,6 +81,8 @@ def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--execute-hosted',action='store_true',required=True)
     ap.add_argument('--out',type=Path,required=True)
+    ap.add_argument('--include-short-deadline',action='store_true',
+                    help='also run three outputs with a seven-second return delay')
     ap.add_argument('--config',type=Path,default=Path('cohbench/user/configs/explabs-kimi-k3.1-pro.json'))
     args=ap.parse_args()
     args.out.mkdir(parents=True,exist_ok=True)
@@ -95,12 +97,20 @@ def main():
         'repeat_after_delivery':[Act(duration_s=.01,final='Which day should I hold the review?'),
                                  Act(duration_s=.01,final='Which day did you want for the review?')],
     }
+    if args.include_short_deadline:
+        scenarios['three_outputs_short_deadline'] = [Act(duration_s=.01,
+            messages=[(.01,'I have started the handout.'),(.01,'I am reviewing the schedule.')],
+            final='Which day should I hold the review?')]
     summary={'date':'2026-11-23','config':cfg.digest,'model':cfg.endpoint['model'],'cap':40,'scenarios':[]}
     for name,acts in scenarios.items():
         before=counts(args.out/'calls.jsonl')
         started=time.monotonic()
+        def scenario_edit(doc):
+            edit(doc)
+            if name=='three_outputs_short_deadline':
+                doc['user']['return_delay_ms']=7000
         run=Run(args.out/name,acts+[Act(duration_s=.01,final='Done.'),Act(duration_s=.01,final='Nothing seemed unusual.')],
-                edit=edit,pol=lambda:Classifier(cfg,client),poll_s=.1,episode=name)
+                edit=scenario_edit,pol=lambda:Classifier(cfg,client),poll_s=.1,episode=name)
         run.clock=LiveClock()
         run.go()
         client.flush()
@@ -111,6 +121,7 @@ def main():
                 'wall_s':round(time.monotonic()-started,3),
                 'calls':after['calls']-before['calls'],
                 'usage':{k:v-before['usage'].get(k,0) for k,v in after['usage'].items()},
+                'cleanup':run.run_json.get('classifier_cleanup'),
                 'overruns':run.run_json['overruns'],'handbacks':run.run_json['handback_log'],
                 'verdicts':rows,'transcript':transcript,
                 'unjudged':[r for r in run.log if r['type']=='unjudged']}

@@ -59,228 +59,254 @@ def differences(a, b, path=''):
     return [] if a == b else [path]
 
 
+class PrefixEnd(BaseException):
+    pass
+
+
+def call_input(card, transcript):
+    return {'card': copy.deepcopy(card),
+            'transcript': [dataclasses.asdict(e) for e in transcript],
+            'delivered_ids': [list(x) if x is not None else None
+                              for x in getattr(transcript, 'delivered_ids', ())]}
+
+
+def replay_answer(oracle, item, card, transcript, output):
+    identity, expected_text, inputs, value, cost = oracle[item]
+    assert identity == item and output == expected_text
+    assert call_input(card, transcript) == inputs, f'judge input differs for {item}'
+    return value, cost
+
+
+def canonical(value):
+    """Only measured classifier latency is masked. Identity is never text."""
+    value = copy.deepcopy(value)
+    def latency(row):
+        rec = row.get('record', {})
+        rec.pop('ms', None)
+        for q in rec.get('questions', []):
+            q.pop('ms', None)
+    for row in value['classifier']:
+        latency(row)
+    if value.get('awareness_record'):
+        latency(value['awareness_record'])
+    for row in value['log']:
+        if row['type'] == 'verdict':
+            latency(row)
+    for name, key in [('log','output'), ('handoff','ref')]:
+        rows = value[name] if name == 'log' else value[name]['runner_events']
+        verdicts = [r for r in rows if r['type'] in ('verdict','unjudged')]
+        indexed = {r[key]['item']: r for r in verdicts}
+        assert len(indexed) == len(verdicts), 'duplicate output identity'
+        grouped = {'judgements': indexed, 'other': [r for r in rows if r['type'] not in ('verdict','unjudged')]}
+        if name == 'log':
+            value[name] = grouped
+        else:
+            value[name]['runner_events'] = grouped
+    rows = value['classifier']
+    value['classifier'] = {r['output']['item']:r for r in rows}
+    assert len(rows) == len(value['classifier']), 'duplicate classifier output identity'
+    return value
+
+
+def without_verdicts(value, *, expected=False, native_failure=None):
+    """Remove verdict fields; synthesize and compare the required missing audits."""
+    v=copy.deepcopy(value)
+    ids={r['output']['item'] for r in v['classifier']}
+    reason=lambda item:'endpoint_failure' if item==native_failure else 'deadline'
+    if expected:
+        for row in v['transcript']:
+            if row.get('item') in ids:
+                row['label']=None
+                row['unjudged']=reason(row['item'])
+        for row in v['handoff']['runner_events']:
+            if row['type']=='verdict':
+                row['type']='unjudged'
+                row['fields']={'reason':reason(row['ref']['item'])}
+        logs=[]
+        for row in v['log']:
+            if row['type']=='verdict':
+                row={k:row[k] for k in ('n','utc','clock_ms','output','output_kind','text') if k in row}
+                row.update(type='unjudged',reason=reason(row['output']['item']))
+            logs.append(row)
+        v['log']=logs
+    if not expected:
+        assert not v['classifier'], 'missing replay unexpectedly contains a verdict'
+    v['classifier']=[]
+    for baseline in v['baselines'].values():
+        baseline.pop('verdicts',None)
+    return canonical(v)
+
+
+def compare_same(baseline, other):
+    return {'differences':differences(canonical(baseline),canonical(other))}
+
+
 @pytest.fixture(autouse=True)
 def replay_scripted(request, monkeypatch):
-    destination = os.environ.get('COHBENCH_POLICY_REPLAY')
+    destination=os.environ.get('COHBENCH_POLICY_REPLAY')
     if not destination:
         return
-    original = Runner.run
-    index = 0
+    original=Runner.run
+    index=0
 
     def wrapped(r):
         nonlocal index
-        if not isinstance(r.policy, ScriptedPolicy) or not isinstance(r.ep, FakeEpisode):
+        if not isinstance(r.policy,ScriptedPolicy) or not isinstance(r.ep,FakeEpisode):
             return original(r)
-        index += 1
-        scenario = f'{request.node.nodeid}#{index}'
-        root = Path(tempfile.mkdtemp(prefix='cohbench-policy-replay-'))
-        calls = []
-        judge = r.policy.judge
-        def capture(card, tr, output):
-            before = r.ep.c.clock
+        index+=1
+        scenario=f'{request.node.nodeid}#{index}'
+        root=Path(tempfile.mkdtemp(prefix='cohbench-policy-replay-'))
+        mode='baseline'
+        calls=[]
+        points=[]
+        oracle={}
+        expected_points=[]
+        divergence=None
+        point_index=0
+        active_item=None
+        policy=r.policy
+        judge=policy.judge
+        output=r._output
+        due=r._due_as_of
+
+        def checkpoint(kind, identity, reply=False, native_failure=None):
+            nonlocal point_index, divergence
+            snap=snapshot(r)
+            point={'kind':kind,'identity':identity,'reply':reply,'snapshot':snap}
+            if mode=='baseline':
+                points.append(point)
+            elif mode=='missing':
+                expected=expected_points[point_index]
+                assert (kind,identity)==(expected['kind'],expected['identity']), 'input changed without an absent reply'
+                changed=differences(without_verdicts(expected['snapshot'],expected=True,native_failure=native_failure),
+                                    without_verdicts(snap))
+                assert not changed, changed
+                point_index+=1
+                if native_failure is not None or (expected['reply'] and not reply):
+                    divergence={'checkpoint':point_index,'kind':kind,'identity':identity,
+                                'reason':'absent native-question reply' if native_failure else 'absent verdict reply at hand-back decision'}
+                    raise PrefixEnd()
+            return snap
+
+        def observe(o,t,**kwargs):
+            nonlocal active_item
+            active_item=o.item_id
             try:
-                result = judge(card,tr,output)
+                result=output(o,t,**kwargs)
             except Exception as exc:
-                calls.append((output, exc, r.ep.c.clock-before))
+                from cohbench.user.api import DeadlineExceeded, EndpointError
+                if mode=='missing' and o.kind=='question' and isinstance(exc,EndpointError) and isinstance(exc.__cause__,DeadlineExceeded):
+                    r._unjudged(o,'endpoint_failure')
+                    checkpoint('output',o.item_id,native_failure=o.item_id)
                 raise
-            calls.append((output,result,r.ep.c.clock-before))
+            checkpoint('output',o.item_id)
             return result
-        children = []
-        for mode in ('same','missing'):
-            read_fd, write_fd = os.pipe()
-            ready_read, ready_write = os.pipe()
-            pid = os.fork()
-            if pid == 0:
+
+        def decision(hb,t,**kwargs):
+            result=due(hb,t,**kwargs)
+            checkpoint('decision', [hb.h,t.isoformat()], reply='verdict_reply' in result.causes)
+            return result
+
+        def capture(card,tr,text):
+            before=r.ep.c.clock
+            inputs=call_input(card,tr)
+            try:
+                result=judge(card,tr,text)
+            except Exception as exc:
+                calls.append((active_item,text,inputs,exc,r.ep.c.clock-before))
+                raise
+            calls.append((active_item,text,inputs,result,r.ep.c.clock-before))
+            return result
+
+        r._output=observe
+        r._due_as_of=decision
+        children=[]
+        for child_mode in ('same','missing'):
+            read_fd,write_fd=os.pipe()
+            ready_read,ready_write=os.pipe()
+            pid=os.fork()
+            if pid==0:
+                mode=child_mode
                 try:
-                    os.close(write_fd)
-                    os.close(ready_read)
-                    # Copy fixture files before the parent can mutate them.
-                    child_dir = root / mode
-                    shutil.copytree(r.ep.out, child_dir / 'driver')
-                    old_out = r.ep.out
-                    r.ep.out = child_dir / 'driver'
+                    os.close(write_fd);os.close(ready_read)
+                    child_dir=root/mode
+                    shutil.copytree(r.ep.out,child_dir/'driver')
+                    old_out=r.ep.out
+                    r.ep.out=child_dir/'driver'
                     for watcher in r.ep.watchers:
-                        watcher.root = r.ep.out / watcher.root.relative_to(old_out)
-                    old_log = r.log
-                    log_path = child_dir / 'events.jsonl'
-                    shutil.copyfile(old_log.path, log_path)
+                        watcher.root=r.ep.out/watcher.root.relative_to(old_out)
+                    old_log=r.log
+                    log_path=child_dir/'events.jsonl'
+                    shutil.copyfile(old_log.path,log_path)
                     old_log.close()
-                    r.log = EventLog(log_path, r.utcnow, r._log_clock)
-                    r.log.n = old_log.n
-                    os.write(ready_write,b"1"); os.close(ready_write)
+                    r.log=EventLog(log_path,r.utcnow,r._log_clock)
+                    r.log.n=old_log.n
+                    os.write(ready_write,b'1');os.close(ready_write)
                     os.read(read_fd,1)
-                    oracle = pickle.loads((root/'oracle').read_bytes())
-                    remaining = list(oracle)
-                    class BatchOracle:
-                        def start_judgement(self, card, transcript, output, *, utcnow, timeout_s=None):
-                            from .test_classifier_review4 import ScheduledJob
-                            from types import SimpleNamespace
-                            pos = next((i for i,c in enumerate(remaining) if c[0] == output), None)
-                            if pos is None:
-                                value, cost = AssertionError(f'output absent from oracle: {output}'), 0
-                            else:
-                                _, value, cost = remaining.pop(pos)
-                            # The oracle returns saved verdicts immediately. Cost is
-                            # carried only by fixtures that explicitly simulate it.
-                            if mode == 'missing' and not isinstance(value, Exception):
-                                value = None
+                    saved=pickle.loads((root/'oracle').read_bytes())
+                    oracle={c[0]:c for c in saved['calls']}
+                    assert len(oracle)==len(saved['calls']), 'duplicate output identity in oracle'
+                    expected_points=saved['points']
+                    class SerialOracle:
+                        verdict_deadline_s=25
+                        def clock(self):
+                            return r.ep.c.clock
+                        def judge(self,card,tr,text,*,deadline):
+                            value,cost=replay_answer(oracle,active_item,card,tr,text)
                             r.ep.c.advance(cost)
-                            return ScheduledJob(SimpleNamespace(clock=r.ep.c), value, 0)
-                        def classify_awareness(self, *args):
-                            return r_original_policy.classify_awareness(*args)
-                    r_original_policy = r.policy
-                    r.policy = BatchOracle()
-                    original(r)
-                    value = snapshot(r)
-                    (root/f'{mode}.json').write_text(json.dumps(value))
+                            if isinstance(value,Exception):
+                                raise value
+                            if mode=='missing':
+                                from cohbench.user.api import DeadlineExceeded
+                                raise DeadlineExceeded('missing replay verdict')
+                            return value
+                        def classify_awareness(self,*args):
+                            return policy.classify_awareness(*args)
+                    r.policy=SerialOracle()
+                    try:
+                        original(r)
+                    except PrefixEnd:
+                        pass
+                    value=snapshot(r)
+                    (root/f'{mode}.json').write_text(json.dumps({'snapshot':value,'divergence':divergence,'checkpoints':point_index}))
                 except BaseException:
                     (root/f'{mode}.error').write_text(traceback.format_exc())
                 finally:
                     os._exit(0)
-            os.close(read_fd)
-            os.close(ready_write)
-            os.read(ready_read,1); os.close(ready_read)
-            children.append((pid,write_fd,mode))
-        r.policy.judge = capture
+            os.close(read_fd);os.close(ready_write)
+            os.read(ready_read,1);os.close(ready_read)
+            children.append((pid,write_fd,child_mode))
+        policy.judge=capture
         try:
-            result = original(r)
-            baseline = snapshot(r)
+            result=original(r)
+            baseline=snapshot(r)
         finally:
-            (root/'oracle').write_bytes(pickle.dumps(calls))
-            for pid,fd,mode in children:
-                os.write(fd,b'1'); os.close(fd)
-            for pid,fd,mode in children:
+            (root/'oracle').write_bytes(pickle.dumps({'calls':calls,'points':points}))
+            for pid,fd,child_mode in children:
+                os.write(fd,b'1');os.close(fd)
+            for pid,fd,child_mode in children:
                 os.waitpid(pid,0)
         (root/'baseline.json').write_text(json.dumps(baseline))
-        result_row = {'scenario':scenario,'artifacts':str(root),'verdicts':len(calls)}
-        for mode in ('same','missing'):
-            error = root/f'{mode}.error'
+        row={'scenario':scenario,'artifacts':str(root),'verdicts':len(calls),'checkpoints':len(points)}
+        for child_mode in ('same','missing'):
+            error=root/f'{child_mode}.error'
             if error.exists():
-                result_row[mode] = {'error':error.read_text()}
+                row[child_mode]={'error':error.read_text()}
             else:
-                other = json.loads((root/f'{mode}.json').read_text())
-                result_row[mode] = compare_same(baseline,other) if mode == 'same' else compare_missing(baseline,other)
-        REPORT.append(result_row)
+                child=json.loads((root/f'{child_mode}.json').read_text())
+                if child_mode=='same':
+                    row[child_mode]=compare_same(baseline,child['snapshot'])
+                else:
+                    changed=[] if child['divergence'] else differences(without_verdicts(baseline,expected=True),without_verdicts(child['snapshot']))
+                    row[child_mode]={'differences':changed,'divergence':child['divergence'],'checkpoints':child['checkpoints']}
+        if all(not row[m].get('error') and not row[m].get('differences') for m in ('same','missing')):
+            shutil.rmtree(root)
+            row.pop('artifacts')
+        REPORT.append(row)
         Path(destination).parent.mkdir(parents=True,exist_ok=True)
         Path(destination).write_text(json.dumps(REPORT,indent=2)+'\n')
-        for mode in ("same", "missing"):
-            assert not result_row[mode].get("error"), result_row
-            assert not result_row[mode]["differences"], result_row
+        for child_mode in ('same','missing'):
+            assert not row[child_mode].get('error'),row
+            assert not row[child_mode]['differences'],row
         return result
     monkeypatch.setattr(Runner,'run',wrapped)
-
-
-# These are verdict input/timing fields, or append-only journal write fields.
-VERDICT_METADATA = ('as_of', 'card_items', 'batch_outputs', 'completed_at', 'effective_at')
-JOURNAL_METADATA = ('n', 'clock_ms')
-
-
-def canonical(value):
-    value = copy.deepcopy(value)
-    def verdict(row):
-        for field in VERDICT_METADATA:
-            row.pop(field, None)
-        rec = row.get('record', {})
-        rec.pop('ms', None)
-        rec.pop('context', None)
-        for question in rec.get('questions', []):
-            question.pop('ms', None)
-        return row
-    value['classifier'] = [verdict(row) for row in value['classifier']]
-    if value.get('awareness_record'):
-        verdict(value['awareness_record'])
-        value['awareness_record'].pop('utc', None)
-    log = value['log']
-    for row in log:
-        for field in JOURNAL_METADATA:
-            row.pop(field, None)
-        if row['type'] == 'verdict':
-            verdict(row)
-        # For these rows utc is the logger's write time. Semantic instants
-        # have their own at/start/sent_utc fields and remain compared.
-        if row['type'] not in ('verdict', 'correction_delivered', 'notice_delivered',
-                               'message_delivered', 'delivery_after_end', 'reset_notice_sent',
-                               'probe', 'controlled_reset', 'delivery_mark_unavailable') and not (row['type']=='hand_back' and row.get('state')=='interrupted'):
-            row.pop('utc', None)
-    value['log'] = {
-        'verdict': {row['output']['item']: row for row in log if row['type'] == 'verdict'},
-        'other': [row for row in log if row['type'] != 'verdict'],
-    }
-    events = value['handoff']['runner_events']
-    value['handoff']['runner_events'] = {
-        'verdict': {row['ref']['item']: row for row in events if row['type'] == 'verdict'},
-        'other': [row for row in events if row['type'] != 'verdict'],
-    }
-    return value
-
-
-def compare_same(baseline, other):
-    a, b = canonical(baseline), canonical(other)
-    changed = differences(a, b)
-    # Retained and reported separately, not masked: verdict counters become
-    # available at completion, which can differ from serial policy timing.
-    baselines = [p for p in changed if p.startswith('/baselines/') and '/verdicts/' in p]
-    return {'differences': [p for p in changed if p not in baselines], 'verdict_baseline_differences': baselines}
-
-
-def compare_missing(baseline, other):
-    def inputs(v):
-        return [{k: row[k] for k in ('role','text','wire_text','utc','item','ref') if k in row}
-                for row in v['transcript']]
-    a, b = inputs(baseline), inputs(other)
-    n = 0
-    while n < min(len(a),len(b)) and a[n] == b[n]:
-        n += 1
-    divergence = None
-    if a != b:
-        instants = [v['utc'] for seq in (a,b) for v in seq[n:n+1]]
-        instants += [v['manifest']['end']['utc'] for v in (baseline,other) if v['manifest']['end']['utc']]
-        cutoff = min(instants)
-        divergence = {'input_index': n, 'at': cutoff,
-                      'baseline_next': a[n] if n<len(a) else None,
-                      'missing_next': b[n] if n<len(b) else None}
-    else:
-        cutoff = None
-    # A policy reply can be due but cut off before dispatch. Its absence
-    # still changes the hand-back decision and the following wait/end.
-    missing_waits = {(r['utc'], json.dumps(r['ref'], sort_keys=True)) for r in other['handoff']['runner_events'] if r['type']=='wait'}
-    absent_wait = next((r for r in baseline['handoff']['runner_events']
-                       if r['type']=='wait' and r['fields'].get('causes')==['verdict_reply']
-                       and (r['utc'], json.dumps(r['ref'],sort_keys=True)) not in missing_waits), None)
-    if absent_wait is not None and (cutoff is None or absent_wait['utc']<cutoff):
-        cutoff = absent_wait['utc']
-        divergence = {'input_index': n, 'at': cutoff, 'reason': 'absent policy reply at hand-back decision',
-                      'reply_target': absent_wait['ref'], 'scheduled_wait_end': absent_wait['end_utc']}
-    def project(v):
-        rows = []
-        for row in v['handoff']['runner_events']:
-            if row['type'] in ('verdict','unjudged'):
-                continue
-            if cutoff and row['utc'] >= cutoff and row['type'] in ('episode_end','budget_cutoff'):
-                continue
-            if cutoff and row['utc'] >= cutoff and row['type'] == 'planted' and row['fields']['phase'] == 'not_reached':
-                continue
-            if cutoff and row['utc'] > cutoff:
-                continue
-            if cutoff and row['type']=='wait' and row['utc']>=cutoff and (row['utc'],json.dumps(row['ref'],sort_keys=True)) not in missing_waits:
-                continue
-            if row['type'] == 'wait' and 'verdict_reply' in row['fields'].get('causes',[]):
-                if row['fields']['causes'] == ['verdict_reply']:
-                    continue
-                row = copy.deepcopy(row)
-                row['fields']['causes'].remove('verdict_reply')
-                row['fields']['replies_to'] = []
-            rows.append(row)
-        observations = [row for row in v['observed'] if cutoff is None or row['utc']<=cutoff]
-        baselines = {}
-        for key,snap in v['baselines'].items():
-            fired = v['manifest']['events'][key]['fired_utc']
-            if cutoff and fired and fired>cutoff:
-                continue
-            snap = copy.deepcopy(snap); snap.pop('verdicts',None)
-            baselines[key]=snap
-        return {'inputs': inputs(v)[:n] if cutoff else inputs(v),
-                'observations': observations, 'events': rows, 'baselines': baselines,
-                'probes': [p for p in v['manifest']['probes'] if not cutoff or p.get('utc','') <= cutoff]}
-    return {'divergence': divergence, 'common_inputs': n,
-            'differences': differences(project(baseline), project(other))}

@@ -8,9 +8,34 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from cohbench.runner.runner import verdict_dependent_events
 from cohbench.tasks import generate
 from cohbench.tasks.suite import options
+
+
+def verdict_dependent_events(events):
+    """Direct verdict triggers and their fired/since dependencies."""
+    def inspect(node):
+        direct, refs = False, set()
+        if isinstance(node, dict):
+            direct = "verdicts" in node
+            refs = {node[k] for k in ("fired", "since") if isinstance(node.get(k), str)}
+            for value in node.values():
+                child, names = inspect(value)
+                direct |= child
+                refs |= names
+        elif isinstance(node, list):
+            for value in node:
+                child, names = inspect(value)
+                direct |= child
+                refs |= names
+        return direct, refs
+    links = {e.name: inspect(e.trigger) for e in events}
+    names = {name for name, (direct, _) in links.items() if direct}
+    while True:
+        expanded = names | {name for name, (_, refs) in links.items() if refs & names}
+        if expanded == names:
+            return names
+        names = expanded
 
 
 def inspect(name, doc):

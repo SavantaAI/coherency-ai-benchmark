@@ -37,6 +37,8 @@ import dataclasses
 import json
 import signal
 import time
+from cohbench.delivery import delivery_instant
+
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterator
@@ -795,6 +797,12 @@ class Episode:
             pass
 
 
+        try:
+            with docker_deadline(at):
+                self._mark_deliveries(projection or self._snapshot(at, s.thread_id), at)
+        except (T3Error, DockerError):
+            pass
+
     def _tree(self, at: float) -> tuple[dict[str, Any], dict[str, Any]]:
         """One projection of the whole thread tree and its state
         (`turns.busy_state`, the one definition of busy). A failed read of the
@@ -1082,6 +1090,8 @@ class Episode:
                 s.status = "unknown"
                 raise self._fail(f"answer {s.command_id}: not known to be taken at the deadline ({last})")
             time.sleep(max(0.0, min(0.3, _left(at))))
+        delivered, _ = delivery_instant(question.raw, request=req, strict=True)
+        s.delivered_utc = delivered.isoformat().replace("+00:00", "Z") if delivered else None
         self.answers[question.request_id] = text
         self.answers[question.item_id] = text
         return s
@@ -1292,7 +1302,16 @@ class Episode:
         not known. `Sent.delivery` holds the same once observed."""
         rec = next((c for c in self.corrections if c["message_id"] == sent.message_id), None)
         if rec is None:
-            raise EpisodeError("not a correction this episode sent")
+            if not any(s is sent for s in self.sent):
+                raise EpisodeError("not a message this episode sent")
+            if sent.delivered_utc is None and self.t3 is not None:
+                at = time.monotonic() + timeout_s
+                try:
+                    with docker_deadline(at):
+                        self._mark_deliveries(self._snapshot(at, sent.thread_id), at)
+                except (T3Error, DockerError):
+                    pass
+            return sent.delivery or Delivery(sent.delivered_utc)
         at = time.monotonic() + timeout_s
         if (not rec.get("delivered_utc") or sent.run_id is None or not (rec.get("delivery") or {}).get("mark_taken")) and self.t3 is not None and sent.thread_id == self.thread_id:
             try:
@@ -1736,8 +1755,13 @@ class Episode:
             else:
                 item = next((i for i in proj.get("turnItems", []) if i["type"] == "user_message" and str(i["id"]).endswith(str(c["message_id"]))), None)
             if item and item.get("completedAt"):
+                run = next((r for r in proj.get("runs", []) if r.get("id") == item.get("runId")), None)
+                receipt = {"inputIntent": "steer", **item}
+                instant, _ = delivery_instant(receipt, run=run, restart=c.get("requested") in ("interrupt_restart", "interrupt_then_queue"), strict=True)
+                if instant is None:
+                    continue
                 c["mark_tries"] = c.get("mark_tries", 0) + 1
-                c["delivered_utc"] = item["completedAt"]
+                c["delivered_utc"] = item["completedAt"] if _ts(item["completedAt"]) == instant else instant.isoformat().replace("+00:00", "Z")
                 label = f"correction-{c['message_id'][:8]}"
                 ack = self._mark(label, at, instant=c["delivered_utc"])
                 if ack is None:
@@ -1752,6 +1776,28 @@ class Episode:
                 for s in self.sent:
                     if s.message_id == c["message_id"]:
                         s.delivered_utc, s.delivery = c["delivered_utc"], d
+
+        for sent in self.sent:
+            if sent.delivered_utc is not None:
+                continue
+            if sent.kind == "answer":
+                item = next((i for i in proj.get("turnItems", []) if i.get("id") == sent.request_id), None)
+                req = next((r for r in proj.get("runtimeRequests", []) if r.get("id") == sent.rpc_request_id), None)
+                if item is None or req is None or req.get("status") != "resolved":
+                    continue
+                instant, _ = delivery_instant(item, request=req, strict=True)
+            elif sent.message_id:
+                item = next((i for i in proj.get("turnItems", []) if i.get("type") == "user_message"
+                             and (i.get("messageId") == sent.message_id or str(i.get("id", "")).endswith(sent.message_id))), None)
+                if item is None:
+                    continue
+                run = next((r for r in proj.get("runs", []) if r.get("id") == item.get("runId")), None)
+                instant, _ = delivery_instant(item, run=run, restart=sent.mechanism in ("interrupt_restart", "interrupt_then_queue"), strict=True)
+            else:
+                continue
+            if instant is not None:
+                sent.delivered_utc = instant.isoformat().replace("+00:00", "Z")
+                sent.delivery = Delivery(sent.delivered_utc)
 
     def _user_channel(self, tree: dict[str, Any], tid: str, at: float) -> tuple[list[dict[str, Any]], list[str], Any]:
         """Completed send_to_user calls in the observed tree, exact tool

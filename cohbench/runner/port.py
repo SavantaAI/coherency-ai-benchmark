@@ -151,6 +151,7 @@ class Sent:
     delivery_quiescent: bool | None = None  # and quiescent
     delivery_straddled: int | None = None  # the batch straddling the delivery's instant, or None (D-037)
     delivery_straddled_last: int | None = None  # the last batch of that straddling run (equal to `delivery_straddled` when one)
+    delivery_pending: bool = False  # live driver has accepted but not observed receipt
     submitted: dict[str, str] | None = None  # an answer: the driver's own normalised map, question id to the value sent (an option's value)
 
 

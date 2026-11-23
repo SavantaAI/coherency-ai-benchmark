@@ -27,10 +27,7 @@ in step 5; otherwise `unanswerable`.
 
 from __future__ import annotations
 
-import copy
 import math
-import threading
-import time
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
@@ -172,10 +169,12 @@ class Classifier:
 
     # ----- the verdict -------------------------------------------------------------------
 
-    def judge(self, card: Mapping[str, Any], transcript: Sequence[Entry], output: str, *, deadline=None, client=None) -> Judgement:
-        client = client or self.client
+    def judge(self, card: Mapping[str, Any], transcript: Sequence[Entry], output: str, *, deadline=None) -> Judgement:
+        client = self.client
         t0 = client.clock()
         deadline = min(deadline if deadline is not None else math.inf, t0 + self.cfg.limits["verdict_deadline_s"])
+        if client.clock() >= deadline:
+            raise DeadlineExceeded("the judgement deadline has arrived")
         with client.session():
             ctx, note = self._layout(card, transcript, output)
             ch = _Chain(client, [{"role": "system", "content": P.SYSTEM}], deadline, pending=ctx)
@@ -189,55 +188,15 @@ class Classifier:
                 raise DeadlineExceeded("the verdict's deadline passed before the verdict was complete")
             return j
 
-    def start_judgement(self, card, transcript, output, *, utcnow, timeout_s=None):
-        from .job import JudgementJob
-        return JudgementJob(self, copy.deepcopy(card), transcript, output, utcnow=utcnow, timeout_s=timeout_s)
-
     @property
     def verdict_deadline_s(self):
         return self.cfg.limits["verdict_deadline_s"]
 
-    def judge_batch(self, card, transcript, outputs, *, timeout_s):
-        """Independent judgements with one cutoff and stable output positions.
+    def clock(self):
+        return self.client.clock()
 
-        Late daemon workers cannot change delivery state or runner records.
-        The real monotonic wait also bounds test clients with stationary clocks.
-        """
-        budget = max(0, min(timeout_s, self.cfg.limits["verdict_deadline_s"]))
-        cutoff = self.client.clock() + budget
-        wall_cutoff = time.monotonic() + budget
-        results = [None] * len(outputs)
-        done = [threading.Event() for _ in outputs]
-        closed = threading.Event()
-        gate = threading.Lock()
-
-        def work(index, output):
-            try:
-                result = self.judge(copy.deepcopy(card), transcript, output,
-                                    deadline=cutoff, client=self.client.fork())
-            except DeadlineExceeded:
-                result = None
-            except Exception as exc:
-                result = exc
-            with gate:
-                if not closed.is_set() and self.client.clock() <= cutoff and time.monotonic() <= wall_cutoff:
-                    results[index] = result
-                done[index].set()
-
-        if budget:
-            for i, output in enumerate(outputs):
-                if self.client.clock() >= cutoff or time.monotonic() >= wall_cutoff:
-                    break
-                threading.Thread(target=work, args=(i, output), daemon=True).start()
-            for event in done:
-                event.wait(max(0, min(cutoff - self.client.clock(), wall_cutoff - time.monotonic())))
-        with gate:
-            closed.set()
-            answer = list(results)
-        for result in answer:
-            if isinstance(result, Exception):
-                raise result
-        return answer
+    def flush(self):
+        return self.client.flush()
 
     def _decide(self, ch: _Chain, card: Mapping[str, Any], transcript: Sequence[Entry]) -> tuple[str, list[str], int | None, str | None, str]:
         if ch.ask(P.Q_REQUEST, ("A", "B"), "request") == "B":

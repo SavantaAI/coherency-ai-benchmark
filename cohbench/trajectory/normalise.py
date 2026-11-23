@@ -25,6 +25,8 @@ from __future__ import annotations
 import json
 import posixpath
 import re
+from cohbench.delivery import delivery_instant
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -546,7 +548,7 @@ class _Builder:
             self.start_turn(agent, ts0, run)
         resume_at: datetime | None = None
         last_ts = ts0
-        ctx = {"new_context": new_context, "declared": declared, "restart": continues, "run": run}
+        ctx = {"new_context": new_context, "declared": declared, "restart": continues, "receipt_restart": continues or self.turn_end_kind.get(agent) == "interrupted", "run": run}
         for item in items:
             if agent not in self.open_turn:
                 if resume_at is None:
@@ -671,6 +673,8 @@ class _Builder:
             self.segment_user_seen = True
         if kind in F.DELIVERED_KINDS:
             ts = self.correction_time(item, ts, ctx, kind)
+        else:
+            ts, _ = delivery_instant(item, queued=ts, run=ctx["run"], restart=ctx["receipt_restart"])
         e = self.ev("user_message", agent, ts, item, turn=turn, kind=kind, text=text)
         e["_message"] = item.get("messageId")
         for r in removed:
@@ -685,21 +689,9 @@ class _Builder:
         restarted run's start, else the time it was queued."""
         mid = item.get("messageId")
         run = ctx["run"] or {}
-        done = _ts(item.get("completedAt"))
-        if mid in self.delivered or item["id"] in self.delivered:
-            t, src = self.delivered.get(mid) or self.delivered[item["id"]], "runner"
-        elif item.get("inputIntent") == "steer" and done and done > queued:
-            t, src = done, "T3 item completion"  # T3 completes a steer item when the harness takes it
-        elif item["id"] in self.native_user_time:
-            t, src = self.native_user_time[item["id"]], "harness session"
-        elif ctx["restart"] and _ts(run.get("startedAt")):
-            t, src = _ts(run.get("startedAt")), "restarted run start"
-        else:
-            t, src = queued, "unknown: queue time used"
-        # The runner and watcher name one delivery instant. T3 may record
-        # the message later, after dispatch, and must not move that instant.
-        if src != "runner":
-            t = max(t, queued)
+        t, src = delivery_instant(item, queued=queued, run=run,
+                                  recorded=self.delivered.get(mid) or self.delivered.get(item["id"]),
+                                  native=self.native_user_time.get(item["id"]), restart=ctx["restart"])
         self.m["steering"].append({"_message": item["id"], "mechanism": "restart" if ctx["restart"] else ("native" if item.get("inputIntent") == "steer" else "other"),
                                    "queued_utc": _iso(queued), "delivered_utc": _iso(t), "delivery_source": src, "kind": kind})
         return t
@@ -971,13 +963,13 @@ class _Builder:
                                  "(pass Hints.answers, or the harness session; Hints.audit_only marks it missing)")
         if status == "open":
             return None
-        ans_ts = max(_ts(req.get("resolvedAt")) or _ts(item.get("completedAt")) or ts, ts)
+        ans_ts, _ = delivery_instant(item, queued=ts, request=req)
         # The runner dated the delivery of what it sent as the answer (a
         # correction or a reopen merged into it): the answer and the resumed
         # turn take that time, never before the question.
         given = _first(self.delivered, item["id"], item.get("requestId"))
         if given is not None:
-            ans_ts = max(given, ts)  # and no later than the resumed work's first item (normalise clamps it)
+            ans_ts, _ = delivery_instant(item, queued=ts, request=req, recorded=max(given, ts))
         akind = self.h.user_kinds.get(item.get("requestId") or "") or self.h.user_kinds.get(item["id"]) or "reply"
         if akind not in F.ANSWER_KINDS:
             raise NormaliseError(f"question {item['id']}: an answer counts as one of {F.ANSWER_KINDS}, not {akind!r}")

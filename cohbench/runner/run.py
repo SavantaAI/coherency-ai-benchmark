@@ -216,7 +216,17 @@ def _drive(task: Task, cfg: RunConfig, s: _State, policy: Any, log: EventLog, d:
     ep = s.ep
     assert ep is not None
     r = s.runner = Runner(task, cfg, ep, policy, log, sleep=sleep, utcnow=utcnow)
-    r.run()
+    try:
+        r.run()
+    finally:
+        flush = getattr(policy, "flush", None)
+        if callable(flush):
+            try:
+                r.classifier_cleanup = flush()
+                log.write("classifier_cleanup", **(r.classifier_cleanup or {}))
+            except Exception as exc:
+                log.write("error", where="classifier cleanup", error=repr(exc))
+                s.fail("runner_abort", "classifier cleanup failed")
     assert r.end is not None
     if r.end["reason"] not in USABLE_ENDS:
         s.fail(r.end["reason"], r.end["detail"])

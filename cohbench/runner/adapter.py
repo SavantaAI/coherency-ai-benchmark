@@ -165,11 +165,11 @@ class DriverEpisode:
             raise mapped from exc
 
     def _port_sent(self, s: Any) -> Sent:
-        if s.message_id:
-            self._sent[s.message_id] = s
+        if s.message_id or s.request_id:
+            self._sent[s.message_id or s.request_id] = s
         sub = getattr(s, "submitted", None)
         return Sent(utc=s.sent_utc, clock_s=s.episode_s, run_id=s.run_id, thread_id=s.thread_id, message_id=s.message_id,
-                    request_id=s.request_id, mechanism=s.mechanism, delivered_utc=s.delivered_utc, delivery_mark=getattr(s, "delivery_mark", None),
+                    request_id=s.request_id, mechanism=s.mechanism, delivered_utc=s.delivered_utc, delivery_pending=s.delivered_utc is None, delivery_mark=getattr(s, "delivery_mark", None),
                     submitted=dict(sub) if isinstance(sub, dict) else None)
 
     @staticmethod
@@ -325,7 +325,7 @@ class DriverEpisode:
 
 
     def correction_delivery(self, sent: Sent) -> Delivery | None:
-        ds = self._sent.get(sent.message_id or "")
+        ds = self._sent.get(sent.message_id or sent.request_id or "")
         if ds is None:
             return None
         d = self._delivery(self._call(self.ep.correction_delivery, ds), ds)

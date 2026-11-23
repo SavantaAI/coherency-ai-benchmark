@@ -189,6 +189,7 @@ def run_manifest(task: Task, cfg: RunConfig, r: Runner | None, desc: Description
         "messages_sent": len(r.sends) if r else 0,
         "export": export,
         "close": close,
+        **({"classifier_cleanup": r.classifier_cleanup} if r is not None and r.classifier_cleanup is not None else {}),
         "config": {"poll_s": cfg.poll_s, "stall_s": cfg.stall_s, "max_turns": cfg.max_turns, "awareness_timeout_s": cfg.awareness_timeout_s,
                    "usage_grace_s": cfg.usage_grace_s},
     }

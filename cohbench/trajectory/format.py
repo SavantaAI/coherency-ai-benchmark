@@ -115,7 +115,7 @@ VERDICT_LABELS = ("answerable", "already_given", "unanswerable", "no_request")
 WAIT_ENDS = ("reply", "budget_cutoff", "episode_end", "open")
 # Why an output on the user channel has no verdict: delivered so close to a
 # cutoff that the runner recorded none.
-UNJUDGED_REASONS = ("cutoff",)
+UNJUDGED_REASONS = ("cutoff", "deadline", "endpoint_failure")
 # A hand-back (D-024, D-028): the agent handed control back by finishing its
 # turn, or by a pending request (a question or secret request through a
 # tool, the main agent's or a child's, which pauses the run).

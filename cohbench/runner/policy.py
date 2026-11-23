@@ -1,12 +1,10 @@
 """The user policy (contract 2): how the simulated user judges what the agent
 showed it.
 
-A policy has two required calls. An asynchronous policy may also implement
-`start_judgement(card, transcript, output, *, utcnow, timeout_s=None)`.
-It returns a job with ready(), wait(), tighten(deadline), value and
-completed_at. The runner freezes each arrival snapshot, observes outputs
-without waiting, and applies completed jobs in output order. A missing
-result at the deadline is None; other failures remain exceptions.
+A policy has two required calls. A deadline-aware classifier also exposes
+`verdict_deadline_s` and `clock()`. Its `judge` accepts an absolute `deadline`
+on that clock. The runner calls it synchronously; scripted policies retain
+these original two calls.
 
 - `judge(card, transcript, output)`: one user-channel output (a final
   message, a text sent through the driver's message tool, a pending question
@@ -101,6 +99,14 @@ PolicyFactory = Callable[[], UserPolicy]
 
 class PolicyError(RuntimeError):
     """The policy raised, or returned something the runner cannot use."""
+
+
+class EndpointError(PolicyError):
+    """The classifier endpoint failed before a verdict was available."""
+
+
+class DeadlineExceeded(EndpointError):
+    """The absolute judgement deadline arrived before completion."""
 
 
 def checked(j: Any) -> Judgement:

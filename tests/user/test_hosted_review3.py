@@ -172,37 +172,3 @@ def test_r3_b2_limit_documents_reservation_write_crossing_cutoff():
     text = " ".join((ROOT / "cohbench/user/README.md").read_text().split())
     assert "reservation write crosses the cutoff" in text
     assert "still consumes one slot" in text
-
-
-@pytest.mark.parametrize("reverse", [False, True])
-def test_r3_b1_classifier_workers_share_cutoff_and_discard_late_result(reverse):
-    barrier, release = threading.Barrier(3), threading.Event()
-    cutoffs, snapshots = [], []
-
-    class Controlled(Classifier):
-        def judge(self, card, transcript, output, *, deadline, client):
-            cutoffs.append(deadline)
-            snapshots.append(transcript)
-            barrier.wait(timeout=0.5)
-            if output == "slow":
-                release.wait(0.5)
-            elif (output == "first") == reverse:
-                time.sleep(0.01)
-            return Judgement(
-                "answerable", answer_ids=(output,), record={"output": output}
-            )
-
-    cfg = parse(config_doc())
-    pol = Controlled(cfg, Client(cfg, KEY))
-    try:
-        results = pol.judge_batch({}, (), ["first", "slow", "last"], timeout_s=0.1)
-        assert [j.answer_ids if j else None for j in results] == [
-            ("first",),
-            None,
-            ("last",),
-        ]
-        assert len(set(cutoffs)) == 1 and snapshots == [()] * 3
-    finally:
-        release.set()
-    time.sleep(0.02)
-    assert results[1] is None
