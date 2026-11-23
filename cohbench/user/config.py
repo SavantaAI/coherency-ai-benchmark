@@ -118,20 +118,27 @@ def parse(doc: Any, path: Path | None = None) -> Config:
     extra = set(doc) - {"format", "version", "description", "endpoint", "prompt", "sampling", "schema", "limits", "context"}
     if extra:
         raise ConfigError(f"config: unknown fields {sorted(extra)}")
-    e = _obj(doc, "endpoint", "config", {"base_url", "model", "provider", "expect"}, {"extra_body"})
+    e = _obj(doc, "endpoint", "config", {"base_url", "model", "provider", "expect"}, {"extra_body", "protocol"})
     _text(e["base_url"], "config.endpoint.base_url")
     u = urllib.parse.urlsplit(e["base_url"])
     if not ((u.scheme == "https" and u.hostname) or (u.scheme == "http" and u.hostname == "127.0.0.1")) or u.username or u.password:
         raise ConfigError("config.endpoint.base_url: https, or http on 127.0.0.1 for a local stand-in, with no credentials")
     _text(e["model"], "config.endpoint.model")
+    protocol = e.get("protocol", "openrouter")
+    if protocol not in ("openrouter", "openai"):
+        raise ConfigError("config.endpoint.protocol: openrouter or openai")
     pv = e["provider"]
-    if not isinstance(pv, Mapping):
-        raise ConfigError("config.endpoint.provider: an object naming one provider")
-    order = pv.get("order")
-    if not (isinstance(order, list) and len(order) == 1 and isinstance(order[0], str) and order[0].strip()):
-        raise ConfigError("config.endpoint.provider.order: exactly one provider")
-    if pv.get("allow_fallbacks") is not False:
-        raise ConfigError("config.endpoint.provider.allow_fallbacks: false")
+    if protocol == "openai":
+        if pv is not None:
+            raise ConfigError("config.endpoint.provider: null for a direct OpenAI endpoint")
+    else:
+        if not isinstance(pv, Mapping):
+            raise ConfigError("config.endpoint.provider: an object naming one provider")
+        order = pv.get("order")
+        if not (isinstance(order, list) and len(order) == 1 and isinstance(order[0], str) and order[0].strip()):
+            raise ConfigError("config.endpoint.provider.order: exactly one provider")
+        if pv.get("allow_fallbacks") is not False:
+            raise ConfigError("config.endpoint.provider.allow_fallbacks: false")
     if "extra_body" in e and not isinstance(e["extra_body"], Mapping):
         raise ConfigError("config.endpoint.extra_body: an object")
     reserved = {"model", "messages", "response_format", "temperature", "seed", "max_tokens", "provider", "stream"}

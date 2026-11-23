@@ -54,8 +54,12 @@ def _run(a: argparse.Namespace) -> int:
     order = sorted(items, key=lambda i: i.id)
     if a.order is not None:
         random.Random(a.order).shuffle(order)
-    order = [i for i in order if i.id not in done]
-    client = Client(cfg, key)
+    if a.select:
+        unknown = set(a.select) - {i.id for i in items}
+        if unknown:
+            raise ItemError(f"unknown selected item ids: {sorted(unknown)}")
+    order = [i for i in order if i.id not in done and (not a.select or i.id in a.select)]
+    client = Client(cfg, key, ledger=_ledger(a))
     try:
         for n, it in enumerate(order, 1):
             t0 = time.monotonic()
@@ -118,8 +122,38 @@ def _check(a: argparse.Namespace) -> int:
         for p in problems:
             print(p)
         print(f"{len(entries)} labels, {len(problems)} problems")
-        return 1 if problems else 0
+        if problems:
+            return 1
+    if a.config:
+        from cohbench.runner.policy import PolicyError
+
+        from . import prompts as P
+        from .api import Client, read_key
+        from .classifier import Classifier
+        from .config import ConfigError, load
+
+        try:
+            cfg = load(a.config)
+            client = Client(cfg, read_key(a.key_file), ledger=_ledger(a))
+            item = sorted(items, key=lambda i: i.id)[0]
+            context, _ = Classifier(cfg, client)._layout(item.card, item.transcript, item.output)
+            result = client.choose([
+                {"role": "system", "content": P.SYSTEM},
+                {"role": "user", "content": context + P.Q_REQUEST},
+            ], ("A", "B"), client.clock() + cfg.limits["verdict_deadline_s"])
+            print(json.dumps(result, sort_keys=True))
+        except (ConfigError, PolicyError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
     return 0
+
+
+def _ledger(a):
+    if a.ledger:
+        from .ledger import Ledger
+
+        return Ledger(a.ledger, a.max_calls)
+    return None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -135,6 +169,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--out", required=True)
     run.add_argument("--key-file", default=None, help="file holding the API key (default: $COHBENCH_CLASSIFIER_KEY_FILE)")
     run.add_argument("--order", type=int, default=None, help="run the items in an order shuffled by this seed")
+    run.add_argument("--select", nargs="+", help="judge only these ids, preserving the full item-set digest for resuming")
     ag = sub.add_parser("agree", help="agreement between two labels or verdicts files")
     ag.add_argument("first")
     ag.add_argument("second")
@@ -143,7 +178,15 @@ def main(argv: list[str] | None = None) -> int:
     ck = sub.add_parser("check", help="validate items and a labels file")
     ck.add_argument("items", nargs="+")
     ck.add_argument("--labels", default=None)
+    ck.add_argument("--config", help="also send one request question from the first item to this endpoint")
+    ck.add_argument("--key-file", default=None)
+    for command in (run, ck):
+        command.add_argument("--ledger", help="append sanitized per-attempt accounting to this JSONL file")
+        command.add_argument("--max-calls", type=int, help="total attempt cap shared by all users of --ledger")
     a = ap.parse_args(argv)
+    if a.cmd in ("run", "check"):
+        if bool(a.ledger) != (a.max_calls is not None) or (a.max_calls is not None and a.max_calls <= 0):
+            ap.error("--ledger and a positive --max-calls must be supplied together")
     try:
         if a.cmd == "label":
             from .label import main as label_main

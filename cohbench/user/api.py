@@ -110,7 +110,8 @@ class _Final(Exception):
 
 class Client:
     def __init__(self, cfg: Config, key: str, *, sleep: Callable[[float], None] = time.sleep,
-                 clock: Callable[[], float] = time.monotonic):
+                 clock: Callable[[], float] = time.monotonic, ledger=None):
+        self.ledger = ledger
         self.cfg = cfg
         self._key = key
         u = urllib.parse.urlsplit(cfg.endpoint["base_url"].rstrip("/") + "/chat/completions")
@@ -149,6 +150,8 @@ class Client:
                  max_tokens=s["max_tokens"], stream=False, provider=thaw(e["provider"]),
                  response_format={"type": "json_schema",
                                   "json_schema": {"name": self.cfg.schema["name"], "strict": True, "schema": P.schema(keys)}})
+        if e.get("protocol", "openrouter") == "openai":
+            b.pop("provider")
         return b
 
     def _post(self, data: bytes, deadline: float) -> bytes:
@@ -267,13 +270,26 @@ class Client:
             if deadline - self.clock() <= 0:
                 raise EndpointError("the verdict's deadline passed before an answer arrived")
             attempts += 1
+            ticket = self.ledger.start(self.cfg) if self.ledger else None
+            started = self.clock()
+            usage = {}
+            outcome = "transport_error"
             try:
                 raw = self._post(data, deadline)
+                outcome = "invalid_response"
+                doc = self._parse(raw)
+                usage = _usage(doc)
+                self._check(doc, keys)
+                self._served(doc)
+                outcome = "accepted"
                 break
             except _Final as exc:
                 raise EndpointError(exc.category) from None
             except _Transient as exc:
                 failure = exc.category
+            finally:
+                if self.ledger:
+                    self.ledger.finish(ticket, usage, outcome, round((self.clock() - started) * 1000))
             if attempts > lim["retries"] or deadline - self.clock() <= lim["backoff_s"]:
                 raise EndpointError(f"{failure} after {attempts} attempt{'s' if attempts > 1 else ''}")
             self.sleep(lim["backoff_s"])
