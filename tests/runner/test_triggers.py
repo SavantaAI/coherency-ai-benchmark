@@ -133,7 +133,7 @@ def test_moves_and_deletes(tmp_path: Path) -> None:
     log = WorkspaceLog()
     log.refresh([fw.root])
     assert set(log.files()) == {"b", "b/x.txt"}
-    assert [c.paths for c in log.changes] == [("a", "b"), ("b/y.txt",)]
+    assert [c.paths for c in log.changes] == [("a", "b", "a/x.txt", "b/x.txt", "a/y.txt", "b/y.txt"), ("b/y.txt",)]
 
 
 def test_metric_readings_by_batch(w) -> None:
@@ -406,3 +406,80 @@ def test_changes_exclude_nested_triggers(w, kind):
     fw.write('main.py', 'x')
     refresh(fw, ctx)
     assert holds(t, ctx)
+
+
+@pytest.mark.parametrize('unit', ['record', 'batch'])
+@pytest.mark.parametrize('source,dest,filename,expected', [
+    ('pkg', 'renamed', 'test_sync.py', True),
+    ('pkg', 'admin/pkg', 'test_sync.py', True),
+    ('admin/pkg', 'pkg', 'test_sync.py', True),
+    ('admin/pkg', 'admin/renamed', 'test_sync.py', False),
+    ('pkg', 'renamed', 'notes.txt', False),
+    ('pkg', 'admin/pkg', 'notes.txt', False),
+])
+def test_directory_move_matches_carried_entries_once(tmp_path, unit, source, dest, filename, expected):
+    fw = FakeWatcher(tmp_path / 's', {f'{source}/{filename}': 'first', f'{source}/nested/{filename}': 'second'}, FakeClock())
+    fw.clock.sleep(1)
+    fw.move(source, dest)
+    ctx = Context()
+    refresh(fw, ctx)
+    body = {'path': '**/*.py', 'exclude': ['admin/**'], 'at_least': 1, 'unit': unit}
+    assert holds({'changes': body}, ctx) is expected
+    assert not holds({'changes': dict(body, at_least=2)}, ctx)
+    assert len(ctx.work.changes) == 1
+    assert f'{source}/nested/{filename}' in ctx.work.changes[0].paths
+    assert f'{dest}/nested/{filename}' in ctx.work.changes[0].paths
+    assert holds({'path_exists': f'{dest}/nested/{filename}'}, ctx)
+    assert holds({'content_matches': {'path': f'{dest}/nested/{filename}', 'regex': '^second$'}}, ctx)
+    assert not holds({'path_exists': f'{source}/**'}, ctx)
+    assert not holds({'content_matches': {'path': f'{source}/**', 'regex': 'first|second'}}, ctx)
+
+
+@pytest.mark.parametrize('unit', ['record', 'batch'])
+def test_directory_moves_respect_since_base(tmp_path, unit):
+    fw = FakeWatcher(tmp_path / 's', {'pkg/test_sync.py': 'x'}, FakeClock())
+    fw.clock.sleep(1)
+    fw.move('pkg', 'renamed')
+    ctx = Context()
+    refresh(fw, ctx)
+    t = {'changes': {'path': '**/*.py', 'exclude': ['admin/**'], 'unit': unit, 'at_least': 1, 'since': 'e'}}
+    assert not holds(t, ctx)
+    fire(ctx, 'e', fw)
+    assert not holds(t, ctx)
+    fw.clock.sleep(1)
+    fw.move('renamed', 'admin/pkg')
+    refresh(fw, ctx)
+    assert holds(t, ctx)
+    assert not holds({'changes': dict(t['changes'], at_least=2)}, ctx)
+
+
+def test_directory_move_paths_and_content_keep_their_batch_instants(tmp_path):
+    from datetime import timedelta
+    from .fake import T0
+
+    fw = FakeWatcher(tmp_path / 's', {'pkg/nested/test_sync.py': 'payload'}, FakeClock(), commit_delay_s=.5)
+    live = WorkspaceLog()
+    live.refresh([fw.root])
+    fw.clock.sleep(2)
+    fw.move('pkg', 'renamed')
+    fw.clock.sleep(.06)
+    fw.write('notes.txt', 'later write')
+    fw.clock.sleep(.5)
+    fw.tick()
+    live.refresh([fw.root])
+    replayed = WorkspaceLog()
+    replayed.refresh([fw.root])
+    change = {'changes': {'path': '**/*.py', 'exclude': ['admin/**'], 'at_least': 1}}
+    exists = {'path_exists': 'renamed/nested/test_sync.py'}
+    content = {'content_matches': {'path': 'renamed/nested/test_sync.py', 'regex': '^payload$'}}
+    for log in (live, replayed):
+        def at(seconds):
+            return Context(work=log.as_of(T0 + timedelta(seconds=seconds)))
+        assert not holds(change, at(1.999)) and not holds(exists, at(1.999))
+        assert holds(change, at(2)) and holds(exists, at(2))
+        assert not holds(content, at(2.03))
+        assert holds(content, at(2.06))
+        assert holds({'path_exists': 'pkg/nested/test_sync.py'}, at(2.03))
+        assert not holds({'path_exists': 'pkg/nested/test_sync.py'}, at(2.06))
+        instants = log.fresh_instants(T0 + timedelta(seconds=5))
+        assert next(t for t in instants if holds(change, Context(work=log.as_of(t)))) == T0 + timedelta(seconds=2)

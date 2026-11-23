@@ -3047,3 +3047,18 @@ def test_planted_conflict_fires_at_its_write_during_the_reset_wait(tmp_path, pol
     assert dt(reset_wait["utc"]) < dt(_fired(r)["conflict"]) < dt(reset_wait["end_utc"])
     assert "answerable" in [label for _, label in _verdicts(r)]
     assert r.fake.handoff_problems == []
+
+
+@pytest.mark.parametrize('poll_s', [1.0, 5.0])
+def test_directory_move_triggers_replay_at_their_own_instants(tmp_path, poll_s):
+    def edit(doc):
+        doc['events'] = [
+            {'name': 'changed', 'trigger': {'changes': {'path': '**/*.py', 'exclude': ['admin/**'], 'at_least': 1}}, 'required': False, 'action': {'type': 'observe'}},
+            {'name': 'exists', 'trigger': {'path_exists': 'renamed/nested/test_sync.py'}, 'required': False, 'action': {'type': 'observe'}},
+            {'name': 'contents', 'trigger': {'content_matches': {'path': 'renamed/nested/test_sync.py', 'regex': '^payload$'}}, 'required': False, 'action': {'type': 'observe'}},
+        ]
+    acts = [Act(duration_s=8, moves=[(2, 'pkg', 'renamed')], writes=[(2.06, 'notes.txt', 'later write')]), Act()]
+    r = Run(tmp_path / f'p{poll_s}', acts, edit=edit, poll_s=poll_s, commit_delay_s=.5, tree={'pkg/nested/test_sync.py': 'payload'}).go()
+    assert r.outcome.ok
+    assert _fired(r) == {'changed': '2026-11-22T12:00:02.000000Z', 'exists': '2026-11-22T12:00:02.000000Z', 'contents': '2026-11-22T12:00:02.060000Z'}
+    assert r.fake.handoff_problems == []

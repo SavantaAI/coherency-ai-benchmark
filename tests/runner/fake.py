@@ -84,6 +84,7 @@ class Act:
     questions: int = 1  # a question request with this many questions
     messages: list[tuple[float, str]] = field(default_factory=list)  # (offset, text) through the message tool
     writes: list[tuple[float, str, str]] = field(default_factory=list)  # (offset, path, content)
+    moves: list[tuple[float, str, str]] = field(default_factory=list)  # (offset, source directory, destination)
     metrics: list[tuple[float, dict[str, Any]]] = field(default_factory=list)  # (offset, reading)
     late: list[str] = field(default_factory=list)  # message-tool texts the driver reports only after an interrupt
     late_at_s: float | None = None  # when those were delivered, from the act's start (None: when the drain reports them)
@@ -210,6 +211,18 @@ class FakeWatcher:
         kind = "modified" if path in self.tree else "created"
         self.tree[path] = content
         self._hold({"kind": kind, "path": path, "type": "file", "mode": "0644", **self._store(content)})
+        self.first_wall = self.first_wall or self.clock.wall
+        self.last_wall = self.clock.wall
+        if self.open_since is None:
+            self.open_since = self.clock.clock
+        self.last_write_clock = self.clock.clock
+        self.tick()
+
+    def move(self, source: str, dest: str) -> None:
+        self.tick()
+        for path in sorted(p for p in self.tree if p == source or p.startswith(source + "/")):
+            self.tree[dest + path[len(source):]] = self.tree.pop(path)
+        self._hold({"kind": "moved", "from": source, "path": dest, "type": "dir", "mode": "0755"})
         self.first_wall = self.first_wall or self.clock.wall
         self.last_wall = self.clock.wall
         if self.open_since is None:
@@ -571,19 +584,25 @@ class FakeEpisode:
         if act is None:
             return None
         times = [self.cur_started + off for i, (off, *_r) in enumerate(act.writes) if ("w", i) not in self.cur_done and self.cur_started + off >= self.c.clock]
+        times += [self.cur_started + off for i, (off, *_r) in enumerate(act.moves) if ("d", i) not in self.cur_done and self.cur_started + off >= self.c.clock]
         return min(times) if times else None
 
     def _play_writes_until(self, t: float) -> None:
         act = self.cur
         assert act is not None
-        for i, (off, path, content) in sorted(enumerate(act.writes), key=lambda x: x[1][0]):
+        edits = [(off, "w", i, path, content) for i, (off, path, content) in enumerate(act.writes)]
+        edits += [(off, "d", i, src, dest) for i, (off, src, dest) in enumerate(act.moves)]
+        for off, kind, i, path, content in sorted(edits):
             at = self.cur_started + off
-            if at <= t + 1e-9 and ("w", i) not in self.cur_done:
+            if at <= t + 1e-9 and (kind, i) not in self.cur_done:
                 if at > self.c.clock:
                     self.c.advance(at - self.c.clock)
                 self.watchers[-1].tick()
-                self.cur_done.add(("w", i))
-                self.watchers[-1].write(path, content)
+                self.cur_done.add((kind, i))
+                if kind == "d":
+                    self.watchers[-1].move(path, content)
+                else:
+                    self.watchers[-1].write(path, content)
 
     def clock(self) -> float:
         return self.c.clock
@@ -649,6 +668,7 @@ class FakeEpisode:
         step = min(timeout_s + self.finish_s, max(act.duration_s - (self.c.clock - self.cur_started), 0.0))
         outputs: list[Output] = []
         events = sorted([(o, "w", i) for i, (o, *_r) in enumerate(act.writes)] + [(o, "m", i) for i, (o, _t) in enumerate(act.messages)]
+                        + [(o, "d", i) for i, (o, *_r) in enumerate(act.moves)]
                         + [(o, "r", i) for i, (o, _x) in enumerate(act.metrics)])
         target = self.c.clock + step
         for off, kind, i in events:
@@ -661,6 +681,9 @@ class FakeEpisode:
                 if kind == "w":
                     _o, path, content = act.writes[i]
                     self.watchers[-1].write(path, content)
+                elif kind == "d":
+                    _o, source, dest = act.moves[i]
+                    self.watchers[-1].move(source, dest)
                 elif kind == "r":
                     self.watchers[-1].metric(act.metrics[i][1])
                 else:

@@ -145,11 +145,17 @@ def _apply(tree: dict[str, FileState], r: dict[str, Any]) -> tuple[str, ...] | N
     elif kind == "moved":
         src = r.get("from")
         if isinstance(src, str):
-            for p in [p for p in tree if p == src or p.startswith(src + "/")]:
-                tree[path + p[len(src):]] = tree.pop(p)
+            paths = [src, path]
+            for p in sorted(p for p in tree if p == src or p.startswith(src + "/")):
+                dest = path + p[len(src):]
+                tree[dest] = tree.pop(p)
+                if p != src:
+                    paths.extend((p, dest))
         if r.get("sha256") is not None or r.get("type") is not None:
             tree[path] = FileState(r.get("type"), r.get("sha256"), r.get("content"))
-    return (r["from"], path) if kind == "moved" and isinstance(r.get("from"), str) else (path,)
+        if isinstance(src, str):
+            return tuple(paths)
+    return (path,)
 
 
 class WorkView:
@@ -212,13 +218,17 @@ class WorkView:
     def paths(self) -> set[str]:
         """Every path that exists: the tree in effect, plus what a batch that
         has begun but whose tree is not in effect yet created or changed."""
-        out = set(self.files())
+        tree = self.files()
+        out = set(tree)
         if self.seg is not None and self.t is not None:
             for b in self.seg.batches:
                 if not self._ok(b.t) and b.begin is not None and b.begin <= self.t and self._in(b):
                     for r in b.records:
+                        _apply(tree, r)
                         if r.get("kind") in STATE_KINDS and isinstance(r.get("path"), str):
                             out.add(r["path"])
+                        elif r.get("kind") == "moved":
+                            out.update(tree)
         return out
 
     def content(self, path: str) -> str | None:

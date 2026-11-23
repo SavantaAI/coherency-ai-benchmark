@@ -7,7 +7,7 @@ A trigger is a JSON object with exactly one key:
 |---|---|
 | `{"path_exists": GLOB}` | a path matches that exists: in the committed tree, or created by a batch that has begun (from its first write, D-030) |
 | `{"content_matches": {"path": GLOB, "regex": RE}}` | a stored file whose path matches has content the regex finds; `^` and `$` match at line ends (MULTILINE) |
-| `{"changes": {"path": GLOB, "exclude": [GLOB, ...]?, "at_least": N, "since": EVENT?, "unit": "record" or "batch"}}` | at least N committed change records touched a path matching `path` and no `exclude` glob (default `record`); a move counts once if either its source or destination qualifies; `batch` counts distinct committed batches with at least one qualifying record |
+| `{"changes": {"path": GLOB, "exclude": [GLOB, ...]?, "at_least": N, "since": EVENT?, "unit": "record" or "batch"}}` | at least N committed change records touched a path matching `path` and no `exclude` glob (default `record`); a move counts once if either its source or destination qualifies, including both paths of every carried entry for a directory move; `batch` counts distinct committed batches with at least one qualifying record |
 | `{"metric": {"name": NAME, "op": OP, "value": NUMBER, "reading": "latest" or "any", "since": EVENT?}}` | the latest (or any) committed reading after the baseline compares true |
 | `{"turns": {"at_least": N, "since": EVENT?}}` | at least N turns finished (the agent ended its turn; a pending question is not a finished turn) |
 | `{"handbacks": {"at_least": N, "since": EVENT?}}` | at least N hand-backs: finished turns plus pauses on a pending question or secret request |

@@ -613,7 +613,7 @@ own counters, and the episode clock.
 |---|---|
 | `{"path_exists": GLOB}` | a matching path exists as of the instant: from its batch's first write (D-030, D-037) |
 | `{"content_matches": {"path": GLOB, "regex": RE}}` | a stored file whose path matches has content the regex finds in the tree in effect as of the instant (from its batch's last write); the regex is line-oriented (MULTILINE), so `^` and `$` match at each line |
-| `{"changes": {"path": GLOB, "exclude": [GLOB, ...], "at_least": N, "unit": "record" or "batch"}}` | With `record` (the default), at least N committed change records after the baseline touched a path matching `path` and no `exclude` glob, each counting from its batch's first write. A move counts once if either its source or destination qualifies, even if the other endpoint is excluded. The watcher keeps one net record per path within a batch, and batches are closed by the file activity alone, so the count does not depend on how often the runner looks. With `batch`, count distinct committed batches with at least one matching record. Three matching paths in one batch count as one |
+| `{"changes": {"path": GLOB, "exclude": [GLOB, ...], "at_least": N, "unit": "record" or "batch"}}` | With `record` (the default), at least N committed change records after the baseline touched a path matching `path` and no `exclude` glob, each counting from its batch's first write. A move counts once if either its source or destination qualifies, even if the other endpoint is excluded. For a directory move, test the old and new paths of every carried entry as well as the directory endpoints, still counting one record. The watcher keeps one net record per path within a batch, and batches are closed by the file activity alone, so the count does not depend on how often the runner looks. With `batch`, count distinct committed batches with at least one matching record. Three matching paths in one batch count as one |
 | `{"metric": {"name": NAME, "op": "lt", "value": 5, "reading": "latest"}}` | the latest (or, with `"any"`, any) committed metric reading after the baseline compares true; ops `lt le gt ge eq ne` |
 | `{"turns": {"at_least": N}}` | at least N turns finished: the agent ended its turn. A pause on a pending question or secret request is not a finished turn |
 | `{"handbacks": {"at_least": N}}` | at least N hand-backs: finished turns, pauses on a pending request, and the silent interruption at a reset grace. A message-tool text mid-turn is not one. With `"since"` naming a reset event, the hand-backs after the reset was performed (its continuation sent); the hand-back at which the reset came is not one of them |
@@ -630,7 +630,10 @@ applies to each changed path before counting records or distinct batches.
 A batch with only excluded paths does not count; a batch with any qualifying
 path counts once in batch mode. For example, `{"changes": {"path": "**/*.py",
 "exclude": ["admin/**"], "at_least": 1}}` counts Python changes outside the
-chore area, including Python files at the project root.
+chore area, including Python files at the project root. A directory rename
+carrying such a file also qualifies when either its old or new path passes
+the filter. Renamed destinations enter `path_exists` at the batch's first
+write; `content_matches` reads the relocated tree from its last write.
 
 Every counter trigger and `changes`, `metric` and `verdicts` take an optional `"since": EVENT`, false until that
 event has fired. Counters count from their values when it fired, and the
