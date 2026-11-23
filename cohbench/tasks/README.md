@@ -201,6 +201,39 @@ base descriptor, not the current working directory. Descriptor resolution
 uses `/proc/self/fd` on Linux and `F_GETPATH` on macOS. Builtin and `io`
 opens, `pathlib`, custom openers, resource readers, memory maps and zip
 imports are checked; zip imports record the archive bytes.
+The audit contract below covers observed Python operations during the measured
+run. Tracked means workspace file bytes or stable absence enter the state;
+non-file memory and runtime bookkeeping add no file bytes. Changed or
+unreadable tracked inputs still make the state null. Standard-library files
+under the interpreter prefix are runtime dependencies, outside the project
+state, as are disabled cache probes below `os.devnull`. Other external
+paths are unknown inputs. Any unlisted audit event
+makes the state null.
+
+| Contract row | Read or launch route | State |
+| --- | --- | --- |
+| `paths` | Builtin `open`, `io.open`, `pathlib`, `io.FileIO`, including `_io.FileIO` | tracked |
+| `descriptors` | `os.open`, including `dir_fd`, fd-backed streams and file-backed `mmap` | tracked |
+| `openers` | Custom openers on `open`, `io.open`, `io.FileIO` and `_io.FileIO`, using only the resolved file | tracked |
+| `imports` | Source imports, fixture decoding, `importlib.resources` and zip imports using archive bytes | tracked |
+| `absence` | A missing opened path, including a directory-relative path, absent before and after | tracked |
+| `directories` | Directory handles add no bytes; import machinery directory discovery selects tracked modules | tracked |
+| `memory` | Anonymous in-process memory maps add no file bytes | tracked |
+| `runtime` | `compile`, `exec`, `import`, `marshal.loads`, `builtins.id`, `object.__getattr__`, `object.__setattr__`, `sys._getframe`, `sys._getframemodulename`; macOS `F_GETPATH` descriptor lookup | tracked |
+| `opaque` | Unresolvable descriptors, including pipes, and external files outside the interpreter prefix | null |
+| `processes` | `os.system`, `subprocess`, all `os.exec*` and `os.spawn*` forms, `os.posix_spawn*`, `os.fork`, `os.forkpty`, multiprocessing fork, spawn and forkserver | null |
+| `native` | Native access, including ctypes library and symbol events | null |
+| `unlisted` | Every other observed audit event, including application directory enumeration | null |
+
+`test_audit_contract_table` walks every row with real operations and checks
+its stated result. The process events are handled together; older Python
+versions also need an audited wrapper around the low-level launcher used by
+multiprocessing. A process-replacing exec writes its null history line just
+before replacement, since replacement cannot reach the normal final append.
+A failed exec keeps that single null line. Forked children do not append a
+second line for the parent's run. The main entry guard also allows spawn
+workers to import the profiler without running it again.
+
 `result` is the canonical short summary of
 peak memory, round trips and whether the totals match. Failed runs record
 an error class. Each line uses one unbuffered append write; an unwritable
@@ -290,7 +323,8 @@ episode and scripted model engine. The long scripts also run through the
 D-046 stand-in. The tests check admission, delivery order, requests, final
 files, answers, readings, attempts, privacy and determinism. New review
 regressions are in `tests/tasks/test_round1.py`, `test_round2.py`,
-`test_round3.py`, `test_round4.py`, `test_round5.py` and `test_round6.py`. The fifth round
+`test_round3.py`, `test_round4.py`, `test_round5.py`, `test_round6.py` and
+`test_round7.py`. The fifth round
 limits state to consumed inputs, records stable absence, uses ordinary
 imports in the measurement, adds the opening constraint, accepts changelog
 blank-line spacing, broadens shell probes, and moves the shape into the
@@ -299,6 +333,8 @@ workspace and metric outputs; rerecord only after reviewing changed output.
 Round 6 shares client normalization, scopes both source triggers across
 refactors, resolves directory-relative file reads, excludes chores at both
 horizons, and confines changelog whitespace tolerance to blank lines.
+Round 7 adds raw FileIO opener attribution and a closed audit event contract,
+with process launches and unlisted observed events producing null states.
 
 ## Limits
 
@@ -320,12 +356,12 @@ reading for that state. Already-given replies quote the earlier user
 message under SPEC section 4, so asking again after a reset can recover
 the opening, including its constraint.
 
-The profiler cannot attribute file reads performed by a child process or
-native code. Observed process launches and `ctypes` library or symbol
-access produce a null state, as does an unresolvable descriptor such as
-an anonymous pipe. Directory-relative handles need one of the supported
-OS descriptor resolvers. Direct native system calls that bypass Python's
-audit hooks remain outside the history mechanism's scope.
+The profiler records only its own process's reads. Process launches and
+unknown observed operations produce null under the audit contract above.
+Directory-relative handles need one of the supported OS descriptor
+resolvers. Direct native system calls that emit no Python audit event
+remain outside the history mechanism's scope; the audit cannot classify
+an operation it does not observe.
 
 Shell probe matching is a command regex, not a shell parser. It may match
 command-looking text inside quotes or a heredoc that merely writes notes.

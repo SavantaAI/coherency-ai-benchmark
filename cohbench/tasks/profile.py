@@ -4,6 +4,8 @@ PROFILE = r'''#!/usr/bin/env python3
 """Run the sync against the sample data and show what it costs."""
 
 import builtins
+import _io
+import _posixsubprocess
 import hashlib
 import io
 import importlib.abc
@@ -20,6 +22,8 @@ sys.dont_write_bytecode = True
 # Read source even if a previous unit run left bytecode behind.
 sys.pycache_prefix = os.devnull
 START_MS = time.time_ns() // 1_000_000
+PROFILE_PID = os.getpid()
+HISTORY_WRITTEN = False
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 READ_PATHS = set()
@@ -121,10 +125,9 @@ os.open = open_at
 RAW_IO_OPEN = io.open
 
 
-def open_file(file, mode="r", buffering=-1, encoding=None, errors=None,
-              newline=None, closefd=True, opener=None):
+def call_with_opener(operation, opener):
     if opener is None:
-        return RAW_IO_OPEN(file, mode, buffering, encoding, errors, newline, closefd)
+        return operation(None)
 
     def resolved_opener(path, flags):
         fd = opener(path, flags)
@@ -135,26 +138,64 @@ def open_file(file, mode="r", buffering=-1, encoding=None, errors=None,
     previous = getattr(OPEN_SCOPE, "skip_next", False)
     OPEN_SCOPE.skip_next = True
     try:
-        return RAW_IO_OPEN(file, mode, buffering, encoding, errors, newline, closefd, resolved_opener)
+        return operation(resolved_opener)
     finally:
         OPEN_SCOPE.skip_next = previous
 
 
+def open_file(file, mode="r", buffering=-1, encoding=None, errors=None,
+              newline=None, closefd=True, opener=None):
+    return call_with_opener(
+        lambda resolved: RAW_IO_OPEN(file, mode, buffering, encoding, errors, newline, closefd, resolved), opener)
+
+
+class FileInputs(io.FileIO):
+    def __init__(self, file, mode="r", closefd=True, opener=None):
+        initialize = super().__init__
+        call_with_opener(lambda resolved: initialize(file, mode, closefd, resolved), opener)
+
+
 builtins.open = io.open = open_file
+io.FileIO = _io.FileIO = FileInputs
+
+# Older CPython versions do not audit this multiprocessing launch path.
+RAW_FORK_EXEC = _posixsubprocess.fork_exec
+
+
+def fork_exec(*args):
+    sys.audit("profile.process_start")
+    return RAW_FORK_EXEC(*args)
+
+
+_posixsubprocess.fork_exec = fork_exec
+
+# Runtime events do not add a file input. Opens issued by loaders still do.
+RUNTIME_EVENTS = frozenset((
+    "compile", "exec", "import", "marshal.loads", "builtins.id",
+    "object.__getattr__", "object.__setattr__", "sys._getframe", "sys._getframemodulename",
+))
+PROCESS_EVENTS = frozenset((
+    "os.system", "subprocess.Popen", "os.exec", "os.spawn", "os.posix_spawn",
+    "os.fork", "os.forkpty", "_posixsubprocess.fork_exec", "profile.process_start",
+))
 
 
 def track_path(path):
     global UNCERTAIN
     if path is None:
         UNCERTAIN = True
-    elif path.is_relative_to(ROOT) and not path.is_dir():
-        READ_PATHS.add(path)
+    elif path.is_relative_to(ROOT):
+        if not path.is_dir():
+            READ_PATHS.add(path)
+    elif not (path.is_relative_to(Path(sys.base_prefix).resolve()) or path.is_relative_to(Path(os.devnull).resolve())):
+        UNCERTAIN = True
 
 
 def track_reads(event, args):
     global UNCERTAIN
-    if not READING_INPUTS:
+    if not READING_INPUTS or getattr(OPEN_SCOPE, "auditing", False):
         return
+    OPEN_SCOPE.auditing = True
     try:
         if event == "open" and getattr(OPEN_SCOPE, "skip_next", False):
             OPEN_SCOPE.skip_next = False
@@ -170,11 +211,26 @@ def track_reads(event, args):
         elif event == "mmap.__new__":
             if args[0] != -1:
                 track_path(descriptor_path(args[0]))
-        elif event in ("subprocess.Popen", "os.fork", "os.posix_spawn", "ctypes.dlopen", "ctypes.dlsym"):
-            # Child and native reads cannot be attributed by this process's audit.
+        elif event in PROCESS_EVENTS:
+            UNCERTAIN = True
+            if event == "os.exec":
+                # Successful replacement cannot reach the normal final append.
+                remember("process-replacement")
+        elif event == "os.listdir":
+            # Import discovery selects modules whose source reads are tracked.
+            if not sys._getframe(1).f_code.co_filename.startswith("<frozen importlib."):
+                UNCERTAIN = True
+        elif event == "open" or event in RUNTIME_EVENTS:
+            pass
+        elif event == "fcntl.fcntl" and sys.platform == "darwin" and args[1] == 50:
+            pass  # Descriptor path lookup adds no file bytes.
+        else:
+            # Unlisted audit events, including native access, are unknown inputs.
             UNCERTAIN = True
     except (OSError, ValueError, TypeError, RuntimeError):
         UNCERTAIN = True
+    finally:
+        OPEN_SCOPE.auditing = False
 
 
 sys.addaudithook(track_reads)
@@ -205,6 +261,10 @@ def state_digest():
 
 
 def remember(result):
+    global HISTORY_WRITTEN
+    if HISTORY_WRITTEN or os.getpid() != PROFILE_PID:
+        return
+    HISTORY_WRITTEN = True
     try:
         row = {"start_ms": START_MS, "end_ms": time.time_ns() // 1_000_000,
                "state": state_digest(), "result": result}
@@ -239,16 +299,17 @@ def main():
     return canonical
 
 
-outcome = "error"
-try:
-    READING_INPUTS = True
-    outcome = main()
-except BaseException as error:
-    outcome = "error:" + type(error).__name__
-    raise
-finally:
-    READING_INPUTS = False
-    remember(outcome)
+if __name__ == "__main__":
+    outcome = "error"
+    try:
+        READING_INPUTS = True
+        outcome = main()
+    except BaseException as error:
+        outcome = "error:" + type(error).__name__
+        raise
+    finally:
+        READING_INPUTS = False
+        remember(outcome)
 '''
 
 
