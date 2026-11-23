@@ -1,7 +1,8 @@
 """The user policy (contract 2): how the simulated user judges what the agent
 showed it.
 
-A policy has two required calls. A deadline-aware classifier also exposes
+A policy declares `max_judgement_s` (zero for scripted policies) and has two
+required calls. A deadline-aware classifier also exposes
 `verdict_deadline_s` and `clock()`. Its `judge` accepts an absolute `deadline`
 on that clock. The runner calls it synchronously; scripted policies retain
 these original two calls.
@@ -89,6 +90,8 @@ class AwarenessJudgement:
 
 
 class UserPolicy(Protocol):
+    max_judgement_s: float
+
     def judge(self, card: Mapping[str, Any], transcript: Sequence[Entry], output: str) -> Judgement: ...
 
     def classify_awareness(self, question: str, reply: str) -> AwarenessJudgement: ...
@@ -203,6 +206,8 @@ class ScriptedPolicy:
     to, counting from 1). `nth` is the output's number among the agent's
     outputs, from 1. The first rule that holds decides.
     """
+
+    max_judgement_s = 0
 
     def __init__(self, doc: Mapping[str, Any]):
         problems = self.check(doc)

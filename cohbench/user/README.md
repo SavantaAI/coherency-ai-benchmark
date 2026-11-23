@@ -319,8 +319,7 @@ judged when observed and has no separate reply wait.
 Every classifier `judge` call receives an absolute deadline. Its limit is
 `limits.verdict_deadline_s` from its own start, 25 seconds in the shipped
 configs. At a hand-back this is also bounded by one shared cutoff: the reply
-due time less the 3-second dispatch allowance, clipped by the episode cutoff
-less that allowance. The reset drain shares that cutoff. A reset's grace or
+due time less the 3-second dispatch allowance. The reset drain shares that cutoff. A reset's grace or
 reported hand-back is chosen before judging, according to which came first.
 There are no runner jobs, batch judgements or deferred verdict applications.
 Scripted policies retain their existing synchronous call signature.
@@ -930,8 +929,8 @@ latency; the earlier development and held-out figures remain unchanged.
 
 ## Review round 6, 2026-11-23
 
-After a judgement advances time, the loop polls once before acting on a
-timer. It replays the newly observed interval by delivery time. A hand-back
+Round 6 added a catch-up poll after judging. Round 7 below narrows it to
+judgements longer than one second and orders due actions before later outputs. A hand-back
 before reset grace or elapsed end retains its normal probe and clipped wait.
 At the final drain, covered outputs receive the classifier's own limit,
 including questions. An expiry there is `deadline`. The full-limit native
@@ -972,3 +971,58 @@ has the scope described above.
 See the [round 6 report](../../calibration/classifier/review-round6.md) for
 per-ruling regressions, saved-episode byte comparison and validation. No
 hosted calls, prompt changes or config changes were made in round 6.
+
+## Review round 7, 2026-11-23
+
+The episode's end bounds which outputs are admitted. It does not shorten the
+judging limit of an admitted output. A pre-end output first seen in the cutoff
+poll receives the same classifier limit as one first seen in the final drain.
+The hand-back's shared reply deadline still applies while the episode is live;
+it is no longer clipped by the episode end.
+
+A judgement taking more than one second permits one extra poll. Short scripted
+judgements do not add a poll. The catch-up replay handles an earlier reset grace
+before judging later outputs, and attempts a due mid-turn correction before a
+later output's judgement. A judgement during that extra look does not chain
+another look ahead of timer handling. An earlier hand-back keeps its normal
+handling. No asynchronous judgement machinery is used.
+
+Policies declare `max_judgement_s`: zero for scripted policies and the configured
+verdict limit for the classifier. Before opening an episode, admission rejects
+a positive declaration whose task return delay is below that maximum plus the
+3-second dispatch allowance. The error names the actual and required delays.
+Zero declarations retain the scripted path, including the two-second fixture.
+The shipped classifier requires 28 seconds; every one of the 88 generated
+public development tasks passes. The generator's lower bound is 30 seconds.
+
+A correction carried by a reply uses the original send instant for both its
+event and watcher mark, as on `main`. A later receipt does not move that
+correction boundary. The reply's own delivery accounting remains separate.
+
+The following limits remain:
+
+- R7-01: a silent hand-back during judging may need a second idle observation.
+  If grace or elapsed end falls inside that judgement and the extra poll only
+  supplies the first idle sample, the runner can record an interrupted
+  hand-back at the timer. `main` shares this behavior with a slow policy.
+- R7-05: a hand-back probe is timestamped immediately before its copy, after
+  judging. Its timestamp can therefore move by the judgement's duration while
+  the agent is idle. The normaliser reanchors the probe only when the copy is
+  after episode end. `main` behaves the same.
+- R7-06: live steer timestamp selection lacks the harness-native receipt input.
+  Rebuild can use that receipt when no runner delivery instant is supplied;
+  a supplied runner instant takes precedence. Saved-episode comparison holds
+  those runner-supplied facts fixed and does not establish live receipt parity.
+- R7-V1, open task-format item: a generated opening can state a decision also
+  present on the later card, but its delivered-ID tuple is empty. Selecting that
+  card item follows the fresh-item path and can use its card wording. The task
+  format and generators need to declare which card ids the opening states.
+  This unit does not infer that missing provenance or change the generators.
+
+A pre-end receipt first observed in the extra hand-back confirmation can be
+discarded when its timestamp falls after that confirmation's replay bound;
+`main` shares that bound.
+
+See the [round 7 report](../../calibration/classifier/review-round7.md) for the
+per-ruling tests, both-Python validation and saved-episode comparison. No hosted
+calls, prompt changes or config changes were made in round 7.

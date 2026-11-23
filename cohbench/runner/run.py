@@ -32,7 +32,7 @@ from .episode_dir import EpisodeDir, _write_json, _write_jsonl
 from .eventlog import EventLog, utc_iso
 from .policy import policy_factory as make_policy_factory
 from .port import Description, EpisodePort, EpisodeSpec, ExportRejected, Interval
-from .runner import RunConfig, Runner
+from .runner import DISPATCH_ALLOWANCE_S, RunConfig, Runner
 from .task import Task
 
 USABLE_ENDS = ("finished", "budget_cutoff")
@@ -142,6 +142,16 @@ def admit_host_files(task: Task, cfg: RunConfig, policy: tuple[str, Path]) -> No
         raise ValueError("run_episode: the task directory changed after it was loaded")
 
 
+def admit_policy_delay(task: Task, policy: Any) -> None:
+    """A slow policy needs room for one judgement and dispatch before a reply."""
+    longest = getattr(policy, "max_judgement_s", 0)
+    delay = task.return_delay_ms / 1000
+    required = longest + DISPATCH_ALLOWANCE_S
+    if longest > 0 and delay < required:
+        raise ValueError(f"return delay {delay:g} s is below the required {required:g} s "
+                         f"({longest:g} s judgement plus {DISPATCH_ALLOWANCE_S:g} s dispatch allowance)")
+
+
 def run_episode(task: Task, cfg: RunConfig, factory: Factory, policy: tuple[str, str | Path], out: Path, *,
                 sleep: Callable[[float], None] = time.sleep, utcnow: Callable[[], datetime] = lambda: datetime.now(timezone.utc)) -> Outcome:
     """`policy` is (kind, file): the run builds the policy's factory from that
@@ -164,7 +174,9 @@ def run_episode(task: Task, cfg: RunConfig, factory: Factory, policy: tuple[str,
         policy = None
         try:
             policy = policy_factory()
+            admit_policy_delay(task, policy)
         except Exception as exc:  # noqa: BLE001
+            policy = None
             log.write("error", where="policy", error=repr(exc), traceback=traceback.format_exc())
             s.fail("runner_abort", f"the user policy could not be made: {exc!r}")
         staged = None

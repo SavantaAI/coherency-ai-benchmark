@@ -192,6 +192,10 @@ class Classifier:
     def verdict_deadline_s(self):
         return self.cfg.limits["verdict_deadline_s"]
 
+    @property
+    def max_judgement_s(self):
+        return self.verdict_deadline_s
+
     def clock(self):
         return self.client.clock()
 
