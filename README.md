@@ -246,7 +246,7 @@ Fixed before the first ranked run. If any of these hold, the benchmark's claim f
 **Not done yet:**
 
 - No real model has run a task. Scores so far come from scripted ideal and worst agents, which land at 100 and at the floor of 5.
-- The simulated user's classifier is on the `phase3-classifier` branch. It has not been run against a hosted model or checked against human labels.
+- The simulated user's classifier runs on a hosted open-weight model. On a held-out set of 52 synthetic agent messages, labelled independently by two model annotators who agreed on every item, it gives the exact verdict on 51 (Cohen's kappa 0.974 on the labels). It has not been checked against human labels, which Section 8 requires before a release, and the hosted endpoint pins the model's name, not its weights.
 - Explanation has been scored only with an offline reader, not the reader model.
 - One harness (Pi) has been exercised end to end.
 
@@ -281,9 +281,11 @@ uv run python -m cohbench.scoring report RESULTS_DIR --out DIR
 | `cohbench/watcher` | Records file changes in the agent's workspace |
 | `cohbench/trajectory` | The trajectory format, normaliser and scoring bundle |
 | `cohbench/tasks` | Task generators for Routing, Explanation and Steering |
+| `cohbench/user` | The simulated user's classifier and its calibration tools |
 | `cohbench/scoring` | Scorers, statistics and the results report |
 | `cohbench/scripted` | A scripted model API for tests without a real model |
 | `driver_proof` | The first check that a harness can be driven and recorded |
+| `calibration` | Calibration items and the records of calibration runs |
 | `tests` | Unit, integration and end-to-end checks |
 
 Each package has its own README with its interface and its limits. Comments and package READMEs cite design decisions by id, such as D-045. Those ids belong to the maintainers' decision log, which is not part of this repository.
