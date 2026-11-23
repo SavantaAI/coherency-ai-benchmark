@@ -196,7 +196,7 @@ class Classifier:
         return self.client.clock()
 
     def flush(self):
-        return self.client.flush()
+        return self.client.flush(require_accounting=False)
 
     def _decide(self, ch: _Chain, card: Mapping[str, Any], transcript: Sequence[Entry]) -> tuple[str, list[str], int | None, str | None, str]:
         if ch.ask(P.Q_REQUEST, ("A", "B"), "request") == "B":

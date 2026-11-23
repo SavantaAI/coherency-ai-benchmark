@@ -92,7 +92,7 @@ def canonical(value):
     for row in value['log']:
         if row['type'] == 'verdict':
             latency(row)
-    for name, key in [('log','output'), ('handoff','ref')]:
+    for name, key in [('log','output')]:
         rows = value[name] if name == 'log' else value[name]['runner_events']
         verdicts = [r for r in rows if r['type'] in ('verdict','unjudged')]
         indexed = {r[key]['item']: r for r in verdicts}

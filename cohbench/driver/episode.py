@@ -1791,8 +1791,13 @@ class Episode:
                              and (i.get("messageId") == sent.message_id or str(i.get("id", "")).endswith(sent.message_id))), None)
                 if item is None:
                     continue
-                run = next((r for r in proj.get("runs", []) if r.get("id") == item.get("runId")), None)
-                instant, _ = delivery_instant(item, run=run, restart=sent.mechanism in ("interrupt_restart", "interrupt_then_queue"), strict=True)
+                runs = sorted(proj.get("runs", []), key=lambda r: r.get("ordinal", 0))
+                index = next((i for i, r in enumerate(runs) if r.get("id") == item.get("runId")), None)
+                run = runs[index] if index is not None else None
+                previous = runs[index-1] if index is not None and index > 0 else None
+                kind = sent.kind if "user_kinds" in self.driver_events else None
+                instant, _ = delivery_instant(item, run=run, previous=previous, kind=kind,
+                                              restart=sent.mechanism in ("interrupt_restart", "interrupt_then_queue"), strict=True)
             else:
                 continue
             if instant is not None:

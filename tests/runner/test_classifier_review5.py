@@ -153,7 +153,7 @@ def test_r5_refusal_delivery_through_real_adapter_and_driver():
     tree['t']['turnItems'].append({'id':'user-'+sent.message_id,'messageId':sent.message_id,'type':'user_message',
                                  'inputIntent':'steer','startedAt':'2026-11-23T00:00:01Z','completedAt':'2026-11-23T00:00:03Z'})
     delivery=adapter.correction_delivery(sent)
-    assert delivery.utc=='2026-11-23T00:00:03Z'
+    assert delivery.utc=='2026-11-23T00:00:01Z'
     assert ep.corrections==[]
 
 
@@ -270,7 +270,7 @@ def test_r5_replay_checks_inputs_by_identity_even_with_repeated_text():
         replay_answer(oracle,'second',cards[0],tr,'Same text.')
 
 
-@pytest.mark.parametrize('route,want', [('plain',2),('steer',4),('restart',4)])
+@pytest.mark.parametrize('route,want', [('plain',2),('steer',2),('restart',2)])
 def test_r5_message_routes_use_same_driver_and_trajectory_instant(route,want,monkeypatch):
     from cohbench.runner.adapter import DriverEpisode
     from cohbench.trajectory import Hints, Segment, t3

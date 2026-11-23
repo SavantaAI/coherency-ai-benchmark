@@ -237,7 +237,7 @@ class Ledger:
             "call"
         ]
 
-    def not_sent(self, ticket):
+    def not_sent(self, ticket, *, deadline=None):
         self._append(
             lambda entries, cap: {
                 "event": "not_sent",
@@ -245,9 +245,10 @@ class Ledger:
                 "reason": "transport did not start",
             },
             match_cap=False,
+            deadline=deadline,
         )
 
-    def finish(self, ticket, usage, outcome, ms):
+    def finish(self, ticket, usage, outcome, ms, *, deadline=None):
         self._append(
             lambda entries, cap: {
                 "event": "finish",
@@ -257,6 +258,7 @@ class Ledger:
                 "ms": ms,
             },
             match_cap=False,
+            deadline=deadline,
         )
 
     def change_cap(self, new):

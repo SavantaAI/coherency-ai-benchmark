@@ -166,9 +166,9 @@ def test_b3_slow_accounting_does_not_reverse_decision(tmp_path, fake):
     release = threading.Event()
 
     class SlowLedger(Ledger):
-        def finish(self, *args):
+        def finish(self, *args, **kwargs):
             release.wait(0.4)
-            super().finish(*args)
+            super().finish(*args, **kwargs)
 
     client = Client(
         parse(config_doc(fake.base_url)), KEY, ledger=SlowLedger(tmp_path / "ledger", 1)

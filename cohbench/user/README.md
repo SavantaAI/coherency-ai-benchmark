@@ -323,17 +323,19 @@ due time less the 3-second dispatch allowance, clipped by the episode cutoff
 less that allowance. The reset drain shares that cutoff. A reset's grace or
 reported hand-back is chosen before judging, according to which came first.
 There are no runner jobs, batch judgements or deferred verdict applications.
-Scripted policies retain their existing call signature and behavior.
+Scripted policies retain their existing synchronous call signature.
 
 Observation, output counts, closing items and probes do not depend on a
 verdict. An expired call records `unjudged` with reason `deadline`. Every
 other endpoint failure records `endpoint_failure` and makes the episode
-unusable. A native pending question gets the full classifier limit because
-the agent is blocked. If it still has no verdict, the episode is unusable;
-a reopen is not substituted for the absent answer. A scripted policy's
+unusable. A live pending native question about to be answered gets the full
+classifier limit because the agent is blocked. If it still has no verdict,
+the episode is unusable; a reopen is not substituted for the absent answer. A scripted policy's
 empty reply retains `main`'s behavior: an eligible event's reopen may answer
 the pending question. Secret requests still get the fixed refusal even
-when their judgement expires.
+when their judgement expires. At the final drain every covered output gets
+its own classifier limit; expiry there is `deadline` and does not make the
+episode unusable.
 
 Each attempt has an absolute cutoff: the smaller of the request timeout and
 what is left of the verdict's deadline. It covers creating the TLS context,
@@ -360,14 +362,16 @@ ledger change is closing its own attempt. The same path serves `check` and
 the runner.
 
 The accept or reject decision is made against the deadline before accounting
-is queued. Completion records are written by non-daemon threads so a slow
-ledger flush does not reverse that decision or delay a user reply. CLI runs and the runner call `Client.flush()` at the end. The hook waits
-at most 0.25 seconds by default and reports `blocked_transport_threads` and
-`pending_accounting_threads`. The episode's `run.json` records these in
-`classifier_cleanup`; accounting errors make the episode unusable. Python
-also waits for non-daemon accounting threads at process exit. The per-verdict deadline is
-still checked before the completed verdict is returned; late verdicts are
-not applied to the reply.
+is queued. Optional completion writes run in daemon threads with a 0.25-second
+deadline, including reservation waits and lock acquisition. CLI runs and the
+runner call `Client.flush()` at the end. The hook waits at most 0.25 seconds
+by default and reports `blocked_transport_threads`, `pending_accounting_threads`
+and `incomplete_accounting_writes`. The episode's `run.json` records these in
+`classifier_cleanup`. Accounting threads cannot hold process exit. Calibration
+CLI flush requires completed accounting and raises if writes remain pending
+or incomplete. Episode cleanup reports unfinished writes without revising a
+published outcome. The per-verdict deadline is still checked before the
+completed verdict is returned; late verdicts are not applied to the reply.
 
 A refused connection, a timeout, a 429 or any 5xx is retried once, after 0.5 s,
 with byte-for-byte the same request, and only if the deadline leaves more
@@ -643,6 +647,9 @@ billing was observed.
 
 ## Limits
 
+After the deadline no new request is submitted and no result is used;
+a request already being written may finish being sent.
+
 - While a judgement is in progress the episode loop does not poll. A planted
   event or correction can be dispatched late by up to that judgement's
   duration after a mid-run message. Observation and delivery records keep
@@ -677,7 +684,8 @@ billing was observed.
   remains a model call. Live episodes use runner delivery provenance for
   selected card items, so the calibration does not measure that code path.
 - If a reservation write crosses the cutoff, it can persist after the
-  caller has returned. A `not_sent` line closes it, but it still consumes one slot
+  caller has returned. When accounting completes, a `not_sent` line closes it; otherwise it
+  remains an incomplete reservation. It still consumes one slot
   of the cap. The cap is a calibration spending guard and counts conservatively.
 - No proxy is used: the client connects to the endpoint directly.
 - Every question of a verdict is a sequential request (3k + 1 at most for a
@@ -740,7 +748,7 @@ or request. If a reservation was written but no request bytes were
 transmitted, a `not_sent` line names its ticket. Transmission is counted only
 after the socket accepts bytes, including a partial submission that later fails. This still consumes the reserved budget.
 Reservation flushes and completion accounting may finish after the caller
-leaves; CLI exit waits for accounting. Process loss can leave an unfinished
+leaves; CLI flush waits only its short bound for accounting. Process loss can leave an unfinished
 reservation, whose usage remains not measured.
 
 Turn and awareness runs hold an exclusive lock in a sibling `OUT.lock` file
@@ -919,3 +927,48 @@ versions passed 280 user tests, 556 runner tests, 3,691 whole-unit tests and
 13 slow pipeline checks. Strict replay covered 240 scenarios per Python
 with zero differences. These fixture checks do not measure real-harness
 latency; the earlier development and held-out figures remain unchanged.
+
+## Review round 6, 2026-11-23
+
+After a judgement advances time, the loop polls once before acting on a
+timer. It replays the newly observed interval by delivery time. A hand-back
+before reset grace or elapsed end retains its normal probe and clipped wait.
+At the final drain, covered outputs receive the classifier's own limit,
+including questions. An expiry there is `deadline`. The full-limit native
+question rule that can make an episode unusable applies only to the live
+pending question about to be answered, outside an ending or reset replay.
+
+A receipt after the episode's end does not deliver a reply or any card item.
+Its wait ends as cut off and the scorer-facing `verdict.reply` stays null.
+Known and queued receipts both follow this rule. Reset notices participate
+in deadline selection whether carried alone or with another user message.
+
+The shared receipt helper follows `main`'s trajectory rule. Explicit replies
+use the item timestamp. Unhinted messages after an interrupt can infer a
+correction and use the restarted run's start. A steer completed at its queue
+time can use a later native receipt. Saved-episode comparison is the check
+against `main`; the replay property alone is not that check.
+
+Both replay arms run this branch's runner with a fake port. The property
+shows that a slow policy with the same verdicts gives the same logical
+records, including handoff row order. It does not establish parity with
+`main`, real receipt behavior or equality of exported scorer files.
+
+The runner's classifier factory creates its client without a ledger by
+default. Calibration commands can explicitly attach the spending ledger.
+Every optional completion write has a short deadline. Unfinished work is
+counted beside blocked transports in the episode's `classifier_cleanup`.
+An underlying blocked filesystem call can outlive the deadline in a daemon
+thread; cleanup records it and does not wait indefinitely.
+
+Four retained limits are explicit. A `no_request` on a pending native
+question can use an eligible required event's reopen as the answer, as a
+scripted empty reply does on `main`. Changing that rule needs a separate
+decision. A reset is recorded as fired at its continuation's send instant,
+as on `main`. Event records after a scripted policy error can differ from
+`main`; that episode is unusable either way. The fake-port replay property
+has the scope described above.
+
+See the [round 6 report](../../calibration/classifier/review-round6.md) for
+per-ruling regressions, saved-episode byte comparison and validation. No
+hosted calls, prompt changes or config changes were made in round 6.

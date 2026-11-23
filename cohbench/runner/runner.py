@@ -134,6 +134,8 @@ class _Message:
     actions: list[Event] = field(default_factory=list)
     handback: int = 0
     replies: list[tuple[dict, str]] = field(default_factory=list)
+    wait: dict | None = None
+    wait_line: dict | None = None
 
 
 @dataclass
@@ -264,6 +266,7 @@ class Runner:
         self._unjudged_items: set[str] = set()
         self._judging_deadline: datetime | None = None
         self._call_bound: datetime | None = None
+        self._judging_advanced = False
         self._carry: list[Output] = []  # outputs dated past the last confirmed instant
         self._pending_deliveries: dict[int, Delivery] = {}
         self._end_at: datetime | None = None
@@ -568,6 +571,9 @@ class Runner:
             self.handback_log.append({"utc": utc_us(_dt(hb.at)), "handback": self.ctx.handbacks, "closing": hb.closing,  # type: ignore[arg-type]
                                       "kind": "finished" if hb.state == "finished" else "pending"})
             self.log.write("hand_back", handback=self.ctx.handbacks, state=hb.state, closing=hb.closing, drained=True)
+        for message in self.queued:
+            if isinstance(message, _Message):
+                self._settle_message_wait(message, "budget_cutoff")
         self._refresh_mechanisms()
         read_at = self.utcnow()
         try:
@@ -880,9 +886,12 @@ class Runner:
 
     def _loop(self) -> None:
         turn_t0 = self.ep.clock()
+        catch_up = False
         while True:
-            self._check_budgets()
-            turn = self.ep.wait(self._slice())
+            if not catch_up:
+                self._check_budgets()
+            turn = self.ep.wait(0 if catch_up else self._slice())
+            catch_up = False
             self.log.write("wait_result", state=turn.state, run=turn.run_id, outputs=len(turn.outputs), closing=turn.closing, detail=turn.detail,
                            started_by_t3=list(turn.started_by_t3))
             handback = turn.state in ("finished", "question", "secret")
@@ -909,10 +918,16 @@ class Runner:
                 # before the outputs. Choose the dispatch basis before judging,
                 # without moving its delivery out of the chronological replay.
                 graces = [g for g in [self._grace_at()] if g is not None]
-                graces += [self._wall_after(t, q.event.action.grace_ms) for t, q, _d in deliveries
-                           if isinstance(q, _Queued) and q.event.action.type == "reset"]
+                graces += [self._wall_after(t, e.action.grace_ms) for t, q, _d in deliveries
+                           for e in ([q.event] if isinstance(q, _Queued) else q.actions)
+                           if e.action.type == "reset"]
                 self._begin_judging(min([hb_instant, *graces]))
+            self._judging_advanced = False
             self._replay_upto(turn.outputs, deliveries, until=newest, why="hand-back" if handback else "coverage")
+            if turn.state == "time_limit" and self._judging_advanced:
+                # Observe the interval spent judging before choosing a timer end.
+                catch_up = True
+                continue
             g = self._grace_at()
             if g is not None and ((handback and hb_instant > g) or (not handback and self.utcnow() >= g)):
                 # D-046: the reset's grace ran out before any hand-back. Which came first is
@@ -1093,6 +1108,7 @@ class Runner:
                 if x[0] == "delivery":
                     q, d = x[1], x[2]
                     if isinstance(q, _Message):
+                        self._settle_message_wait(q, "reply")
                         self._line(USER, q.text, d.utc, **q.meta)
                         for verdict, reply in q.replies:
                             verdict["fields"]["reply"] = reply
@@ -1130,12 +1146,21 @@ class Runner:
             self._pending_deliveries[id(q)] = d
             return
         if isinstance(q, _Message):
+            self._settle_message_wait(q, "budget_cutoff")
             self.log.write("delivery_after_end", ref=q.ref, utc=d.utc, mark=d.mark)
             return
         q.record["delivered_utc"], q.record["after_end"] = d.utc, True
         if d.mark is not None and d.mark not in self.marks:
             self.marks.append(d.mark)  # the driver's mark is in the watcher log; the runner names it, though nothing counts from it
         self.log.write("delivery_after_end", name=q.event.name, utc=d.utc, mark=d.mark)
+
+    def _settle_message_wait(self, message: _Message, ended: str) -> None:
+        if message.wait is not None:
+            message.wait["fields"]["ended"] = ended
+            message.wait = None
+        if message.wait_line is not None:
+            self.log.write("user_wait_end", **message.wait_line, ended=ended)
+            message.wait_line = None
 
     def _observe_deliveries(self) -> list[tuple[datetime, _Queued, Delivery]]:
         """Correction deliveries the driver now reports, each once, in time order."""
@@ -1208,16 +1233,19 @@ class Runner:
             return
         card = self.task.card_for(self._fired_by(t))
         limit = getattr(self.policy, "verdict_deadline_s", None)
-        pending = o.kind == "question"
+        pending = (self.pending is not None and self.pending.item_id == o.item_id
+                   and o.kind == "question" and not self._final_replay
+                   and self.reset_in_progress is None)
+        started = self.utcnow()
         try:
-            if limit is None:  # Scripted policies retain main's call and behavior.
+            if limit is None:  # Scripted policies retain main's call signature.
                 j = self.policy.judge(copy.deepcopy(card), tr, o.text)
             else:
                 remaining = limit
-                if self._call_bound is not None and not pending:
+                if self._call_bound is not None and not pending and self._end_at is None:
                     remaining = min(remaining, (self._call_bound-self.utcnow()).total_seconds())
-                end = self._end_at or self._deadline_at()
-                if end is not None and self.utcnow() >= end:
+                end = self._deadline_at()
+                if self._end_at is None and end is not None and self.utcnow() >= end:
                     remaining = 0
                 deadline = self.policy.clock() + max(0, remaining)
                 j = self.policy.judge(copy.deepcopy(card), tr, o.text, deadline=deadline)
@@ -1230,6 +1258,8 @@ class Runner:
             raise
         except Exception as exc:
             raise PolicyError(f"judge raised {exc!r}") from exc
+        finally:
+            self._judging_advanced |= self.utcnow() > started
         self._apply_verdict(seen, j, card, tr, t)
 
 
@@ -1991,11 +2021,12 @@ class Runner:
         self._cutoff("time", at=self._deadline_at())
 
     def _late(self, sent: Sent) -> bool:
-        """A dispatch that landed after the deadline: its send instant against the
-        deadline's (a reset's handoff is excluded time, which moves the deadline)."""
+        """Receipt after the deadline, or send time until receipt is known.
+        A reset's excluded handoff time moves the deadline."""
         if self.task.budgets["elapsed_ms"] is None:
             return False
-        at, dl = _dt(self._outside_excluded(sent.utc)) if sent.utc else None, self._deadline_at()
+        receipt = sent.delivered_utc or sent.utc
+        at, dl = _dt(self._outside_excluded(receipt)) if receipt else None, self._deadline_at()
         if at is None or dl is None:
             return self._dispatch_ms(sent) > self.task.budgets["elapsed_ms"]
         return at > dl
@@ -2043,7 +2074,8 @@ class Runner:
                     self._run_to_deadline()
                 raise
         self.agent = "running"  # at once: the end sequence interrupts whatever the dispatch started
-        if not (check_late and self._late(sent)):
+        pending_delivery = sent.delivery_pending or (via == "refuse_secret" and sent.mechanism in ("native_steer", "interrupt_restart") and not sent.delivered_utc)
+        if not pending_delivery and not (check_late and self._late(sent)):
             self._last_wait = None  # its reply went
             self._flush_wait("reply")
         if via == "answer":
@@ -2070,8 +2102,10 @@ class Runner:
         wire_text = "\n\n".join(dict.fromkeys(submitted.values())) if submitted else text
         line_meta = dict(kind=kind, ref=ref, shown_as=_shown_as(kind, meta),
                          delivered_ids=delivered_ids, wire_text=wire_text)
-        if sent.delivery_pending or (via == "refuse_secret" and sent.mechanism in ("native_steer", "interrupt_restart") and not sent.delivered_utc):
-            self.queued.append(_Message(sent, ref, text, line_meta))
+        if pending_delivery:
+            wait_line = dict(self._wait_line, user_wait_ms=self.user_wait_ms) if self._wait_line is not None else None
+            self.queued.append(_Message(sent, ref, text, line_meta, wait=self._last_wait, wait_line=wait_line))
+            self._last_wait = self._wait_line = None
         else:
             self._line(USER, text, sent.delivered_utc or sent.utc, **line_meta)
         return sent

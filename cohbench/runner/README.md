@@ -181,8 +181,8 @@ the key file; it passes the path on.
    time left as its own limit; a call the driver never started ("unsent",
    non-fatal) is nothing sent. After any dispatch returns, the agent is
    running at once, so the end sequence interrupts what it started. A
-   dispatch that lands after the deadline anyway (its send instant against the
-   deadline's) counts as not sent: it is in the run manifest's
+   dispatch whose known receipt lands after the deadline (or whose send
+   already passed it) counts as not delivered: it is in the run manifest's
    `after_deadline`, and the episode ends at the deadline. A late steer is
    queued for settlement first, so the end replay records its delivery as
    audit only. The reset's handoff has its own
@@ -867,7 +867,7 @@ and supplies `verdict_deadline_s` and `clock()`. The runner calls it
 synchronously in output order. Each call receives the card and transcript
 at that output's own delivery instant, before the output enters the
 transcript. This applies to several outputs observed in one hand-back poll.
-Scripted policies keep their existing synchronous signature and behavior.
+Scripted policies keep their existing synchronous call signature.
 
 The absolute deadline is the earlier of the classifier limit from the
 call's own start and the shared hand-back cutoff. That cutoff is the reply
@@ -875,10 +875,11 @@ due time less the 3-second dispatch allowance, clipped by the episode end
 less the allowance. A reset drain shares it. At a reset, grace or the
 reported hand-back is selected before judging, according to which came
 first. Mid-run outputs get the classifier's own limit and no separate reply
-wait. A pending native question also gets the full limit; expiry makes the
-episode unusable instead of sending invented answer text. A scripted empty
-reply retains `main`'s behavior, including an eligible event's reopen sent
-as the pending answer.
+wait. A live pending native question about to be answered also gets the full
+limit; expiry makes the episode unusable instead of sending invented answer
+text. A scripted empty reply retains `main`'s behavior, including an eligible event's reopen sent
+as the pending answer. Final-drain outputs receive their own classifier
+limit; expiry there is `deadline` and leaves the episode usable.
 
 Every observed output enters the transcript and output counts at delivery,
 including one without a verdict. It can close a hand-back and be a probe
@@ -901,7 +902,7 @@ adds no delivered card item.
 The replay property matches verdict rows by output item id, never text,
 and checks the exact card, transcript and delivery provenance received by
 each call. It compares whole episode, handoff, transcript, classifier,
-awareness, manifest and journal records. Only measured `record.ms` and
+awareness, manifest and journal records. Handoff rows retain their order. Only measured `record.ms` and
 `record.questions[].ms` are masked. Snapshot `as_of`, `card_items`,
 `record.context`, journal `n`, `utc` and `clock_ms` all remain compared.
 The forked fixture copies keep original path identities and clock advances.
@@ -925,13 +926,18 @@ instants even when processing resumes later.
 
 The classifier client retains bounded-return transport threads. Python
 cannot cancel a blocked name lookup or connect. An abandoned thread's
-result is unused, it cannot submit a later request, and its only permitted
-ledger write is closing its own attempt. The end-of-episode `flush()` hook
+result is unused. After the deadline no new request is submitted and no
+result is used; a request already being written may finish being sent. Its
+only permitted ledger write is closing its own attempt. The end-of-episode `flush()` hook
 waits at most 0.25 seconds by default. `run.json` stores its
 `classifier_cleanup.blocked_transport_threads` and
-`classifier_cleanup.pending_accounting_threads` counts. Accounting errors
-make the episode unusable. No runner judgement job survives a reset because
-there are no runner judgement jobs.
+`classifier_cleanup.pending_accounting_threads` and
+`classifier_cleanup.incomplete_accounting_writes` counts. Optional completion
+writes have a 0.25-second deadline and daemon workers; they cannot hold
+process exit or change a published episode outcome. The runner factory
+leaves the optional ledger off. Calibration commands still require completed
+accounting and report incomplete writes as errors. There are no runner
+judgement jobs to survive a reset.
 
 `Judgement(label, answer_ids, quote_of, quote, record)`. The policy never
 writes a reply. It names the label (`answerable`, `already_given`,
@@ -1515,6 +1521,9 @@ hand-back to the report; `after_report_ms`, from the report to the wait).
 
 ## Limits
 
+After the deadline no new request is submitted and no result is used;
+a request already being written may finish being sent.
+
 - Classifier judgements are synchronous. While one is in progress the loop
   does not poll, so a planted event or correction after a mid-run message
   can be dispatched late by up to that judgement's duration. Recorded
@@ -1523,7 +1532,8 @@ hand-back to the report; `after_report_ms`, from the report to the wait).
 - Python cannot cancel blocked name lookup or connect. An abandoned
   classifier transport thread can outlive its call, with its result unused
   and late submission blocked. The bounded end flush reports still-blocked
-  transport and pending accounting counts in `run.json.classifier_cleanup`.
+  transport, pending accounting and incomplete-write counts in
+  `run.json.classifier_cleanup`.
 
 What the unit does not do, or does only within these bounds, as of
 2026-11-22:
@@ -1654,3 +1664,48 @@ Verdicts in the blind view carry `answer_ids`, the card item ids selected
 by the classifier, including when the reply was cut off during its wait.
 No card text is added. An empty list means none selected; a missing field
 in an older bundle means the ids were not recorded.
+
+## Review round 6, 2026-11-23
+
+After a judgement advances time, the loop polls once before acting on a
+timer. It replays the newly observed interval by delivery time. A hand-back
+before reset grace or elapsed end retains its normal probe and clipped wait.
+At the final drain, covered outputs receive the classifier's own limit,
+including questions. An expiry there is `deadline`. The full-limit native
+question rule that can make an episode unusable applies only to the live
+pending question about to be answered, outside an ending or reset replay.
+
+A receipt after the episode's end does not deliver a reply or any card item.
+Its wait ends as cut off and the scorer-facing `verdict.reply` stays null.
+Known and queued receipts both follow this rule. Reset notices participate
+in deadline selection whether carried alone or with another user message.
+
+The shared receipt helper follows `main`'s trajectory rule. Explicit replies
+use the item timestamp. Unhinted messages after an interrupt can infer a
+correction and use the restarted run's start. A steer completed at its queue
+time can use a later native receipt. Saved-episode comparison is the check
+against `main`; the replay property alone is not that check.
+
+Both replay arms run this branch's runner with a fake port. The property
+shows that a slow policy with the same verdicts gives the same logical
+records, including handoff row order. It does not establish parity with
+`main`, real receipt behavior or equality of exported scorer files.
+
+The runner's classifier factory creates its client without a ledger by
+default. Calibration commands can explicitly attach the spending ledger.
+Every optional completion write has a short deadline. Unfinished work is
+counted beside blocked transports in the episode's `classifier_cleanup`.
+An underlying blocked filesystem call can outlive the deadline in a daemon
+thread; cleanup records it and does not wait indefinitely.
+
+Four retained limits are explicit. A `no_request` on a pending native
+question can use an eligible required event's reopen as the answer, as a
+scripted empty reply does on `main`. Changing that rule needs a separate
+decision. A reset is recorded as fired at its continuation's send instant,
+as on `main`. Event records after a scripted policy error can differ from
+`main`; that episode is unusable either way. The fake-port replay property
+has the scope described above.
+
+See the [round 6 report](../../calibration/classifier/review-round6.md) for
+per-ruling regressions, saved-episode byte comparison and validation. No
+hosted calls, prompt changes or config changes were made in round 6.

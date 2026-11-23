@@ -548,7 +548,7 @@ class _Builder:
             self.start_turn(agent, ts0, run)
         resume_at: datetime | None = None
         last_ts = ts0
-        ctx = {"new_context": new_context, "declared": declared, "restart": continues, "receipt_restart": continues or self.turn_end_kind.get(agent) == "interrupted", "run": run}
+        ctx = {"new_context": new_context, "declared": declared, "restart": continues, "run": run}
         for item in items:
             if agent not in self.open_turn:
                 if resume_at is None:
@@ -674,7 +674,7 @@ class _Builder:
         if kind in F.DELIVERED_KINDS:
             ts = self.correction_time(item, ts, ctx, kind)
         else:
-            ts, _ = delivery_instant(item, queued=ts, run=ctx["run"], restart=ctx["receipt_restart"])
+            ts, _ = delivery_instant(item, queued=ts, kind=kind)
         e = self.ev("user_message", agent, ts, item, turn=turn, kind=kind, text=text)
         e["_message"] = item.get("messageId")
         for r in removed:

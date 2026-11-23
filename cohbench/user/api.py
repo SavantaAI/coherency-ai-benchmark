@@ -155,7 +155,6 @@ class Client:
     ):
         self._finishes = []
         self._transports = []
-        self._accounting_errors = []
         self._previous_served = None
         self.ledger = ledger
         self.cfg = cfg
@@ -217,35 +216,44 @@ class Client:
             b.pop("provider")
         return b
 
-    def flush(self, timeout_s=0.25):
+    def flush(self, timeout_s=0.25, *, require_accounting=True):
         """Bounded end-of-episode cleanup; blocked platform calls remain isolated."""
         end = time.monotonic() + timeout_s
         for thread in self._transports + self._finishes:
             thread.join(max(0, end-time.monotonic()))
         self._transports = [t for t in self._transports if t.is_alive()]
+        incomplete = sum(bool(getattr(t, "accounting_incomplete", False))
+                         for t in self._finishes if not getattr(t, "accounting_reported", False))
+        for thread in self._finishes:
+            thread.accounting_reported = True
         self._finishes = [t for t in self._finishes if t.is_alive()]
-        if self._accounting_errors:
-            raise EndpointError("the call ledger could not be written")
-        return {"blocked_transport_threads": len(self._transports),
-                "pending_accounting_threads": len(self._finishes)}
+        counts = {"blocked_transport_threads": len(self._transports),
+                  "pending_accounting_threads": len(self._finishes),
+                  "incomplete_accounting_writes": incomplete}
+        if require_accounting and (incomplete or self._finishes):
+            raise EndpointError("the call ledger did not complete before its cleanup deadline")
+        return counts
 
     def _record_attempt(self, attempt, usage, outcome, ms):
         if self.ledger is None:
             return
 
+        end = time.monotonic() + 0.25
         def write():
             try:
-                attempt.reserved.wait()
+                if not attempt.reserved.wait(max(0, end-time.monotonic())):
+                    raise TimeoutError()
                 if attempt.ticket is not None:
-                    attempt.submission_done.wait()
+                    if not attempt.submission_done.wait(max(0, end-time.monotonic())):
+                        raise TimeoutError()
                     if not attempt.sent:
-                        self.ledger.not_sent(attempt.ticket)
-                    self.ledger.finish(attempt.ticket, usage, outcome, ms)
+                        self.ledger.not_sent(attempt.ticket, deadline=end)
+                    self.ledger.finish(attempt.ticket, usage, outcome, ms, deadline=end)
             except Exception:
-                self._accounting_errors.append(True)
+                thread.accounting_incomplete = True
 
-        # Non-daemon: the process also waits at exit if a runner has no close hook.
-        thread = threading.Thread(target=write)
+        # A blocked filesystem write must not hold process exit. Flush reports it.
+        thread = threading.Thread(target=write, daemon=True)
         self._finishes.append(thread)
         thread.start()
 
