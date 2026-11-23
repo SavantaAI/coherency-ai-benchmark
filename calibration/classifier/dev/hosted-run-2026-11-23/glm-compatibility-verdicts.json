@@ -1,0 +1,149 @@
+{
+  "format": "cohbench-classifier-verdicts",
+  "version": 1,
+  "items": "e23e1e37bc32c0eac084973ed7d7ddde23ddb5707de5f6b7167c3f6d2037357e",
+  "config": "87299cae387435032e1df43ea3fcd5801f32c59be3582c13e907e26423810522",
+  "order": null,
+  "code": "5069fa21983f",
+  "verdicts": {
+    "dev-e1-03": {
+      "label": "answerable",
+      "answer_ids": ["restart"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "87299cae387435032e1df43ea3fcd5801f32c59be3582c13e907e26423810522",
+        "prompt": "p9",
+        "context": {
+          "entries": 4,
+          "input_tokens_est_max": 6175
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 2673,
+            "attempts": 1,
+            "served": {
+              "model": "glm-5.3-flash-uncensored",
+              "provider": "experiential_cloud"
+            },
+            "usage": {
+              "prompt_tokens": 2497,
+              "completion_tokens": 8,
+              "cached_tokens": 2304,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see the machines' files or logs; I only see what you tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 2539,
+            "attempts": 1,
+            "served": {
+              "model": "glm-5.3-flash-uncensored",
+              "provider": "experiential_cloud"
+            },
+            "usage": {
+              "prompt_tokens": 2593,
+              "completion_tokens": 26,
+              "cached_tokens": 2432,
+              "reasoning_tokens": 18
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [role] is the fact \"I manage the team that uses these machines, but I'm not a sysadmin.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 2668,
+            "attempts": 1,
+            "served": {
+              "model": "glm-5.3-flash-uncensored",
+              "provider": "experiential_cloud"
+            },
+            "usage": {
+              "prompt_tokens": 2686,
+              "completion_tokens": 20,
+              "cached_tokens": 2432,
+              "reasoning_tokens": 12
+            },
+            "item": "role"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [restart] is the decision about \"Whether you may restart or change anything on the machines\", with the user's answer \"Don't restart or change anything yet. Just find out why and tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1873,
+            "attempts": 1,
+            "served": {
+              "model": "glm-5.3-flash-uncensored",
+              "provider": "experiential_cloud"
+            },
+            "usage": {
+              "prompt_tokens": 2796,
+              "completion_tokens": 8,
+              "cached_tokens": 2432,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [restart] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "A",
+            "ms": 1675,
+            "attempts": 1,
+            "served": {
+              "model": "glm-5.3-flash-uncensored",
+              "provider": "experiential_cloud"
+            },
+            "usage": {
+              "prompt_tokens": 2937,
+              "completion_tokens": 17,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 9
+            },
+            "item": "restart"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [restart] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"m3 is way slower than m1, m2 and m4 at the nightly build, even though they're supposed to be identical. Everything we collected is in ...\"}\n{\"n\": 3, \"begins\": \"I don't follow. What's the actual reason?\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "3", "N"],
+            "chosen": "N",
+            "ms": 1721,
+            "attempts": 1,
+            "served": {
+              "model": "glm-5.3-flash-uncensored",
+              "provider": "experiential_cloud"
+            },
+            "usage": {
+              "prompt_tokens": 3081,
+              "completion_tokens": 34,
+              "cached_tokens": 2688,
+              "reasoning_tokens": 26
+            },
+            "item": "restart"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 16590,
+          "completion_tokens": 113,
+          "cached_tokens": 14848,
+          "reasoning_tokens": 65
+        },
+        "ms": 13151
+      }
+    }
+  }
+}

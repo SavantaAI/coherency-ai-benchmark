@@ -1,0 +1,30 @@
+  1/30 dev-e1-03: answerable restart  10.8 s
+  2/30 dev-e1-04: unanswerable  6.9 s
+  3/30 dev-e1-07: no_request  1.1 s
+  4/30 dev-e1-08: already_given [3]  8.1 s
+  5/30 dev-e1-11: answerable restart  8.9 s
+  6/30 dev-e2-02: answerable rollback  8.5 s
+  7/30 dev-e2-03: unanswerable  9.1 s
+  8/30 dev-e2-04: answerable since  9.2 s
+  9/30 dev-e2-05: already_given [1]  7.8 s
+ 10/30 dev-e2-06: unanswerable  5.9 s
+ 11/30 dev-e2-08: already_given [3]  8.1 s
+ 12/30 dev-r1-04: already_given [3]  10.5 s
+ 13/30 dev-r1-09: no_request  1.2 s
+ 14/30 dev-r2-05: answerable audience  7.2 s
+ 15/30 dev-r2-09: no_request  1.0 s
+ 16/30 dev-r2-10: unanswerable  4.2 s
+ 17/30 dev-r3-01: answerable build,notes  13.3 s
+ 18/30 dev-r3-07: already_given [1]  7.9 s
+ 19/30 dev-r3-09: answerable together  10.3 s
+ 20/30 dev-r4-05: no_request  1.2 s
+ 21/30 dev-r4-06: answerable purpose  8.9 s
+ 22/30 dev-r4-07: already_given [3]  8.2 s
+ 23/30 dev-s1-03: unanswerable  7.7 s
+ 24/30 dev-s1-05: already_given [4]  9.2 s
+ 25/30 dev-s1-06: no_request  1.2 s
+ 26/30 dev-s1-09: already_given [4]  8.5 s
+ 27/30 dev-s2-02: answerable same  11.1 s
+ 28/30 dev-s2-05: no_request  1.6 s
+ 29/30 dev-s2-08: unanswerable  7.6 s
+ 30/30 dev-s2-09: answerable rollout  11.3 s

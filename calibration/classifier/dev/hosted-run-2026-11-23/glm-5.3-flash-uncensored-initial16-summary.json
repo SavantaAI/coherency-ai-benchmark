@@ -1,0 +1,6 @@
+{
+  "model": "glm-5.3-flash-uncensored",
+  "stage": "subset",
+  "exit": 1,
+  "wall_s": 7.213
+}

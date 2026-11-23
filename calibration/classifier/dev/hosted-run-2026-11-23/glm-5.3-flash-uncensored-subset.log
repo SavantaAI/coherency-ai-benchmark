@@ -1,0 +1,17 @@
+  1/30 dev-e1-03: answerable restart  9.9 s
+  2/30 dev-e1-04: unanswerable  15.2 s
+  3/30 dev-e1-07: no_request  1.4 s
+  4/30 dev-e1-08: already_given [3]  9.5 s
+  5/30 dev-e1-11: answerable restart  12.9 s
+  6/30 dev-e2-02: answerable rollback  12.3 s
+  7/30 dev-e2-03: unanswerable  8.2 s
+  8/30 dev-e2-04: answerable since  11.5 s
+  9/30 dev-e2-05: already_given [1]  11.5 s
+ 10/30 dev-e2-06: unanswerable  9.1 s
+ 11/30 dev-e2-08: already_given [3]  13.9 s
+ 12/30 dev-r1-04: already_given [3]  12.2 s
+ 13/30 dev-r1-09: no_request  1.9 s
+ 14/30 dev-r2-05: answerable audience  12.8 s
+ 15/30 dev-r2-09: no_request  1.4 s
+ 16/30 dev-r2-10: unanswerable  8.5 s
+error: the verdict's deadline passed while the response was read

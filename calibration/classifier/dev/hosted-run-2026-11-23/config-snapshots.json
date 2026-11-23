@@ -1,0 +1,455 @@
+{
+  "3772af2699892b118cead50eab2eb8d1dc1d042bdf1f36ecf1913b1d0945a845": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "glm-5.3-flash-uncensored",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "none"
+      },
+      "expect": {
+        "model": "glm-5.3-flash-uncensored",
+        "provider": null
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 16
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 0,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  },
+  "395b6d57fea7a149715d6dc70f9d9f67ba7d523225bd2fc6275430d540921ca1": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "glm-5.3-flash-uncensored",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "none"
+      },
+      "expect": {
+        "model": "glm-5.3-flash-uncensored",
+        "provider": "experiential_cloud"
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 16
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 0,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  },
+  "7038d6adf1b52b6584820fd3af6346b9a5afee9749dd668e80067159c558e3ae": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "glm-5.3-flash-uncensored",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "none"
+      },
+      "expect": {
+        "model": "glm-5.3-flash-uncensored",
+        "provider": "experiential_cloud"
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 16
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 1,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  },
+  "87299cae387435032e1df43ea3fcd5801f32c59be3582c13e907e26423810522": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "glm-5.3-flash-uncensored",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "low"
+      },
+      "expect": {
+        "model": "glm-5.3-flash-uncensored",
+        "provider": "experiential_cloud"
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 1024
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 1,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  },
+  "0e458f22f5a56a8078d81330b23721104aca6c50aaff544d912f7296b9787e35": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "glm-5.3-flash-uncensored",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "none",
+        "thinking": {
+          "type": "disabled"
+        }
+      },
+      "expect": {
+        "model": "glm-5.3-flash-uncensored",
+        "provider": "experiential_cloud"
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 16
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 1,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  },
+  "592fc11653feba65e348f180b2068d1952d543d3935739f1a8c702ef8b9a8dcd": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "deepseek-v4.1-flash-uncensored",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "none"
+      },
+      "expect": {
+        "model": "deepseek-v4.1-flash-uncensored",
+        "provider": "experiential_cloud"
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 16
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 0,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  },
+  "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "deepseek-v4.1-flash-uncensored",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "none"
+      },
+      "expect": {
+        "model": "deepseek-v4.1-flash-uncensored",
+        "provider": "experiential_cloud"
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 16
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 1,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  },
+  "0141539ac82af7990074c11f1324b2befe0aa69c8d2c522c35222387e5aef2c1": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "kimi-k3.1-pro",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "none"
+      },
+      "expect": {
+        "model": "kimi-k3.1-pro",
+        "provider": "experiential_cloud"
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 16
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 0,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  },
+  "92bb7518c6a99d9f1dd39e7718ba15b139ec6403b386b4c3105b0c540f778b03": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "kimi-k3.1-pro",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "none"
+      },
+      "expect": {
+        "model": "kimi-k3.1-pro",
+        "provider": "openrouter"
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 16
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 0,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  },
+  "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf": {
+    "format": "cohbench-classifier-config",
+    "version": 2,
+    "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+    "endpoint": {
+      "base_url": "https://api.experientiallabs.ai/v1",
+      "model": "kimi-k3.1-pro",
+      "protocol": "openai",
+      "provider": null,
+      "extra_body": {
+        "reasoning_effort": "none"
+      },
+      "expect": {
+        "model": "kimi-k3.1-pro",
+        "provider": "openrouter"
+      }
+    },
+    "prompt": {
+      "version": "p9",
+      "template": "chat-messages-json-choice-json-data",
+      "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+    },
+    "sampling": {
+      "temperature": 0,
+      "seed": 20261122,
+      "max_tokens": 16
+    },
+    "schema": {
+      "name": "closed_choice",
+      "strict": true,
+      "field": "choice"
+    },
+    "limits": {
+      "verdict_deadline_s": 25.0,
+      "request_timeout_s": 10.0,
+      "retries": 1,
+      "backoff_s": 0.5
+    },
+    "context": {
+      "max_input_tokens": 30000,
+      "chars_per_token": 2.5,
+      "margin": 512,
+      "keep_message_tokens": 512
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "glm-5.3-flash-uncensored": {
+    "attempts": 98,
+    "usage": {
+      "cached_tokens": 180992,
+      "completion_tokens": 1886,
+      "prompt_tokens": 244782,
+      "reasoning_tokens": 1147
+    },
+    "missing_usage": 2,
+    "request_ms": 209169,
+    "invalid_responses": 3,
+    "transport_errors": 2
+  },
+  "deepseek-v4.1-flash-uncensored": {
+    "attempts": 406,
+    "usage": {
+      "completion_tokens": 2835,
+      "prompt_tokens": 1043266,
+      "reasoning_tokens": 0,
+      "cached_tokens": 843392
+    },
+    "missing_usage": 1,
+    "request_ms": 502152,
+    "invalid_responses": 0,
+    "transport_errors": 1
+  },
+  "kimi-k3.1-pro": {
+    "attempts": 401,
+    "usage": {
+      "cached_tokens": 787456,
+      "completion_tokens": 2716,
+      "prompt_tokens": 1071100,
+      "reasoning_tokens": 0
+    },
+    "missing_usage": 0,
+    "request_ms": 585550,
+    "invalid_responses": 1,
+    "transport_errors": 0
+  }
+}

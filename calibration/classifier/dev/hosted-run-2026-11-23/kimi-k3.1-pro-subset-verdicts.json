@@ -1,0 +1,3640 @@
+{
+  "format": "cohbench-classifier-verdicts",
+  "version": 1,
+  "items": "e23e1e37bc32c0eac084973ed7d7ddde23ddb5707de5f6b7167c3f6d2037357e",
+  "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+  "order": null,
+  "code": "5069fa21983f",
+  "verdicts": {
+    "dev-e1-03": {
+      "label": "answerable",
+      "answer_ids": ["restart"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 4,
+          "input_tokens_est_max": 6175
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1259,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2586,
+              "completion_tokens": 6,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see the machines' files or logs; I only see what you tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1625,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2707,
+              "completion_tokens": 7,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [role] is the fact \"I manage the team that uses these machines, but I'm not a sysadmin.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 3002,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2823,
+              "completion_tokens": 7,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            },
+            "item": "role"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [restart] is the decision about \"Whether you may restart or change anything on the machines\", with the user's answer \"Don't restart or change anything yet. Just find out why and tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1543,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2955,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [restart] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "A",
+            "ms": 1441,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3122,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [restart] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"m3 is way slower than m1, m2 and m4 at the nightly build, even though they're supposed to be identical. Everything we collected is in ...\"}\n{\"n\": 3, \"begins\": \"I don't follow. What's the actual reason?\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "3", "N"],
+            "chosen": "N",
+            "ms": 1965,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3284,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 17477,
+          "completion_tokens": 41,
+          "cached_tokens": 6656,
+          "reasoning_tokens": 0
+        },
+        "ms": 10836
+      }
+    },
+    "dev-e1-04": {
+      "label": "unanswerable",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 1,
+          "input_tokens_est_max": 5646
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1675,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2253,
+              "completion_tokens": 6,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see the machines' files or logs; I only see what you tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1262,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2374,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [role] is the fact \"I manage the team that uses these machines, but I'm not a sysadmin.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1500,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2490,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "role"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [restart] is the decision about \"Whether you may restart or change anything on the machines\", with the user's answer \"Don't restart or change anything yet. Just find out why and tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1126,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2622,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          },
+          {
+            "type": "given",
+            "question": "Question type 5 (already answered). Did one of the user's earlier messages already answer what this message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"m3 is way slower than m1, m2 and m4 at the nightly build, even though they're supposed to be identical. Everything we collected is in ...\"}\nAnswer with the number of the user message that answered it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1296,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2749,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "none",
+        "usage": {
+          "prompt_tokens": 12488,
+          "completion_tokens": 34,
+          "cached_tokens": 8192,
+          "reasoning_tokens": 0
+        },
+        "ms": 6861
+      }
+    },
+    "dev-e1-07": {
+      "label": "no_request",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 3,
+          "input_tokens_est_max": 6077
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "B",
+            "ms": 1110,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2521,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "request",
+        "usage": {
+          "prompt_tokens": 2521,
+          "completion_tokens": 6,
+          "cached_tokens": 1536,
+          "reasoning_tokens": 0
+        },
+        "ms": 1110
+      }
+    },
+    "dev-e1-08": {
+      "label": "already_given",
+      "answer_ids": [],
+      "quote_of": 2,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 4,
+          "input_tokens_est_max": 6042
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1330,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2455,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see the machines' files or logs; I only see what you tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1218,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2576,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [role] is the fact \"I manage the team that uses these machines, but I'm not a sysadmin.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1084,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2692,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "role"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [restart] is the decision about \"Whether you may restart or change anything on the machines\", with the user's answer \"Don't restart or change anything yet. Just find out why and tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 2097,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2824,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [restart] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "A",
+            "ms": 1223,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2991,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [restart] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"m3 is way slower than m1, m2 and m4 at the nightly build, even though they're supposed to be identical. Everything we collected is in ...\"}\n{\"n\": 3, \"begins\": \"Don't restart or change anything yet. Just find out why and tell me.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "3", "N"],
+            "chosen": "3",
+            "ms": 1134,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3159,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          }
+        ],
+        "decided_by": "told_model",
+        "usage": {
+          "prompt_tokens": 16697,
+          "completion_tokens": 41,
+          "cached_tokens": 11264,
+          "reasoning_tokens": 0
+        },
+        "ms": 8087
+      }
+    },
+    "dev-e1-11": {
+      "label": "answerable",
+      "answer_ids": ["restart"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 8,
+          "input_tokens_est_max": 6709
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1225,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2826,
+              "completion_tokens": 6,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see the machines' files or logs; I only see what you tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1063,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2947,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [role] is the fact \"I manage the team that uses these machines, but I'm not a sysadmin.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 2095,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3063,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "role"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [restart] is the decision about \"Whether you may restart or change anything on the machines\", with the user's answer \"Don't restart or change anything yet. Just find out why and tell me.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1295,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3195,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [restart] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "A",
+            "ms": 1234,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3362,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [restart] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"m3 is way slower than m1, m2 and m4 at the nightly build, even though they're supposed to be identical. Everything we collected is in ...\"}\n{\"n\": 3, \"begins\": \"I don't follow. What's the actual reason?\"}\n{\"n\": 5, \"begins\": \"Thanks. Can you also check why m1's build log is so noisy?\"}\n{\"n\": 7, \"begins\": \"Also, please add a short summary of both findings to investigation/SUMMARY.md.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "3", "5", "7", "N"],
+            "chosen": "N",
+            "ms": 1999,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3585,
+              "completion_tokens": 7,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            },
+            "item": "restart"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 18978,
+          "completion_tokens": 41,
+          "cached_tokens": 10240,
+          "reasoning_tokens": 0
+        },
+        "ms": 8911
+      }
+    },
+    "dev-e2-02": {
+      "label": "answerable",
+      "answer_ids": ["rollback"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 3,
+          "input_tokens_est_max": 6030
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1325,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2473,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or the servers.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1224,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2585,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [since] is the fact \"Customers started complaining that the dashboard is slow last Tuesday.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1404,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2696,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "since"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [rollback] is the decision about \"Whether rolling back last week's deploy is acceptable\", with the user's answer \"A rollback is fine if it fixes it, but only in the evening after 18:00.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 2250,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2831,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [rollback] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 1306,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2998,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [rollback] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"The dashboard API on api-2 got slow last week, but api-1 and api-3 are fine. Everything we gathered is in notes/. What's actually causing it?\"}\n{\"n\": 3, \"begins\": \"I don't follow. What's the actual reason?\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "3", "N"],
+            "chosen": "N",
+            "ms": 1024,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3162,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 16745,
+          "completion_tokens": 41,
+          "cached_tokens": 11776,
+          "reasoning_tokens": 0
+        },
+        "ms": 8534
+      }
+    },
+    "dev-e2-03": {
+      "label": "unanswerable",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 1,
+          "input_tokens_est_max": 5603
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 2913,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2233,
+              "completion_tokens": 6,
+              "cached_tokens": 0,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or the servers.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 2438,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2345,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [since] is the fact \"Customers started complaining that the dashboard is slow last Tuesday.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1310,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2456,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "since"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [rollback] is the decision about \"Whether rolling back last week's deploy is acceptable\", with the user's answer \"A rollback is fine if it fixes it, but only in the evening after 18:00.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1252,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2591,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          },
+          {
+            "type": "given",
+            "question": "Question type 5 (already answered). Did one of the user's earlier messages already answer what this message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"The dashboard API on api-2 got slow last week, but api-1 and api-3 are fine. Everything we gathered is in notes/. What's actually causing it?\"}\nAnswer with the number of the user message that answered it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1184,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2720,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "none",
+        "usage": {
+          "prompt_tokens": 12345,
+          "completion_tokens": 34,
+          "cached_tokens": 7680,
+          "reasoning_tokens": 0
+        },
+        "ms": 9098
+      }
+    },
+    "dev-e2-04": {
+      "label": "answerable",
+      "answer_ids": ["since"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 1,
+          "input_tokens_est_max": 5586
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1347,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2214,
+              "completion_tokens": 6,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or the servers.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1674,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2326,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [since] is the fact \"Customers started complaining that the dashboard is slow last Tuesday.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1067,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2437,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "since"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [rollback] is the decision about \"Whether rolling back last week's deploy is acceptable\", with the user's answer \"A rollback is fine if it fixes it, but only in the evening after 18:00.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 2307,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2572,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [since] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "A",
+            "ms": 1121,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2739,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "since"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [since] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"The dashboard API on api-2 got slow last week, but api-1 and api-3 are fine. Everything we gathered is in notes/. What's actually causing it?\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1702,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2880,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "since"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 15168,
+          "completion_tokens": 41,
+          "cached_tokens": 12288,
+          "reasoning_tokens": 0
+        },
+        "ms": 9219
+      }
+    },
+    "dev-e2-05": {
+      "label": "already_given",
+      "answer_ids": [],
+      "quote_of": 0,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 2,
+          "input_tokens_est_max": 5585
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1368,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2226,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or the servers.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1296,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2338,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [since] is the fact \"Customers started complaining that the dashboard is slow last Tuesday.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 2376,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2449,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "since"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [rollback] is the decision about \"Whether rolling back last week's deploy is acceptable\", with the user's answer \"A rollback is fine if it fixes it, but only in the evening after 18:00.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1341,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2584,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          },
+          {
+            "type": "given",
+            "question": "Question type 5 (already answered). Did one of the user's earlier messages already answer what this message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"The dashboard API on api-2 got slow last week, but api-1 and api-3 are fine. Everything we gathered is in notes/. What's actually causing it?\"}\nAnswer with the number of the user message that answered it, or N.",
+            "options": ["1", "N"],
+            "chosen": "1",
+            "ms": 1421,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2713,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "given",
+        "usage": {
+          "prompt_tokens": 12310,
+          "completion_tokens": 34,
+          "cached_tokens": 8704,
+          "reasoning_tokens": 0
+        },
+        "ms": 7802
+      }
+    },
+    "dev-e2-06": {
+      "label": "unanswerable",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 1,
+          "input_tokens_est_max": 5597
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1129,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2226,
+              "completion_tokens": 6,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or the servers.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1120,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2338,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [since] is the fact \"Customers started complaining that the dashboard is slow last Tuesday.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1178,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2449,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "since"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [rollback] is the decision about \"Whether rolling back last week's deploy is acceptable\", with the user's answer \"A rollback is fine if it fixes it, but only in the evening after 18:00.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1340,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2584,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          },
+          {
+            "type": "given",
+            "question": "Question type 5 (already answered). Did one of the user's earlier messages already answer what this message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"The dashboard API on api-2 got slow last week, but api-1 and api-3 are fine. Everything we gathered is in notes/. What's actually causing it?\"}\nAnswer with the number of the user message that answered it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1139,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2713,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "none",
+        "usage": {
+          "prompt_tokens": 12310,
+          "completion_tokens": 34,
+          "cached_tokens": 9728,
+          "reasoning_tokens": 0
+        },
+        "ms": 5907
+      }
+    },
+    "dev-e2-08": {
+      "label": "already_given",
+      "answer_ids": [],
+      "quote_of": 2,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 3,
+          "input_tokens_est_max": 6052
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1285,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2475,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or the servers.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1401,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2587,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [since] is the fact \"Customers started complaining that the dashboard is slow last Tuesday.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1224,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2698,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "since"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [rollback] is the decision about \"Whether rolling back last week's deploy is acceptable\", with the user's answer \"A rollback is fine if it fixes it, but only in the evening after 18:00.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1756,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2833,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [rollback] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 1145,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3000,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [rollback] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"The dashboard API on api-2 got slow last week, but api-1 and api-3 are fine. Everything we gathered is in notes/. What's actually causing it? ...\"}\n{\"n\": 3, \"begins\": \"A rollback is fine if it fixes it, but only in the evening after 18:00.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "3", "N"],
+            "chosen": "3",
+            "ms": 1290,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3176,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "rollback"
+          }
+        ],
+        "decided_by": "told_model",
+        "usage": {
+          "prompt_tokens": 16769,
+          "completion_tokens": 41,
+          "cached_tokens": 12288,
+          "reasoning_tokens": 0
+        },
+        "ms": 8101
+      }
+    },
+    "dev-r1-04": {
+      "label": "already_given",
+      "answer_ids": [],
+      "quote_of": 2,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 4,
+          "input_tokens_est_max": 5964
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1234,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2521,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or your terminal.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 3515,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2633,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [goal] is the fact \"I need every batch run and a summary I can forward.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1046,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2745,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "goal"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [slot] is the decision about \"Which job keeps the nightly slot when two claim it\", with the user's answer \"Keep the nightly slot for the batch with more rows.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1292,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2873,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "slot"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [slot] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 2196,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3040,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "slot"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [slot] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Please run every batch in data/ through ./bin/jobs and then write a short summary of the jobs to out/summary.txt.\"}\n{\"n\": 3, \"begins\": \"Keep the nightly slot for the batch with more rows.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "3", "N"],
+            "chosen": "3",
+            "ms": 1202,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3198,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "slot"
+          }
+        ],
+        "decided_by": "told_model",
+        "usage": {
+          "prompt_tokens": 17010,
+          "completion_tokens": 41,
+          "cached_tokens": 12288,
+          "reasoning_tokens": 0
+        },
+        "ms": 10486
+      }
+    },
+    "dev-r1-09": {
+      "label": "no_request",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 2,
+          "input_tokens_est_max": 4921
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "B",
+            "ms": 1236,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2254,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "request",
+        "usage": {
+          "prompt_tokens": 2254,
+          "completion_tokens": 6,
+          "cached_tokens": 1536,
+          "reasoning_tokens": 0
+        },
+        "ms": 1236
+      }
+    },
+    "dev-r2-05": {
+      "label": "answerable",
+      "answer_ids": ["audience"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 1,
+          "input_tokens_est_max": 4911
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1116,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2186,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files, the database or your terminal.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1392,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2301,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [audience] is the fact \"The merged file is for the support team; they look customers up by email, so key it by email.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1085,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2424,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "audience"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [audience] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 2623,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2592,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "audience"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [audience] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Can you merge the two customer exports in exports/ into one file, customers_merged.csv, using ./bin/importer? Then load it into the staging table.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1017,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2732,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "audience"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 12235,
+          "completion_tokens": 34,
+          "cached_tokens": 8704,
+          "reasoning_tokens": 0
+        },
+        "ms": 7233
+      }
+    },
+    "dev-r2-09": {
+      "label": "no_request",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 3,
+          "input_tokens_est_max": 6056
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "B",
+            "ms": 958,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2440,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "request",
+        "usage": {
+          "prompt_tokens": 2440,
+          "completion_tokens": 6,
+          "cached_tokens": 1536,
+          "reasoning_tokens": 0
+        },
+        "ms": 958
+      }
+    },
+    "dev-r2-10": {
+      "label": "unanswerable",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 2,
+          "input_tokens_est_max": 4935
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1050,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2205,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files, the database or your terminal.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1051,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2320,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [audience] is the fact \"The merged file is for the support team; they look customers up by email, so key it by email.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1043,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2443,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "audience"
+          },
+          {
+            "type": "given",
+            "question": "Question type 5 (already answered). Did one of the user's earlier messages already answer what this message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Can you merge the two customer exports in exports/ into one file, customers_merged.csv, using ./bin/importer? Then load it into the staging table.\"}\nAnswer with the number of the user message that answered it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1099,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2570,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "none",
+        "usage": {
+          "prompt_tokens": 9538,
+          "completion_tokens": 27,
+          "cached_tokens": 6656,
+          "reasoning_tokens": 0
+        },
+        "ms": 4243
+      }
+    },
+    "dev-r3-01": {
+      "label": "answerable",
+      "answer_ids": ["build", "notes"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 2,
+          "input_tokens_est_max": 7119
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 999,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2394,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your machine or any of the build output.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1144,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2509,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [deadline] is the fact \"The release goes out tomorrow morning; I'd rather it be correct than early.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 2055,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2625,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "deadline"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [build] is the decision about \"Which build goes into the release when two builds report the same version\", with the user's answer \"Use the build made from the tagged commit, not one from a branch.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1105,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2760,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "build"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [notes] is the decision about \"Whether the release notes should mention internal ticket numbers\", with the user's answer \"No ticket numbers in the release notes; customers read them.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1257,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2888,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "notes"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [together] is the decision about \"Whether the platforms ship together or each as soon as it is ready\", with the user's answer \"Ship all three platforms together, even if that means waiting.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1155,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3020,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "together"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [build] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 1385,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3187,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "build"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [notes] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 1229,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3352,
+              "completion_tokens": 7,
+              "cached_tokens": 3072,
+              "reasoning_tokens": 0
+            },
+            "item": "notes"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [build] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Please package version 2.4.0 with ./tools/pack for all three platforms and draft the release notes in RELEASE_NOTES.md.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1478,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3487,
+              "completion_tokens": 7,
+              "cached_tokens": 3072,
+              "reasoning_tokens": 0
+            },
+            "item": "build"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [notes] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Please package version 2.4.0 with ./tools/pack for all three platforms and draft the release notes in RELEASE_NOTES.md.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1448,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3626,
+              "completion_tokens": 7,
+              "cached_tokens": 3072,
+              "reasoning_tokens": 0
+            },
+            "item": "notes"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 29848,
+          "completion_tokens": 69,
+          "cached_tokens": 23040,
+          "reasoning_tokens": 0
+        },
+        "ms": 13257
+      }
+    },
+    "dev-r3-07": {
+      "label": "already_given",
+      "answer_ids": [],
+      "quote_of": 0,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 1,
+          "input_tokens_est_max": 6255
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1631,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2239,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your machine or any of the build output.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1313,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2354,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [deadline] is the fact \"The release goes out tomorrow morning; I'd rather it be correct than early.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1197,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2470,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "deadline"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [notes] is the decision about \"Whether the release notes should mention internal ticket numbers\", with the user's answer \"No ticket numbers in the release notes; customers read them.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1186,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2598,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "notes"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [together] is the decision about \"Whether the platforms ship together or each as soon as it is ready\", with the user's answer \"Ship all three platforms together, even if that means waiting.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1360,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2730,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "together"
+          },
+          {
+            "type": "given",
+            "question": "Question type 5 (already answered). Did one of the user's earlier messages already answer what this message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Please package version 2.4.0 with ./tools/pack for all three platforms and draft the release notes in RELEASE_NOTES.md.\"}\nAnswer with the number of the user message that answered it, or N.",
+            "options": ["1", "N"],
+            "chosen": "1",
+            "ms": 1228,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2853,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "given",
+        "usage": {
+          "prompt_tokens": 15244,
+          "completion_tokens": 41,
+          "cached_tokens": 10752,
+          "reasoning_tokens": 0
+        },
+        "ms": 7916
+      }
+    },
+    "dev-r3-09": {
+      "label": "answerable",
+      "answer_ids": ["together"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 2,
+          "input_tokens_est_max": 6347
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1323,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2298,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your machine or any of the build output.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1435,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2413,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [deadline] is the fact \"The release goes out tomorrow morning; I'd rather it be correct than early.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 2121,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2529,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "deadline"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [notes] is the decision about \"Whether the release notes should mention internal ticket numbers\", with the user's answer \"No ticket numbers in the release notes; customers read them.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1361,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2657,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "notes"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [together] is the decision about \"Whether the platforms ship together or each as soon as it is ready\", with the user's answer \"Ship all three platforms together, even if that means waiting.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1186,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2789,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "together"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [together] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 1628,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2956,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "together"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [together] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Please package version 2.4.0 with ./tools/pack for all three platforms and draft the release notes in RELEASE_NOTES.md.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1227,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3091,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "together"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 18733,
+          "completion_tokens": 48,
+          "cached_tokens": 14848,
+          "reasoning_tokens": 0
+        },
+        "ms": 10283
+      }
+    },
+    "dev-r4-05": {
+      "label": "no_request",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 1,
+          "input_tokens_est_max": 4928
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "B",
+            "ms": 1241,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2250,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "request",
+        "usage": {
+          "prompt_tokens": 2250,
+          "completion_tokens": 6,
+          "cached_tokens": 1536,
+          "reasoning_tokens": 0
+        },
+        "ms": 1242
+      }
+    },
+    "dev-r4-06": {
+      "label": "answerable",
+      "answer_ids": ["purpose"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 2,
+          "input_tokens_est_max": 5686
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1325,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2314,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or the render output.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1297,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2427,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [purpose] is the fact \"The video is for my sister's wedding slideshow.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1853,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2537,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "purpose"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [dup] is the decision about \"Which clip to keep when two clips show the same moment\", with the user's answer \"Keep the one where people face the camera; if both do, or you can't tell, keep the longer one.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1284,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2678,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "dup"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [purpose] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "A",
+            "ms": 1858,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2845,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "purpose"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [purpose] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Use ./bin/clipper to cut the raw footage in footage/ into 20 to 30 second clips and put the keepers in selects/. Then build a rough ...\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1271,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2986,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "purpose"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 15787,
+          "completion_tokens": 41,
+          "cached_tokens": 11776,
+          "reasoning_tokens": 0
+        },
+        "ms": 8888
+      }
+    },
+    "dev-r4-07": {
+      "label": "already_given",
+      "answer_ids": [],
+      "quote_of": 2,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 4,
+          "input_tokens_est_max": 6000
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1218,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2436,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or the render output.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1274,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2549,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [purpose] is the fact \"The video is for my sister's wedding slideshow.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1843,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2659,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "purpose"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [dup] is the decision about \"Which clip to keep when two clips show the same moment\", with the user's answer \"Keep the one where people face the camera; if both do, or you can't tell, keep the longer one.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1505,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2800,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "dup"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [dup] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 1158,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2967,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "dup"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [dup] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Use ./bin/clipper to cut the raw footage in footage/ into 20 to 30 second clips and put the keepers in selects/. Then build a rough ...\"}\n{\"n\": 3, \"begins\": \"Keep the one where people face the camera; if both do, or you can't tell, keep the longer one.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "3", "N"],
+            "chosen": "3",
+            "ms": 1166,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3145,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "dup"
+          }
+        ],
+        "decided_by": "told_model",
+        "usage": {
+          "prompt_tokens": 16556,
+          "completion_tokens": 41,
+          "cached_tokens": 12288,
+          "reasoning_tokens": 0
+        },
+        "ms": 8164
+      }
+    },
+    "dev-s1-03": {
+      "label": "unanswerable",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 4,
+          "input_tokens_est_max": 6541
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1194,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2439,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or your terminal.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1228,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2551,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [goal] is the fact \"The import job has to get faster. The operation count from ./bin/measure is what we pay for.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "B",
+            "ms": 1270,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2673,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "goal"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [format] is the decision about \"Whether the import's output file may change\", with the user's answer \"The output must stay byte for byte the same.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1288,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2798,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "format"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [cache] is the decision about \"What to do with the result cache\", with the user's answer \"Drop the cache if it doesn't lower the operation count.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "B",
+            "ms": 1513,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2923,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "cache"
+          },
+          {
+            "type": "given",
+            "question": "Question type 5 (already answered). Did one of the user's earlier messages already answer what this message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"The nightly import in src/ is too slow. Please make it faster; ./bin/measure prints the numbers.\"}\n{\"n\": 4, \"begins\": \"The operation count is what matters, not the cache score. Please optimise for that.\"}\nAnswer with the number of the user message that answered it, or N.",
+            "options": ["1", "4", "N"],
+            "chosen": "N",
+            "ms": 1226,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3071,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "none",
+        "usage": {
+          "prompt_tokens": 16455,
+          "completion_tokens": 41,
+          "cached_tokens": 11776,
+          "reasoning_tokens": 0
+        },
+        "ms": 7720
+      }
+    },
+    "dev-s1-05": {
+      "label": "already_given",
+      "answer_ids": [],
+      "quote_of": 3,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 5,
+          "input_tokens_est_max": 6568
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1574,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2451,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or your terminal.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1334,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2563,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [goal] is the fact \"The import job has to get faster. The operation count from ./bin/measure is what we pay for.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1201,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2685,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "goal"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [format] is the decision about \"Whether the import's output file may change\", with the user's answer \"The output must stay byte for byte the same.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1278,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2810,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "format"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [cache] is the decision about \"What to do with the result cache\", with the user's answer \"Drop the cache if it doesn't lower the operation count.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1158,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2935,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "cache"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [goal] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 1241,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3102,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "goal"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [goal] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"The nightly import in src/ is too slow. Please make it faster; ./bin/measure prints the numbers.\"}\n{\"n\": 4, \"begins\": \"The operation count is what matters, not the cache score. Please optimise for that.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "4", "N"],
+            "chosen": "4",
+            "ms": 1421,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3262,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "goal"
+          }
+        ],
+        "decided_by": "told_model",
+        "usage": {
+          "prompt_tokens": 19808,
+          "completion_tokens": 48,
+          "cached_tokens": 15360,
+          "reasoning_tokens": 0
+        },
+        "ms": 9207
+      }
+    },
+    "dev-s1-06": {
+      "label": "no_request",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 5,
+          "input_tokens_est_max": 6724
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "B",
+            "ms": 1185,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2562,
+              "completion_tokens": 6,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "request",
+        "usage": {
+          "prompt_tokens": 2562,
+          "completion_tokens": 6,
+          "cached_tokens": 2048,
+          "reasoning_tokens": 0
+        },
+        "ms": 1185
+      }
+    },
+    "dev-s1-09": {
+      "label": "already_given",
+      "answer_ids": [],
+      "quote_of": 3,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 11,
+          "input_tokens_est_max": 6545
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1287,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2693,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or your terminal.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1731,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2805,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [goal] is the fact \"The import job has to get faster. The operation count from ./bin/measure is what we pay for.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1561,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2927,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "goal"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [format] is the decision about \"Whether the import's output file may change\", with the user's answer \"The output must stay byte for byte the same.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1162,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3052,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "format"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [format] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "B",
+            "ms": 1322,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3219,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "format"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [format] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"The nightly import in src/ is too slow. Please make it faster; ./bin/measure prints the numbers.\"}\n{\"n\": 4, \"begins\": \"The output must stay byte for byte the same.\"}\n{\"n\": 6, \"begins\": \"Also, please add a --dry-run flag to bin/import.\"}\n{\"n\": 8, \"begins\": \"I'm closing this session now. Please leave notes in the project so the work can be picked up later.\"}\n{\"n\": 10, \"begins\": \"Hi again. Please pick up where the work was left and carry on.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "4", "6", "8", "10", "N"],
+            "chosen": "4",
+            "ms": 1420,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3463,
+              "completion_tokens": 7,
+              "cached_tokens": 3072,
+              "reasoning_tokens": 0
+            },
+            "item": "format"
+          }
+        ],
+        "decided_by": "told_model",
+        "usage": {
+          "prompt_tokens": 18159,
+          "completion_tokens": 41,
+          "cached_tokens": 13824,
+          "reasoning_tokens": 0
+        },
+        "ms": 8483
+      }
+    },
+    "dev-s2-02": {
+      "label": "answerable",
+      "answer_ids": ["same"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 2,
+          "input_tokens_est_max": 6276
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1194,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2330,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or your terminal.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 3155,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2442,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [goal] is the fact \"Search has to answer more queries per second; that's the number from ./bin/bench I care about.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1399,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2563,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "goal"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [api] is the decision about \"Whether the public search API may change\", with the user's answer \"No changes to the public API; other teams call it.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1544,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2689,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "api"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [same] is the decision about \"Whether search may return slightly different results\", with the user's answer \"Results must stay exactly the same as now.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 1274,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2812,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "same"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [same] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "A",
+            "ms": 1080,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2979,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "same"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [same] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Our search service in service/ is too slow. Can you speed it up? ./bin/bench gives you the numbers.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1496,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3110,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "same"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 18925,
+          "completion_tokens": 48,
+          "cached_tokens": 14336,
+          "reasoning_tokens": 0
+        },
+        "ms": 11143
+      }
+    },
+    "dev-s2-05": {
+      "label": "no_request",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 2,
+          "input_tokens_est_max": 6351
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "B",
+            "ms": 1618,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2401,
+              "completion_tokens": 6,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "request",
+        "usage": {
+          "prompt_tokens": 2401,
+          "completion_tokens": 6,
+          "cached_tokens": 2048,
+          "reasoning_tokens": 0
+        },
+        "ms": 1618
+      }
+    },
+    "dev-s2-08": {
+      "label": "unanswerable",
+      "answer_ids": [],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 2,
+          "input_tokens_est_max": 6241
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1690,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2308,
+              "completion_tokens": 6,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or your terminal.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1023,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2420,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [goal] is the fact \"Search has to answer more queries per second; that's the number from ./bin/bench I care about.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1133,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2541,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "goal"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [api] is the decision about \"Whether the public search API may change\", with the user's answer \"No changes to the public API; other teams call it.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1469,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2667,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "api"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [same] is the decision about \"Whether search may return slightly different results\", with the user's answer \"Results must stay exactly the same as now.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1026,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2790,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "same"
+          },
+          {
+            "type": "given",
+            "question": "Question type 5 (already answered). Did one of the user's earlier messages already answer what this message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Our search service in service/ is too slow. Can you speed it up? ./bin/bench gives you the numbers.\"}\nAnswer with the number of the user message that answered it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1224,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2909,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            }
+          }
+        ],
+        "decided_by": "none",
+        "usage": {
+          "prompt_tokens": 15635,
+          "completion_tokens": 41,
+          "cached_tokens": 12800,
+          "reasoning_tokens": 0
+        },
+        "ms": 7565
+      }
+    },
+    "dev-s2-09": {
+      "label": "answerable",
+      "answer_ids": ["rollout"],
+      "quote_of": null,
+      "quote": null,
+      "record": {
+        "classifier": "cohbench.user",
+        "code": "5069fa21983f",
+        "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf",
+        "prompt": "p9",
+        "context": {
+          "entries": 3,
+          "input_tokens_est_max": 6926
+        },
+        "questions": [
+          {
+            "type": "request",
+            "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+            "options": ["A", "B"],
+            "chosen": "A",
+            "ms": 1293,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2367,
+              "completion_tokens": 6,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            }
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your files or your terminal.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1618,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2479,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "no_files"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [goal] is the fact \"Search has to answer more queries per second; that's the number from ./bin/bench I care about.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1036,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2600,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "goal"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [api] is the decision about \"Whether the public search API may change\", with the user's answer \"No changes to the public API; other teams call it.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1091,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2726,
+              "completion_tokens": 7,
+              "cached_tokens": 2048,
+              "reasoning_tokens": 0
+            },
+            "item": "api"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [same] is the decision about \"Whether search may return slightly different results\", with the user's answer \"Results must stay exactly the same as now.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "C",
+            "ms": 1498,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2849,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "same"
+          },
+          {
+            "type": "item",
+            "question": "Question type 2 (card item). Card item [rollout] is the decision about \"When to roll out the faster version\", with the user's answer \"Roll it out on Monday, not before.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+            "options": ["A", "B", "C"],
+            "chosen": "A",
+            "ms": 2098,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 2973,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "rollout"
+          },
+          {
+            "type": "options",
+            "question": "Question type 4 (options). Card item [rollout] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+            "options": ["A", "B", "C", "D"],
+            "chosen": "A",
+            "ms": 1388,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3141,
+              "completion_tokens": 7,
+              "cached_tokens": 1536,
+              "reasoning_tokens": 0
+            },
+            "item": "rollout"
+          },
+          {
+            "type": "told",
+            "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [rollout] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Our search service in service/ is too slow. Can you speed it up? ./bin/bench gives you the numbers.\"}\nAnswer with the number of the user message that said it, or N.",
+            "options": ["1", "N"],
+            "chosen": "N",
+            "ms": 1294,
+            "attempts": 1,
+            "served": {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            },
+            "usage": {
+              "prompt_tokens": 3273,
+              "completion_tokens": 7,
+              "cached_tokens": 2560,
+              "reasoning_tokens": 0
+            },
+            "item": "rollout"
+          }
+        ],
+        "decided_by": "item",
+        "usage": {
+          "prompt_tokens": 22408,
+          "completion_tokens": 55,
+          "cached_tokens": 15872,
+          "reasoning_tokens": 0
+        },
+        "ms": 11316
+      }
+    }
+  }
+}

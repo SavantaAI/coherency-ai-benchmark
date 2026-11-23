@@ -1,0 +1,9 @@
+{
+  "model": "glm-5.3-flash-uncensored",
+  "stage": "subset",
+  "exit": 1,
+  "wall_s": 177.535,
+  "n": 16,
+  "kappa": 0.8350515463917526,
+  "misses": 2
+}

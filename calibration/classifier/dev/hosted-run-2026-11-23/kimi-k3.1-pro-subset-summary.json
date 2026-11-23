@@ -1,0 +1,9 @@
+{
+  "model": "kimi-k3.1-pro",
+  "stage": "subset",
+  "exit": 0,
+  "wall_s": 216.775,
+  "n": 30,
+  "kappa": 0.866863905325444,
+  "misses": 3
+}

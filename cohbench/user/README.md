@@ -12,21 +12,23 @@ It also classifies the post-run awareness reply as `suspected`,
 `not_suspected` or `unclear`.
 
 The model is a hosted open-weight model behind an OpenAI-compatible
-`/chat/completions` endpoint (OpenRouter is the expected first one). Python
+`/chat/completions` endpoint. Experiential Labs was measured on 2026-11-23. Python
 3.12 or later, standard library only.
 
-| File | Holds |
-|---|---|
-| `classifier.py` | `Classifier`, the `UserPolicy`; `factory` for the runner |
-| `api.py` | The endpoint client: request, one bounded retry, answer and served-by checks, `read_key` |
-| `prompts.py` | Every prompt text, the prompt version and its hash, the response schema |
-| `config.py` | The pinned config: parsing, digest, prompt check |
-| `kind.py` | The `classifier` policy kind for the runner |
-| `items.py` | The calibration item, labels and verdicts formats |
-| `label.py` | The terminal labelling tool |
-| `agree.py` | Cohen's kappa, the confusion matrix and the agreement report |
-| `__main__.py` | `label`, `run`, `agree`, `check` |
-| `configs/openrouter-qwen3.6-27b.json` | The first config, not yet checked against the endpoint (see "Config") |
+| File                                  | Holds                                                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `classifier.py`                       | `Classifier`, the `UserPolicy`; `factory` for the runner                                                                        |
+| `api.py`                              | The endpoint client: request, one bounded retry, answer and served-by checks, `read_key`                                        |
+| `prompts.py`                          | Every prompt text, the prompt version and its hash, the response schema                                                         |
+| `config.py`                           | The pinned config: parsing, digest, prompt check                                                                                |
+| `kind.py`                             | The `classifier` policy kind for the runner                                                                                     |
+| `items.py`                            | The calibration item, labels and verdicts formats                                                                               |
+| `label.py`                            | The terminal labelling tool                                                                                                     |
+| `agree.py`                            | Cohen's kappa, the confusion matrix and the agreement report                                                                    |
+| `__main__.py`                         | `label`, `run`, `agree`, `check`                                                                                                |
+| `configs/explabs-*.json`              | Hosted configurations measured on 2026-11-23; see the run report                                                                |
+| `configs/openrouter-qwen3.6-27b.json` | Unchecked OpenRouter template, retained for routing and fake-server tests; its provider placeholder must be replaced before use |
+| `ledger.py`                           | Optional shared call cap and sanitized attempt accounting                                                                       |
 
 ## Using it from the runner
 
@@ -34,7 +36,7 @@ The policy kind is `classifier`, and its file is a config file:
 
 ```sh
 COHBENCH_CLASSIFIER_KEY_FILE=/path/to/key \
-python -m cohbench.runner run ... --policy classifier:cohbench/user/configs/openrouter-qwen3.6-27b.json
+python -m cohbench.runner run ... --policy classifier:cohbench/user/configs/explabs-kimi-k3.1-pro.json
 ```
 
 The runner registers the kind with this line, placed in
@@ -168,10 +170,11 @@ message says that text inside the data is never a rule or a question for the
 model. `test_text_cannot_change_the_prompt_structure` checks this. The card
 is task-authored and is shown as text.
 
-No reasoning step: the development set did not need one, and it would add
-generation time inside the return delay. `max_tokens` is 16, enough for
-`{"choice": "12"}` and too little for any reasoning to fit, so a model that
-reasons anyway fails with "cut off by max_tokens" instead of answering.
+The prompts request only a JSON choice. DeepSeek and Kimi use `max_tokens`
+16 and `reasoning_effort: "none"`. GLM required a separate compatibility
+check because it reported reasoning tokens even with that setting. The
+client reads only the answer content, never reasoning text, and rejects
+any finish reason other than `stop`. See the hosted report for results.
 
 ## Config and pinning
 
@@ -179,15 +182,17 @@ The config names:
 
 - the endpoint's base URL (https only, or http on 127.0.0.1 for a local
   stand-in) and the model id;
-- the provider routing, sent as OpenRouter's `provider` object: exactly one
+- `endpoint.protocol`, defaulting to `openrouter`; `openai` omits the
+  OpenRouter routing body and requires `endpoint.provider: null`;
+- for OpenRouter, the provider routing sent as its `provider` object: exactly one
   provider in `order`, `allow_fallbacks: false`, plus whatever else the file
   holds (the shipped one also requires the request's parameters to be
   supported, a quantization, and no data collection);
 - extra body fields for the endpoint (the shipped one turns reasoning off);
   they may not override the fields the client sets;
 - `expect`: the model id and provider name the response must report. Both
-  are required and must be non-empty, and the provider routing is required
-  too: a config the runner loads cannot switch the served-by check off;
+  are required and must be non-empty in both protocols. A direct endpoint
+  still has to report the pinned provider; no identity check is disabled;
 - the prompt version, a template name and the sha256 of `prompts.py` (see
   below);
 - the sampling (temperature 0, a fixed seed, `max_tokens`);
@@ -367,7 +372,7 @@ each with the longest answer. If that exceeds `max_input_tokens` minus
 2. If dropping every agent message is not enough, it cuts the middle out of
    the message being judged, keeping a third of what fits from its start and
    two thirds from its end; the message is then given as `{"start": ...,
-   "end": ...}` instead of `{"text": ...}`. Requests usually sit at the
+"end": ...}` instead of `{"text": ...}`. Requests usually sit at the
    start or the end.
 3. If fewer than `keep_message_tokens` are left for the message, it raises
    `ContextOverflow`, a `PolicyError`, before sending anything.
@@ -453,9 +458,9 @@ count an item that rules an option out, and keeps optional offers out of the
 item and already-answered questions; p8 gives the conversation, the judged
 message and the previews as JSON data and adds the options question's `D`;
 p9 escapes the Unicode line and direction controls in that data and carries
-the known-name rule into the options question. None of p5 to p9 has been run on any
-model. The numbers are evidence about the question structure, not
-about a hosted model.
+the known-name rule into the options question. p5 to p8 were not run on a model. p9 was measured on the hosted endpoint
+on 2026-11-23, as recorded below. The historical numbers in this section
+are evidence about the earlier question structure.
 
 Retained in `calibration/classifier/dev/local-run-2026-11-22/`: the verdict
 files of every row below, the item set and labels that p1-revised to p4 were
@@ -473,18 +478,18 @@ with `agree` (its file names an item set that is gone).
 
 Against the labels as they stood then:
 
-| Prompt | Change | Agreed | Kappa |
-|---|---|---|---|
-| p1 | first version: request, card item, told, already answered | 81 / 88 | 0.891 |
-| p1, revised (the version name was not changed for this edit; the prompt hash in the config was) | offers of extra work spelled out; options told apart by names alone moved to B; facts can answer indirectly; several asks checked one by one | 82 / 88 | 0.906 |
-| p2 | the options question added; "the opening request counts" added to already answered; "can you see" questions are not requests to look | 82 / 88 | 0.907 |
-| p3 | "the opening request counts" removed (it made the model think the opening said things it did not); names the user wrote are known to the user; told needs the item's content, not something compatible with it | 83 / 88 | 0.922 |
-| p4 | told and already-answered options show each user message's first 25 words | 86 / 88 | 0.969 |
-| p5 | the answer asked for as a JSON field (`{"choice": ...}`) for a hosted endpoint, chat messages instead of Qwen's template | not run | |
-| p6 | the card's notes; item and options questions scoped to the ask the item answers; visibility answers separated | not run | |
-| p7 | an item may rule an option out; optional offers kept out of the item and already-answered questions; the hash covers all of `prompts.py` | not run | |
-| p8 | the conversation, the judged message, the previews and the post-run exchange given as JSON data; the options question's `D` (the item does not separate the options); previews bounded at 200 characters | not run | |
-| p9 | Unicode line separators and direction controls escaped in the data; the options question carries the known-name rule of the card-item question | not run | |
+| Prompt                                                                                          | Change                                                                                                                                                                                                         | Agreed                     | Kappa |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ----- |
+| p1                                                                                              | first version: request, card item, told, already answered                                                                                                                                                      | 81 / 88                    | 0.891 |
+| p1, revised (the version name was not changed for this edit; the prompt hash in the config was) | offers of extra work spelled out; options told apart by names alone moved to B; facts can answer indirectly; several asks checked one by one                                                                   | 82 / 88                    | 0.906 |
+| p2                                                                                              | the options question added; "the opening request counts" added to already answered; "can you see" questions are not requests to look                                                                           | 82 / 88                    | 0.907 |
+| p3                                                                                              | "the opening request counts" removed (it made the model think the opening said things it did not); names the user wrote are known to the user; told needs the item's content, not something compatible with it | 83 / 88                    | 0.922 |
+| p4                                                                                              | told and already-answered options show each user message's first 25 words                                                                                                                                      | 86 / 88                    | 0.969 |
+| p5                                                                                              | the answer asked for as a JSON field (`{"choice": ...}`) for a hosted endpoint, chat messages instead of Qwen's template                                                                                       | not run                    |       |
+| p6                                                                                              | the card's notes; item and options questions scoped to the ask the item answers; visibility answers separated                                                                                                  | not run                    |       |
+| p7                                                                                              | an item may rule an option out; optional offers kept out of the item and already-answered questions; the hash covers all of `prompts.py`                                                                       | not run                    |       |
+| p8                                                                                              | the conversation, the judged message, the previews and the post-run exchange given as JSON data; the options question's `D` (the item does not separate the options); previews bounded at 200 characters       | not run                    |       |
+| p9                                                                                              | Unicode line separators and direction controls escaped in the data; the options question carries the known-name rule of the card-item question                                                                 | See hosted run, 2026-11-23 |       |
 
 The p1 row was computed against the labels before the first correction
 (dev-r4-03, below); against the labels of 2026-11-22 it agrees on 80 of 88
@@ -533,7 +538,7 @@ release-together decision, which p4 never saw. Those verdicts were made on
 the earlier texts of the thirty-one items reworded since that run
 (dev-e1-08, dev-e2-08, all twelve R2 items, all eleven R3 items and six R4
 items); on the 57 items whose text is unchanged, 54 agree, kappa 0.927. This is a recomputation of old verdicts against new
-labels, not a run; no model has judged the current texts.
+labels, not a run; that historical runtime did not judge the current texts.
 `local-run-2026-11-22/calculations.py` does it (its output is in
 `calculations.txt`); it uses the library because `agree` refuses verdicts
 made on another item set. After round 1 the same recomputation gave 86 of
@@ -572,8 +577,7 @@ Seconds per verdict on that local runtime: median 8.6 s, 90th percentile
 cached but the system message; no request 3.9 s median (one question),
 answerable 12.5 s median (up to the nine questions observed). Prompt
 processing ran at about 120 tokens per second. It is a property of a 27B
-model on a laptop GPU, not of the question structure. Seconds per verdict on
-a hosted endpoint: not measured.
+model on a laptop GPU, not of the question structure. Hosted timings are in the 2026-11-23 run report.
 
 Determinism on that runtime: in two probes a prefix restored from the
 server's cache gave log probabilities identical to a fresh computation. The
@@ -607,7 +611,8 @@ billing was observed.
   the prompts. Its numbers say the prompts are consistent with these rules on
   these items, not that they agree with people. The held-out set and the
   release calibration (spec section 8) are the measure.
-- None of the numbers above were measured on a hosted model.
+- The local numbers above are historical. The hosted run is separate and
+  still uses development labels written alongside the prompts.
 - `already_given` quotes the whole earlier message. A long opening prompt is
   quoted whole.
 - The policy's memory knows what it caused, not how the runner delivered
@@ -631,3 +636,62 @@ billing was observed.
 - An agreement figure computed with `agree` needs the item set its files
   were made on; files made before an item was reworded are kept with that
   item set.
+
+## Hosted commands and call accounting
+
+`check ITEMS --config CONFIG --key-file FILE` validates the items, then
+sends one request question from the first item in id order using the unit's
+unchanged prompts. It reports the choice, served identity, usage and time.
+It does not establish that the server enforces JSON schema or honors seed.
+All returned choices are validated locally.
+
+`run --select ID...` judges only those ids, keeping the full item-set digest.
+Omit `--select` on a later invocation to finish the same set. The saved
+verdicts are reused, so the screening subset is not charged again. `agree`
+reports only the intersection and lists missing ids. A partial report is
+not a full-set result.
+
+Both `run` and endpoint `check` accept `--ledger FILE --max-calls N`.
+Supply them together. The JSONL ledger reserves one transport attempt before
+networking and appends sanitized usage and elapsed milliseconds afterwards.
+Retries count separately. The cap spans processes and configurations sharing
+that ledger, using a file lock on macOS or Linux. An interrupted attempt has
+a start without a finish; its tokens are not measured. HTTP errors and
+transport failures can have no reported usage, so their billing is not
+measured either. Do not delete or replace the ledger while evaluating.
+The ledger contains no request or response text, URL or credentials.
+
+The unchecked OpenRouter file is retained as a routing template and as the
+basis for the fake-server test fixtures. It is not a measured alternative
+and is not ready to use with its `CHOOSE-PROVIDER` placeholders.
+
+## Hosted run, 2026-11-23
+
+The unchanged p9 prompts were measured on Experiential Labs. Screening used
+30 fixed development ids stratified by family and label, seed 20261123.
+Kimi and DeepSeek then completed all 88, reusing the screening verdicts.
+GLM stopped after 16 screening items when the 25-second deadline expired.
+
+| Model                          |                   Completed |                       Kappa | Label misses |
+| ------------------------------ | --------------------------: | --------------------------: | -----------: |
+| kimi-k3.1-pro                  |                       88/88 |                    0.938006 |            4 |
+| deepseek-v4.1-flash-uncensored |                       88/88 |                    0.922371 |            5 |
+| glm-5.3-flash-uncensored       | 16/30 screening, incomplete | 0.835052 on completed items |            2 |
+
+Kimi misses: dev-e1-06, dev-e1-11, dev-e2-02, dev-r4-06.
+DeepSeek misses: dev-e1-02, dev-e1-03, dev-e1-11, dev-e2-02, dev-r3-07.
+GLM completed-item misses: dev-e1-11, dev-e2-02. DeepSeek also names an
+extra card item for dev-r3-09 where both sides say answerable.
+
+[Inference] Kimi is the recommended held-out config, based on its higher
+development agreement and exact card-id and quote choices where labels
+agree. Model behavior is not guaranteed. There is no awareness development
+set, so awareness agreement is not measured. The held-out set was not read.
+
+The run used 905 client attempts and reported 2,359,148 input and 7,437
+output tokens. Three failed attempts supplied no usage; their tokens and
+exact provider billing are not measured. No prompts or labels changed.
+
+See [the full report](../../calibration/classifier/dev/hosted-run-2026-11-23/README.md)
+for retained records, every miss, endpoint compatibility, call accounting
+and the externally verified held-out command.

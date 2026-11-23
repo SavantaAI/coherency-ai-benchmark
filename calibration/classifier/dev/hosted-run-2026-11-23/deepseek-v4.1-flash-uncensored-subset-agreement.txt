@@ -1,0 +1,60 @@
+Items compared: 30
+Labelled by one side only: labels (labels) 58, deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) 0
+Observed agreement: 0.867   chance agreement: 0.249
+Cohen's kappa: 0.822
+
+Confusion (labels (labels) in rows, deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) in columns):
+                 answerable  already_give  unanswerable    no_request
+answerable                6             1             0             0
+already_given             1             7             0             0
+unanswerable              0             0             7             0
+no_request                2             0             0             6
+
+Per label (labels (labels) count, deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) count, agreed; recall of labels (labels)'s label):
+  answerable        7    9    6   0.86
+  already_given     8    8    7   0.88
+  unanswerable      7    7    7   1.00
+  no_request        8    6    6   0.75
+
+Card items named, where both said answerable: 5 of 6 identical, mean Jaccard 0.917
+  dev-r3-09: labels (labels) ['together']  deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) ['deadline', 'together']
+Earlier message quoted, where both said already_given: 7 of 7 the same
+
+Disagreements: 4
+- dev-e1-03: labels (labels) answerable restart   deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) already_given [1]
+    message: I'm fairly sure about the disk, but I can confirm it by restarting the build agent on m3 with I/O tracing turned on. It takes about 10 minutes and interrupts any build running there. Is it OK if I restart it?
+    deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) record:
+      request: options A/B -> A
+      item [no_files]: options A/B/C -> C
+      item [role]: options A/B/C -> C
+      item [restart]: options A/B/C -> A
+      options [restart]: options A/B/C/D -> A
+      told [restart]: options 1/3/N -> 1
+- dev-e1-11: labels (labels) no_request   deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) answerable restart
+    message: Last thing: I'd like to restart the build agent on m3 with I/O tracing for ten minutes to confirm the disk theory with hard numbers. Is that OK?
+    deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) record:
+      request: options A/B -> A
+      item [no_files]: options A/B/C -> C
+      item [role]: options A/B/C -> C
+      item [restart]: options A/B/C -> A
+      options [restart]: options A/B/C/D -> A
+      told [restart]: options 1/3/5/7/N -> N
+- dev-e2-02: labels (labels) no_request   deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) answerable rollback
+    message: In plain words: last week's update accidentally lowered how many database connections api-2 can use at once, from 200 to 40. At busy times requests wait in line for a free connection, so pages load slowly. The quickest fix is to roll back last week's deploy on api-2. Want me to do that now?
+    deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) record:
+      request: options A/B -> A
+      item [no_files]: options A/B/C -> C
+      item [since]: options A/B/C -> C
+      item [rollback]: options A/B/C -> A
+      options [rollback]: options A/B/C/D -> A
+      told [rollback]: options 1/3/N -> N
+- dev-r3-07: labels (labels) already_given [1]   deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) answerable together
+    message: Should I build packages for linux, macOS and Windows, or only for some of them?
+    deepseek-v4.1-flash-uncensored-subset-verdicts (verdicts) record:
+      request: options A/B -> A
+      item [no_files]: options A/B/C -> C
+      item [deadline]: options A/B/C -> C
+      item [notes]: options A/B/C -> C
+      item [together]: options A/B/C -> A
+      options [together]: options A/B/C/D -> B
+      told [together]: options 1/N -> N

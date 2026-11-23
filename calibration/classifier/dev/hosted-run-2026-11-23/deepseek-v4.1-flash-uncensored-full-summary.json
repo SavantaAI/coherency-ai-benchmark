@@ -1,0 +1,9 @@
+{
+  "model": "deepseek-v4.1-flash-uncensored",
+  "stage": "full",
+  "exit": 0,
+  "wall_s": 318.085,
+  "n": 88,
+  "kappa": 0.9223712067748766,
+  "misses": 5
+}
