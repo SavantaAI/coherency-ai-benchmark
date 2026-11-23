@@ -71,8 +71,8 @@ Every miss and confusion matrix is in the regenerated
 ```sh
 uv run --isolated --python 3.12 python calibration/classifier/regenerate_agreement.py
 uv run --isolated --python 3.12 python calibration/classifier/regenerate_agreement.py \
-  --heldout-root /path/to/private/heldout \
-  --private-results /path/to/private/heldout-results-2026-11-23
+  --heldout-root "$HELDOUT_ROOT" \
+  --private-results "$HELDOUT_RESULTS"
 ```
 
 The first command regenerates development machine-readable reports and text

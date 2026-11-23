@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from cohbench.user import ledger as ledger_module
+from cohbench import ledger as ledger_module
 from cohbench.user.agree import compare, render
 from cohbench.user.api import Client, EndpointError
 from cohbench.user.config import parse

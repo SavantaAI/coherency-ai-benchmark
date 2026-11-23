@@ -64,8 +64,8 @@ def test_report_without_required_plan_has_values_but_no_release_bands(tmp_path, 
         score["python_version"] = "3.12"
     root = S.write(tmp_path / "results", scores, {"a": full_config(), "ac": full_config()})
     plan = plan_file(tmp_path, scores)
-    ordinary = report.build(root, plan=plan if supplied_plan else None)
-    release = report.build(root, plan=plan, require_plan=True)
+    ordinary = S.calibrated_report(root, plan=plan if supplied_plan else None)
+    release = S.calibrated_report(root, plan=plan, require_plan=True)
     assert ordinary["not_release"] and not release["not_release"]
     assert "plan was not required" in report.render(ordinary, False)
     for unplanned, planned in zip(ordinary["sections"][0]["tables"], release["sections"][0]["tables"]):
@@ -89,8 +89,8 @@ def test_release_runtime_has_no_cli_or_build_override(tmp_path):
               "--require-plan", "--release-python", "3.15", "--resamples", "10"])
     assert exc.value.code == 2 and not (tmp_path / "out").exists()
     with pytest.raises(TypeError, match="release_python"):
-        report.build(root, plan=plan, require_plan=True, release_python="3.15")
-    assert report.build(root, plan=plan, require_plan=True, resamples=10)["not_release"]
+        S.calibrated_report(root, plan=plan, require_plan=True, release_python="3.15")
+    assert S.calibrated_report(root, plan=plan, require_plan=True, resamples=10)["not_release"]
 
 
 def decision_episode(tmp_path, answer_ids, reply, *, decision_id=True, final=True, bad_request=False):

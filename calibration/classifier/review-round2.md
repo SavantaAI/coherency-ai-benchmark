@@ -160,8 +160,8 @@ for the disclosure headline.
 ```sh
 uv run --isolated --python 3.12 python calibration/classifier/regenerate_agreement.py \
   --allow-partial \
-  --heldout-root /path/to/private/heldout \
-  --private-results /path/to/private/heldout-results-2026-11-23
+  --heldout-root "$HELDOUT_ROOT" \
+  --private-results "$HELDOUT_RESULTS"
 ```
 
 `--allow-partial` is necessary for the archived GLM screening's 16/30

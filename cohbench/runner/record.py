@@ -56,6 +56,7 @@ def episode_record(task: Task, cfg: RunConfig, r: Runner) -> dict[str, Any]:
     g = task.grouping
     end = r.end or {"reason": "runner_abort", "elapsed_ms": r.elapsed_ms()}
     return {
+        **({"classifier_config_sha256": r.policy.cfg.digest} if getattr(getattr(r.policy, "cfg", None), "digest", None) else {}),
         "format": EPISODE_FORMAT,
         "version": 1,
         "episode": r.scorer_id,  # generated and opaque; the caller's label stays in the run manifest (m6)

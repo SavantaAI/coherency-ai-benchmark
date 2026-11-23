@@ -16,7 +16,7 @@ from .test_routing import right_summary
 
 
 def build(tmp_path, scores, configs=None, **kw):
-    return report.build(S.write(tmp_path, scores, configs or CONFIGS), resamples=30, **kw)
+    return S.calibrated_report(S.write(tmp_path, scores, configs or CONFIGS), resamples=30, **kw)
 
 
 @pytest.mark.parametrize("pairs", [2, 20])
@@ -126,7 +126,7 @@ def test_column_keys_keep_json_types_distinct(tmp_path):
                "b": {"model": "m", "harness": "pi", "threads": "1"}}
     configs = {q: {**c, "harness_version": "1", "driver_version": "1", "settings": {}} for p, c in configs.items() for q in (p, p + "c")}
     scores = [d for p in configs for d in S.config_set(p, r_pass=1, pairs=1, e=[1], s=[1], controls=(1, 1), mode="coached" if p.endswith("c") else "default")]
-    rep = report.build(S.write(tmp_path, scores, configs), plan=plan_file(tmp_path, scores), require_plan=True)
+    rep = S.calibrated_report(S.write(tmp_path, scores, configs), plan=plan_file(tmp_path, scores), require_plan=True)
     rs = rep["sections"][0]["tables"][0]["rows"]
     assert len({r["column_key"] for r in rs}) == len({r["harness"] for r in rs}) == 2
     assert all((r["headline"]["band"]["ranks"] == "1" if sys.version_info[:2] == (3, 12) else r["headline"]["band"] is None) for r in rs)
@@ -162,7 +162,7 @@ def test_explicit_plan_counts_instances_everyone_omitted(tmp_path):
     extra = {"dir": "absent", **S.steer("a-absent", 99, 1)["task"]["instance"], "digest": "absent"}
     plan = plan_file(tmp_path, scores, extra)
     root = S.write(tmp_path / "scores", scores, CONFIGS)
-    rep = report.build(root, plan=plan, resamples=10)
+    rep = S.calibrated_report(root, plan=plan, resamples=10)
     c = rows(rep)[0][("m1", "pi")]
     assert c["coverage"]["planned"] == len(scores) + 1 and c["S"]["partial"]
     assert c["S"]["unjudged_instances"][0]["reasons"][0]["reason"] == "missing"
@@ -175,7 +175,7 @@ def test_explicit_plan_counts_instances_everyone_omitted(tmp_path):
     assert main(["report", str(root), "--require-plan", "--out", str(tmp_path / "out")]) == 2
     plan = plan_file(tmp_path, scores[1:])
     with pytest.raises(report.ReportError, match="a-ra0.*absent from the plan"):
-        report.build(root, plan=plan)
+        S.calibrated_report(root, plan=plan)
 
 
 def test_counts_distinguish_reruns_and_inferred_plan(tmp_path):
@@ -190,10 +190,10 @@ def test_counts_distinguish_reruns_and_inferred_plan(tmp_path):
 def test_result_filenames_do_not_order_episode_lists(tmp_path):
     scores = [S.steer("a-z", 1, 1, planted=("correction",)), S.steer("a-a", 2, 1, planted=("correction",))]
     root = S.write(tmp_path, scores, CONFIGS)
-    before = dumps(report.build(root, resamples=10))
+    before = dumps(S.calibrated_report(root, resamples=10))
     (root / "scores" / "a-z.score.json").rename(root / "scores" / "0.score.json")
-    assert dumps(report.build(root, resamples=10)) == before
-    c = rows(report.build(root, resamples=10))[0][("m1", "pi")]
+    assert dumps(S.calibrated_report(root, resamples=10)) == before
+    c = rows(S.calibrated_report(root, resamples=10))[0][("m1", "pi")]
     assert c["event_reach"]["events"]["correction"]["not_fired"] == ["a-a", "a-z"]
 
 
@@ -215,7 +215,8 @@ def test_reader_cache_replays_and_score_records_choices(tmp_path):
     assert first_calls and not second_calls and dumps(a) == dumps(b)
     assert a["reader_requests"] and all(x["choice"] == "A" for x in a["reader_requests"])
     cached = [json.loads(line) for line in cache.read_text().splitlines()]
-    assert sorted(cached, key=lambda x: x["request_digest"]) == a["reader_requests"]
+    assert sorted([{k: row[k] for k in ("request_digest", "reader_digest", "choice")} for row in cached],
+                  key=lambda x: x["request_digest"]) == a["reader_requests"]
 
 
 def test_report_refuses_reader_disagreements(tmp_path):

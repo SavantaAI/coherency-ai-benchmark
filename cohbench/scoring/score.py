@@ -220,6 +220,10 @@ def score_episode(ep: Episode, rd: R.Reader | None = None, cfg: R.Config | None 
     g = ep.grouping
     head = {"python_version": f"{sys.version_info.major}.{sys.version_info.minor}", "format": FORMAT, "version": VERSION, "episode": ep.doc["episode"], "bundle_sha256": ep.digest,
             "grouping": g, "poll_s": ep.doc.get("poll_s"), "task": task_identity(ep), "family": ep.family}
+    if "classifier_config_sha256" in ep.doc:
+        head["classifier_config_sha256"] = ep.doc["classifier_config_sha256"]
+    if ep.family == "explanation":
+        head["reader_question_source"] = explanation.reader_question(ep)[1]
     if ep.family == "steering":
         head["attempt_observations"] = steering.observation_counts(ep)
     end = (ep.doc.get("end") or {}).get("reason")

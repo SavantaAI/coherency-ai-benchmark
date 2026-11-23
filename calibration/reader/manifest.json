@@ -1,0 +1,7 @@
+{
+  "authored_sha256": "95d52091d9029f35594d53279ddb7613c06e4c90e23ab6126e551a19432376c3",
+  "base_commit": "2fc9b96aa1527566c2a30a014c37d350260ae1af",
+  "implementation_commit": "b18b526",
+  "recommendation": "Kimi for further development on non-control Explanation tasks; human calibration remains outstanding.",
+  "suite_sha256": "1cd1bd2f0c609605b216ba4172fa430f2af11937444e420dc2271258397e015c"
+}

@@ -1,0 +1,1296 @@
+{
+  "cap": 2500,
+  "date": "2026-11-23",
+  "models": {
+    "deepseek-v4.1-flash-uncensored": {
+      "accounting": {
+        "accepted_choices": 1032,
+        "attempt_latency_ms": {
+          "max": 10006,
+          "mean": 1360.9700483091788
+        },
+        "attempts": 1035,
+        "choice_latency_ms": {
+          "max": 12175,
+          "mean": 1366.3972868217054,
+          "median": 1125.0,
+          "p95": 2668
+        },
+        "completed": 1035,
+        "outcomes": {
+          "accepted": 1032,
+          "transport_error": 3
+        },
+        "tokens": {
+          "cached_tokens": 319232,
+          "completion_tokens": 7224,
+          "prompt_tokens": 597066
+        },
+        "unmeasured_usage_calls": [99, 383, 1062]
+      },
+      "config_sha256": "d3df0d929f7179fc904c6d7cb157f80324840896bb2865fa4342070246382acc",
+      "harder": {
+        "buried": {
+          "attribution": {
+            "correct": 60,
+            "n": 60
+          },
+          "misses": [],
+          "orders": [
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            }
+          ],
+          "true_cause": {
+            "correct": 0,
+            "n": 60
+          }
+        },
+        "negated_herring": {
+          "attribution": {
+            "correct": 60,
+            "n": 60
+          },
+          "misses": [],
+          "orders": [
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            }
+          ],
+          "true_cause": {
+            "correct": 60,
+            "n": 60
+          }
+        },
+        "paraphrase": {
+          "attribution": {
+            "correct": 60,
+            "n": 60
+          },
+          "misses": [],
+          "orders": [
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            }
+          ],
+          "true_cause": {
+            "correct": 60,
+            "n": 60
+          }
+        },
+        "wrong": {
+          "attribution": {
+            "correct": 60,
+            "n": 60
+          },
+          "misses": [],
+          "orders": [
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            }
+          ],
+          "true_cause": {
+            "correct": 0,
+            "n": 60
+          }
+        }
+      },
+      "phases": {
+        "authored": {
+          "accepted_choices": 240,
+          "attempts": 241,
+          "latency_ms": {
+            "max": 11741,
+            "mean": 1359.4291666666666,
+            "median": 1102.5,
+            "p95": 2686
+          },
+          "tokens": {
+            "cached_tokens": 9984,
+            "completion_tokens": 1680,
+            "prompt_tokens": 86988
+          }
+        },
+        "generated": {
+          "accepted_choices": 792,
+          "attempts": 794,
+          "latency_ms": {
+            "max": 12175,
+            "mean": 1368.5088383838383,
+            "median": 1134.5,
+            "p95": 2649
+          },
+          "tokens": {
+            "cached_tokens": 309248,
+            "completion_tokens": 5544,
+            "prompt_tokens": 510078
+          }
+        }
+      },
+      "pipeline": {
+        "all": {
+          "buried": {
+            "bound": [0.0, 0.31881182152921284],
+            "correct": 18,
+            "items": 24,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 5,
+                "n": 24
+              },
+              {
+                "correct": 2,
+                "n": 24
+              },
+              {
+                "correct": 1,
+                "n": 24
+              },
+              {
+                "correct": 3,
+                "n": 24
+              },
+              {
+                "correct": 2,
+                "n": 24
+              },
+              {
+                "correct": 5,
+                "n": 24
+              }
+            ],
+            "passed": true
+          },
+          "ideal": {
+            "answers": 48,
+            "correct": 288,
+            "n": 288,
+            "orders": [
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              }
+            ],
+            "unexpected": []
+          },
+          "no_answer": {
+            "bound": [0.014521511804120507, 0.31881182152921284],
+            "correct": 22,
+            "items": 24,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 4,
+                "n": 24
+              },
+              {
+                "correct": 4,
+                "n": 24
+              },
+              {
+                "correct": 4,
+                "n": 24
+              },
+              {
+                "correct": 3,
+                "n": 24
+              },
+              {
+                "correct": 3,
+                "n": 24
+              },
+              {
+                "correct": 4,
+                "n": 24
+              }
+            ],
+            "passed": true
+          },
+          "worst": {
+            "answers": 48,
+            "correct": 5,
+            "n": 288,
+            "orders": [
+              {
+                "correct": 3,
+                "n": 48
+              },
+              {
+                "correct": 0,
+                "n": 48
+              },
+              {
+                "correct": 0,
+                "n": 48
+              },
+              {
+                "correct": 0,
+                "n": 48
+              },
+              {
+                "correct": 0,
+                "n": 48
+              },
+              {
+                "correct": 2,
+                "n": 48
+              }
+            ],
+            "unexpected": [
+              {
+                "answer": 1,
+                "instance": "explanation-h20-s1006-control",
+                "orders": [0, 5]
+              },
+              {
+                "answer": 2,
+                "instance": "explanation-h20-s1006-control",
+                "orders": [0, 5]
+              },
+              {
+                "answer": 2,
+                "instance": "explanation-h80-s1006-control",
+                "orders": [0]
+              }
+            ]
+          }
+        },
+        "control": {
+          "buried": {
+            "bound": [0.0, 0.3818324081226343],
+            "correct": 18,
+            "items": 12,
+            "n": 72,
+            "orders": [
+              {
+                "correct": 5,
+                "n": 12
+              },
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 1,
+                "n": 12
+              },
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 5,
+                "n": 12
+              }
+            ],
+            "passed": true
+          },
+          "ideal": {
+            "answers": 24,
+            "correct": 144,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              }
+            ],
+            "unexpected": []
+          },
+          "no_answer": {
+            "bound": [0.0, 0.3818324081226343],
+            "correct": 21,
+            "items": 12,
+            "n": 72,
+            "orders": [
+              {
+                "correct": 4,
+                "n": 12
+              },
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 4,
+                "n": 12
+              },
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 4,
+                "n": 12
+              }
+            ],
+            "passed": true
+          },
+          "worst": {
+            "answers": 24,
+            "correct": 5,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 3,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 2,
+                "n": 24
+              }
+            ],
+            "unexpected": [
+              {
+                "answer": 1,
+                "instance": "explanation-h20-s1006-control",
+                "orders": [0, 5]
+              },
+              {
+                "answer": 2,
+                "instance": "explanation-h20-s1006-control",
+                "orders": [0, 5]
+              },
+              {
+                "answer": 2,
+                "instance": "explanation-h80-s1006-control",
+                "orders": [0]
+              }
+            ]
+          }
+        },
+        "non_control": {
+          "buried": {
+            "bound": [0.0, 0.3818324081226343],
+            "correct": 0,
+            "items": 12,
+            "n": 72,
+            "orders": [
+              {
+                "correct": 0,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              }
+            ],
+            "passed": true
+          },
+          "ideal": {
+            "answers": 24,
+            "correct": 144,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              }
+            ],
+            "unexpected": []
+          },
+          "no_answer": {
+            "bound": [0.0, 0.3818324081226343],
+            "correct": 1,
+            "items": 12,
+            "n": 72,
+            "orders": [
+              {
+                "correct": 0,
+                "n": 12
+              },
+              {
+                "correct": 1,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              }
+            ],
+            "passed": true
+          },
+          "worst": {
+            "answers": 24,
+            "correct": 0,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              }
+            ],
+            "unexpected": []
+          }
+        }
+      }
+    },
+    "kimi-k3.1-pro": {
+      "accounting": {
+        "accepted_choices": 1032,
+        "attempt_latency_ms": {
+          "max": 9282,
+          "mean": 1524.1928294573643
+        },
+        "attempts": 1032,
+        "choice_latency_ms": {
+          "max": 9282,
+          "mean": 1524.1899224806202,
+          "median": 1268.5,
+          "p95": 2946
+        },
+        "completed": 1032,
+        "outcomes": {
+          "accepted": 1032
+        },
+        "tokens": {
+          "cached_tokens": 202752,
+          "completion_tokens": 6192,
+          "prompt_tokens": 641088
+        },
+        "unmeasured_usage_calls": []
+      },
+      "config_sha256": "dfcc9145ef59fa61c5739d62d4a958a6986391fc8abc77cfc39ff8a3f20ffa2c",
+      "harder": {
+        "buried": {
+          "attribution": {
+            "correct": 60,
+            "n": 60
+          },
+          "misses": [],
+          "orders": [
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            }
+          ],
+          "true_cause": {
+            "correct": 0,
+            "n": 60
+          }
+        },
+        "negated_herring": {
+          "attribution": {
+            "correct": 60,
+            "n": 60
+          },
+          "misses": [],
+          "orders": [
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            }
+          ],
+          "true_cause": {
+            "correct": 60,
+            "n": 60
+          }
+        },
+        "paraphrase": {
+          "attribution": {
+            "correct": 60,
+            "n": 60
+          },
+          "misses": [],
+          "orders": [
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            }
+          ],
+          "true_cause": {
+            "correct": 60,
+            "n": 60
+          }
+        },
+        "wrong": {
+          "attribution": {
+            "correct": 60,
+            "n": 60
+          },
+          "misses": [],
+          "orders": [
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            },
+            {
+              "correct": 10,
+              "n": 10
+            }
+          ],
+          "true_cause": {
+            "correct": 0,
+            "n": 60
+          }
+        }
+      },
+      "phases": {
+        "authored": {
+          "accepted_choices": 240,
+          "attempts": 240,
+          "latency_ms": {
+            "max": 7239,
+            "mean": 1545.1291666666666,
+            "median": 1253.0,
+            "p95": 3043
+          },
+          "tokens": {
+            "completion_tokens": 1440,
+            "prompt_tokens": 99480
+          }
+        },
+        "generated": {
+          "accepted_choices": 792,
+          "attempts": 792,
+          "latency_ms": {
+            "max": 9282,
+            "mean": 1517.844696969697,
+            "median": 1273.0,
+            "p95": 2906
+          },
+          "tokens": {
+            "cached_tokens": 202752,
+            "completion_tokens": 4752,
+            "prompt_tokens": 541608
+          }
+        }
+      },
+      "pipeline": {
+        "all": {
+          "buried": {
+            "bound": [0.0, 0.31881182152921284],
+            "correct": 32,
+            "items": 24,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 7,
+                "n": 24
+              },
+              {
+                "correct": 8,
+                "n": 24
+              },
+              {
+                "correct": 5,
+                "n": 24
+              },
+              {
+                "correct": 4,
+                "n": 24
+              },
+              {
+                "correct": 4,
+                "n": 24
+              },
+              {
+                "correct": 4,
+                "n": 24
+              }
+            ],
+            "passed": true
+          },
+          "ideal": {
+            "answers": 48,
+            "correct": 288,
+            "n": 288,
+            "orders": [
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              },
+              {
+                "correct": 48,
+                "n": 48
+              }
+            ],
+            "unexpected": []
+          },
+          "no_answer": {
+            "bound": [0.014521511804120507, 0.31881182152921284],
+            "correct": 31,
+            "items": 24,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 5,
+                "n": 24
+              },
+              {
+                "correct": 5,
+                "n": 24
+              },
+              {
+                "correct": 5,
+                "n": 24
+              },
+              {
+                "correct": 5,
+                "n": 24
+              },
+              {
+                "correct": 6,
+                "n": 24
+              },
+              {
+                "correct": 5,
+                "n": 24
+              }
+            ],
+            "passed": true
+          },
+          "worst": {
+            "answers": 48,
+            "correct": 8,
+            "n": 288,
+            "orders": [
+              {
+                "correct": 2,
+                "n": 48
+              },
+              {
+                "correct": 2,
+                "n": 48
+              },
+              {
+                "correct": 0,
+                "n": 48
+              },
+              {
+                "correct": 0,
+                "n": 48
+              },
+              {
+                "correct": 2,
+                "n": 48
+              },
+              {
+                "correct": 2,
+                "n": 48
+              }
+            ],
+            "unexpected": [
+              {
+                "answer": 1,
+                "instance": "explanation-h20-s4-single",
+                "orders": [1]
+              },
+              {
+                "answer": 2,
+                "instance": "explanation-h20-s4-single",
+                "orders": [1]
+              },
+              {
+                "answer": 1,
+                "instance": "explanation-h20-s1006-control",
+                "orders": [0, 4, 5]
+              },
+              {
+                "answer": 2,
+                "instance": "explanation-h20-s1006-control",
+                "orders": [0, 4, 5]
+              }
+            ]
+          }
+        },
+        "control": {
+          "buried": {
+            "bound": [0.0, 0.3818324081226343],
+            "correct": 20,
+            "items": 12,
+            "n": 72,
+            "orders": [
+              {
+                "correct": 4,
+                "n": 12
+              },
+              {
+                "correct": 4,
+                "n": 12
+              },
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 4,
+                "n": 12
+              }
+            ],
+            "passed": true
+          },
+          "ideal": {
+            "answers": 24,
+            "correct": 144,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              }
+            ],
+            "unexpected": []
+          },
+          "no_answer": {
+            "bound": [0.0, 0.3818324081226343],
+            "correct": 20,
+            "items": 12,
+            "n": 72,
+            "orders": [
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 4,
+                "n": 12
+              },
+              {
+                "correct": 4,
+                "n": 12
+              }
+            ],
+            "passed": true
+          },
+          "worst": {
+            "answers": 24,
+            "correct": 6,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 2,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 2,
+                "n": 24
+              },
+              {
+                "correct": 2,
+                "n": 24
+              }
+            ],
+            "unexpected": [
+              {
+                "answer": 1,
+                "instance": "explanation-h20-s1006-control",
+                "orders": [0, 4, 5]
+              },
+              {
+                "answer": 2,
+                "instance": "explanation-h20-s1006-control",
+                "orders": [0, 4, 5]
+              }
+            ]
+          }
+        },
+        "non_control": {
+          "buried": {
+            "bound": [0.0, 0.3818324081226343],
+            "correct": 12,
+            "items": 12,
+            "n": 72,
+            "orders": [
+              {
+                "correct": 3,
+                "n": 12
+              },
+              {
+                "correct": 4,
+                "n": 12
+              },
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 1,
+                "n": 12
+              },
+              {
+                "correct": 0,
+                "n": 12
+              }
+            ],
+            "passed": true
+          },
+          "ideal": {
+            "answers": 24,
+            "correct": 144,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              },
+              {
+                "correct": 24,
+                "n": 24
+              }
+            ],
+            "unexpected": []
+          },
+          "no_answer": {
+            "bound": [0.0, 0.3818324081226343],
+            "correct": 11,
+            "items": 12,
+            "n": 72,
+            "orders": [
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 2,
+                "n": 12
+              },
+              {
+                "correct": 1,
+                "n": 12
+              }
+            ],
+            "passed": true
+          },
+          "worst": {
+            "answers": 24,
+            "correct": 2,
+            "n": 144,
+            "orders": [
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 2,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              },
+              {
+                "correct": 0,
+                "n": 24
+              }
+            ],
+            "unexpected": [
+              {
+                "answer": 1,
+                "instance": "explanation-h20-s4-single",
+                "orders": [1]
+              },
+              {
+                "answer": 2,
+                "instance": "explanation-h20-s4-single",
+                "orders": [1]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "reserved_calls": 2067
+}

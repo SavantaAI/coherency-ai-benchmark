@@ -32,7 +32,7 @@ def main_set() -> list[dict]:
 
 
 def build(tmp_path, scores, **kw) -> dict:
-    return report.build(S.write(tmp_path / "results", scores, CONFIGS), resamples=kw.pop("resamples", 300), **kw)
+    return S.calibrated_report(S.write(tmp_path / "results", scores, CONFIGS), resamples=kw.pop("resamples", 300), **kw)
 
 
 def rows(rep, horizon="h20", mode="default", section=0):
@@ -198,7 +198,7 @@ def test_bands_never_cross_harnesses(tmp_path):
               for s in S.config_set(prefix + ("c" if mode == "coached" else ""), mode=mode,
                                     r_pass=2, pairs=4, e=[0.5] * 4, s=[0.5] * 4)]
     configs = {p: {**c, "harness_version": "1", "driver_version": "1", "settings": {}} for p, c in CONFIGS.items()}
-    rep = report.build(S.write(tmp_path / "results", scores, configs), plan=plan_file(tmp_path, scores), require_plan=True)
+    rep = S.calibrated_report(S.write(tmp_path / "results", scores, configs), plan=plan_file(tmp_path, scores), require_plan=True)
     rs, _ = rows(rep)
     for config in (configs["a"], configs["b"]):
         assert rs[("m1", report.harness_label(config))]["headline"]["band"] == ({"band": 1, "ranks": "1", "members": 1} if sys.version_info[:2] == (3, 12) else None)
@@ -267,7 +267,7 @@ def test_sanity_counts_identical_inputs_once(tmp_path):
     # Q10, the reviewer's case: four copies of one item at 2 of 6 are one item, not 8 of 24.
     scores = [S.sibling("a-1", 1, "A", True), S.sibling("a-2", 1, "B", True), S.steer("a-3", 1, 1.0)]
     scores += [S.expl(f"a-e{i}", i, 1.0, no_answer=(2, 6), items=("same-na", "same-bu")) for i in range(4)]
-    san = build(tmp_path, scores)["sections"][0]["reader_sanity"]["r" * 64]
+    san = build(tmp_path, scores)["sections"][0]["reader_sanity"]["a" * 64]
     assert (san["no_answer"]["items"], san["no_answer"]["correct"], san["no_answer"]["n"]) == (1, 2, 6)
     assert san["no_answer"]["passed"] is True and san["passed"] is True
 
@@ -281,7 +281,7 @@ def test_a_failed_sanity_check_withholds_e_and_everything_that_needs_it(tmp_path
         return out
     rep = build(tmp_path, cheat("a") + cheat("ac", mode="coached") + cheat("a80", horizon="h80") + cheat("b"))
     sec = rep["sections"][0]
-    assert sec["withheld"] == "withheld: reader failed the sanity check"
+    assert sec["withheld"] == "withheld: reader failed the smoke check"
     cell = rows(rep)[0][("m1", "pi")]
     assert cell["E"]["value"] is None and cell["E"]["withheld"] and cell["headline"]["value"] is None and cell["headline"]["withheld"]
     assert cell["R"]["value"] is not None
@@ -308,7 +308,7 @@ def test_zero_resamples_text_and_json_agree(tmp_path):
 
     scores = S.config_set("a", r_pass=1, pairs=1, e=[1.0], s=[1.0]) + S.config_set("ac", r_pass=1, pairs=1, e=[1.0], s=[1.0], mode="coached")
     configs = {p: {**c, "harness_version": "1", "driver_version": "1", "settings": {}} for p, c in CONFIGS.items()}
-    rep = report.build(S.write(tmp_path / "results", scores, configs), plan=plan_file(tmp_path, scores), require_plan=True, resamples=0)
+    rep = S.calibrated_report(S.write(tmp_path / "results", scores, configs), plan=plan_file(tmp_path, scores), require_plan=True, resamples=0)
     cell = rows(rep)[0][("m1", report.harness_label(configs["a"]))]
     assert cell["headline"]["ranked"] is True and cell["headline"]["interval"] is None and cell["headline"]["band"] is None
     assert rep["not_release"] and "resamples" in cell["headline"]["band_note"]
@@ -347,7 +347,7 @@ def test_a_scored_episode_missing_from_the_index_is_refused(tmp_path):
     idx["episodes"] = {}
     (root / "index.json").write_text(json.dumps(idx))
     with pytest.raises(report.ReportError):
-        report.build(root)
+        S.calibrated_report(root)
 
 
 def test_report_is_byte_identical_across_processes(tmp_path):
@@ -417,7 +417,7 @@ def test_end_to_end_from_validated_bundles(tmp_path):
         assert main(["score", str(d), "--out", str(out), "--reader", str(rcfg)]) == 0, bd.episode
     (res / "index.json").write_text(json.dumps({"format": "cohbench-results-index", "version": 1,
                                                 "episodes": {bd.episode: {"model": "m", "harness": "h"} for bd in bundles}}))
-    rep = report.build(res, resamples=50, scripted_reader=True)
+    rep = S.calibrated_report(res, resamples=50, scripted_reader=True)
     cell = rows(rep)[0][("m", "h")]
     assert (cell["R"]["value"], cell["E"]["value"], cell["S"]["value"]) == (1.0, 0.5, 1.0)
     assert cell["headline"]["value"] == pytest.approx(100 * 0.5 ** (1 / 3))
@@ -515,6 +515,6 @@ def test_sanity_bound_on_the_command_line(tmp_path):
     a = json.loads((tmp_path / "o1" / "report.json").read_text())
     b = json.loads((tmp_path / "o2" / "report.json").read_text())
     assert b["parameters"]["sanity_z"] == 2.5 and a["parameters"]["sanity_z"] == 2.0
-    k = "r" * 64
+    k = "a" * 64
     assert a["sections"][0]["reader_sanity"][k]["passed"] is False and b["sections"][0]["reader_sanity"][k]["passed"] is True
     assert main(["report", str(root), "--out", str(tmp_path / "o3"), "--z", "0"]) == 2

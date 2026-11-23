@@ -29,7 +29,7 @@ def test_unmeasured_final_changed_state_leaves_episode_and_coverage_unjudged(tmp
         scores.append(score_episode(validated(b, tmp_path / str(missing))))
     assert scores[0]["score"]["score"] == pytest.approx(5 / 6)
     assert scores[1]["score"]["score"] is None and scores[1]["unjudged_reason"] == "final state not measured"
-    rep = report.build(S.write(tmp_path / "results", scores[1:], {"a": full_config()}), resamples=0)
+    rep = S.calibrated_report(S.write(tmp_path / "results", scores[1:], {"a": full_config()}), resamples=0)
     row = rep["sections"][0]["tables"][0]["rows"][0]
     assert row["S"]["judged"] == 0 and row["S"]["planned"] == 1 and row["S"]["value"] is None
     assert row["S"]["unjudged_instances"][0]["reasons"][0]["reason"] == "final state not measured"
@@ -43,12 +43,12 @@ def test_index_only_harness_is_named_without_blanking_observed_spreads(tmp_path)
         scores += full_scores(p, mode="coached" if p.endswith("c") else "default")
     plan = plan_file(tmp_path, scores)
     root = S.write(tmp_path / "results", scores, configs)
-    original = report.build(root, plan=plan, require_plan=True)
+    original = S.calibrated_report(root, plan=plan, require_plan=True)
     index_path = root / "index.json"
     index = json.loads(index_path.read_text())
     index["episodes"]["c-pending"] = full_config("h3")
     index_path.write_text(json.dumps(index))
-    changed = report.build(root, plan=plan, require_plan=True)
+    changed = S.calibrated_report(root, plan=plan, require_plan=True)
     old_spreads, new_spreads = [r["sections"][0]["harness_effect"] for r in (original, changed)]
     assert len(old_spreads) == len(new_spreads) == 2
     for old, new in zip(old_spreads, new_spreads):
@@ -66,12 +66,12 @@ def test_uniform_runtime_must_match_release_pin_to_publish_bands(tmp_path, versi
         score["python_version"] = version
     root = S.write(tmp_path / "results", scores, {"a": full_config(), "ac": full_config()})
     plan = plan_file(tmp_path, scores)
-    rep = report.build(root, plan=plan, require_plan=True)
+    rep = S.calibrated_report(root, plan=plan, require_plan=True)
     row = rep["sections"][0]["tables"][0]["rows"][0]
     assert rep["not_release"] is (version != "3.12")
     assert (row["headline"]["band"] is not None) is (version == "3.12")
     assert row["headline"]["ranked"]
-    assert main(["report", str(root), "--out", str(tmp_path / "out"), "--plan", str(plan), "--require-plan"]) == 0
+    assert main(["report", str(root), "--out", str(tmp_path / "out"), "--plan", str(plan), "--require-plan", "--calibration-manifest", str(S.manifest(root))]) == 0
     cli = json.loads((tmp_path / "out" / "report.json").read_text())
     assert cli["not_release"] is (version != "3.12")
     assert (cli["sections"][0]["tables"][0]["rows"][0]["headline"]["band"] is not None) is (version == "3.12")
@@ -86,10 +86,10 @@ def test_required_plan_refuses_incomplete_configuration_by_name(tmp_path, field)
     root = S.write(tmp_path / "results", scores, {"a": c})
     plan = plan_file(tmp_path, scores)
     with pytest.raises(report.ReportError, match="index entry a-") as exc:
-        report.build(root, plan=plan, require_plan=True)
+        S.calibrated_report(root, plan=plan, require_plan=True)
     assert field in str(exc.value)
     if field not in ("model", "harness"):
-        assert report.build(root, plan=plan, resamples=0)["sections"]
+        assert S.calibrated_report(root, plan=plan, resamples=0)["sections"]
 
 
 def test_settings_object_is_canonical_and_empty_settings_are_explicit(tmp_path):
@@ -97,15 +97,15 @@ def test_settings_object_is_canonical_and_empty_settings_are_explicit(tmp_path):
     c = full_config()
     c["settings"] = {"limits": {"tools": 4, "tokens": 100}, "reasoning": "high", "features": [True, None]}
     root = S.write(tmp_path / "results", scores, {"a": c, "ac": c})
-    rep = report.build(root, plan=plan_file(tmp_path, scores), require_plan=True, resamples=0)
+    rep = S.calibrated_report(root, plan=plan_file(tmp_path, scores), require_plan=True, resamples=0)
     assert rep["sections"][0]["tables"][0]["rows"][0]["configuration"]["settings"] == c["settings"]
     reordered = {**c, "settings": dict(reversed(list(c["settings"].items())))}
     assert report.config_key(c) == report.config_key(reordered) and report.harness_label(c) == report.harness_label(reordered)
     c["settings"] = "legacy"
     root = S.write(tmp_path / "legacy", scores, {"a": c, "ac": c})
-    assert report.build(root, resamples=0)["sections"]
+    assert S.calibrated_report(root, resamples=0)["sections"]
     with pytest.raises(report.ReportError, match="settings"):
-        report.build(root, plan=plan_file(tmp_path, scores), require_plan=True, resamples=0)
+        S.calibrated_report(root, plan=plan_file(tmp_path, scores), require_plan=True, resamples=0)
 
 
 def cutoff_validated(b, path):
@@ -201,7 +201,7 @@ def test_hosted_cli_requires_cache_or_explicit_nonrelease_override(tmp_path, mon
     uncached = json.loads(out.read_text())
     assert uncached["reader_record"] is False
     root = S.write(tmp_path / "results", [uncached], {"a": full_config()})
-    rep = report.build(root, resamples=10)
+    rep = S.calibrated_report(root, resamples=10)
     assert rep["not_release"] and "without a persistent record" in report.render(rep, False)
     cache = tmp_path / "cache.jsonl"
     assert main([*args, "--reader-cache", str(cache)]) == 0
@@ -219,8 +219,8 @@ def test_uncached_hosted_record_removes_bands_from_complete_report(tmp_path):
     configs = {"a": full_config(), "ac": full_config()}
     root = S.write(tmp_path / "before", scores, configs)
     plan = plan_file(tmp_path, scores)
-    original = report.build(root, plan=plan, require_plan=True)
+    original = S.calibrated_report(root, plan=plan, require_plan=True)
     assert original["sections"][0]["tables"][0]["rows"][0]["headline"]["band"] is not None
     next(s for s in scores if s["family"] == "explanation" and not s["grouping"]["control"])["reader_record"] = False
-    changed = report.build(S.write(tmp_path / "after", scores, configs), plan=plan, require_plan=True)
+    changed = S.calibrated_report(S.write(tmp_path / "after", scores, configs), plan=plan, require_plan=True)
     assert changed["not_release"] and changed["sections"][0]["tables"][0]["rows"][0]["headline"]["band"] is None

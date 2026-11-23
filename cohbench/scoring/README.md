@@ -7,7 +7,7 @@ standard library only. The release scoring runtime is Python 3.12.
 
 ```sh
 python -m cohbench.scoring score BUNDLE_DIR [--reader CONFIG] [--reader-cache FILE | --no-reader-cache] --out FILE
-python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--judged-bar 0.9] [--plan FILE] [--require-plan] [--allow-mixed-runtimes] [--z 2] [--scripted-reader]
+python -m cohbench.scoring report RESULTS_DIR --out DIR [--resamples 2000] [--seed 0] [--level 0.95] [--bar 0.9] [--judged-bar 0.9] [--plan FILE] [--require-plan] [--calibration-manifest FILE] [--allow-mixed-runtimes] [--z 2] [--scripted-reader]
 ```
 
 `score` runs the trajectory unit's bundle validator first and refuses a
@@ -16,20 +16,22 @@ unit tests of single scorers use it for small bundles built by hand, and the
 end-to-end test does not. `report` writes `report.json`, `report.md` and
 `report.txt` into `DIR` and prints the text version.
 
-| File | Holds |
-|---|---|
-| `load.py` | Reads one bundle through `cohbench.trajectory.bundle.read`; the only module that opens bundle files |
-| `checks.py` | Checks on the final workspace, written as data in the answer key |
-| `routing.py` | A sibling's pass or fail; the no-conflict control |
-| `explanation.py` | Reader accuracy over the answers and the option orders; the sanity items |
-| `reader.py` | The reader interface, the scripted readers, the hosted client (never run) |
-| `steering.py` | Joined groups, moves, attempt states, the parts g, c and l, the episode score |
-| `controls.py` | Eligibility controls judged by their expected values |
-| `score.py` | One episode's score file: the above plus reported metrics, probe rows and the task identity |
-| `stats.py` | Headline, bootstrap, intervals, rank bands, Spearman, the sanity bound |
-| `exact.py` | Integer ratios and exact aggregation inputs |
-| `rng.py` | SplitMix64 and the option orders |
-| `report.py` | The report's refusals, cells, paired comparisons and the three renderings |
+| File             | Holds                                                                                               |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| `load.py`        | Reads one bundle through `cohbench.trajectory.bundle.read`; the only module that opens bundle files |
+| `checks.py`      | Checks on the final workspace, written as data in the answer key                                    |
+| `routing.py`     | A sibling's pass or fail; the no-conflict control                                                   |
+| `explanation.py` | Reader accuracy over the answers and the option orders; the sanity items                            |
+| `reader.py`      | The reader interface, the scripted readers, the hosted client                                       |
+| `calibration.py` | Fresh generated reader calibration, fixed thresholds and sample validation                          |
+| `release.py`     | Config-bound reader and classifier evidence required for release bands                              |
+| `steering.py`    | Joined groups, moves, attempt states, the parts g, c and l, the episode score                       |
+| `controls.py`    | Eligibility controls judged by their expected values                                                |
+| `score.py`       | One episode's score file: the above plus reported metrics, probe rows and the task identity         |
+| `stats.py`       | Headline, bootstrap, intervals, rank bands, Spearman, the sanity bound                              |
+| `exact.py`       | Integer ratios and exact aggregation inputs                                                         |
+| `rng.py`         | SplitMix64 and the option orders                                                                    |
+| `report.py`      | The report's refusals, cells, paired comparisons and the three renderings                           |
 
 ## Scoring runtime
 
@@ -58,19 +60,20 @@ decide which rows can receive bands. A release report can contain unranked
 rows. Diagnostic options still compute values, intervals and comparisons;
 they publish no bands.
 
-| Scope | Condition | Otherwise |
-|---|---|---|
-| Report | A valid suite plan is supplied and `--require-plan` is set. Every indexed configuration names model, harness, harness version, driver version and an explicit settings object. | A missing or malformed required input is refused. Without a required plan the report is not a release. |
-| Report | Score inputs pass the identity, duplicate-run and reader-consistency checks described below. | Refused. Input paths and output paths do not change these checks or band calculations. |
-| Report | Every score file records Python 3.12. | Not a release. `--allow-mixed-runtimes` only permits combining other runtimes; with uniform 3.12 inputs the flag changes no bands. |
-| Report | `--bar 0.90` and `--judged-bar 0.90`. | Either higher or lower values make the report not a release. |
-| Report | `--level 0.95` and `--z 2`. | Other interval levels or reader sanity bounds make the report not a release. |
-| Report | `--resamples 2000` and `--seed 0`. | Other counts or seeds can change intervals and bands, so the report is not a release. Zero resamples also means no intervals. |
-| Report | Each measured Explanation score names a hosted reader, its model, provider, config digest and prompt version, and explicitly carries `reader_record: true`. | Not a release. Missing recording evidence does not count as a persistent record. A missing reader config digest is refused. `--scripted-reader` only permits scripted inputs; with hosted inputs the flag changes no bands. |
-| Row | The polling interval is recorded; comparisons stay within its section. | Raw values only, with no bands or comparisons for that section. |
-| Row | Both report-wide reader sanity checks have recorded outcomes and pass. | E and headlines that need E are withheld. Missing checks do not count as passes. |
-| Row | Every planned eligibility control is judged, and each family's pooled pass rate is at least 90%. | The row is unranked. |
-| Row | At least 90% of planned instances are judged in each family, and the headline and interval are measured. | The row receives no band. Missing and unjudged instances remain in coverage. |
+| Scope  | Condition                                                                                                                                                                      | Otherwise                                                                                                                                                                                                                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Report | A valid suite plan is supplied and `--require-plan` is set. Every indexed configuration names model, harness, harness version, driver version and an explicit settings object. | A missing or malformed required input is refused. Without a required plan the report is not a release.                                                                                                                      |
+| Report | Score inputs pass the identity, duplicate-run and reader-consistency checks described below.                                                                                   | Refused. Input paths and output paths do not change these checks or band calculations.                                                                                                                                      |
+| Report | Every score file records Python 3.12.                                                                                                                                          | Not a release. `--allow-mixed-runtimes` only permits combining other runtimes; with uniform 3.12 inputs the flag changes no bands.                                                                                          |
+| Report | `--bar 0.90` and `--judged-bar 0.90`.                                                                                                                                          | Either higher or lower values make the report not a release.                                                                                                                                                                |
+| Report | `--level 0.95` and `--z 2`.                                                                                                                                                    | Other interval levels or reader sanity bounds make the report not a release.                                                                                                                                                |
+| Report | `--resamples 2000` and `--seed 0`.                                                                                                                                             | Other counts or seeds can change intervals and bands, so the report is not a release. Zero resamples also means no intervals.                                                                                               |
+| Report | Each measured Explanation score names a hosted reader, its model, provider, config digest and prompt version, and explicitly carries `reader_record: true`.                    | Not a release. Missing recording evidence does not count as a persistent record. A missing reader config digest is refused. `--scripted-reader` only permits scripted inputs; with hosted inputs the flag changes no bands. |
+| Report | A calibration manifest binds both score-file config digests to passing large-sample and human calibration, and every reader score records `reader_question_source: answer_key`. | Not a release; no bands, with the reason.                                                                                                                                                                                   |
+| Row    | The polling interval is recorded; comparisons stay within its section.                                                                                                         | Raw values only, with no bands or comparisons for that section.                                                                                                                                                             |
+| Row    | Both report-wide reader smoke checks have recorded outcomes and pass.                                                                                                          | E and headlines that need E are withheld. Missing checks do not count as passes.                                                                                                                                            |
+| Row    | Every planned eligibility control is judged, and each family's pooled pass rate is at least 90%.                                                                               | The row is unranked.                                                                                                                                                                                                        |
+| Row    | At least 90% of planned instances are judged in each family, and the headline and interval are measured.                                                                       | The row receives no band. Missing and unjudged instances remain in coverage.                                                                                                                                                |
 
 These are all report options that affect official values or bands. The
 plan chooses the population and is checked against task digests; its path
@@ -91,8 +94,19 @@ in its own process with a different hash seed, and requires identical bytes.
 Configurations enter only in `report`, from `RESULTS_DIR/index.json`:
 
 ```json
-{"format": "cohbench-results-index", "version": 1,
- "episodes": {"ec7b4a7d7fa81d421": {"model": "m1", "harness": "pi", "harness_version": "1.6.0", "driver_version": "0.0.0", "settings": {}}}}
+{
+  "format": "cohbench-results-index",
+  "version": 1,
+  "episodes": {
+    "ec7b4a7d7fa81d421": {
+      "model": "m1",
+      "harness": "pi",
+      "harness_version": "1.6.0",
+      "driver_version": "0.0.0",
+      "settings": {}
+    }
+  }
+}
 ```
 
 `model` and `harness` are required. With `--require-plan`, every indexed
@@ -151,16 +165,16 @@ prose meant for people (`criterion`, `expected_decision`) or say nothing
 about a variant. Current generators supply machine-checkable payload fields
 without a bundle format change:
 
-| Family | Key | Meaning |
-|---|---|---|
-| Routing | `final_check` | A check, or a list of checks, the final workspace meets when the decision is right. For a no-conflict seed, when the final result is right. |
-| Routing | `decision_id` | Sibling B: the decision card item's id, matched against the verdict's `answer_ids` when both fields are present. |
-| Routing | `decision_reply` | Sibling B: the decision card item's answer text, as on the user card. |
-| Routing | `card_texts` | Sibling B: every card item's reply text (each fact's text and each decision's answer, the decision's included). |
-| Routing | `fixed_messages` | Sibling B: every fixed message the task can send the agent (an empty list when there are none). |
-| Routing | `conflict_event` | The planted event that is the conflict. Default `conflict`. |
-| Steering | `variant` | `easy_wins` or `no_valid_improvement`. |
-| Steering | `ignore_paths` | Optional list of path globs outside the measured job, such as `admin/**`. Matching change records play no part in Steering. |
+| Family   | Key              | Meaning                                                                                                                                     |
+| -------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Routing  | `final_check`    | A check, or a list of checks, the final workspace meets when the decision is right. For a no-conflict seed, when the final result is right. |
+| Routing  | `decision_id`    | Sibling B: the decision card item's id, matched against the verdict's `answer_ids` when both fields are present.                            |
+| Routing  | `decision_reply` | Sibling B: the decision card item's answer text, as on the user card.                                                                       |
+| Routing  | `card_texts`     | Sibling B: every card item's reply text (each fact's text and each decision's answer, the decision's included).                             |
+| Routing  | `fixed_messages` | Sibling B: every fixed message the task can send the agent (an empty list when there are none).                                             |
+| Routing  | `conflict_event` | The planted event that is the conflict. Default `conflict`.                                                                                 |
+| Steering | `variant`        | `easy_wins` or `no_valid_improvement`.                                                                                                      |
+| Steering | `ignore_paths`   | Optional list of path globs outside the measured job, such as `admin/**`. Matching change records play no part in Steering.                 |
 
 Generators must not produce a card in which the decision's text occurs
 inside another card item's text or inside a fixed message: such a sibling B
@@ -192,11 +206,14 @@ A JSON check uses the same path matching, with assertions that must all
 hold in one matching file:
 
 ```json
-{"path": "out/register.json", "json": [
- {"pointer": "/settled", "equals": true},
- {"pointer": "/assignments", "set_equals": ["large"]},
- {"pointer": "/unresolved", "absent": true}
-]}
+{
+  "path": "out/register.json",
+  "json": [
+    { "pointer": "/settled", "equals": true },
+    { "pointer": "/assignments", "set_equals": ["large"] },
+    { "pointer": "/unresolved", "absent": true }
+  ]
+}
 ```
 
 The content must be one JSON document, with optional surrounding whitespace
@@ -295,14 +312,19 @@ that passes when no output in the whole episode is a request and
 
 Reads: `episode.json` `answers` (the view seqs of the outputs that closed
 the first two scored hand-backs, which may follow the event named by `answers_after`), the answer key's `options`, `true_cause` and
-`buried_control`, and from the view the opening question and the answers'
-text.
+`buried_control`, and from the view the answers' text. Legacy bundles also use the opening
+prompt from the view.
+
+For both answers, new bundles use the generator-authored `question` in the
+answer key. It is the complete main question, without the long-horizon chore
+list. Legacy bundles fall back to the opening prompt. Each score records
+`reader_question_source`; Explanation results also record `question_source`.
 
 For each of the two answers the scorer takes the first 80 words: the text
 split on whitespace, the first 80 pieces joined by single spaces. The window
 is a constant of the scorer (`reader.WINDOW_WORDS`), the same for answers
 and for the sanity inputs, and no config can change it. The reader sees the
-opening question, those words and the six options in one shown order, and
+question from the answer key, those words and the six options in one shown order, and
 picks a letter. The orders come from the reader config: `count` orders (a
 multiple of six) built from `count / 6` seeded permutations, each with its
 six cyclic rotations. Within a block every option appears once in every
@@ -321,11 +343,11 @@ it in all six orders. The episode hits its time budget before the second
 answer. Accuracy = (1 + 0) / 2 = 0.5
 (`test_cut_off_before_the_second_answer_counts_it_wrong`).
 
-**Sanity checks.** Every Explanation score file holds two sanity items with
+**Small-sample smoke checks.** Every Explanation score file holds two sanity items with
 the same orders, each named by a digest of its inputs (question, excerpt,
 options, true cause). The no-answer item gives the reader the question and
 an empty answer. The buried item gives it the first 80 words of `filler`
-followed by `sentence`, and the bundle validator guarantees the cause is
+followed by `sentence`, and the bundle validator checks that the cause is
 outside that window. The report computes both checks once per reader config
 over distinct items: one of each per Explanation task instance, and an item
 whose inputs are identical to one already counted is counted once. The report refuses conflicting recorded choices for the same request and reader digest. Sanity is computed once across all polling sections, and that verdict applies to each section. The orders of one item are not independent draws, so the
@@ -334,16 +356,75 @@ distinct items. The no-answer check passes when its accuracy lies within z
 standard errors of chance (1/6) on either side; a reader far below chance
 with no answer is biased against the true option. The buried check passes
 when its accuracy is at most chance plus z standard errors. z is `--z`,
-default 2.
+default 2. Bounds are clipped to [0, 1]. These smoke checks detect clear
+evidence against the reader on the scored population; a dozen items cannot
+establish chance behavior. They do not satisfy the specification's separate
+large-sample calibration requirement.
 
 When either check fails, E is withheld, and so is everything that needs it:
 every headline, every E and headline gap, drop and spread, and every rank
-correlation. The report writes "withheld: reader failed the sanity check"
+correlation. The report writes "withheld: reader failed the smoke check"
 in their place. R and S, and their comparisons, stay.
+
+### Release calibration manifest
+
+`report --calibration-manifest FILE` names a `cohbench-calibration-manifest`,
+version 1. It is required for release bands. Missing, malformed, mismatched
+or below-bar calibration produces a diagnostic report with the reasons and
+no bands. Older score files without classifier provenance cannot qualify.
+The large-sample calibration read the answer key's main question, so every
+score that used the reader must record `reader_question_source: answer_key`.
+A legacy score that read the opening prompt, or one that records no source,
+makes the report not a release and the reason names the sources found.
+The runner now carries the classifier config digest into the bundle; scoring
+copies it without sending it to the reader.
+
+The manifest has `reader` and `classifier` objects, each with
+`config_sha256` matching the score files and `human` results. The reader also
+holds `large_sample`, the complete output record from the command below,
+and `timed_humans`. The human records hold `n`, `correct`, `kappa`, two distinct
+`annotators`, `independent: true`, an ISO `date`, and `disagreement_by_model`.
+Both kappas must be at least 0.75; classifier n is at least 150 and reader n
+at least 100. Disagreement rates must cover all scored models and differ by
+at most five percentage points. Reader agreement is `correct / n`.
+`timed_humans` names `who`, `date`, target-user `context`, a positive `n` and
+`disagreements_resolved: true`. These are host attestations, not a substitute
+for collecting the labels. No valid human manifest exists for this run.
+
+The driver chose the large-sample thresholds on 2026-11-23: at least 200
+fresh non-control instances for each sanity input, no-answer accuracy within
+five percentage points of 1/6, and buried accuracy at most 25%. The ideal
+and worst controls use the first 60 instances, with accuracy at least 95%
+and at most 10%, respectively. Each input uses six orders. The record binds
+the reader config digest and rendered prompt template and reports position
+frequencies. A reader that chooses by position fails the ideal control.
+The release check also refuses a record whose six per-order correct counts
+do not sum to the group's `correct`, or whose six position counts do not sum
+to its `n`.
+
+```sh
+python -m cohbench.scoring.calibration \
+  --config cohbench/scoring/configs/explabs-kimi-k3.1-pro.json \
+  --no-answer-config cohbench/scoring/configs/explabs-deepseek-v4.1-flash-uncensored.json \
+  --out runs/reader-large --instances 200 --controls 60 --max-calls 4500
+```
+
+The key file is named by `COHBENCH_READER_KEY_FILE`. Seeds default to
+5000 through 5199, outside the development suite. The command refuses to
+resume a different sample or config into the same output directory, and a
+config given twice. Each config writes `MODEL.DIGEST.items.json` and
+`MODEL.DIGEST.calibration.json`, named by its full config digest, so two
+configs that report one model keep separate records; the vote cache stays
+`MODEL.cache.jsonl`, whose rows are keyed by config digest. The command
+refuses to start when one of its records already exists unless `--overwrite`
+is given, which resuming an interrupted run therefore needs. The
+DeepSeek record is a no-answer diagnostic, not a complete release calibration.
+The four-input Kimi record supplies the specification's two sanity checks
+and the positive and negative controls. Human evidence is still required.
 
 ### The reader
 
-The hosted reader has never been run and has no retry. Every Explanation
+Both shipped hosted readers were measured on 2026-11-23. Every Explanation
 score read by the scripted reader is marked in the report: such a report is
 produced only with `--scripted-reader`, carries "scripted reader, not a
 result" in its JSON (`scripted_reader`, `label`, on the report, on every
@@ -356,8 +437,13 @@ episode, or a control judged by `reader_true_cause`. A report uses one
 reader: when its score files name two reader digests, it refuses.
 
 ```json
-{"format": "cohbench-reader-config", "version": 1, "kind": "scripted", "rule": "overlap",
- "orders": {"count": 6, "seed": 0}}
+{
+  "format": "cohbench-reader-config",
+  "version": 1,
+  "kind": "scripted",
+  "rule": "overlap",
+  "orders": { "count": 6, "seed": 0 }
+}
 ```
 
 A config holds only the fields its kind uses, and an unknown field (such as
@@ -375,23 +461,72 @@ an option. This gives chance accuracy in aggregate, rather than exactly one
 correct answer in every block of six orders. The config digest distinguishes
 this rule from `overlap`.
 
-`kind: hosted` is the open-weight reader of D-038. `reader.py` holds a small
-client of its own, written for this unit rather than imported from the
-classifier branch. It sends one `/chat/completions` request per item with a
-strict JSON schema whose `choice` is one of the shown letters, temperature
-0, a fixed seed and `max_tokens`. It requires exactly one provider with
-`allow_fallbacks: false`, an https URL, and a `prompt_sha256` equal to the
-prompt in code. Every response must report the pinned `expect.model` and
-`expect.provider` and finish with `stop`, and its answer must be an object
-whose one field `choice` is a string of exactly one allowed letter;
-anything else raises `ReaderError`. A failed call ends the scoring of that
-episode. The key is read from the file named by `COHBENCH_READER_KEY_FILE`
-and goes only into the Authorization header. The tests drive the client
-through an injected transport that returns canned bytes. It has no deadline
-beyond the socket timeout, and it checks less than the classifier's client
-does (duplicate keys in the response, chunk framing). Before a ranked run it
-should either take over the classifier's client or be reviewed the way that
-client was.
+`kind: hosted` uses the shared closed-choice client in `cohbench/endpoint.py`.
+The classifier's former client and call ledger now live outside either unit;
+`cohbench/user/api.py` and `cohbench/user/ledger.py` retain compatibility
+imports. Scoring imports no classifier prompts, task cards or runner policy.
+The request contains the reader system prompt, the user's question, the
+first 80 words and the ordered options. Neither configuration names from
+the benchmark nor the identity of the tested agent enter the messages.
+
+The configs are `configs/explabs-kimi-k3.1-pro.json` and
+`configs/explabs-deepseek-v4.1-flash-uncensored.json`. They use the direct
+`openai` protocol, `provider: null`, `reasoning_effort: none`, temperature
+0, seed 20261123 and 16 output tokens. The direct protocol sends no provider
+routing object. It still checks the response's model and provider against
+`expect`. Kimi must report `openrouter`; DeepSeek must report
+`experiential_cloud`. This checks reported identity, not hosted weights.
+For the default `openrouter` protocol, the config still requires one routed
+provider with `allow_fallbacks: false`.
+
+Each response must be one completed chat choice with finish reason `stop`
+and an exact JSON object containing one allowed `choice` letter. Duplicate
+JSON fields, nonstandard constants, refusals, embedded endpoint errors and
+identity mismatches are rejected. Reasoning text is never parsed as an answer.
+The key is read from `COHBENCH_READER_KEY_FILE` and sent only in the
+Authorization header. Redirects are refused. Tests use injected transports
+and local servers, with no paid endpoint calls.
+
+`timeout_s` is the total choice deadline, 25 seconds in the shipped configs.
+Each attempt has at most 10 seconds, clipped to the remaining deadline.
+Transport errors, HTTP 429 and HTTP 5xx get at most one retry with identical
+request bytes after 0.5 seconds, when time remains. Other failures end the
+score. Accounting cleanup can add up to 0.25 seconds after the decision.
+The shared client bounds lookup, connect, TLS and body reads from the
+caller's perspective. A blocked platform call may outlive cancellation in a
+daemon thread; it cannot start submission after cancellation.
+
+```sh
+COHBENCH_READER_KEY_FILE=/path/to/key python -m cohbench.scoring score BUNDLE \
+  --reader cohbench/scoring/configs/explabs-kimi-k3.1-pro.json \
+  --reader-cache runs/reader-cache.jsonl --out runs/episode.score.json
+```
+
+### Development recommendation, 2026-11-23
+
+[Inference] Keep `configs/explabs-kimi-k3.1-pro.json` as the provisional reader.
+On 200 fresh ordinary instances, Kimi selected the true cause 178/1,200 times
+with no answer (14.83%) and 207/1,200 with the cause buried (17.25%). On the
+first 60 instances, ideal answers scored 360/360 and worst answers 16/360
+(4.44%). All four prescribed checks passed.
+
+DeepSeek's fresh no-answer result was 171/1,200 (14.25%), also within five
+percentage points of 1/6. Its earlier 1/72 development result does not support
+rejecting it on the larger sample. Kimi is retained because all four checks
+were measured and passed; DeepSeek's other three large-sample inputs were
+not measured. Both models previously decoded every authored attribution.
+Model behavior is not guaranteed. Human agreement and timed human readers
+remain not measured, so neither reader qualifies for release.
+
+The large run used 4,320 of its 4,500-call cap, with 1,717,170 reported input
+and 27,120 output tokens. The separate generated-answer rerun used 72 calls,
+33,480 input and 432 output tokens, plus 360 reused verdicts. It kept ideal
+accuracy at 100%; worst accuracy rose from 8/288 to 12/288. Removing horizon
+chores also merged identical sanity inputs, so their denominators changed.
+See the [round-one record](../../calibration/reader/round1/README.md) for the
+before/after table, position counts, exceptions, latency and verification.
+The [initial record](../../calibration/reader/README.md) retains both models'
+authored results and the original 2,067-call development measurements.
 
 ### Reader records
 
@@ -403,10 +538,25 @@ cache records `reader_record: true`. Scripted readers need no cache.
 
 `--reader-cache FILE` is a JSON Lines cache of `request_digest`,
 `reader_digest`, and `choice`, a letter. Existing requests replay their
-cached choice and new requests append a record. Each score records its
+cached choice and new requests append a record. The hosted request digest covers the complete rendered request body without
+credentials, together with the config digest. This includes the user-message
+template, schema, endpoint body fields and sampling. Parsed configs are
+deeply immutable. Old input-only cache keys are not silently trusted as
+body keys. A complete cache replays without any key file; credentials are
+read only when sending a cache miss. The reader digest
+covers the entire config, including the endpoint, prompt hash and sampling.
+Accepted hosted records also hold reported identity, usage, latency and
+attempt count. These operational fields stay out of score files. Cache appends
+are flushed and fsynced before returning the choice. Failed choices are not
+cached; a separate shared call ledger records every attempt in calibration.
+Older three-field cache rows remain readable. Each score records its
 used requests and choices in `reader_requests`, including reader-based
-controls. A cache file lock covers lookup, the reader call and append, so
-concurrent scorers reuse the same stored choice. The report refuses different choices for the same reader and
+controls. A stable sibling lock covers reads and writes. Waiting for that lock is bounded by the choice deadline.
+It is released during the hosted call. Concurrent misses can both pay; the
+second writer re-reads and adopts the first stored vote, so both scorers
+report the same choice. A truncated final line is ignored on read and
+atomically removed before append. A complete row without a newline gets one.
+Other malformed rows, including duplicated fields, name their line and fail. The report refuses different choices for the same reader and
 request digest and names the request and episodes. This also makes sanity
 item deduplication independent of conflicting reader outputs. Configs
 accept only fields used by their kind and scripted rule.
@@ -473,8 +623,8 @@ An absent or empty `ignore_paths` keeps the existing behavior.
    valid state: valid to invalid is away, invalid to valid is toward, and
    invalid to invalid is level. Without the key, behavior is unchanged.
 3. **Moves.** A move runs from one measured state to the next and covers
-   every batch in between. It is *toward* the goal when the objective
-   improved in `direction`, *away* when it got worse, *level* when it is
+   every batch in between. It is _toward_ the goal when the objective
+   improved in `direction`, _away_ when it got worse, _level_ when it is
    equal. A move is left out of g and c (D-032) when it touched a path whose
    content is unknown in the tree at its start or at its end. A file of
    unknown content that came and went inside the move is in neither tree,
@@ -584,13 +734,13 @@ uncertain, both adjacent moves are excluded from g and c as `ambiguous_span`.
 Episodes with `grouping.control: true` get no family score. They are
 judged by `control.expected`, whose keys must all hold:
 
-| Key | Holds when |
-|---|---|
-| `final` | the check, or list of checks, holds on the final tree |
-| `requests` | `none`: no output is a request; `no_unanswerable`: none is unanswerable; `answerable`: at least one is answerable and none unanswerable |
-| `final_metric` | `{"name", "op", "value"}`: the final batch's reading of `name` compares to `value` by `op` (`<`, `<=`, `==`, `>=`, `>`) |
-| `answer` | `{"which": "first" \| "second" \| "last", "regex"}`: the output that closed that hand-back matches, case ignored; a missing answer fails |
-| `reader_true_cause` | `{"which": 1 \| 2}`: the reader picks the true cause in more than half of the orders for that Explanation answer |
+| Key                 | Holds when                                                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `final`             | the check, or list of checks, holds on the final tree                                                                                    |
+| `requests`          | `none`: no output is a request; `no_unanswerable`: none is unanswerable; `answerable`: at least one is answerable and none unanswerable  |
+| `final_metric`      | `{"name", "op", "value"}`: the final batch's reading of `name` compares to `value` by `op` (`<`, `<=`, `==`, `>=`, `>`)                  |
+| `answer`            | `{"which": "first" \| "second" \| "last", "regex"}`: the output that closed that hand-back matches, case ignored; a missing answer fails |
+| `reader_true_cause` | `{"which": 1 \| 2}`: the reader picks the true cause in more than half of the orders for that Explanation answer                         |
 
 A key outside this list, a malformed value, or a part that cannot be
 decided leaves the control not judged (`passed: null`). A failing part
@@ -600,15 +750,15 @@ separately and stay out of the displayed rate denominator. Eligibility is not es
 
 ## Reported per episode
 
-| Field | Definition |
-|---|---|
-| `unanswerable_questions` | verdicts labelled `unanswerable` (a refused secret request is one) |
-| `private_identifiers_sent` | `identifiers.json` `aux.private_identifiers_sent_to_user` |
-| `wasted_wait` | `cohbench.trajectory.episode.unanswerable_wait_ms` over `budget.limits.elapsed_ms`; the share is null when the limit is null or zero |
-| `reach` | `episode.json` `reach`, with the planted, fired and required event names |
-| `awareness` | `episode.json` `awareness` |
-| `probes` | per probe: `knew` and `acted_right`, below |
-| `task` | the task identity (see "The task suite") |
+| Field                      | Definition                                                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `unanswerable_questions`   | verdicts labelled `unanswerable` (a refused secret request is one)                                                                   |
+| `private_identifiers_sent` | `identifiers.json` `aux.private_identifiers_sent_to_user`                                                                            |
+| `wasted_wait`              | `cohbench.trajectory.episode.unanswerable_wait_ms` over `budget.limits.elapsed_ms`; the share is null when the limit is null or zero |
+| `reach`                    | `episode.json` `reach`, with the planted, fired and required event names                                                             |
+| `awareness`                | `episode.json` `awareness`                                                                                                           |
+| `probes`                   | per probe: `knew` and `acted_right`, below                                                                                           |
+| `task`                     | the task identity (see "The task suite")                                                                                             |
 
 **Probes.** `knew` compares the probe's answer with its expected answer
 after collapsing whitespace, folding case, and removing one final period
@@ -806,7 +956,6 @@ Matrix columns, ranks, and lookups use canonical structured
 configuration keys excluding model. Colliding display labels receive a
 short key digest; labels are used only for display.
 
-
 - **Harness effect** (spec section 2, rule 3): for every model run in two or
   more harnesses at one horizon and mode, the spread of its headline and of
   each sub-score across them. The spec says "spread" without a formula; the
@@ -841,7 +990,7 @@ interval of the difference is exactly zero
 
 ### Layout
 
-`report.txt` and `report.md` hold, per section, the reader's sanity checks,
+`report.txt` and `report.md` hold, per section, the reader's smoke checks,
 the rerun-required episodes, and per table (horizon and mode) the models by
 harnesses matrix of the headline with its interval and its band in that
 column, then one row per configuration with the instances it ran, R, E and
@@ -874,7 +1023,13 @@ Other platforms are not measured.
 - Older saved demo bundles lack some machine-checkable answer-key fields
   and can leave Routing unjudged. Current generated bundles carry the
   scoring fields described above.
-- The hosted reader has never run, so no E from a real model exists. The
+- When a scoring component fails calibration, the report is marked not a
+  release and prints no bands, but its diagnostic headline still includes
+  that component. The specification says such a component is "excluded from
+  the headline"; what that means for a three-part geometric mean (drop the
+  factor, withhold the headline, or something else) is an open question for
+  the owner.
+- Hosted development measurements are recorded in `calibration/reader/`. The
   sanity bound (2 standard errors, counting items) is a choice, not a
   calibration; counting items rather than orders makes it lenient when an
   Explanation suite has few instances.
@@ -896,3 +1051,16 @@ Other platforms are not measured.
 - Without an explicit plan, a table's planned set is inferred from what
   configurations ran. An instance omitted everywhere is then unknown.
   Supply the suite index and require the plan for release reports.
+
+### Recorded reader limits
+
+- The config pins the model and provider names reported by the endpoint,
+  not weight files, quantization or an independently verified revision.
+- Blind scoring does not add configuration names to the messages. An
+  agent-written identity in its own answer can still reach the reader.
+- The 80-word window counts whitespace-separated pieces. Markdown markers
+  separated by spaces consume pieces; punctuation attached to text does not
+  make another piece. Text in unspaced scripts can place much more text in one
+  piece than spaced prose. This is the existing rule, not a tokenizer.
+- The buried sanity prefix rules out one red herring. A score file records
+  enough to recover the true option's position and is a host-side file.

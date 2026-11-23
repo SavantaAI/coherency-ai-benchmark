@@ -1,10 +1,10 @@
 """Explanation: the reader's accuracy on the first 80 words of each of the two
-answers, over a fixed, seeded set of option orders, and the two sanity checks
-of the spec, both computed for every episode.
+answers, over a fixed, seeded set of option orders, and two smoke-check inputs computed for every episode. The specification
+checks are assessed separately on a large fresh calibration sample.
 
 Reads `episode.json` (`answers`, the answer key's `options`, `true_cause` and
-`buried_control`) and the scorer view (the opening question and the answers'
-text). An answer never given is wrong and stays in the denominator (D-034).
+`buried_control` and `question`) and the scorer view (the answers' text;
+the opening prompt is a fallback for older keys). An answer never given is wrong and stays in the denominator (D-034).
 """
 
 from __future__ import annotations
@@ -53,10 +53,19 @@ def answer_texts(ep: Episode) -> list[dict[str, Any]]:
     return out
 
 
+def reader_question(ep):
+    if "question" in ep.payload:
+        question = ep.payload["question"]
+        if not isinstance(question, str) or not question.strip():
+            raise R.ReaderError("answer-key question must be nonempty text")
+        return question, "answer_key"
+    return ep.opening_question(), "opening_prompt"
+
+
 def score(ep: Episode, rd: R.Reader | None, cfg: R.Config | None) -> dict[str, Any]:
     k = ep.payload
     options, true_cause = k["options"], k["true_cause"]
-    question = ep.opening_question()
+    question, question_source = reader_question(ep)
     answers = answer_texts(ep)
     if rd is None or cfg is None:
         return {"accuracy": None, "ratio": None, "why": "no reader was given", "answers": [
@@ -84,7 +93,7 @@ def score(ep: Episode, rd: R.Reader | None, cfg: R.Config | None) -> dict[str, A
                    "n": len(buried_items), "excerpt": buried_excerpt, "items": buried_items},
     }
     acc = sum(Fraction(row["correct"], row["n"]) for row in rows) / len(rows)
-    return {"accuracy": float(acc), "ratio": exact.pack(acc), "answers": rows, "sanity": sanity, "reader": rd.describe()}
+    return {"accuracy": float(acc), "ratio": exact.pack(acc), "answers": rows, "sanity": sanity, "reader": rd.describe(), "question_source": question_source}
 
 
 def answer_accuracy(ep: Episode, which: int, rd: R.Reader, cfg: R.Config) -> float | None:
@@ -93,4 +102,4 @@ def answer_accuracy(ep: Episode, which: int, rd: R.Reader, cfg: R.Config) -> flo
     if a["text"] is None:
         return None
     excerpt, _ = R.window(a["text"])
-    return _accuracy(read_items(rd, cfg, ep.opening_question(), excerpt, ep.payload["options"], ep.payload["true_cause"]))
+    return _accuracy(read_items(rd, cfg, reader_question(ep)[0], excerpt, ep.payload["options"], ep.payload["true_cause"]))

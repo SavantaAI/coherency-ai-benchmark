@@ -45,6 +45,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
+from cohbench.errors import PolicyError, EndpointError, DeadlineExceeded
+
 LABELS = ("answerable", "already_given", "unanswerable", "no_request")
 ASKING = ("answerable", "already_given", "unanswerable")
 AWARENESS = ("suspected", "not_suspected", "unclear")
@@ -99,17 +101,6 @@ class UserPolicy(Protocol):
 
 PolicyFactory = Callable[[], UserPolicy]
 
-
-class PolicyError(RuntimeError):
-    """The policy raised, or returned something the runner cannot use."""
-
-
-class EndpointError(PolicyError):
-    """The classifier endpoint failed before a verdict was available."""
-
-
-class DeadlineExceeded(EndpointError):
-    """The absolute judgement deadline arrived before completion."""
 
 
 def checked(j: Any) -> Judgement:

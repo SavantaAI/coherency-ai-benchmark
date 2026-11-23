@@ -14,7 +14,7 @@ from cohbench.scoring.exact import pack
 
 # A stand-in reader record. Its kind is "hosted" so that reports on synthetic
 # scores print bands; no reader read anything here.
-READER = {"kind": "hosted", "model": "stand-in", "provider": "stand-in", "config_sha256": "r" * 64, "prompt_version": "reader-1"}
+READER = {"kind": "hosted", "model": "stand-in", "provider": "stand-in", "config_sha256": "a" * 64, "prompt_version": "reader-1"}
 SCRIPTED_READER = {"kind": "scripted", "rule": "overlap", "config_sha256": "s" * 64, "prompt_version": "reader-1"}
 
 
@@ -28,6 +28,7 @@ def base(eid: str, family: str, seed: int, *, horizon: str = "h20", mode: str = 
     # The task digest: by default a function of the instance, so every configuration faced the same suite.
     digest = task or hashlib.sha256(json.dumps(instance, sort_keys=True).encode()).hexdigest()
     return {
+        "classifier_config_sha256": "c" * 64,
         "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
         "task": {"sha256": digest, "instance": instance, "source": "derived"}, "rerun_required": rerun_required,
         "format": "cohbench-score", "version": 1, "episode": eid, "bundle_sha256": "0" * 64,
@@ -65,6 +66,7 @@ def expl(eid: str, seed: int, acc: float | None, no_answer: tuple[int, int] = (1
                                                              "buried": {"key": bu, "correct": buried[0], "n": buried[1]}}}
     d["reader"] = reader or READER
     d["reader_record"] = True
+    d["reader_question_source"] = "answer_key"
     return d
 
 
@@ -103,3 +105,76 @@ def write(root: Path, scores: list[dict[str, Any]], configs: dict[str, dict[str,
     index = {d["episode"]: configs[d["episode"].split("-")[0]] for d in scores}
     (root / "index.json").write_text(json.dumps({"format": "cohbench-results-index", "version": 1, "episodes": index}, sort_keys=True), encoding="utf-8")
     return root
+
+
+def manifest(root):
+    """Synthetic attestations for report arithmetic tests, never release evidence."""
+    from cohbench.scoring.calibration import FORMAT, template_digest, THRESHOLDS
+
+    root = Path(root)
+    index = json.loads((root / "index.json").read_text())["episodes"]
+    models = {v.get("model", "missing-model") for v in index.values()}
+    groups = {
+        name: {
+            "instances": n,
+            "n": n * 6,
+            "correct": correct,
+            "positions": [n] * 6,
+            "per_order": [correct // 6 + (i < correct % 6) for i in range(6)],
+            "seeds": list(range(5000, 5000 + n)),
+        }
+        for name, n, correct in [
+            ("no_answer", 200, 200),
+            ("buried", 200, 0),
+            ("ideal", 60, 360),
+            ("worst", 60, 0),
+        ]
+    }
+    large = {
+        "format": FORMAT,
+        "version": 1,
+        "reader": READER["config_sha256"],
+        "template_sha256": template_digest(),
+        "question_source": "answer_key",
+        "orders": 6,
+        "groups": groups,
+        "thresholds": THRESHOLDS,
+    }
+
+    def human(n):
+        return {
+            "n": n,
+            "correct": n,
+            "kappa": 1,
+            "annotators": ["synthetic-annotator-1", "synthetic-annotator-2"],
+            "independent": True,
+            "date": "2026-11-23",
+            "disagreement_by_model": {m: 0 for m in models},
+        }
+
+    doc = {
+        "format": "cohbench-calibration-manifest",
+        "version": 1,
+        "reader": {
+            "config_sha256": READER["config_sha256"],
+            "large_sample": large,
+            "human": human(100),
+            "timed_humans": {
+                "n": 1,
+                "who": ["synthetic-reader"],
+                "context": "synthetic task context",
+                "date": "2026-11-23",
+                "disagreements_resolved": True,
+            },
+        },
+        "classifier": {"config_sha256": "c" * 64, "human": human(150)},
+    }
+    path = root / "synthetic-calibration.json"
+    path.write_text(json.dumps(doc, sort_keys=True))
+    return path
+
+
+def calibrated_report(root, **kwargs):
+    from cohbench.scoring.report import build
+
+    return build(root, calibration_manifest=manifest(root), **kwargs)

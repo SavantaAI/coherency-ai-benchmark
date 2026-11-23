@@ -247,7 +247,7 @@ Fixed before the first ranked run. If any of these hold, the benchmark's claim f
 
 - No real model has run a task. Scores so far come from scripted ideal and worst agents, which land at 100 and at the floor of 5.
 - The simulated user's classifier runs on a hosted open-weight model. On a held-out set of 52 synthetic agent messages, labelled independently by two model annotators who agreed on every item, it gives the exact verdict on 51 (Cohen's kappa 0.974 on the labels). It has not been checked against human labels, which Section 8 requires before a release, and the hosted endpoint pins the model's name, not its weights.
-- Explanation has been scored only with an offline reader, not the reader model.
+- The Explanation reader runs on a hosted open-weight model. On 200 fresh instances it picks the true cause 14.8% of the time when it is given no answer (chance is 16.7%) and 17.3% when the cause is buried, and it reads ideal answers correctly every time. The records are in `calibration/reader/`. Human reader calibration, which Section 8 requires before a release, is not measured, and a report prints no release bands without it.
 - One harness (Pi) has been exercised end to end.
 
 **Requirements.** Python 3.12 or later and [uv](https://docs.astral.sh/uv/). The code uses the standard library only. Docker is needed for the integration tests and for real episodes.

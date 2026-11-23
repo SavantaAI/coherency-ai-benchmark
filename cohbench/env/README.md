@@ -303,7 +303,7 @@ then these checks, failing closed, on every segment and every probe copy:
 - the container's, gateway's, networks' and volumes' names (a probe
   copy's own volume included);
 - every name under the harness's own directories at any depth (for Pi,
-  `/home/node/.pi`), with each symlink's target string, listed
+  the container user's `.pi` directory), with each symlink's target string, listed
   NUL-delimited; the CA certificate's name; and the text of the files this
   project writes (`/etc/t3-settings.json`, the entrypoint, the harness's
   default-model file, the diagnostic extension when loaded). A JSON file is

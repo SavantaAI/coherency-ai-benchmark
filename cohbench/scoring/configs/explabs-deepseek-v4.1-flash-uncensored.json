@@ -1,0 +1,29 @@
+{
+  "format": "cohbench-reader-config",
+  "version": 1,
+  "kind": "hosted",
+  "endpoint": {
+    "base_url": "https://api.experientiallabs.ai/v1",
+    "model": "deepseek-v4.1-flash-uncensored",
+    "protocol": "openai",
+    "provider": null,
+    "extra_body": {
+      "reasoning_effort": "none"
+    }
+  },
+  "expect": {
+    "model": "deepseek-v4.1-flash-uncensored",
+    "provider": "experiential_cloud"
+  },
+  "sampling": {
+    "temperature": 0,
+    "seed": 20261123,
+    "max_tokens": 16
+  },
+  "orders": {
+    "count": 6,
+    "seed": 0
+  },
+  "timeout_s": 25,
+  "prompt_sha256": "2869c71e8bbbc42452e87c414f6f433b7fae38f5ebb3536677fcac063d1c9d2b"
+}

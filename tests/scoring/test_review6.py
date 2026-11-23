@@ -28,7 +28,7 @@ def release_inputs(path):
 ])
 def test_diagnostic_options_cannot_publish_release_bands(tmp_path, option, value):
     root, plan, _ = release_inputs(tmp_path)
-    rep = report.build(root, plan=plan, require_plan=True, **{option: value})
+    rep = S.calibrated_report(root, plan=plan, require_plan=True, **{option: value})
     assert rep["not_release"]
     assert option.replace("_", "-") in rep["parameters"]["nonrelease_note"]
     for table in rep["sections"][0]["tables"]:
@@ -40,8 +40,11 @@ def test_diagnostic_options_cannot_publish_release_bands(tmp_path, option, value
 
 @pytest.mark.parametrize("flags", [{}, {"scripted_reader": True}, {"allow_mixed_runtimes": True}])
 def test_default_release_and_unused_allowance_flags_publish_identical_bands(tmp_path, flags):
-    root, plan, _ = release_inputs(tmp_path)
-    rep = report.build(root, plan=plan, require_plan=True, **flags)
+    root, plan, scores = release_inputs(tmp_path)
+    # Every reader-bearing score read the question the calibration used.
+    readers = [s for s in scores if s["reader"]]
+    assert readers and all(s["reader_question_source"] == "answer_key" for s in readers)
+    rep = S.calibrated_report(root, plan=plan, require_plan=True, **flags)
     assert not rep["not_release"]
     assert all(t["rows"][0]["headline"]["band"] == {"band": 1, "ranks": "1", "members": 1} for t in rep["sections"][0]["tables"])
 
@@ -62,7 +65,7 @@ def test_release_input_conditions_withhold_all_bands(tmp_path, condition):
     if condition == "reader_record":
         next(s for s in scores if s["reader"])["reader_record"] = False
     S.write(root, scores, {"a": full_config(), "ac": full_config()})
-    rep = report.build(root, **kw)
+    rep = S.calibrated_report(root, **kw)
     assert rep["not_release"]
     assert all(t["rows"][0]["headline"]["band"] is None for t in rep["sections"][0]["tables"])
 
@@ -99,7 +102,7 @@ def harness_inputs(path, third=False, settings=False, pending=False):
         index = json.loads((root / "index.json").read_text())
         index["episodes"]["b-pending"] = configs["b"]
         (root / "index.json").write_text(json.dumps(index))
-    return report.build(root, plan=plan_file(path, scores), require_plan=pending, resamples=0)
+    return S.calibrated_report(root, plan=plan_file(path, scores), require_plan=pending, resamples=0)
 
 
 def test_versions_of_one_harness_are_values_without_a_spread(tmp_path):
@@ -162,7 +165,7 @@ def test_release_row_conditions_withhold_bands(tmp_path, condition):
         if condition == "poll":
             score["poll_s"] = None
     S.write(root, scores, {"a": full_config(), "ac": full_config()})
-    rep = report.build(root, plan=plan, require_plan=True)
+    rep = S.calibrated_report(root, plan=plan, require_plan=True)
     assert not rep["not_release"]
     for table in rep["sections"][0]["tables"]:
         assert not table["rows"][0]["headline"]["ranked"] and table["rows"][0]["headline"]["band"] is None

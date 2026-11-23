@@ -287,7 +287,8 @@ that produced it.
 
 What these cover, and what they do not. The config digest covers every
 setting in the file. The prompt hash covers every string this unit puts in
-front of the model. The code revision covers the unit's Python files: how
+front of the model. The code revision covers the unit's Python files and the shared `cohbench/endpoint.py`,
+`cohbench/errors.py` and `cohbench/ledger.py`: how
 messages are ordered and fitted, the question order, the label rule, the
 transport. None of them covers the runner (the card and transcript it
 passes, how it composes replies from a judgement: `cohbench.runner`, which

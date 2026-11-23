@@ -435,7 +435,7 @@ def generate(o: Options) -> Instance:
                "reopen": f"Could you tell me why {p.slow} is slow?",
                "probe": {"question": probe_q, "expected": p.cause.short, "about": "message"}}]
     card = {"facts": [dict(NO_FILES), {"id": "role", "text": d.role}], "decisions": []}
-    answer_key = {"options": p.options, "true_cause": p.true_index, "follow_up": FOLLOW_UP, "buried_control": buried(p),
+    answer_key = {"question": why, "options": p.options, "true_cause": p.true_index, "follow_up": FOLLOW_UP, "buried_control": buried(p),
                   "slow_machine": p.slow, "cause": p.cause.key, "red_herrings": [c.key for c in p.herrings],
                   "distractors": [c.key for c in p.distractors]}
     if reset:

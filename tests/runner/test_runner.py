@@ -3062,3 +3062,14 @@ def test_directory_move_triggers_replay_at_their_own_instants(tmp_path, poll_s):
     assert r.outcome.ok
     assert _fired(r) == {'changed': '2026-11-22T12:00:02.000000Z', 'exists': '2026-11-22T12:00:02.000000Z', 'contents': '2026-11-22T12:00:02.060000Z'}
     assert r.fake.handoff_problems == []
+
+
+def test_episode_record_carries_classifier_config_provenance(run_factory):
+    from types import SimpleNamespace
+    from .conftest import policy
+    def make():
+        p = policy()()
+        p.cfg = SimpleNamespace(digest='c' * 64)
+        return p
+    r = run_factory([Act(final='Done.'), Act()], edit=no_events, pol=make).go()
+    assert r.record['classifier_config_sha256'] == 'c' * 64

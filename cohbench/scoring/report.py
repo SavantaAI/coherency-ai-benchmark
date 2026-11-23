@@ -42,7 +42,7 @@ FORMAT = "cohbench-report"
 VERSION = 1
 FAMILIES = ("routing", "explanation", "steering")
 NM = "not measured"
-WITHHELD = "withheld: reader failed the sanity check"
+WITHHELD = "withheld: reader failed the smoke check"
 SCRIPTED = "scripted reader, not a result"
 SANITY_Z = 2.0
 CHANCE = 1 / 6
@@ -375,7 +375,7 @@ def reader_sanity(scores: list[dict[str, Any]], z: float) -> dict[str, dict[str,
             items = a[part]
             correct, n = sum(c for c, _ in items.values()), sum(n for _, n in items.values())
             res[part] = {**stats.near_chance(correct, n, CHANCE, z, two_sided=two, clusters=len(items)), "items": len(items), "correct": correct}
-        out[k] = {"reader": a["reader"], **res, "passed": bool(not a["missing"] and res["no_answer"]["passed"] and res["buried"]["passed"]),
+        out[k] = {"kind": "small-sample smoke check", "reader": a["reader"], **res, "passed": bool(not a["missing"] and res["no_answer"]["passed"] and res["buried"]["passed"]),
                   "episodes": sorted(a["episodes"]), "missing": a["missing"]}
     return out
 
@@ -513,7 +513,7 @@ def poll_display(k: str) -> str:
 
 
 def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float = 0.95, bar: float = 0.9, z: float = SANITY_Z,
-          scripted_reader: bool = False, plan: str | Path | None = None, require_plan: bool = False, judged_bar: float = 0.9, allow_mixed_runtimes: bool = False) -> dict[str, Any]:
+          scripted_reader: bool = False, plan: str | Path | None = None, require_plan: bool = False, judged_bar: float = 0.9, allow_mixed_runtimes: bool = False, calibration_manifest: str | Path | None = None) -> dict[str, Any]:
     root = Path(root)
     if require_plan and plan is None:
         raise ReportError("a release report requires a plan")
@@ -538,14 +538,17 @@ def build(root: str | Path, resamples: int = 2000, seed: int = 0, level: float =
     changed = [name for name, value, default in (("bar", bar, 0.9), ("judged-bar", judged_bar, 0.9),
                ("level", level, 0.95), ("z", z, SANITY_Z), ("resamples", resamples, 2000), ("seed", seed, 0)) if value != default]
     options_note = "non-default " + ", ".join(changed) + ": not a release" if changed else None
-    nonrelease_note = "; ".join(n for n in (runtime_note, record_note, reader_note, plan_note, options_note) if n) or None
+    from .release import check as check_calibration
+    calibration = check_calibration(calibration_manifest, scores, index)
+    calibration_note = None if calibration["passed"] else "; ".join(calibration["reasons"]) + ": not a release"
+    nonrelease_note = "; ".join(n for n in (runtime_note, record_note, reader_note, plan_note, options_note, calibration_note) if n) or None
     if not 0 < judged_bar <= 1:
         raise ReportError("judged_bar must be greater than zero and at most one")
     plan_instances = read_plan(plan, scores) if plan is not None else None
     sanity = reader_sanity(scores, z)
     unscored = sorted(set(index) - {d["episode"] for d in scores})
     scripted = bool(reader and reader.get("kind") == "scripted")
-    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z, "judged_bar": judged_bar, "require_plan": require_plan, "runtime_note": runtime_note, "nonrelease_note": nonrelease_note, "release_python": RELEASE_PYTHON}
+    params = {"resamples": resamples, "seed": seed, "level": level, "bar": bar, "sanity_z": z, "judged_bar": judged_bar, "require_plan": require_plan, "runtime_note": runtime_note, "nonrelease_note": nonrelease_note, "release_python": RELEASE_PYTHON, "calibration": calibration}
     by_poll: dict[str, list[dict[str, Any]]] = {}
     for d in scores:
         by_poll.setdefault(poll_key(d.get("poll_s")), []).append(d)
@@ -867,7 +870,7 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
          f"Bootstrap: {p['resamples']} resamples of seeds within each family, sibling pairs kept together, seed {p['seed']}, "
          f"{100 * p['level']:.0f}% percentile intervals; every comparison is paired on the seeds both cells ran. "
          f"Eligibility bar: {100 * p['bar']:.0f}% of a family's controls, pooled per model in a harness. "
-         f"Reader sanity bound: {p['sanity_z']:g} standard errors. "
+         f"Reader smoke-check bound: {p['sanity_z']:g} standard errors. "
          f"Score files read: {rep['inputs']['score_files_read']}; usable scores: {rep['inputs']['usable_scores']}; rerun markers: {rep['inputs']['rerun_markers']}; "
          f"in the index but not scored: {len(rep['inputs']['indexed_not_scored'])}.", ""]
     L += ["Scoring Python versions: " + (", ".join(rep["python_versions"]) or NM) + f". Release runtime: Python {p['release_python']}.", ""]
@@ -882,9 +885,9 @@ def render(rep: dict[str, Any], markdown: bool) -> str:
             L += ["Polling interval not recorded: raw values only; no bands or comparisons.", ""]
         for k, s in sec["reader_sanity"].items():
             na, bu = s["no_answer"], s["buried"]
-            L.append(f"Reader {s['reader'].get('kind', 'not recorded')} {k[:12]}: no answer {_pct(na['accuracy'])} over {na['items']} distinct items "
-                     f"(chance 16.7%), buried cause {_pct(bu['accuracy'])} over {bu['items']} distinct items: "
-                     + ("both sanity checks pass." if s["passed"] else "a sanity check FAILS, so E and every headline and comparison that needs it are withheld."))
+            L.append(f"Reader {s['reader'].get('kind', 'not recorded')} {k[:12]}: no answer {_pct(na['accuracy'])} ({na['correct']}/{na['n']}) over {na['items']} distinct items "
+                     f"(chance 16.7%), buried cause {_pct(bu['accuracy'])} ({bu['correct']}/{bu['n']}) over {bu['items']} distinct items: "
+                     + ("both smoke checks pass. This small sample does not establish chance behavior; release needs the separate calibration manifest." if s["passed"] else "a smoke check FAILS, so E and every headline and comparison that needs it are withheld."))
         if sec["reader_sanity"]:
             L.append("")
         if sec["rerun_required"]:

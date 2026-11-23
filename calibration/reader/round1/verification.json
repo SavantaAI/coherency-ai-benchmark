@@ -1,0 +1,55 @@
+{
+  "base_commit": "a72e98c",
+  "date": "2026-11-23",
+  "human_calibration": "not measured",
+  "implementation_commit": "c5a0557",
+  "offline_cli_replays": {
+    "cache_and_ledger_bytes_unchanged": true,
+    "credentials_present": false,
+    "hash_seeds": [1, 777],
+    "processes": 8,
+    "python": "3.12",
+    "score_bytes_identical": true
+  },
+  "paid_request_audit": {
+    "generated_new_requests_overlap_with_original_or_large": 0,
+    "large_sample_overlap_with_original": 0
+  },
+  "pushed": false,
+  "tests": {
+    "3.12": {
+      "pipeline": {
+        "passed": 13,
+        "seconds": 357.44
+      },
+      "scoring": {
+        "passed": 606,
+        "seconds": 71.19
+      },
+      "units": {
+        "deselected": 49,
+        "passed": 3786,
+        "seconds": 757.72,
+        "skipped": 313
+      }
+    },
+    "3.15": {
+      "pipeline": {
+        "passed": 13,
+        "seconds": 335.54
+      },
+      "scoring": {
+        "passed": 606,
+        "seconds": 71.12
+      },
+      "units": {
+        "deselected": 49,
+        "passed": 3786,
+        "seconds": 737.36,
+        "skipped": 313
+      }
+    }
+  },
+  "timed_human_readers": "not measured",
+  "valid_release_manifest": false
+}

@@ -152,7 +152,7 @@ def near_chance(correct: int, n: int, chance: float, z: float, two_sided: bool, 
         return {"accuracy": None, "n": n, "clusters": m, "passed": None}
     acc = correct / n
     se = math.sqrt(chance * (1 - chance) / m)
-    hi = chance + z * se
-    lo = chance - z * se
+    hi = min(1.0, chance + z * se)
+    lo = max(0.0, chance - z * se)
     ok = (lo <= acc <= hi) if two_sided else (acc <= hi)
-    return {"accuracy": acc, "n": n, "clusters": m, "chance": chance, "bound": [lo, hi] if two_sided else [None, hi], "passed": ok}
+    return {"accuracy": acc, "n": n, "clusters": m, "chance": chance, "bound": [lo, hi] if two_sided else [0.0, hi], "passed": ok}

@@ -35,7 +35,7 @@ def test_equal_published_headlines_share_a_band(tmp_path):
             configs[prefix] = full_config(model=model)
             scores += S.config_set(prefix, r_pass=0, pairs=6, e=[e] * 6, s=[s] * 6, controls=(1, 1), mode=mode)
     root, plan = write_release(tmp_path, scores, configs)
-    rep = json.loads(dumps(report.build(root, plan=plan, require_plan=True)))
+    rep = json.loads(dumps(S.calibrated_report(root, plan=plan, require_plan=True)))
     assert not rep["not_release"]
     for table in rep["sections"][0]["tables"]:
         for row in table["rows"]:
@@ -66,7 +66,7 @@ def test_capability_count_tie_has_shared_correlation_ranks(tmp_path):
             for family, count in zip(report.FAMILIES, passed):
                 scores += [S.control(f"{prefix}-{family}{i}", family, 100 + i, i < count, mode=mode) for i in range(24)]
     root, plan = write_release(tmp_path, scores, configs)
-    rep = report.build(root, plan=plan, require_plan=True)
+    rep = S.calibrated_report(root, plan=plan, require_plan=True)
     for table in rep["sections"][0]["tables"]:
         assert table["rows"][1]["capability"] == table["rows"][2]["capability"] == float(Fraction(70, 72))
         correlation, = table["rank_correlation"].values()
@@ -115,7 +115,7 @@ def numeric_report(value):
 @pytest.mark.parametrize("change", ["model", "harness", "index_order", "score_files"])
 def test_names_and_input_order_do_not_change_any_report_number(tmp_path, change):
     root, plan = varying_inputs(tmp_path)
-    before = report.build(root, plan=plan, require_plan=True)
+    before = S.calibrated_report(root, plan=plan, require_plan=True)
     index_path = root / "index.json"
     index = json.loads(index_path.read_text())
     if change in ("model", "harness"):
@@ -129,7 +129,7 @@ def test_names_and_input_order_do_not_change_any_report_number(tmp_path, change)
         for i, file in enumerate(sorted((root / "scores").glob("*.score.json"))):
             file.rename(file.with_name(f"renamed-{9999 - i}.score.json"))
     index_path.write_text(json.dumps(index))
-    after = report.build(root, plan=plan, require_plan=True)
+    after = S.calibrated_report(root, plan=plan, require_plan=True)
     assert numeric_report(tidy(before)) == numeric_report(tidy(after))
     def cells(rep):
         return {tuple(row["episodes"]): numeric_report(tidy(row)) for section in rep["sections"]
@@ -139,7 +139,7 @@ def test_names_and_input_order_do_not_change_any_report_number(tmp_path, change)
 
 def test_matching_populations_share_cell_and_paired_draws(tmp_path):
     root, plan = varying_inputs(tmp_path)
-    rep = report.build(root, plan=plan, require_plan=True)
+    rep = S.calibrated_report(root, plan=plan, require_plan=True)
     section = rep["sections"][0]
     # All Routing inputs agree. Sharing draws gives identical cell intervals
     # and exactly zero spread, drop and coached gap in every resample.
@@ -171,7 +171,7 @@ def test_release_requires_explicit_reader_record(tmp_path, evidence):
             if evidence != "absent":
                 score["reader_record"] = {"null": None, "false": False, "one": 1, "text": "true"}[evidence]
     S.write(root, scores, {"a": full_config(), "ac": full_config()})
-    rep = report.build(root, plan=plan, require_plan=True)
+    rep = S.calibrated_report(root, plan=plan, require_plan=True)
     assert rep["not_release"]
     assert "without a persistent record" in rep["parameters"]["nonrelease_note"]
     assert all(row["headline"]["band"] is None for t in rep["sections"][0]["tables"] for row in t["rows"])
@@ -196,7 +196,7 @@ def test_absent_release_evidence_cannot_publish_a_band(tmp_path, field):
                 target = target[part]
             target.pop(parts[-1])
     S.write(root, scores, {"a": full_config(), "ac": full_config()})
-    rep = report.build(root, plan=plan, require_plan=True)
+    rep = S.calibrated_report(root, plan=plan, require_plan=True)
     assert all(row["headline"]["band"] is None for t in rep["sections"][0]["tables"] for row in t["rows"])
     for markdown in (False, True):
         assert "Coherency results" in report.render(rep, markdown)
@@ -209,16 +209,17 @@ def test_absent_reader_digest_is_refused(tmp_path):
             score["reader"] = {k: v for k, v in score["reader"].items() if k != "config_sha256"}
     S.write(root, scores, {"a": full_config(), "ac": full_config()})
     with pytest.raises(report.ReportError, match="reader config_sha256 not recorded"):
-        report.build(root, plan=plan, require_plan=True)
+        S.calibrated_report(root, plan=plan, require_plan=True)
 
 
 def test_report_numbers_match_across_runtimes_and_hash_seeds(tmp_path):
     executables = runtime_interpreters()
     root, plan = varying_inputs(tmp_path)
     code = """import sys
+from tests.scoring import synth as S
 from cohbench.scoring import report
 from cohbench.scoring.score import dumps
-print(dumps(report.build(sys.argv[1], plan=sys.argv[2], require_plan=True)), end='')
+print(dumps(S.calibrated_report(sys.argv[1], plan=sys.argv[2], require_plan=True)), end='')
 """
     outputs = []
     for executable in executables:

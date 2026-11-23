@@ -71,7 +71,7 @@ ANSWER_KEY_RESERVED = {
 # two configurations ran the same tasks; task-owned, the same for every
 # configuration that ran the instance. Null only in a record from before it.
 FIELDS = ("format", "version", "episode", "grouping", "budget", "planted", "reach", "answer_key", "control", "probes", "answers", "awareness", "end", "poll_s",
-          "task_sha256", "resets", "collected", "attempt_logs")
+          "task_sha256", "resets", "collected", "attempt_logs", "classifier_config_sha256")
 # `event`: the planted event the probe was scheduled with. `deferred`: the
 # runner's word that the copy was taken at a later hand-back than the first
 # one at or after that event (D-028), recorded as given (null when unknown).
@@ -151,6 +151,9 @@ def _key_errors(family: str, k: dict[str, Any], doc_planted: list[dict[str, Any]
                 e.append("answer_key.payload.true_cause: an index into the six options")
             if not (isinstance(k["follow_up"], str) and k["follow_up"].strip()):
                 e.append("answer_key.payload.follow_up: the fixed follow-up text")
+            # Absent in legacy keys, which fall back to the opening prompt.
+            if "question" in k and not (isinstance(k["question"], str) and k["question"].strip()):
+                e.append("answer_key.payload.question: the main question as non-empty text, or absent")
             aa = k.get("answers_after")
             if not (aa is None or (isinstance(aa, str) and aa)):
                 e.append("answer_key.payload.answers_after: the name of a planted event, or absent")
@@ -312,8 +315,10 @@ def _reset_errors(doc, view):
 def validate(doc: Any, view: Trajectory | None = None, changes: Any = None, observations: Any = None) -> list[str]:
     e: list[str] = []
     late = {"poll_s": "the runner's polling interval is required (D-040)", "task_sha256": "the task instance's digest is required (D-046)"}
-    if not isinstance(doc, dict) or set(doc) - set(FIELDS) or set(FIELDS) - set(doc) - set(late) - {"resets", "collected", "attempt_logs"}:
+    if not isinstance(doc, dict) or set(doc) - set(FIELDS) or set(FIELDS) - set(doc) - set(late) - {"resets", "collected", "attempt_logs", "classifier_config_sha256"}:
         return [f"episode.json: fields must be exactly {list(FIELDS)}"]
+    if "classifier_config_sha256" in doc and not (isinstance(doc["classifier_config_sha256"], str) and re.fullmatch(r"[0-9a-f]{64}", doc["classifier_config_sha256"])):
+        e.append("classifier_config_sha256: a SHA-256 digest")
     from .collection import validate as validate_collected, NAME as COLLECT_NAME
     if "collected" in doc:
         e.extend(validate_collected(doc["collected"]))
