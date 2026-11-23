@@ -1,0 +1,45 @@
+{
+  "format": "cohbench-classifier-config",
+  "version": 2,
+  "description": "Experiential Labs direct endpoint. Hosted identity and sampling are self-reported; see the development run report.",
+  "endpoint": {
+    "base_url": "https://api.experientiallabs.ai/v1",
+    "model": "glm-5.3-flash-uncensored",
+    "protocol": "openai",
+    "provider": null,
+    "extra_body": {
+      "reasoning_effort": "low"
+    },
+    "expect": {
+      "model": "glm-5.3-flash-uncensored",
+      "provider": "experiential_cloud"
+    }
+  },
+  "prompt": {
+    "version": "p9",
+    "template": "chat-messages-json-choice-json-data",
+    "sha256": "ccc5290ecad7dce8ec893ef92037212c839d1b3b3709012b31df0242ea35b442"
+  },
+  "sampling": {
+    "temperature": 0,
+    "seed": 20261122,
+    "max_tokens": 1024
+  },
+  "schema": {
+    "name": "closed_choice",
+    "strict": true,
+    "field": "choice"
+  },
+  "limits": {
+    "verdict_deadline_s": 25.0,
+    "request_timeout_s": 10.0,
+    "retries": 1,
+    "backoff_s": 0.5
+  },
+  "context": {
+    "max_input_tokens": 30000,
+    "chars_per_token": 2.5,
+    "margin": 512,
+    "keep_message_tokens": 512
+  }
+}
