@@ -263,3 +263,24 @@ def test_r4_endpoint_failure_does_not_remove_following_observations(run_factory,
     assert r.end['reason']=='runner_abort'
     assert 'Third.' in [s.output.text for s in r._observed.values()]
     assert r.ctx.outputs==3
+
+
+def test_r4_failed_end_coverage_still_closes_pending_jobs(run_factory, runners, monkeypatch):
+    from cohbench.runner.port import EpisodeFailure
+    original = Runner._coverage
+    def unavailable(r, *args, **kwargs):
+        if r.ep.clock() >= 2:
+            raise EpisodeFailure('coverage unavailable')
+        return original(r, *args, **kwargs)
+    monkeypatch.setattr(Runner, '_coverage', unavailable)
+    policies = []
+    def make():
+        p = ScheduledPolicy(run, {'Working.':20})
+        policies.append(p)
+        return p
+    run = run_factory([Act(duration_s=10,messages=[(1,'Working.')]),Act()],edit=no_events,poll_s=1,pol=make)
+    run.go()
+    assert runners[0].end['reason']=='driver_failure'
+    assert policies[0].jobs[0].ready()
+    assert runners[0]._jobs==[]
+    assert {e['ref']['item'] for e in run.events('unjudged')} == set(runners[0]._observed)

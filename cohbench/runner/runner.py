@@ -586,6 +586,12 @@ class Runner:
         except Exception as exc:  # noqa: BLE001
             notes.append(f"replay at the end failed: {exc!r}")
             self.log.write("error", where="replay at the end", error=repr(exc), traceback=traceback.format_exc())
+        # A failed final coverage mark can bypass result collection. The
+        # episode is unusable, but every observed output still has an audit.
+        pending, self._jobs = self._jobs, []
+        for seen, job, _, _, _ in pending:
+            job.tighten(end_at)
+            self._unjudged(seen.output)
         hb = self._drained_handback
         if hb is not None and hb.at and _dt(hb.at) is not None and _dt(hb.at) <= end_at:  # type: ignore[operator]
             # A hand-back the drain confirmed, before the end: recorded with its closing item and instant.
@@ -1016,6 +1022,8 @@ class Runner:
         stamped after it, and file activity after it is outside the episode."""
         self._cap = end if self._cap is None else min(self._cap, end)
         self.ctx.work.end_bound = self._cap
+        for _, job, _, _, _ in self._jobs:
+            job.tighten(self._cap)
 
     def _bound_from_deadline(self) -> None:
         """G2: the elapsed deadline's wall instant is known from the origin before it

@@ -39,6 +39,10 @@ Additional differences found during this work:
 - Two queued endpoint failures could skip the next output before observation.
   `test_r4_endpoint_failure_does_not_remove_following_observations` failed
   before observation moved ahead of failure handling.
+- A failed end-coverage mark could bypass pending-job settlement. Ending
+  now tightens every remaining job and records each observed output even
+  when final coverage fails. Covered by
+  `test_r4_failed_end_coverage_still_closes_pending_jobs`.
 
 The original targeted regressions failed on the previous implementation.
 The arrival-snapshot regressions were also run against the base runner and
