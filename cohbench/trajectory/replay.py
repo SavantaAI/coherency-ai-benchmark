@@ -155,8 +155,9 @@ def hints_from_sends(log: list[dict[str, Any]], sent: list[dict[str, Any]] | Non
 def rebuild(run_dir: str | Path, task: str | Path | None = None, *, verdicts_at_as_of: bool = False, profile: str | None = None,
             workspace: str = "/work/project") -> tuple[Any, bundle.Bundle]:
     """The normalisation result and the bundle, from the raw record.
-    `verdicts_at_as_of` dates each verdict at its classifier record's `as_of`
-    (the output's item delivery), as the current runner stamps them."""
+    `verdicts_at_as_of` dates each verdict at `output_at`. Older batch rows
+    use `utc`; serial historical rows use `as_of`. The snapshot instant is
+    separate from the output's delivery instant in current records."""
     run_dir = Path(run_dir)
     task = Path(task) if task is not None else task_of(run_dir)
     if task is None:
@@ -166,7 +167,7 @@ def rebuild(run_dir: str | Path, task: str | Path | None = None, *, verdicts_at_
     if verdicts_at_as_of:
         for c in _lines(run_dir / "classifier.jsonl"):
             if "as_of" in c:  # the last line is the awareness record
-                as_of[c["output"]["item"]] = c["as_of"]
+                as_of[c["output"]["item"]] = c.get("output_at", c["utc"] if "batch_outputs" in c else c["as_of"])
     m = _object(ex / "manifest.json", {"segments": list, "runner_events": list, "clock": dict})
     try:
         prof = get_profile(profile or profile_of(m))

@@ -37,7 +37,7 @@ from typing import Any, Mapping, Sequence
 from cohbench.runner.policy import AGENT, USER, AwarenessJudgement, Entry, Judgement, PolicyError, PolicyFactory
 
 from . import prompts as P
-from .api import Client, EndpointError
+from .api import Client, DeadlineExceeded, EndpointError
 from .config import Config
 from .revision import code_revision
 
@@ -186,8 +186,16 @@ class Classifier:
             j = Judgement(label, answer_ids=tuple(ids), quote_of=quote_of, quote=quote, record=rec)
             # The last check before returning: a verdict complete after its deadline is no verdict.
             if self.client.clock() > ch.deadline:
-                raise EndpointError("the verdict's deadline passed before the verdict was complete")
+                raise DeadlineExceeded("the verdict's deadline passed before the verdict was complete")
             return j
+
+    def start_judgement(self, card, transcript, output, *, utcnow, timeout_s=None):
+        from .job import JudgementJob
+        return JudgementJob(self, copy.deepcopy(card), transcript, output, utcnow=utcnow, timeout_s=timeout_s)
+
+    @property
+    def verdict_deadline_s(self):
+        return self.cfg.limits["verdict_deadline_s"]
 
     def judge_batch(self, card, transcript, outputs, *, timeout_s):
         """Independent judgements with one cutoff and stable output positions.
@@ -207,8 +215,8 @@ class Classifier:
             try:
                 result = self.judge(copy.deepcopy(card), transcript, output,
                                     deadline=cutoff, client=self.client.fork())
-            except EndpointError as exc:
-                result = None if "deadline" in str(exc) or "timeout" in str(exc) else exc
+            except DeadlineExceeded:
+                result = None
             except Exception as exc:
                 result = exc
             with gate:
@@ -298,7 +306,7 @@ class Classifier:
                    "questions": ch.asked, **note, "usage": _total_usage(ch.asked), "ms": round((self.client.clock() - t0) * 1000)}
             a = AwarenessJudgement(outcome, rec)
             if self.client.clock() > ch.deadline:  # the last thing before returning
-                raise EndpointError("the deadline passed before the classification was complete")
+                raise DeadlineExceeded("the deadline passed before the classification was complete")
             return a
 
 

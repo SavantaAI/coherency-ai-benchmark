@@ -652,7 +652,7 @@ billing was observed.
 - `already_given` quotes the whole earlier message. A long opening prompt is
   quoted whole.
 - Several outputs in one hand-back can each be `answerable`, since none of
-  their replies has been sent when that shared snapshot is taken.
+  their replies has been sent when their arrival snapshots are taken.
 - Calibration items carry only role and text. Their "already told" decision
   remains a model call. Live episodes use runner delivery provenance for
   selected card items, so the calibration does not measure that code path.
@@ -662,8 +662,9 @@ billing was observed.
 - No proxy is used: the client connects to the endpoint directly.
 - Every question of a verdict is a sequential request (3k + 1 at most for a
   card of k ≥ 1 items, 2 for an empty card), and all of them must fit the
-  deadline. The batch path records a verdict that misses its deadline as
-  unjudged.
+  deadline. The episode path records a judgement still missing at its
+  deadline as unjudged. `DeadlineExceeded` carries that cause; an ordinary
+  request timeout with time left remains an endpoint failure.
 - After agent messages are dropped for length, a name the agent explained in
   a dropped message counts as unexplained (see "Context overflow").
 - An agreement figure computed with `agree` needs the item set its files
@@ -867,3 +868,31 @@ judging in the episode path, credential admission, transport accounting and
 saved-report validation. Prompts, configs and calibration verdicts stayed
 unchanged. See the [round 3 record](../../calibration/classifier/review-round3.md)
 for the regressions and verification commands.
+
+
+Review round 4 on 2026-11-23 separates output observation from judgement.
+Outputs count and remain closing/probe candidates without verdicts. Each
+classifier job uses the conversation at the output's arrival and runs off
+the episode loop. A hand-back shares one cutoff across unfinished jobs and
+its reset drain; each job also keeps its own 25-second limit. Verdicts take
+effect in output order at completion, while replies retain the hand-back
+schedule. `job.py` owns job completion and cancellation. Client flush waits
+for outstanding job accounting.
+
+All policies now receive delivery provenance from actual user messages.
+Host transcript `text` is the user's words, `wire_text` is the submitted
+native value, and `delivered_ids` names only card items actually delivered.
+A refusal accepted for steering is added when the driver observes delivery.
+Snapshot `as_of`, output `output_at`, and asynchronous `completed_at` and
+`effective_at` are separate fields. The trajectory uses `output_at`.
+
+The exact replay comparison fields and exclusions are documented in
+[the runner policy contract](../runner/README.md). Verdict-count baseline
+differences are retained explicitly. No generated development-suite task
+or checked-in runner task fixture has a verdict-dependent planted event or
+card unlock. The round 4 regression fixture has one such event, `after`,
+to check completion-time behavior. Prompts, pinned configs, development
+agreement outputs and held-out evidence are unchanged.
+
+See [the round 4 report](../../calibration/classifier/review-round4.md) for
+regressions, replay coverage, test commands and the hosted episode checks.

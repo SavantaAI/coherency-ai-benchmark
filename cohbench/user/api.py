@@ -52,6 +52,10 @@ class EndpointError(PolicyError):
     """The endpoint failed, timed out, or answered outside what was asked."""
 
 
+class DeadlineExceeded(EndpointError):
+    """The shared verdict deadline expired while judgement was in progress."""
+
+
 class ServedMismatch(EndpointError):
     """The response says another model or provider served it."""
 
@@ -157,7 +161,10 @@ class Client:
         clock: Callable[[], float] = time.monotonic,
         ledger=None,
     ):
+        self._cancelled = threading.Event()
+        self._active_attempts = []
         self._finishes = []
+        self._workers = []
         self._accounting_errors = []
         self._previous_served = None
         self.ledger = ledger
@@ -190,6 +197,12 @@ class Client:
             return v
         return WITHHELD
 
+    def cancel(self):
+        """Stop the per-verdict client before any further request submission."""
+        self._cancelled.set()
+        for attempt in tuple(self._active_attempts):
+            attempt.cancel()
+
     def fork(self):
         """An independent conversation and metadata session for a batch worker."""
         client = Client(
@@ -197,6 +210,7 @@ class Client:
         )
         # Completion accounting remains owned by the parent CLI's flush.
         client._finishes = self._finishes
+        client._workers = self._workers
         client._accounting_errors = self._accounting_errors
         return client
 
@@ -232,6 +246,9 @@ class Client:
 
     def flush(self):
         """Wait for accounting outside the verdict deadline, before CLI exit."""
+        for thread in self._workers:
+            thread.join()
+        self._workers.clear()
         for thread in self._finishes:
             thread.join()
         self._finishes.clear()
@@ -289,9 +306,19 @@ class Client:
                 attempt.submission_done.set()
                 done.set()
 
+        self._active_attempts.append(attempt)
+        if self._cancelled.is_set():
+            attempt.cancel()
         thread = threading.Thread(target=exchange, daemon=True)
         thread.start()
-        completed = done.wait(max(0, cutoff - self.clock()))
+        wall_cutoff = time.monotonic() + max(0, cutoff - self.clock())
+        while not done.is_set() and not self._cancelled.is_set() and self.clock() < cutoff and time.monotonic() < wall_cutoff:
+            done.wait(min(0.05, max(0, cutoff - self.clock()), max(0, wall_cutoff - time.monotonic())))
+        self._active_attempts.remove(attempt)
+        completed = done.is_set()
+        if self._cancelled.is_set():
+            attempt.cancel()
+            raise DeadlineExceeded("the shared judgement deadline expired")
         if not completed or self.clock() >= cutoff:
             attempt.cancel()
             if self.ledger is not None and (
@@ -454,8 +481,8 @@ class Client:
         attempts = 0
         t0 = self.clock()
         while True:
-            if deadline - self.clock() <= 0:
-                raise EndpointError(
+            if self._cancelled.is_set() or deadline - self.clock() <= 0:
+                raise DeadlineExceeded(
                     "the verdict's deadline passed before an answer arrived"
                 )
             attempts += 1
@@ -473,7 +500,7 @@ class Client:
                 served = self._served(doc)
                 if self.clock() > deadline:
                     outcome = "deadline_exceeded"
-                    raise EndpointError(
+                    raise DeadlineExceeded(
                         "the verdict's deadline passed before the answer was accepted"
                     )
                 answer = {
@@ -495,12 +522,12 @@ class Client:
                 outcome = "accepted"
                 return answer
             except _Final as exc:
-                outcome = (
-                    "deadline_exceeded" if "deadline" in exc.category else "rejected"
-                )
-                raise EndpointError(exc.category) from None
+                expired = self.clock() >= deadline
+                outcome = "deadline_exceeded" if expired else "rejected"
+                error = DeadlineExceeded if expired else EndpointError
+                raise error(exc.category) from None
             except _Transient as exc:
-                if "timeout" in exc.category:
+                if self.clock() >= deadline:
                     outcome = "deadline_exceeded"
                 failure = exc.category
             finally:
@@ -508,7 +535,8 @@ class Client:
                     attempt, usage, outcome, round((self.clock() - started) * 1000)
                 )
             if attempts > lim["retries"] or deadline - self.clock() <= lim["backoff_s"]:
-                raise EndpointError(
+                error = DeadlineExceeded if self.clock() >= deadline else EndpointError
+                raise error(
                     f"{failure} after {attempts} attempt{'s' if attempts > 1 else ''}"
                 )
             self.sleep(lim["backoff_s"])

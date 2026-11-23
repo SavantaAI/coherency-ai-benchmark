@@ -862,18 +862,57 @@ one user message carry the union of their delivered items, including items
 whose reply texts happen to be identical. This side channel is not model
 prompt text. Quote indices refer to the supplied transcript snapshot.
 
-A policy can also implement
-`judge_batch(card, transcript, outputs, *, timeout_s)`. For that policy the
-runner collects streamed outputs until a hand-back and supplies one card
-and conversation snapshot as of that hand-back, excluding the outputs being
-judged. The classifier runs independent workers and returns results in
-output order. All share one cutoff: the hand-back's return time less the
-runner's 3-second dispatch allowance, clipped by the episode cutoff and the
-classifier's per-verdict limit. Time spent collecting coverage has already
-used part of that window. A missing result is recorded as `unjudged`.
-Accepted verdicts are applied in output order, with `as_of` naming the
-snapshot instant and `batch_outputs` naming the excluded outputs. The
-scripted policy keeps its existing per-output path and delivery-time card.
+The classifier implements
+`start_judgement(card, transcript, output, *, utcnow, timeout_s=None)`.
+Each output starts an independent job when the runner observes it. Its card
+and transcript are frozen at the output's delivery instant, before that
+output enters the transcript. Coverage polling continues while jobs run.
+The classifier limit counts from each job's start. At a hand-back the runner
+tightens every unfinished job to one deadline: the closing output's return
+time less the 3-second dispatch allowance, also clipped by the episode end.
+A reset drain reuses that deadline. No new request starts after the episode
+end. Results are applied in output order; a completed later result waits for
+the earlier job to finish or expire. `completed_at` records completion and
+`effective_at` records ordered application. Only verdict-dependent triggers
+are evaluated on completion. Other triggers remain on the observed timeline.
+
+The reply schedule is unchanged: replies go at a hand-back, from its closing
+output. A mid-run message has no separate reply wait. The synchronous
+scripted policy retains its per-output path. The classifier's standalone
+`judge_batch` remains available for callers outside the episode runner.
+
+Every observed output enters the transcript and output counts at delivery,
+including an output without a verdict. It can close a hand-back and be a
+probe target. `as_of` names the judgement snapshot; `output_at` names the
+output's delivery and is the trajectory verdict timestamp. A shared-deadline
+expiry is a missing judgement. An endpoint failure before that deadline
+makes the episode unusable.
+
+User transcript rows carry `delivered_ids` for every policy. They also carry
+`wire_text`: usually the same as `text`, but a native option's submitted
+value can differ from the user's label. Classifier quotes use `text`.
+A refusal steer enters the transcript only when the driver reports that the
+harness took it. Acceptance alone adds no message or delivered card item.
+
+The replay property matches verdict rows by output identity. With the same
+inputs and verdicts it compares complete episode, handoff, transcript,
+classifier, manifest and journal records except declared metadata:
+classifier `as_of`, `card_items`, historical `batch_outputs`, `completed_at`,
+`effective_at`, `record.context`, `record.ms`, and `record.questions[].ms`;
+journal `n`, `clock_ms`, and its automatically written `utc`. Semantic times
+such as `output_at`, `sent_utc`, `at`, delivery `utc`, wait bounds and event
+`utc` remain compared. Verdict journal rows are matched separately by output
+identity. Fixture storage roots and staging directory identities are mapped
+to the same input location in the reversed-completion test.
+
+Verdict-count baselines are reported separately, not masked: a delayed
+verdict becomes available at completion. With missing verdicts, only
+verdict-dependent fields are removed, and comparison stops at the first
+absent reply or changed hand-back decision and its consequences. Each
+scenario records that point. The property replays explicit fixture clock
+advances in all variants to keep observed inputs identical. It uses saved
+verdicts, not endpoint calls. See the round 4 report for coverage and the
+inventory of verdict-dependent events.
 
 `Judgement(label, answer_ids, quote_of, quote, record)`. The policy never
 writes a reply. It names the label (`answerable`, `already_given`,

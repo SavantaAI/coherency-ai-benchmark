@@ -888,8 +888,10 @@ def check_handoff(h: ExportHandoff, fake: FakeEpisode) -> list[str]:
     if len(verdicts) != len(set(verdicts)):
         e.append("verdicts: more than one for an output")
     for r in h.runner_events:
-        if r["type"] == "wait" and r["fields"].get("charged_ms") and r["ref"] is not None and json.dumps(r["ref"], sort_keys=True) not in verdicts:
-            e.append(f"wait at {r['utc']}: charged with no verdict on its target")
+        if r["type"] == "wait" and r["fields"].get("charged_ms"):
+            need = r["fields"].get("replies_to", [r["ref"]] if r["ref"] else [])
+            if any(json.dumps(ref, sort_keys=True) not in verdicts for ref in need):
+                e.append(f"wait at {r['utc']}: charged with no verdict on a replied output")
     charged = sum(r["fields"]["charged_ms"] for r in h.runner_events if r["type"] == "wait")
     def _t(x: str) -> datetime:
         return datetime.fromisoformat(x.replace("Z", "+00:00"))

@@ -1,9 +1,12 @@
 """The user policy (contract 2): how the simulated user judges what the agent
 showed it.
 
-A policy has two required calls. A batch policy may also implement
-`judge_batch(card, transcript, outputs, *, timeout_s)`, returning results
-in output order, with None for a result missing at the shared cutoff.
+A policy has two required calls. An asynchronous policy may also implement
+`start_judgement(card, transcript, output, *, utcnow, timeout_s=None)`.
+It returns a job with ready(), wait(), tighten(deadline), value and
+completed_at. The runner freezes each arrival snapshot, observes outputs
+without waiting, and applies completed jobs in output order. A missing
+result at the deadline is None; other failures remain exceptions.
 
 - `judge(card, transcript, output)`: one user-channel output (a final
   message, a text sent through the driver's message tool, a pending question

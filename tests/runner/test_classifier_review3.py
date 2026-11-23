@@ -123,7 +123,7 @@ def test_r3_v1_fixed_override_delivers_no_card_item(run_factory):
         run_factory, ["May I deploy?", "May I deploy again?"], override=True
     )
     assert pol.inputs[1][3].label == "answerable"
-    assert pol.inputs[1][1].delivered_ids[-1] == ()
+    assert [ids for e, ids in zip(pol.inputs[1][1], pol.inputs[1][1].delivered_ids) if e.role == "user"][-1] == ()
 
 
 def test_r3_v1_identical_texts_keep_their_distinct_delivered_items(run_factory):
@@ -137,7 +137,7 @@ def test_r3_v1_identical_texts_keep_their_distinct_delivered_items(run_factory):
     ]
     tr, j = pol.inputs[2][1], pol.inputs[2][3]
     assert tr.delivered_ids[j.quote_of] == ("test",)
-    assert tr.delivered_ids[-1] == ("deploy",)
+    assert [ids for e, ids in zip(tr, tr.delivered_ids) if e.role == "user"][-1] == ("deploy",)
     assert j.quote_of != len(tr) - 1
 
 
@@ -169,31 +169,17 @@ class TimedBatch:
             else Judgement("no_request")
         )
 
-    def judge_batch(self, card, transcript, outputs, *, timeout_s):
+    def start_judgement(self, card, transcript, output, *, utcnow, timeout_s=None):
         from cohbench.runner.policy import Judgement
-
+        from .test_classifier_review4 import ScheduledJob
         self.allowances.append(timeout_s)
-        self.snapshots.extend([tuple(transcript)] * len(outputs))
-        # Fake completion order does not determine the returned output order.
-        order = list(reversed(outputs)) if self.reverse else outputs
-        result = {
-            o: (
-                Judgement("answerable", answer_ids=("slot",), record={"text": o})
-                if self.durations.get(o, 0) <= min(25, timeout_s)
-                else None
-            )
-            for o in order
-        }
-        if outputs and outputs[0] not in self.durations:
-            return [Judgement("no_request") for _ in outputs]
-        self.run.clock.advance(
-            min(
-                max((self.durations.get(o, 0) for o in outputs), default=0),
-                25,
-                timeout_s,
-            )
-        )
-        return [result[o] for o in outputs]
+        self.snapshots.append(tuple(transcript))
+        value = (Judgement("answerable", answer_ids=("slot",), record={"text": output})
+                 if output in self.durations else Judgement("no_request"))
+        duration = self.durations.get(output, 0)
+        if self.reverse and output == "first":
+            duration = max(0, duration - 1)
+        return ScheduledJob(self.run, value, duration, timeout_s)
 
     def classify_awareness(self, *args):
         from cohbench.runner.policy import AwarenessJudgement
@@ -237,7 +223,7 @@ def test_r3_b1_two_sixteen_second_outputs_share_one_deadline(run_factory):
     run, pol = timed_run(run_factory, {"first": 16, "second": 16})
     assert run.outcome.status == "usable", run.outcome
     assert not run.run_json["overruns"]["count"]
-    assert pol.snapshots[0] == pol.snapshots[1]
+    assert pol.snapshots[0] == pol.snapshots[1][:-1]
     assert pol.allowances[0] <= 27
     assert run.sends()[1]["sent_utc"] <= "2026-11-22T12:00:31.000Z"
 
@@ -250,31 +236,44 @@ def test_r3_b1_one_slow_output_is_unjudged_without_delaying_other_replies(run_fa
         "answerable",
     ]
     assert not run.run_json["overruns"]["count"]
-    assert pol.snapshots[:3] == [pol.snapshots[0]] * 3
+    assert [len(x) for x in pol.snapshots[:3]] == [1, 2, 3]
 
 
-def test_r3_b1_completion_order_does_not_change_records(run_factory):
-    one, _ = timed_run(run_factory, {"first": 16, "second": 16}, episode="forward")
-    two, _ = timed_run(
-        run_factory, {"first": 16, "second": 16}, reverse=True, episode="reverse"
-    )
+def test_r3_b1_completion_order_does_not_change_records(tmp_path, monkeypatch):
+    from .conftest import Run
+    from .policy_replay import canonical, snapshot
+    from cohbench.runner.runner import Runner
 
-    def records(run):
-        return {
-            "verdicts": run.events("verdict"),
-            "unjudged": run.events("unjudged"),
-            "sends": [(s["text"], s["parts"], s["sent_utc"]) for s in run.sends()],
-        }
-
-    assert records(one) == records(two)
-    assert (
-        not one.run_json["overruns"]["count"] and not two.run_json["overruns"]["count"]
-    )
+    captured = []
+    original = Runner.run
+    def capture(runner):
+        original(runner)
+        captured.append(canonical(snapshot(runner)))
+    monkeypatch.setattr(Runner, "run", capture)
+    def factory(root):
+        def make(acts, **kwargs):
+            run = Run(root, acts, **kwargs)
+            from dataclasses import replace
+            run.cfg = replace(run.cfg, scorer_id="e1234567890abcdef")
+            return run
+        return make
+    one, _ = timed_run(factory(tmp_path / "forward"), {"first": 16, "second": 16})
+    two, _ = timed_run(factory(tmp_path / "reverse"), {"first": 16, "second": 16}, reverse=True)
+    # Fixture roots are distinct locations for otherwise identical inputs.
+    import json
+    import re
+    def text(value, root):
+        raw = json.dumps(value, sort_keys=True).replace(str(root), "ROOT")
+        return re.sub(r"staging-ep-1-[a-f0-9]+", "staging-ep-1-IDENTITY", raw)
+    left = text(captured[0], tmp_path / "forward")
+    right = text(captured[1], tmp_path / "reverse")
+    assert left == right
+    assert not one.run_json["overruns"]["count"] and not two.run_json["overruns"]["count"]
 
 
 def test_r3_b1_streamed_outputs_wait_for_the_same_handback_snapshot(run_factory):
     run, pol = timed_run(run_factory, {"first": 16, "second": 16}, poll_s=0.1)
-    assert pol.snapshots[0] == pol.snapshots[1]
+    assert pol.snapshots[0] == pol.snapshots[1][:-1]
     assert not run.run_json["overruns"]["count"]
 
 
@@ -303,11 +302,9 @@ def test_r3_b1_unjudged_secret_still_gets_the_fixed_refusal(run_factory):
     from cohbench.runner.policy import Judgement
 
     class LateSecret(TimedBatch):
-        def judge_batch(self, card, transcript, outputs, *, timeout_s):
-            if outputs == ["Done."]:
-                return [Judgement("no_request")]
-            self.run.clock.advance(min(25, timeout_s))
-            return [None] * len(outputs)
+        def start_judgement(self, card, transcript, output, *, utcnow, timeout_s=None):
+            from .test_classifier_review4 import ScheduledJob
+            return ScheduledJob(self.run, Judgement("no_request"), 40 if output != "Done." else 0, timeout_s)
 
     def edit(doc):
         no_events(doc)
