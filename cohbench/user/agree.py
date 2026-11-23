@@ -108,8 +108,22 @@ def compare(
         }
     disagreements = []
     extras = []
+    disclosures = []
     for i in common:
         expected, given = first[i], second[i]
+        required = (
+            set(expected.get("answer_ids") or [])
+            if expected["label"] == "answerable"
+            else set()
+        )
+        selected = (
+            set(given.get("answer_ids") or [])
+            if given["label"] == "answerable"
+            else set()
+        )
+        disclosed = selected - required
+        if disclosed:
+            disclosures.append({"item": i, "disclosed": sorted(disclosed)})
         kinds = []
         if expected["label"] != given["label"]:
             kinds.append("wrong_label")
@@ -209,6 +223,13 @@ def compare(
             "ratio": ratio(Fraction(len(extras), len(common))),
             "differences": extras,
         },
+        "disclosures": {
+            "count": len(disclosures),
+            "item_count": sum(len(d["disclosed"]) for d in disclosures),
+            "rate": rounded(Fraction(len(disclosures), len(common))),
+            "ratio": ratio(Fraction(len(disclosures), len(common))),
+            "differences": disclosures,
+        },
         "served_metadata": {
             "first": served_metadata(first),
             "second": served_metadata(second),
@@ -232,9 +253,8 @@ def served_metadata(entries):
     variants = []
     for entry in entries.values():
         record = entry.get("record", {})
-        for question in (
-            record.get("questions", []) if isinstance(record, Mapping) else []
-        ):
+        questions = record.get("questions") if isinstance(record, Mapping) else None
+        for question in questions if isinstance(questions, list) else []:
             served = question.get("served") if isinstance(question, Mapping) else None
             if isinstance(served, Mapping) and dict(served) not in variants:
                 variants.append(dict(served))
@@ -308,7 +328,19 @@ def render(
     by_id = {i.id: i for i in items}
     L = []
     k = rep["kappa"]
+    coverage = rep.get("coverage")
+    if coverage and not coverage["complete"]:
+        L.append(
+            f"INCOMPLETE: {coverage['compared']} of {coverage['expected']} items; missing gold {coverage['missing_first']}; missing verdicts {coverage['missing_second']}"
+        )
     L.append(f"Exact verdicts: {rep['exact_verdicts']['identical']} of {rep['n']}")
+    L.append(f"Label kappa: {k:.6f}" if k is not None else "Label kappa: undefined")
+    disclosure = rep["disclosures"]
+    L.append(
+        f"Disclosing verdicts: {disclosure['count']} of {rep['n']} ({disclosure['rate']:.6f})"
+    )
+    for entry in disclosure["differences"]:
+        L.append(f"  {entry['item']}: {', '.join(entry['disclosed'])}")
     L.append(f"Items compared: {rep['n']}; label agreements: {rep['label_agreements']}")
     extra = rep["extra_card_items"]
     L.append(

@@ -635,7 +635,9 @@ billing was observed.
   needs an endpoint that serves an identified weight revision. The driver
   raises this with the owner. Known served revision fields and
   `system_fingerprint` are sanitized and recorded when present. A change
-  between accepted responses is stored as `served_change`; agreement reports
+  between accepted responses in the same client session is stored as
+  `served_change` only when the reported values are distinguishable after withholding;
+  agreement reports
   also compare recorded metadata variants across a run. Unchanged reported
   strings cannot expose an upstream redeployment that keeps those strings.
 
@@ -701,10 +703,24 @@ python -m cohbench.user.ledger set-cap CALLS.jsonl --old 700 --new 900
 ```
 
 This appends a cap-change record. Historical ledgers without a cap header are
-read-only evidence and cannot be resumed. A truncated final line counts as one
-attempt of unknown outcome, emits a warning and is preserved with a recovery
-marker before later entries. Malformed interior lines raise a line-numbered
-error. A complete `start` without a `finish` already counts as an attempt.
+read-only evidence and cannot be resumed. `set-cap` requires an existing
+ledger. Creation and tail repair write a same-directory temporary file, flush
+it, then replace the ledger and flush the directory. A stable sibling lock
+covers replacement and append. Each ordinary append writes one complete line
+in one write call. A truncated final line counts as one unknown attempt and
+is preserved beside its recovery marker in the replacement file. A lone
+truncated header is treated as a ledger that has not yet been created.
+Malformed interior lines raise a line-numbered error. A complete `start`
+without a `finish` already counts as an attempt.
+
+The caller computes one absolute cutoff for each attempt. Lock acquisition,
+reservation and transport share it. A caller whose lock wait expires reports
+`attempt not started: ledger unavailable before deadline`, with no reservation
+or request. If a reservation was written but transport did not start, a
+`not_sent` line names its ticket. This still consumes the reserved budget.
+Reservation flushes and completion accounting may finish after the caller
+leaves; CLI exit waits for accounting. Process loss can leave an unfinished
+reservation, whose usage remains not measured.
 
 Turn and awareness runs hold an exclusive lock in a sibling `OUT.lock` file
 from before reading output until exit. A second process using the same output
@@ -803,3 +819,33 @@ Hosted weights and seed enforcement cannot be verified from the endpoint;
 model behavior is not guaranteed.
 
 See [the held-out report](../../calibration/classifier/heldout-run-2026-11-23/README.md).
+
+## Review round 2: disclosure and saved reports
+
+The three turn-agreement headlines are exact verdicts, label kappa and
+**disclosing verdicts**. A verdict discloses when its answerable selection
+includes a card item outside the gold answering set. The gold set is empty
+for every other gold label. This includes wrong-label verdicts; the earlier
+right-label-extra count remains a subset, not the disclosure measure.
+
+Recomputed from the saved development verdicts: Kimi has 84/88 exact,
+label kappa 0.938006 and 4/88 disclosing verdicts. DeepSeek has 82/88 exact,
+label kappa 0.922371 and 4/88 disclosing verdicts. On held-out turns Kimi
+has 51/52 exact, label kappa 0.974359 and 0/52 disclosures; DeepSeek has
+52/52 exact, label kappa 1.000000 and 0/52 disclosures. The recommendation
+remains the one committed before held-out access. These measurements do not
+establish absence of disclosure on other items.
+
+The [round 2 report](../../calibration/classifier/review-round2.md) lists every
+disclosing development verdict and the relevant input. No prompt changed.
+A future prompt revision requires a fresh held-out set.
+
+`calibration/classifier/regenerate_agreement.py` derives each result from the
+saved labels and verdicts, without loading an old agreement report. It checks
+coverage before writing anything and names missing ids. `--allow-partial`
+permits incomplete results and marks their coverage in JSON, text and stdout.
+The archived GLM screening needs that flag because it completed only 16/30
+items. Public held-out JSON contains aggregate counts and miss ids only;
+full agreement reports remain private. Original timing and billing evidence
+remains in the hosted logs and call ledgers rather than being carried into
+regenerated agreement statistics.

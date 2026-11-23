@@ -108,6 +108,22 @@ class _Final(Exception):
         self.category = category
 
 
+class _Attempt:
+    def __init__(self):
+        self.cancelled = threading.Event()
+        self.reserved = threading.Event()
+        self.gate = threading.Lock()
+        self.ticket = None
+        self.sent = False
+
+    def written(self, entry):
+        self.ticket = entry["call"]
+
+    def cancel(self):
+        with self.gate:
+            self.cancelled.set()
+
+
 class Client:
     def __init__(
         self,
@@ -189,13 +205,17 @@ class Client:
         if self._accounting_errors:
             raise EndpointError("the call ledger could not be written")
 
-    def _record_attempt(self, ticket, usage, outcome, ms):
+    def _record_attempt(self, attempt, usage, outcome, ms):
         if self.ledger is None:
             return
 
         def write():
             try:
-                self.ledger.finish(ticket, usage, outcome, ms)
+                attempt.reserved.wait()
+                if attempt.ticket is not None:
+                    if not attempt.sent:
+                        self.ledger.not_sent(attempt.ticket)
+                    self.ledger.finish(attempt.ticket, usage, outcome, ms)
             except Exception:
                 self._accounting_errors.append(True)
 
@@ -204,24 +224,28 @@ class Client:
         self._finishes.append(thread)
         thread.start()
 
-    def _post(self, data, deadline):
-        """Abandon even blocked DNS/connect work at the attempt cutoff.
+    def _post(self, data, cutoff, attempt):
+        """Bound reservation and transport by the caller's one absolute cutoff.
 
-        An abandoned daemon can finish platform lookup/connection setup later;
-        it checks cancellation before sending a request and closes its socket.
-        Its result is never consumed. Socket reads also have the exchange timer.
+        Accounting can wait for a slow reservation flush after the caller leaves.
+        The shared gate decides whether a request started before cancellation.
         """
-        budget = min(self.cfg.limits["request_timeout_s"], deadline - self.clock())
-        if budget <= 0:
-            raise _Final("the verdict's deadline passed before connection setup")
-        wall_cutoff = time.monotonic() + budget
-        cancelled, done = threading.Event(), threading.Event()
-        result = []
+        done, result = threading.Event(), []
 
         def exchange():
             try:
-                result.append((True, self._exchange(data, deadline, cancelled)))
-            except (_Final, _Transient) as exc:
+                try:
+                    if self.ledger is not None:
+                        self.ledger.start(
+                            self.cfg,
+                            deadline=cutoff,
+                            clock=self.clock,
+                            written=attempt.written,
+                        )
+                finally:
+                    attempt.reserved.set()
+                result.append((True, self._exchange(data, cutoff, attempt)))
+            except (_Final, _Transient, EndpointError) as exc:
                 result.append((False, exc))
             except Exception:
                 result.append(
@@ -232,37 +256,29 @@ class Client:
 
         thread = threading.Thread(target=exchange, daemon=True)
         thread.start()
-        remaining = max(0, min(deadline - self.clock(), wall_cutoff - time.monotonic()))
-        if not done.wait(remaining):
-            cancelled.set()
-            if self.clock() >= deadline:
-                raise _Final(
-                    "the verdict's deadline passed during connection or response"
-                )
-            raise _Transient("transport error (timeout)")
+        completed = done.wait(max(0, cutoff - self.clock()))
+        if not completed or self.clock() >= cutoff:
+            attempt.cancel()
+            if self.ledger is not None and (
+                not attempt.reserved.is_set() or attempt.ticket is None
+            ):
+                raise _Final("attempt not started: ledger unavailable before deadline")
+            raise _Transient("transport error (timeout at attempt deadline)")
         ok, value = result[0]
         if not ok:
             raise value
         return value
 
-    def _exchange(self, data: bytes, deadline: float, fired) -> bytes:
-        """One attempt: the raw body of a 200 response, read completely before
-        an absolute cutoff (the smaller of the request timeout and what is left
-        of the verdict's deadline) that covers creating the TLS context,
-        connecting, sending, the status line, the headers and the body.
+    def _exchange(self, data: bytes, cutoff: float, attempt) -> bytes:
+        """Send and read before the original cutoff, including setup time.
 
-        The socket is taken right after connecting and held to the end: the
-        connection object may let go of it once the headers say the server
-        will close, while the response still reads from it. A timer shuts that
-        socket at the cutoff, which wakes any blocked read; between partial
-        reads the clock is checked too. The response and the connection are
-        closed on every exit, and a failure while closing changes nothing.
-        Nothing is followed: only status 200 is a completion."""
-        start = self.clock()
-        budget = min(self.cfg.limits["request_timeout_s"], deadline - start)
-        if budget <= 0:
-            raise _Final("the verdict's deadline passed before an answer arrived")
-        cutoff = start + budget
+        Platform lookup may finish after abandonment. It cannot proceed to
+        request submission after cancellation. A timer closes a held socket.
+        """
+        fired = attempt.cancelled
+        budget = cutoff - self.clock()
+        if budget <= 0 or fired.is_set():
+            raise _Transient("transport error (timeout at attempt deadline)")
         held: list[socket.socket] = []
         conn: http.client.HTTPConnection | None = None
         resp: http.client.HTTPResponse | None = None
@@ -276,11 +292,7 @@ class Client:
                     pass
 
         def late() -> bool:
-            if self.clock() > deadline:
-                raise _Final(
-                    "the verdict's deadline passed while the response was read"
-                )
-            return fired.is_set() or self.clock() > cutoff
+            return fired.is_set() or self.clock() >= cutoff
 
         timer = threading.Timer(budget, cut_off)
         timer.daemon = True
@@ -298,13 +310,21 @@ class Client:
                     conn = http.client.HTTPConnection(
                         self._host, self._port, timeout=budget
                     )
-                if fired.is_set():
-                    raise _Transient("transport error (timeout)")
+                if late():
+                    raise _Transient("transport error (timeout at attempt deadline)")
                 conn.connect()
                 if conn.sock is not None:
                     held.append(conn.sock)
-                if fired.is_set():
-                    raise _Transient("transport error (timeout)")
+                if late():
+                    raise _Transient("transport error (timeout at attempt deadline)")
+                # Mark a submitted request under the same gate as cancellation.
+                # Do not hold the gate during potentially blocking socket I/O.
+                with attempt.gate:
+                    if late():
+                        raise _Transient(
+                            "transport error (timeout at attempt deadline)"
+                        )
+                    attempt.sent = True
                 conn.request(
                     "POST",
                     self._path,
@@ -331,13 +351,15 @@ class Client:
                 parts: list[bytes] = []
                 while True:
                     if late():
-                        raise _Transient("transport error (timeout)")
+                        raise _Transient(
+                            "transport error (timeout at attempt deadline)"
+                        )
                     piece = resp.read1(CHUNK)
                     if not piece:
                         break
                     parts.append(piece)
                 if late():
-                    raise _Transient("transport error (timeout)")
+                    raise _Transient("transport error (timeout at attempt deadline)")
                 raw = b"".join(parts)
                 # A declared length is read up to and no further; ending short of it is a cut response.
                 if declared is not None and (
@@ -350,12 +372,10 @@ class Client:
             except (_Transient, _Final):
                 raise
             except (http.client.HTTPException, OSError, ValueError):
-                if self.clock() > deadline:
-                    raise _Final(
-                        "the verdict's deadline passed while the response was read"
-                    ) from None
                 if fired.is_set() or self.clock() > cutoff:
-                    raise _Transient("transport error (timeout)") from None
+                    raise _Transient(
+                        "transport error (timeout at attempt deadline)"
+                    ) from None
                 raise _Transient("transport error (connection or protocol)") from None
         finally:
             timer.cancel()
@@ -400,12 +420,13 @@ class Client:
                     "the verdict's deadline passed before an answer arrived"
                 )
             attempts += 1
-            ticket = self.ledger.start(self.cfg) if self.ledger else None
             started = self.clock()
+            cutoff = min(deadline, started + lim["request_timeout_s"])
+            attempt = _Attempt()
             usage = {}
             outcome = "transport_error"
             try:
-                raw = self._post(data, deadline)
+                raw = self._post(data, cutoff, attempt)
                 outcome = "invalid_response"
                 doc = self._parse(raw)
                 usage = _usage(doc)
@@ -445,7 +466,7 @@ class Client:
                 failure = exc.category
             finally:
                 self._record_attempt(
-                    ticket, usage, outcome, round((self.clock() - started) * 1000)
+                    attempt, usage, outcome, round((self.clock() - started) * 1000)
                 )
             if attempts > lim["retries"] or deadline - self.clock() <= lim["backoff_s"]:
                 raise EndpointError(
