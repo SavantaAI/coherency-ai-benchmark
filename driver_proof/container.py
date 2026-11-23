@@ -713,7 +713,7 @@ def identity_checks(harness: Container, topo: Topology) -> dict:
         return {"ok_dns": False, "ok_mounts": False, "error": proc.stderr.strip()[:300]}
     data = json.loads(proc.stdout)
     names = [n for v in data["reverse"].values() if isinstance(v, list) for n in v]
-    host_markers = [str(REPO_ROOT), "/Users/", "/home/berg", "runs/driver", "driver-proof", "/private/"]
+    host_markers = [str(REPO_ROOT), "/Users/", str(Path.home()), "runs/driver", "driver-proof", "/private/"]
     def named_fields(line: str) -> str:
         # root, mount point, and the source after the " - fstype " separator.
         left, _, right = line.partition(" - ")
