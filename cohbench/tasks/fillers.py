@@ -1,5 +1,5 @@
 """Filler subtasks: small, plain chores that lengthen an instance before its
-scored events (SPEC.md section 5). Each one plants a few files, asks for one
+scored events (the root README section 5). Each one plants a few files, asks for one
 change in one sentence, and has a single right result, so the scripted
 agents can do it and a test can check that result.
 

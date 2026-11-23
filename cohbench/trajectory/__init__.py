@@ -1,6 +1,6 @@
 """The harness-blind trajectory format (version 1), the scorer view, the
 normalised change log, their adapters, the blindness check and the
-identifier registry. See docs/trajectory-format.md."""
+identifier registry. See cohbench/trajectory/README.md."""
 
 from .format import FORMAT, VERSION, VIEW_FORMAT
 from .io import Trajectory, read, read_manifest, write, write_manifest

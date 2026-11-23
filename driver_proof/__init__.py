@@ -1,2 +1,2 @@
 """Driver proof: checks that T3 Code can drive a harness through the six
-operations the benchmark needs. See docs/driver-proof.md."""
+operations the benchmark needs."""

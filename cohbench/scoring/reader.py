@@ -40,7 +40,7 @@ from .rng import stream
 LETTERS = "ABCDEF"
 KEY_ENV = "COHBENCH_READER_KEY_FILE"
 CONFIG_FORMAT = "cohbench-reader-config"
-WINDOW_WORDS = 80  # SPEC.md section 6; a constant, never a config field
+WINDOW_WORDS = 80  # the root README section 6; a constant, never a config field
 CONFIG_KEYS = {"format", "version", "kind", "rule", "position", "table", "orders", "endpoint", "expect", "sampling", "prompt_sha256", "timeout_s"}
 
 PROMPT_VERSION = "reader-1"

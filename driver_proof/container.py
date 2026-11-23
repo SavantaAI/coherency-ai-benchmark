@@ -42,7 +42,7 @@ HARNESS_BUILD_ARGS = {
     "claude": {"CLAUDE_CODE_VERSION": "2.1.330"},
 }
 
-# Inside the harness container. Neutral names only (see docs/driver-proof.md).
+# Inside the harness container. Neutral names only.
 CONTAINER_HOSTNAME = "workstation"
 WORKSPACE = "/work/project"
 T3_BASE_DIR = "/home/node/.t3"

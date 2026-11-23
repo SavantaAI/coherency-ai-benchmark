@@ -2,7 +2,7 @@
 
 `cohbench/driver` runs one episode through T3 Code: it starts the
 environment (`cohbench/env`), talks to the T3 server inside the harness
-container, and gives a runner the operations SPEC.md section 3 needs. It
+container, and gives a runner the operations the root README section 3 needs. It
 hides Docker and T3. Python 3.12, standard library.
 
 The T3 client (`t3client.py`) is the driver proof's, copied: every request is

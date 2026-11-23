@@ -268,7 +268,7 @@ def _a_part(part: str, text: str) -> bool:
 
 
 def unanswerable_wait_ms(view: Trajectory) -> int:
-    """The Routing share's numerator (docs/trajectory-format.md, section 1):
+    """The Routing share's numerator (cohbench/trajectory/README.md, section 1):
     the charged time of waits whose `causes` is exactly the policy's reply,
     that reply to at least one output, and whose every output was judged
     unanswerable. A wait that a fixed message, a reopen, the reset or a

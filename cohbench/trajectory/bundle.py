@@ -65,7 +65,7 @@ class BundleError(ValueError):
 class NoTarget(BundleError):
     """A probe target the agent's run gave nothing for (no attempt completed
     by the mark, a mark's batch with no changed path, no output before the
-    copy). Probes are diagnostic and never exclude an episode (SPEC.md
+    copy). Probes are diagnostic and never exclude an episode (the root README
     section 3): the record says `no_target`."""
 
 

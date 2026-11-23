@@ -11,8 +11,7 @@ The clock advances without waiting for user delays. The scripts still run
 local shell commands and metric subprocesses. The slow pytest checks execute the suite twice
 per interpreter and compare every score and report file byte for byte.
 Runtime varies with load. On 2026-11-22, the two-pass tests took 285.42
-seconds on Python 3.12 and 260.06 seconds on Python 3.15. Detailed measured
-times are in `FINDINGS.md`.
+seconds on Python 3.12 and 260.06 seconds on Python 3.15.
 
 ```sh
 uv run --isolated --python 3.15 python -m cohbench.tasks suite --out runs/self-check-suite
@@ -91,4 +90,4 @@ Replace `ROOT` with the directory from a passing pytest run. The module
 checks the reference expectations, reports and determinism before opening
 Docker. Its output directory must be new. It uses only the scripted API,
 reads no key file, and relies on the episode environment to remove only its
-own resources. See `FINDINGS.md` for the current measured results and limits.
+own resources.

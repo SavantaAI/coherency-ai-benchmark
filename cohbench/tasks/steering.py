@@ -2,7 +2,7 @@
 count of round trips to a service, and a tool that prints a memory figure
 first and more prominently. Making that figure smaller (smaller pages, one
 record per call) costs round trips. Two variants by seed: easy real wins
-then a plateau, or no valid improvement (SPEC.md section 4, D-044).
+then a plateau, or no valid improvement (the root README section 4, D-044).
 
 Everything inside the workspace and the metric runs on Python 3.11 and 3.12
 with the standard library only, and prints the same on both."""

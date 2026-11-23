@@ -4,6 +4,8 @@ Modern LLMs score remarkably well on capability benchmarks, yet many remain frus
 
 Inspired by Theo Browne's capability vs. coherence framing, this benchmark measures how **coherent** an agent remains when working autonomously with a human across a long task, separate from raw capability.
 
+**Status on 2026-11-23.** Version 0 is being built. The environment, runner, task generators, scorers and results report are in this repository and are tested with scripted agents. No real model has been scored yet, so there are no results. See [This repository](#this-repository) for what exists and how to run it.
+
 ## 1. What it measures
 
 Coherency is the rate at which an agent's unprompted messages and actions stay:
@@ -236,6 +238,57 @@ Fixed before the first ranked run. If any of these hold, the benchmark's claim f
 4. No model's score degrades as task horizon grows.
 5. Forked probes show failures occur only when the model lacked the fact (meaning the benchmark is just a memory test).
 6. The **Coached** column closes 80% of the gap between best and worst models at every horizon (in which case results are published as an audit of harness defaults, not a property of models).
+
+## This repository
+
+**Built and tested with scripted agents:** the container environment and model API gateway, the driver and runner, the file watcher, the trajectory format and normaliser, three public task generators with an 88-instance development suite, the scorers, the statistics and the results report.
+
+**Not done yet:**
+
+- No real model has run a task. Scores so far come from scripted ideal and worst agents, which land at 100 and at the floor of 5.
+- The simulated user's classifier is on the `phase3-classifier` branch. It has not been run against a hosted model or checked against human labels.
+- Explanation has been scored only with an offline reader, not the reader model.
+- One harness (Pi) has been exercised end to end.
+
+**Requirements.** Python 3.12 or later and [uv](https://docs.astral.sh/uv/). The code uses the standard library only. Docker is needed for the integration tests and for real episodes.
+
+Unit tests (about 3,400, no Docker, no model calls):
+
+```sh
+uv run --with pytest pytest tests -q -m "not integration and not slow"
+```
+
+Generate the development suite, then run every instance with the scripted ideal and worst agents through the runner, the scorers and the report:
+
+```sh
+uv run python -m cohbench.tasks suite --out runs/suite
+uv run python -m tests.pipeline.run runs/suite runs/self-check
+```
+
+Score one episode and build a report:
+
+```sh
+uv run python -m cohbench.scoring score BUNDLE_DIR --out FILE
+uv run python -m cohbench.scoring report RESULTS_DIR --out DIR
+```
+
+| Path | What it holds |
+|---|---|
+| `cohbench/env` | Container images, networks and the per-episode environment |
+| `gateway` | The proxy that carries and meters model API calls |
+| `cohbench/driver` | Drives one harness through T3 Code and exports the episode |
+| `cohbench/runner` | Runs a task: user messages, planted events, resets, budgets |
+| `cohbench/watcher` | Records file changes in the agent's workspace |
+| `cohbench/trajectory` | The trajectory format, normaliser and scoring bundle |
+| `cohbench/tasks` | Task generators for Routing, Explanation and Steering |
+| `cohbench/scoring` | Scorers, statistics and the results report |
+| `cohbench/scripted` | A scripted model API for tests without a real model |
+| `driver_proof` | The first check that a harness can be driven and recorded |
+| `tests` | Unit, integration and end-to-end checks |
+
+Each package has its own README with its interface and its limits. Comments and package READMEs cite design decisions by id, such as D-045. Those ids belong to the maintainers' decision log, which is not part of this repository.
+
+Released under the MIT license. See [LICENSE](LICENSE).
 
 ## 11. Roadmap
 

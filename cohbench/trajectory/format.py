@@ -13,7 +13,7 @@ Every event and header has a closed key set: a field not declared here cannot
 appear (the validator rejects it). That is the mechanism that keeps native
 data out: an adapter has nowhere to put it.
 
-`docs/trajectory-format.md` is the prose specification; this module is the
+`cohbench/trajectory/README.md` is the prose specification; this module is the
 machine-readable one. The two must agree.
 """
 

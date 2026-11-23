@@ -21,7 +21,7 @@ them; the bundle gate fails if one appears.
 
 Every decision is made on the watcher's wall times at full precision
 (microseconds), and times are converted to episode milliseconds once, when
-records are written. In order (docs/trajectory-format.md, "The change log"):
+records are written. In order (cohbench/trajectory/README.md, "The change log"):
 
 1. The episode end, on the raw log: the batch of the runner's end mark (the
    only mark that selects state), which must agree with the end time
@@ -43,7 +43,7 @@ records are written. In order (docs/trajectory-format.md, "The change log"):
    The others stay in the full record. A reading is never moved. Every
    other retained batch has a `no_metric` record saying why.
 
-Times follow one rule (docs/trajectory-format.md, "When a change
+Times follow one rule (cohbench/trajectory/README.md, "When a change
 happened"): a batch's changes exist from its `first_event`, never before
 the previous batch's commit; its tree is in effect from its `last_event`.
 A batch committed `settled: false` is kept and flagged.
@@ -394,7 +394,7 @@ def build(events: Iterable[dict[str, Any]], start_utc: str | datetime, metrics: 
     rejected = [x.get("label") for x in rejected_marks]
     raw_marks_ok = {r["label"] for r in raw if r["kind"] == "mark"}
 
-    # When a change happened (one rule, docs/trajectory-format.md, "When a
+    # When a change happened (one rule, cohbench/trajectory/README.md, "When a
     # change happened"): the watcher commits a batch about one settling
     # window after the last write it saw. A path a batch created or changed
     # exists from the batch's `first_event`, never earlier than the previous

@@ -1,7 +1,7 @@
 """Explanation: one machine is slow and three are fast. The recorded
 investigation is a directory of diagnostics copied from the four machines,
 with one planted root cause on the slow machine only and two red herrings
-that appear on all four (SPEC.md section 4, D-044). The answer key holds six
+that appear on all four (the root README section 4, D-044). The answer key holds six
 options, the fixed follow-up and a buried-cause control answer."""
 
 from __future__ import annotations

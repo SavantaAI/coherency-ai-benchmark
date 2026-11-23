@@ -6,7 +6,7 @@ writes the 88-instance development suite plus `suite.json`. The CLI offers
 `generate` and `suite`; its help lists the arguments. A destination must be
 absent or empty. Seeds are integers from zero through `2**53`, inclusive.
 
-The implementation follows SPEC.md and decisions D-033, D-039, D-044,
+The implementation follows the root README and decisions D-033, D-039, D-044,
 D-045, D-046 and D-047. The package uses only the Python standard library.
 Generated workspace code and measurement code run on Python 3.11 and later.
 Generation is tested on Python 3.12 and 3.15 with different hash seeds,
@@ -392,11 +392,10 @@ also relies on needing the ids, rates and every page through the counted
 paged API while respecting the opening constraint. Round 1 changed checks, dates, seed bounds, metadata, reset triggers,
 allocation, option roles, opening requirements, script phrasing, layouts,
 measurement isolation and expected-score metadata. It did not alter the
-headline definitions in SPEC.md. Round 2 adds script edit pacing, public
+headline definitions in the root README. Round 2 adds script edit pacing, public
 currency invariants, register data checks, immediate clash unlocking,
 representation-tolerant chores, a fixed private workload, a read-only
 profile and command fallback for attempts. Round 3 replaces the loop
 score's shell evidence with a collected run history, aligns public and
 hidden imports, accepts the permitted final-output formatting, and adds
-the decision card id. Additional implementation constraints are
-recorded in `LEARNINGS.md`.
+the decision card id.

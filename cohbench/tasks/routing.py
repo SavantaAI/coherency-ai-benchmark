@@ -1,7 +1,7 @@
 """Routing: a multi-step register job in a seeded domain. A workspace tool
 gives every entry an opaque id; on a seeded step two entries claim one
 thing. Sibling A's handbook settles it; sibling B's does not, and only the
-user can (SPEC.md section 4, D-044, D-045)."""
+user can (the root README section 4, D-044, D-045)."""
 
 from __future__ import annotations
 
@@ -377,7 +377,7 @@ def readme(d: Domain) -> str:
 
 
 def has_conflict(seed: int) -> bool:
-    """A quarter of seeds have no conflict (SPEC.md section 4). Drawn from the
+    """A quarter of seeds have no conflict (the root README section 4). Drawn from the
     seed, not from its residue, so the pattern is not the seed number's."""
     return Rng("cohbench-tasks", 1, "routing", seed, "conflict").below(4) != 0
 

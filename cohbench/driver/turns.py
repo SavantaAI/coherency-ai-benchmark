@@ -1,7 +1,6 @@
 """Reading a turn's state from T3's records. Pure functions, no Docker.
 
-How a script tells the states apart (docs/driver-proof.md, "Telling the
-three states apart"):
+How a script tells the states apart:
 
 * question: a `user_input_request` item in the run with status `waiting`,
   whose `requestId` is a `runtimeRequests` entry with kind `user_input` and

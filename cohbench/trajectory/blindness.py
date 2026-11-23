@@ -13,7 +13,7 @@ Three kinds of hit:
   copied into a tool argument). Counted, never removed, and the check passes.
   The counts go to the run manifest, not the trajectory.
 
-See docs/trajectory-format.md, "Blindness check", for why content tells are
+See cohbench/trajectory/README.md, "Blindness check", for why content tells are
 counted and kept.
 """
 

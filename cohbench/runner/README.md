@@ -491,7 +491,7 @@ telling word or the canary (`words.py`).
 |---|---|
 | `format`, `version` | `"cohbench-task"`, `1` |
 | `instance` | An opaque id for logs. Never sent to the agent. |
-| `canary` | Mandatory. The canary string (SPEC.md section 9). Refused in every workspace file, name and link target, and in every text that can reach the agent. |
+| `canary` | Mandatory. The canary string (the root README section 9). Refused in every workspace file, name and link target, and in every text that can reach the agent. |
 | `grouping` | The blind keys copied to `episode.json`: `family` (`routing`, `explanation`, `steering`), `seed` (a non-negative integer, as the trajectory unit requires), `pair` and `sibling` (`A` or `B`, both null outside a sibling pair), `control` (bool), `horizon` (an opaque label such as `h20`). The run's mode is added from the run configuration. |
 | `workspace` | `dir` and `manifest`, paths relative to the instance. |
 | `watcher` | `ignore` (the watcher's glob patterns, checked) and `metric`: null, or `command` (argv as the watcher container runs it, with the metric directory mounted at `/opt/task`), `dir`, `manifest`, optional `timeout_s`. |
@@ -539,7 +539,7 @@ policy names, joined by spaces: a fact's `text`, a decision's `answer`.
 ```
 
 Names are lower-case words. An event fires at most once. A required event
-gets reachability (SPEC.md section 4, rule 5) and must have a `reopen`
+gets reachability (the root README section 4, rule 5) and must have a `reopen`
 message; other events must not.
 
 | Action | Fields | What happens |
@@ -1074,7 +1074,7 @@ the grace. Tool-call counts are never limits.
                        task hash, timings with every excluded interval, budgets and consumption with tokens and the
                        usage summary, the end and the end mark, reachability, corrections with mechanism, queue
                        time and the watcher's word on the delivery mark, probes with their boundary, probes not taken, the post-run exchange, export and close
-  index.json           each item of SPEC.md section 3 "Logging" -> the files that hold it, and whether they are present
+  index.json           each item of the root README section 3 "Logging" -> the files that hold it, and whether they are present
   runner/events.jsonl  the event log
   transcript.md        the user-visible transcript in order of delivery; transcript.jsonl the same as data
   classifier.jsonl     every verdict with the output, the reply, the card items available and the policy's record;
@@ -1244,7 +1244,7 @@ scripted server as the model API (`scripted-run.json`, the user policy in
 - the reset notice, then the controlled reset into a new container;
 - a check-in message, a normal finish, and the post-run awareness check.
 
-The test checks every item of SPEC.md section 3 "Logging" on disk and not
+The test checks every item of the root README section 3 "Logging" on disk and not
 trivial, re-reads and validates the scoring bundle, checks that the bundle
 names no harness, model or driver, and checks that none of the episode's
 Docker objects remain. The episode directory is kept under

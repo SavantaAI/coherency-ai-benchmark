@@ -1,7 +1,7 @@
 # Scoring and the results report
 
 `cohbench/scoring` turns scoring bundles into per-episode score files, and
-score files into the results report (SPEC.md sections 2, 5, 6 and 7; the
+score files into the results report (the root README sections 2, 5, 6 and 7; the
 decisions are D-045, D-018, D-034, D-040, D-042, D-049). Python 3.12 or later,
 standard library only. The release scoring runtime is Python 3.12.
 
@@ -746,7 +746,7 @@ also use their recorded counts rather than displayed shares.
   bar. Unranked cells keep their raw numbers, and the report states
   why each is unranked.
 - **Rank bands** compare models within one harness, at one horizon and
-  mode, which is the comparison SPEC.md section 2 allows (rule 1). Among
+  mode, which is the comparison the root README section 2 allows (rule 1). Among
   the ranked cells of one harness column, cells whose headline intervals
   overlap are linked, and a band is a connected group of linked cells.
   Bands are ordered by their highest upper bound and labelled with the

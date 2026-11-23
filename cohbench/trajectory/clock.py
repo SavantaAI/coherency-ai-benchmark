@@ -23,7 +23,7 @@ from typing import Any, Iterable
 
 EXCLUDED_REASONS = ("handoff", "probe", "export")
 
-# The cutoff contract, by record type (docs/trajectory-format.md, "The episode end").
+# The cutoff contract, by record type (cohbench/trajectory/README.md, "The episode end").
 END_CONTRACT = {
     "view: user message": "kept when sent at or before the end",
     "view: output to the user": "kept when delivered at or before the end",

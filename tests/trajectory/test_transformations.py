@@ -1,4 +1,4 @@
-"""One test (or more) per transformation rule in docs/trajectory-format.md.
+"""One test (or more) per transformation rule in cohbench/trajectory/README.md.
 Rule numbers match the document."""
 
 from __future__ import annotations

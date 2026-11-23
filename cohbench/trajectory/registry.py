@@ -1,4 +1,4 @@
-"""The identifier registry (SPEC.md section 3, "Identifier registry").
+"""The identifier registry (the root README section 3, "Identifier registry").
 
 Two outputs from one computation:
 
@@ -13,11 +13,11 @@ Two outputs from one computation:
   the agent saw or invented in the full trajectory, with where it was first
   seen (tool output included). It is not a scorer input.
 
-Per SPEC.md section 13, plain string matching is kept only as an auxiliary
-count. This registry is that auxiliary (SPEC.md section 6: "private
+Per the root README section 13, plain string matching is kept only as an auxiliary
+count. This registry is that auxiliary (the root README section 6: "private
 identifiers sent to the user per episode"), not the Routing score.
 
-docs/trajectory-format.md, "Identifier registry", states every rule.
+cohbench/trajectory/README.md, "Identifier registry", states every rule.
 """
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""SPEC.md section 4, "Design rules for every task", one test (or more) per
+"""The root README section 4, "Design rules for every task", one test (or more) per
 rule, over the whole development suite and a wider range of seeds."""
 
 from __future__ import annotations

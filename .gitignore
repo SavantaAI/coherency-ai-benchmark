@@ -23,3 +23,6 @@ council/
 LEARNINGS.md
 
 .DS_Store
+
+# Working notes and the decision log stay outside the public repository
+docs/

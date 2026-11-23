@@ -928,7 +928,7 @@ def test_the_runners_probe_targets_resolve(pair, tmp_path):
             p = b.episode["probes"][0]
             assert p["about"]["kind"] == kind and p["deferred"] is deferred and p["status"] == "answered", name
             assert episode.validate(b.episode, b.view, b.changes, b.observations) == [], (name, episode.validate(b.episode, b.view, b.changes, b.observations))
-    # The attempt a mark names is the last one completed by then. None completed: no target, the bundle stands (SPEC.md section 3).
+    # The attempt a mark names is the last one completed by then. None completed: no target, the bundle stands (the root README section 3).
     early = _with_mark(w, tmp_path, "a2", 2.5, "m-2", 0)
     b = make(pair[0], tmp_path, "a", record=runner_record(probes=[base], probe_about="attempt"), targets={1: target(q_item, about="attempt", ref={"mark": "m-2"})}, watcher=early)
     p = b.episode["probes"][0]

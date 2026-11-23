@@ -2,6 +2,8 @@
 name = "coherency-benchmark"
 version = "0.0.0"
 description = "User-grounded LLM coherency benchmark"
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = []
 

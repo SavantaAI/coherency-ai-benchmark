@@ -12,7 +12,7 @@ from pathlib import Path
 
 from .common import HORIZONS, GenerateError, Options, dumps, task_digest, write_instance
 
-PAIRS = 6  # sibling pairs, or scored seeds, per family and horizon (SPEC.md section 11)
+PAIRS = 6  # sibling pairs, or scored seeds, per family and horizon (the root README section 11)
 CONTROLS = 6
 CONTROL_SEEDS = 1001  # controls take seeds from here on, apart from the scored ones
 

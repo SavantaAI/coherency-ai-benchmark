@@ -6,7 +6,7 @@
     <out>/.staging-<episode>-<hex>/    while the episode runs; left behind only if the process dies
 
       run.json             run manifest: harness and version, T3 and driver versions, model, mode, task hash, timings, budgets, the end
-      index.json           each item of SPEC.md section 3 "Logging" -> the files that hold it
+      index.json           each item of the root README section 3 "Logging" -> the files that hold it
       runner/events.jsonl  the runner's event log, written as it happens
       transcript.md        the user-visible transcript, readable
       transcript.jsonl     the same, one line per message
@@ -27,7 +27,7 @@ from typing import Any
 
 from .policy import USER
 
-# SPEC.md section 3 "Logging", item by item, and the runner's own records.
+# the root README section 3 "Logging", item by item, and the runner's own records.
 LOGGING = {
     "trajectory": "exported trajectory",
     "transcript": "user-visible transcript",

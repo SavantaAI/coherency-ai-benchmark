@@ -3,7 +3,7 @@
 Written against run 2026-11-21T210951-74da66. What that run exercised is
 marked "observed"; the rest follows Pi's tool set as listed in its session
 (`read`, `bash`, `edit`, `write`, `tool_search`) and is marked unverified in
-docs/trajectory-format.md.
+cohbench/trajectory/README.md.
 """
 
 from __future__ import annotations

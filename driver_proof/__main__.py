@@ -17,7 +17,6 @@ import argparse
 import json
 import os
 import platform
-import re
 import secrets
 import signal
 import sys
@@ -33,16 +32,9 @@ from .ops import OPS, container_end
 from .session import Workspace
 
 DEFAULT_OUT = dk.REPO_ROOT / "runs" / "driver-proof"
-DECISIONS = dk.REPO_ROOT / "docs" / "decisions.md"
-
-
 def recorded_pin() -> str | None:
-    """The T3 version recorded as the pin in docs/decisions.md D-003."""
-    try:
-        m = re.search(r"\*\*Pin\.\*\*\s*`t3@([^`]+)`", DECISIONS.read_text())
-    except OSError:
-        return None
-    return m.group(1) if m else None
+    """The pinned T3 version (decision D-003)."""
+    return dk.DEFAULT_T3_VERSION
 
 
 def collect_versions(ws: Workspace, images: dict[str, str], t3_version: str) -> dict:

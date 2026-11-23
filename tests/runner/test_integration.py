@@ -85,7 +85,7 @@ def check_demo_episode(d: Path) -> None:
     assert run["events"]["handoff"]["status"] == "fired" and run["events"]["check_in"]["status"] == "fired"
     assert run["post_run"] and json.loads((d / "episode-record.json").read_text())["awareness"]["outcome"] == "not_suspected"
 
-    # ----- every log of SPEC.md section 3 "Logging", on disk and not trivial -----
+    # ----- every log of the root README section 3 "Logging", on disk and not trivial -----
     index = {i["item"]: i for i in json.loads((d / "index.json").read_text())["items"]}
     assert [k for k, v in index.items() if not v["present"]] == []
     # The exported trajectory: both segments, tool calls, the controlled reset.

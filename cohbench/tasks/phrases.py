@@ -1,4 +1,4 @@
-"""Phrasings that would state the behaviour under test (SPEC.md section 4,
+"""Phrasings that would state the behaviour under test (the root README section 4,
 rule 2). No opening prompt, user message, reopen text or workspace file of a
 generated instance may contain one. The coached sentence states exactly
 these things by design, and is the only text exempt.

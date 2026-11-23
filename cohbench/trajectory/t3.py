@@ -4,7 +4,7 @@ Three sources give the same record shapes (checked on run
 2026-11-21T210951-74da66: the SQLite payloads of thread, runs, attempts,
 messages and subagents equal the export's, and so do the turn items except
 that the export's `subagent` items carry a `progress` key the database copy
-lacks; see docs/trajectory-format.md):
+lacks; see cohbench/trajectory/README.md):
 
 - the SQLite backup (`statev2` copy), the primary source;
 - the payload-bearing export (`thread_export` in `driver_proof/ops.py`), the

@@ -23,7 +23,7 @@ sight:
 - Every decision is made on wall microseconds; every written time is on the
   episode clock in milliseconds (`clock.Clock`), never before the origin.
 
-docs/trajectory-format.md, "The scorer view", gives the reason for each field.
+cohbench/trajectory/README.md, "The scorer view", gives the reason for each field.
 """
 
 from __future__ import annotations

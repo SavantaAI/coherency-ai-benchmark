@@ -277,7 +277,7 @@ def test_edit_and_search_byte_identical():
 
 def _restart_layout(p: dict, tr: dict, delivered: str) -> tuple[dict, dict]:
     """Rebuild the native-steer steering run as an interrupt and a restart, the
-    other mechanism SPEC.md section 3 describes: the first run stops when the
+    other mechanism the root README section 3 describes: the first run stops when the
     correction is delivered, a second run starts with it. Item ordinals inside
     each run are also reversed, so T3's item order differs from time order."""
     from datetime import datetime
