@@ -29,7 +29,7 @@ without looking up a verdict that may be absent.
 | R3-V2  | `runner/run.py` includes `COHBENCH_CLASSIFIER_KEY_FILE` in the existing host-only path and content-digest admission check. Tests use synthetic credentials.                                                                                                                                                                                                                                                           | `tests/runner/test_classifier_review3.py`: `test_r3_v2_classifier_key_cannot_be_staged`, staged-path and copied-content cases                                                                                                                                                                                                                                                                                                                                                                         |
 | R3-B2  | `cohbench/user/README.md` records the reservation-write limit. No reservation logic changed: a write crossing the cutoff can persist, gets `not_sent`, and still consumes one slot.                                                                                                                                                                                                                                   | `tests/user/test_hosted_review3.py`: `test_r3_b2_limit_documents_reservation_write_crossing_cutoff`; existing behavior coverage in `test_r2_b2_slow_reservation_has_explicit_not_sent`                                                                                                                                                                                                                                                                                                                |
 
-Source paths in the first column are relative to `cohbench/` unless they
+Source paths in the change column are relative to `cohbench/` unless they
 name a manifest or regeneration file, which lives beside this report.
 The runner and classifier READMEs describe the new interface. Existing
 runner tests were not changed. Three earlier classifier tests were updated
@@ -71,11 +71,11 @@ Each command uses `uv run --isolated --python VERSION --with pytest`.
 The test suites use synthetic responses or local transports and make no
 hosted endpoint calls.
 
-| Command after the uv prefix                                             | Python 3.12                                       | Python 3.15                                       |
-| ----------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
-| `pytest tests/user -q -p no:cacheprovider`                              | 276 passed in 89.44 seconds                       | 276 passed in 87.26 seconds                       |
-| `pytest tests/runner -q -p no:cacheprovider`                            | 534 passed, 9 skipped in 9.85 seconds final rerun | 534 passed, 9 skipped in 9.14 seconds final rerun |
-| `pytest tests -q -p no:cacheprovider -m "not integration and not slow"` | Pending final rerun final rerun                   | Pending final rerun                               |
+| Command after the uv prefix                                             | Python 3.12                                                | Python 3.15                                                |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| `pytest tests/user -q -p no:cacheprovider`                              | 276 passed in 85.61 seconds                                | 276 passed in 85.56 seconds                                |
+| `pytest tests/runner -q -p no:cacheprovider`                            | 534 passed, 9 skipped in 9.85 seconds                      | 534 passed, 9 skipped in 9.14 seconds                      |
+| `pytest tests -q -p no:cacheprovider -m "not integration and not slow"` | 3,665 passed, 313 skipped, 49 deselected in 718.49 seconds | 3,665 passed, 313 skipped, 49 deselected in 686.66 seconds |
 
 Prettier checks pass for the changed Markdown and JSON files.
 `git diff --check` passes. The protected-file diff is empty for prompts,
