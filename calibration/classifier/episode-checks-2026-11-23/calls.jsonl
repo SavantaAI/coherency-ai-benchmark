@@ -1,0 +1,53 @@
+{"event": "cap", "max_calls": 40, "version": 1}
+{"call": 1, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 1, "event": "finish", "ms": 1684, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2139, "reasoning_tokens": 0}}
+{"call": 2, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 3, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 2, "event": "finish", "ms": 1405, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2256, "reasoning_tokens": 0}}
+{"call": 3, "event": "finish", "ms": 1127, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2373, "reasoning_tokens": 0}}
+{"call": 4, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 4, "event": "finish", "ms": 1375, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2540, "reasoning_tokens": 0}}
+{"call": 5, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 5, "event": "finish", "ms": 1257, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2177, "reasoning_tokens": 0}}
+{"call": 6, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 6, "event": "finish", "ms": 1845, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 334, "reasoning_tokens": 0}}
+{"call": 7, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 8, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 7, "event": "finish", "ms": 1586, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2139, "reasoning_tokens": 0}}
+{"call": 9, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 8, "event": "finish", "ms": 1727, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2166, "reasoning_tokens": 0}}
+{"call": 10, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 11, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 9, "event": "finish", "ms": 1357, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2256, "reasoning_tokens": 0}}
+{"call": 12, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 10, "event": "finish", "ms": 1525, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2283, "reasoning_tokens": 0}}
+{"call": 11, "event": "finish", "ms": 1252, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2373, "reasoning_tokens": 0}}
+{"call": 13, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 12, "event": "finish", "ms": 1342, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2400, "reasoning_tokens": 0}}
+{"call": 14, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 13, "event": "finish", "ms": 1271, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2540, "reasoning_tokens": 0}}
+{"call": 14, "event": "finish", "ms": 1559, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2567, "reasoning_tokens": 0}}
+{"call": 15, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 15, "event": "finish", "ms": 1813, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2208, "reasoning_tokens": 0}}
+{"call": 16, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 16, "event": "finish", "ms": 4560, "outcome": "accepted", "usage": {"cached_tokens": 320, "completion_tokens": 6, "prompt_tokens": 334, "reasoning_tokens": 0}}
+{"call": 17, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 18, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 17, "event": "finish", "ms": 1190, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2139, "reasoning_tokens": 0}}
+{"call": 19, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 18, "event": "finish", "ms": 1740, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2256, "reasoning_tokens": 0}}
+{"call": 19, "event": "finish", "ms": 1309, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2373, "reasoning_tokens": 0}}
+{"call": 20, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 20, "event": "finish", "ms": 1376, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2540, "reasoning_tokens": 0}}
+{"call": 21, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 21, "event": "finish", "ms": 1179, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2184, "reasoning_tokens": 0}}
+{"call": 22, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 22, "event": "finish", "ms": 1207, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2301, "reasoning_tokens": 0}}
+{"call": 23, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 23, "event": "finish", "ms": 1242, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2418, "reasoning_tokens": 0}}
+{"call": 24, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 24, "event": "finish", "ms": 1103, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2585, "reasoning_tokens": 0}}
+{"call": 25, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 25, "event": "finish", "ms": 1052, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2229, "reasoning_tokens": 0}}
+{"call": 26, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 26, "event": "finish", "ms": 1995, "outcome": "accepted", "usage": {"cached_tokens": 320, "completion_tokens": 6, "prompt_tokens": 334, "reasoning_tokens": 0}}

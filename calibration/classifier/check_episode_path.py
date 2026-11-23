@@ -68,9 +68,13 @@ def counts(path):
         for k,v in row.get('usage',{}).items():
             if isinstance(v,(int,float)):
                 usage[k] = usage.get(k,0)+v
-    return {'calls':sum(r.get('event')=='start' for r in rows),
-            'not_sent':sum(r.get('event')=='not_sent' for r in rows),
-            'completed_attempts':len(finished), 'usage':usage}
+    not_sent={r['call'] for r in rows if r.get('event')=='not_sent'}
+    with_usage={r['call'] for r in finished if r.get('usage')}
+    started={r['call'] for r in rows if r.get('event')=='start'}
+    return {'calls':len(started), 'not_sent':len(not_sent),
+            'completed_attempts':len(finished), 'calls_with_reported_usage':len(with_usage),
+            'calls_without_reported_usage':len(started-not_sent-with_usage), 'usage':usage}
+
 
 
 def main():

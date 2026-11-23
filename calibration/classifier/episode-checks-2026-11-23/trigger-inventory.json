@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-23",
+  "generated": {
+    "tasks": 88,
+    "planted_events": 116,
+    "dependencies": []
+  },
+  "fixtures": {
+    "tasks": 2,
+    "planted_events": 4,
+    "dependencies": []
+  },
+  "dynamic_regression_fixtures": [
+    {
+      "test": "tests/runner/test_classifier_review4.py::test_r4_verdict_effects_wait_for_completion_and_output_order",
+      "event": "after",
+      "trigger": {
+        "verdicts": {
+          "label": "no_request",
+          "at_least": 1
+        }
+      },
+      "action": "observe",
+      "card_unlocks": []
+    },
+    {
+      "test": "tests/runner/test_classifier_review4.py::test_r4_completion_does_not_fire_an_elapsed_branch_after_handback",
+      "event": "elapsed_or_verdict",
+      "trigger": {
+        "any": [
+          {
+            "verdicts": {
+              "label": "answerable",
+              "at_least": 1
+            }
+          },
+          {
+            "elapsed_ms": {
+              "at_least": 1001
+            }
+          }
+        ]
+      },
+      "action": "observe",
+      "card_unlocks": []
+    }
+  ]
+}

@@ -899,7 +899,9 @@ inputs and verdicts it compares complete episode, handoff, transcript,
 classifier, manifest and journal records except declared metadata:
 classifier `as_of`, `card_items`, historical `batch_outputs`, `completed_at`,
 `effective_at`, `record.context`, `record.ms`, and `record.questions[].ms`;
-journal `n`, `clock_ms`, and its automatically written `utc`. Semantic times
+awareness-record write `utc`, its `as_of`, `card_items`, `batch_outputs`,
+`completed_at`, `effective_at`, `record.context`, `record.ms`, and
+`record.questions[].ms` when present; journal `n`, `clock_ms`, and its automatically written `utc`. Semantic times
 such as `output_at`, `sent_utc`, `at`, delivery `utc`, wait bounds and event
 `utc` remain compared. Verdict journal rows are matched separately by output
 identity. Fixture storage roots and staging directory identities are mapped

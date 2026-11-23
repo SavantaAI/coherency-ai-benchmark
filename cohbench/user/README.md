@@ -310,25 +310,34 @@ available, and it should be part of every release's calibration.
 
 ## Retries and the deadline
 
-The reply is due at the hand-back plus the return delay. The runner passes
-one judging window to `judge_batch`, ending at that due time less its
-3-second dispatch margin, or at the episode cutoff less the same margin,
-whichever comes first. The classifier caps this window at
-`limits.verdict_deadline_s` (25 seconds in the shipped configs). Setup already
-spent since the hand-back reduces the remaining window. A standalone `judge`
-call uses the configured per-verdict limit.
+The reply is due at the hand-back plus the return delay. Each output starts
+an independent judgement when the runner observes it, using the card and
+conversation as they stood at its delivery instant. The job runs off the
+runner's main loop and has its own `limits.verdict_deadline_s` limit
+(25 seconds in the shipped configs), counted from its start.
 
-All outputs from the hand-back use one card and conversation snapshot taken
-when the hand-back began. Streamed outputs wait for that boundary. Independent
-workers judge them concurrently, each with its own client session and the
-same absolute cutoff. The runner applies accepted results in output order.
-An output with no verdict by the cutoff is recorded as unjudged; a late worker
-cannot add a result afterwards. Other policy errors still fail the episode.
-Scripted policies retain their existing serial path. Each request's timeout
-is the smaller of `request_timeout_s` and the time left before the shared
-cutoff. The fake-clock regressions cover two 16-second verdicts within a
-30-second return delay, a slow verdict among three, and reversed completion
-order.
+At a hand-back the runner tightens every unfinished job to one shared
+cutoff: the reply due time less the 3-second dispatch allowance, also clipped
+by the episode cutoff less that allowance. A reset drain reuses that same
+cutoff; it does not open another window. An end bound also cancels outstanding
+jobs if final coverage fails. The earlier per-job limit remains in force.
+
+Each worker has its own client session. Accepted results are applied in
+output order: a completed later result waits for the earlier job to finish
+or expire. `completed_at` and `effective_at` distinguish those instants.
+Observation, output counts, closing items and probes do not depend on a
+verdict. A missing judgement at its deadline is recorded as unjudged.
+`DeadlineExceeded` carries that cause. Every other endpoint failure with
+time left remains a policy failure and makes the episode unusable.
+
+Scripted policies retain their synchronous path. Replies still go only at
+a hand-back; a mid-run message gets no separate reply wait. Standalone
+`judge` uses the configured per-verdict limit. Standalone `judge_batch`
+continues to run concurrent independent judgements under a caller-supplied
+cutoff, but the runner uses per-output jobs and arrival snapshots.
+The regressions cover concurrent 16-second jobs within a 30-second return
+delay, one slow result among three, reverse completion, reset drains,
+arrival snapshots, ordered event effects and endpoint failures.
 
 Each attempt has an absolute cutoff: the smaller of the request timeout and
 what is left of the verdict's deadline. It covers creating the TLS context,
@@ -363,7 +372,7 @@ A refused connection, a timeout, a 429 or any 5xx is retried once, after 0.5 s,
 with byte-for-byte the same request, and only if the deadline leaves more
 than the pause. Any other HTTP status (including every 3xx and 4xx), a second
 failure raises `EndpointError`, a `PolicyError`. The runner records a
-batch deadline failure as unjudged and ends the episode as unusable for
+shared-deadline expiry as unjudged and ends the episode as unusable for
 other policy failures. An answer outside the options, an answer
 whose finish reason is anything but `stop` (cut off, filtered), an answer
 object that repeats its field, a refusal or a response that is not one chat
@@ -869,7 +878,6 @@ saved-report validation. Prompts, configs and calibration verdicts stayed
 unchanged. See the [round 3 record](../../calibration/classifier/review-round3.md)
 for the regressions and verification commands.
 
-
 Review round 4 on 2026-11-23 separates output observation from judgement.
 Outputs count and remain closing/probe candidates without verdicts. Each
 classifier job uses the conversation at the output's arrival and runs off
@@ -893,6 +901,14 @@ or checked-in runner task fixture has a verdict-dependent planted event or
 card unlock. The round 4 regression fixtures add `after` and `elapsed_or_verdict`
 to check completion-time behavior, with no card unlocks. Prompts, pinned configs, development
 agreement outputs and held-out evidence are unchanged.
+
+The three hosted episode checks on 2026-11-23 used the unchanged Kimi
+config. All were usable, with no unjudged outputs or reply overruns. The
+repeat ask was `already_given` and quoted the delivered answer. They used
+26 calls, 54,444 input tokens and 171 output tokens, with usage reported for
+every call. These checks use a fake harness; real-harness latency is not
+measured here. Both Python versions passed the user, runner, whole unit and
+slow pipeline suites.
 
 See [the round 4 report](../../calibration/classifier/review-round4.md) for
 regressions, replay coverage, test commands and the hosted episode checks.

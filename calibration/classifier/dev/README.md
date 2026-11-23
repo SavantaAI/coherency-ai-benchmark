@@ -91,9 +91,11 @@ verdict and report before writing. Its subset scopes are the original
 30 ids, so GLM still reports 16/30 coverage. The development statistics and
 historical verdicts are unchanged. See the [round 3 record](../review-round3.md).
 
-
 On 2026-11-23, review round 4 changed the live episode path. It did not
 rerun development or held-out agreement and changed no prompt or config.
 The previous agreement counts still describe the saved calibration verdicts.
+Three separate Kimi episode checks completed as usable with no unjudged
+outputs or reply overruns: 26 calls, 54,444 input tokens and 171 output
+tokens. The repeat ask was `already_given` and quoted the delivered answer.
 See [the round 4 report](../review-round4.md) for the separate episode checks
 and their call accounting.
