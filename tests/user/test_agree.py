@@ -78,7 +78,7 @@ def test_compare_reports_items_and_quotes():
     assert rep["answer_items"]["both_answerable"] == 2 and rep["answer_items"]["exact"] == 1
     assert rep["answer_items"]["mean_jaccard"] == pytest.approx((1 + 0.5) / 2)
     assert rep["quotes"]["differences"] == [{"item": "c", "first": 0, "second": 2}]
-    assert [d["item"] for d in rep["disagreements"]] == ["d"]
+    assert [d["item"] for d in rep["disagreements"]] == ["b", "c", "d"]
     assert rep["per_label"][U] == {"first": 1, "second": 0, "agree": 0}
     text = render(rep, items, ("me", "model"))
     assert "Cohen's kappa" in text and "request: options A/B -> B" in text and "msg d" in text

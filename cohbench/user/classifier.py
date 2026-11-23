@@ -71,6 +71,8 @@ class _Chain:
         self.messages.append({"role": "assistant", "content": P.answer(got)})
         rec: dict[str, Any] = {"type": qtype, "question": question, "options": list(keys), "chosen": got, "ms": r["ms"],
                                "attempts": r["attempts"], "served": r["served"], "usage": r["usage"]}
+        if "served_change" in r:
+            rec["served_change"] = r["served_change"]
         if item is not None:
             rec["item"] = item
         self.asked.append(rec)

@@ -109,12 +109,24 @@ class _Final(Exception):
 
 
 class Client:
-    def __init__(self, cfg: Config, key: str, *, sleep: Callable[[float], None] = time.sleep,
-                 clock: Callable[[], float] = time.monotonic, ledger=None):
+    def __init__(
+        self,
+        cfg: Config,
+        key: str,
+        *,
+        sleep: Callable[[float], None] = time.sleep,
+        clock: Callable[[], float] = time.monotonic,
+        ledger=None,
+    ):
+        self._finishes = []
+        self._accounting_errors = []
+        self._previous_served = None
         self.ledger = ledger
         self.cfg = cfg
         self._key = key
-        u = urllib.parse.urlsplit(cfg.endpoint["base_url"].rstrip("/") + "/chat/completions")
+        u = urllib.parse.urlsplit(
+            cfg.endpoint["base_url"].rstrip("/") + "/chat/completions"
+        )
         self._https = u.scheme == "https"
         self._host = u.hostname or ""
         self._port = u.port or (443 if self._https else 80)
@@ -143,18 +155,97 @@ class Client:
         """Held for a whole verdict, so one verdict's questions are not interleaved with another's."""
         return self._lock
 
-    def body(self, messages: Sequence[Mapping[str, str]], keys: Sequence[str]) -> dict[str, Any]:
+    def body(
+        self, messages: Sequence[Mapping[str, str]], keys: Sequence[str]
+    ) -> dict[str, Any]:
         e, s = self.cfg.endpoint, self.cfg.sampling
         b: dict[str, Any] = thaw(e.get("extra_body", {}))
-        b.update(model=e["model"], messages=[dict(m) for m in messages], temperature=s["temperature"], seed=s["seed"],
-                 max_tokens=s["max_tokens"], stream=False, provider=thaw(e["provider"]),
-                 response_format={"type": "json_schema",
-                                  "json_schema": {"name": self.cfg.schema["name"], "strict": True, "schema": P.schema(keys)}})
+        b.update(
+            model=e["model"],
+            messages=[dict(m) for m in messages],
+            temperature=s["temperature"],
+            seed=s["seed"],
+            max_tokens=s["max_tokens"],
+            stream=False,
+            provider=thaw(e["provider"]),
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": self.cfg.schema["name"],
+                    "strict": True,
+                    "schema": P.schema(keys),
+                },
+            },
+        )
         if e.get("protocol", "openrouter") == "openai":
             b.pop("provider")
         return b
 
-    def _post(self, data: bytes, deadline: float) -> bytes:
+    def flush(self):
+        """Wait for accounting outside the verdict deadline, before CLI exit."""
+        for thread in self._finishes:
+            thread.join()
+        self._finishes.clear()
+        if self._accounting_errors:
+            raise EndpointError("the call ledger could not be written")
+
+    def _record_attempt(self, ticket, usage, outcome, ms):
+        if self.ledger is None:
+            return
+
+        def write():
+            try:
+                self.ledger.finish(ticket, usage, outcome, ms)
+            except Exception:
+                self._accounting_errors.append(True)
+
+        # Non-daemon: the process also waits at exit if a runner has no close hook.
+        thread = threading.Thread(target=write)
+        self._finishes.append(thread)
+        thread.start()
+
+    def _post(self, data, deadline):
+        """Abandon even blocked DNS/connect work at the attempt cutoff.
+
+        An abandoned daemon can finish platform lookup/connection setup later;
+        it checks cancellation before sending a request and closes its socket.
+        Its result is never consumed. Socket reads also have the exchange timer.
+        """
+        budget = min(self.cfg.limits["request_timeout_s"], deadline - self.clock())
+        if budget <= 0:
+            raise _Final("the verdict's deadline passed before connection setup")
+        wall_cutoff = time.monotonic() + budget
+        cancelled, done = threading.Event(), threading.Event()
+        result = []
+
+        def exchange():
+            try:
+                result.append((True, self._exchange(data, deadline, cancelled)))
+            except (_Final, _Transient) as exc:
+                result.append((False, exc))
+            except Exception:
+                result.append(
+                    (False, _Transient("transport error (connection or protocol)"))
+                )
+            finally:
+                done.set()
+
+        thread = threading.Thread(target=exchange, daemon=True)
+        thread.start()
+        remaining = max(0, min(deadline - self.clock(), wall_cutoff - time.monotonic()))
+        if not done.wait(remaining):
+            cancelled.set()
+            if self.clock() >= deadline:
+                raise _Final(
+                    "the verdict's deadline passed during connection or response"
+                )
+            raise _Transient("transport error (timeout)")
+        ok, value = result[0]
+        if not ok:
+            raise value
+        return value
+
+    def _exchange(self, data: bytes, deadline: float, fired) -> bytes:
         """One attempt: the raw body of a 200 response, read completely before
         an absolute cutoff (the smaller of the request timeout and what is left
         of the verdict's deadline) that covers creating the TLS context,
@@ -172,7 +263,6 @@ class Client:
         if budget <= 0:
             raise _Final("the verdict's deadline passed before an answer arrived")
         cutoff = start + budget
-        fired = threading.Event()
         held: list[socket.socket] = []
         conn: http.client.HTTPConnection | None = None
         resp: http.client.HTTPResponse | None = None
@@ -187,7 +277,9 @@ class Client:
 
         def late() -> bool:
             if self.clock() > deadline:
-                raise _Final("the verdict's deadline passed while the response was read")
+                raise _Final(
+                    "the verdict's deadline passed while the response was read"
+                )
             return fired.is_set() or self.clock() > cutoff
 
         timer = threading.Timer(budget, cut_off)
@@ -196,23 +288,45 @@ class Client:
         try:
             try:
                 if self._https:
-                    conn = http.client.HTTPSConnection(self._host, self._port, timeout=budget, context=ssl.create_default_context())
+                    conn = http.client.HTTPSConnection(
+                        self._host,
+                        self._port,
+                        timeout=budget,
+                        context=ssl.create_default_context(),
+                    )
                 else:
-                    conn = http.client.HTTPConnection(self._host, self._port, timeout=budget)
+                    conn = http.client.HTTPConnection(
+                        self._host, self._port, timeout=budget
+                    )
+                if fired.is_set():
+                    raise _Transient("transport error (timeout)")
                 conn.connect()
                 if conn.sock is not None:
                     held.append(conn.sock)
                 if fired.is_set():
                     raise _Transient("transport error (timeout)")
-                conn.request("POST", self._path, body=data,
-                             headers={"Content-Type": "application/json", "Authorization": f"Bearer {self._key}"})
+                conn.request(
+                    "POST",
+                    self._path,
+                    body=data,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self._key}",
+                    },
+                )
                 resp = conn.getresponse()
                 status = resp.status
                 if status != 200:
                     if 300 <= status <= 399:
-                        raise _Final(f"HTTP {status} (redirect refused: an authenticated request is never followed)")
+                        raise _Final(
+                            f"HTTP {status} (redirect refused: an authenticated request is never followed)"
+                        )
                     category = f"HTTP {status} ({status_category(status)})"
-                    raise _Transient(category) if retryable_status(status) else _Final(category)
+                    raise (
+                        _Transient(category)
+                        if retryable_status(status)
+                        else _Final(category)
+                    )
                 declared = resp.getheader("Content-Length")
                 parts: list[bytes] = []
                 while True:
@@ -226,14 +340,20 @@ class Client:
                     raise _Transient("transport error (timeout)")
                 raw = b"".join(parts)
                 # A declared length is read up to and no further; ending short of it is a cut response.
-                if declared is not None and (not declared.strip().isdigit() or int(declared) != len(raw)):
-                    raise _Transient("transport error (the body ended before its declared length)")
+                if declared is not None and (
+                    not declared.strip().isdigit() or int(declared) != len(raw)
+                ):
+                    raise _Transient(
+                        "transport error (the body ended before its declared length)"
+                    )
                 return raw
             except (_Transient, _Final):
                 raise
             except (http.client.HTTPException, OSError, ValueError):
                 if self.clock() > deadline:
-                    raise _Final("the verdict's deadline passed while the response was read") from None
+                    raise _Final(
+                        "the verdict's deadline passed while the response was read"
+                    ) from None
                 if fired.is_set() or self.clock() > cutoff:
                     raise _Transient("transport error (timeout)") from None
                 raise _Transient("transport error (connection or protocol)") from None
@@ -248,27 +368,37 @@ class Client:
 
     def _parse(self, raw: bytes) -> Mapping[str, Any]:
         try:
-            doc = json.loads(raw, object_pairs_hook=_no_duplicates, parse_constant=_no_constant)
+            doc = json.loads(
+                raw, object_pairs_hook=_no_duplicates, parse_constant=_no_constant
+            )
         except _Duplicate:
             raise EndpointError("the response repeats a field") from None
         except _Constant:
-            raise EndpointError("the response holds a non-standard JSON constant (NaN or Infinity)") from None
+            raise EndpointError(
+                "the response holds a non-standard JSON constant (NaN or Infinity)"
+            ) from None
         except ValueError:
             raise EndpointError("the response is not JSON") from None
         if not isinstance(doc, Mapping):
             raise EndpointError("the response is not a JSON object")
         return doc
 
-    def choose(self, messages: Sequence[Mapping[str, str]], keys: Sequence[str], deadline: float) -> dict[str, Any]:
-        """One closed question. Returns the choice, what served it, the token
-        usage, the milliseconds and the number of attempts."""
+    def choose(
+        self,
+        messages: Sequence[Mapping[str, str]],
+        keys: Sequence[str],
+        deadline: float,
+    ) -> dict[str, Any]:
+        """Decide against the deadline before scheduling the accounting write."""
         data = json.dumps(self.body(messages, keys), ensure_ascii=False).encode("utf-8")
         lim = self.cfg.limits
         attempts = 0
         t0 = self.clock()
         while True:
             if deadline - self.clock() <= 0:
-                raise EndpointError("the verdict's deadline passed before an answer arrived")
+                raise EndpointError(
+                    "the verdict's deadline passed before an answer arrived"
+                )
             attempts += 1
             ticket = self.ledger.start(self.cfg) if self.ledger else None
             started = self.clock()
@@ -279,50 +409,88 @@ class Client:
                 outcome = "invalid_response"
                 doc = self._parse(raw)
                 usage = _usage(doc)
-                self._check(doc, keys)
-                self._served(doc)
+                choice = self._check(doc, keys)
+                served = self._served(doc)
+                if self.clock() > deadline:
+                    outcome = "deadline_exceeded"
+                    raise EndpointError(
+                        "the verdict's deadline passed before the answer was accepted"
+                    )
+                answer = {
+                    "choice": choice,
+                    "served": served,
+                    "usage": usage,
+                    "ms": round((self.clock() - t0) * 1000),
+                    "attempts": attempts,
+                }
+                if (
+                    self._previous_served is not None
+                    and served != self._previous_served
+                ):
+                    answer["served_change"] = {
+                        "before": self._previous_served,
+                        "after": served,
+                    }
+                self._previous_served = served
                 outcome = "accepted"
-                break
+                return answer
             except _Final as exc:
+                outcome = (
+                    "deadline_exceeded" if "deadline" in exc.category else "rejected"
+                )
                 raise EndpointError(exc.category) from None
             except _Transient as exc:
+                if "timeout" in exc.category:
+                    outcome = "deadline_exceeded"
                 failure = exc.category
             finally:
-                if self.ledger:
-                    self.ledger.finish(ticket, usage, outcome, round((self.clock() - started) * 1000))
+                self._record_attempt(
+                    ticket, usage, outcome, round((self.clock() - started) * 1000)
+                )
             if attempts > lim["retries"] or deadline - self.clock() <= lim["backoff_s"]:
-                raise EndpointError(f"{failure} after {attempts} attempt{'s' if attempts > 1 else ''}")
+                raise EndpointError(
+                    f"{failure} after {attempts} attempt{'s' if attempts > 1 else ''}"
+                )
             self.sleep(lim["backoff_s"])
-        doc = self._parse(raw)
-        if self.clock() > deadline:
-            raise EndpointError("the verdict's deadline passed before the answer was accepted")
-        ms = round((self.clock() - t0) * 1000)
-        return {"choice": self._check(doc, keys), "served": self._served(doc), "usage": _usage(doc), "ms": ms, "attempts": attempts}
 
     def _check(self, doc: Mapping[str, Any], keys: Sequence[str]) -> str:
         if "error" in doc:
-            raise EndpointError("the endpoint reported an error in a successful response")
+            raise EndpointError(
+                "the endpoint reported an error in a successful response"
+            )
         ch = doc.get("choices")
         if not isinstance(ch, list) or len(ch) != 1 or not isinstance(ch[0], Mapping):
             raise EndpointError("the response does not hold exactly one choice")
         fr = ch[0].get("finish_reason")
         if fr != FINISHED:
-            raise EndpointError(f"the answer did not finish normally (finish_reason {self.meta(fr)})")
+            raise EndpointError(
+                f"the answer did not finish normally (finish_reason {self.meta(fr)})"
+            )
         msg = ch[0].get("message")
         if not isinstance(msg, Mapping) or msg.get("refusal"):
-            raise EndpointError("the response holds no answer (missing message or a refusal)")
+            raise EndpointError(
+                "the response holds no answer (missing message or a refusal)"
+            )
         content = msg.get("content")
         if not isinstance(content, str):
             raise EndpointError("the response holds no answer text")
         try:
-            ans = json.loads(content, object_pairs_hook=_no_duplicates, parse_constant=_no_constant)
+            ans = json.loads(
+                content, object_pairs_hook=_no_duplicates, parse_constant=_no_constant
+            )
         except _Constant:
-            raise EndpointError("the answer holds a non-standard JSON constant") from None
+            raise EndpointError(
+                "the answer holds a non-standard JSON constant"
+            ) from None
         except _Duplicate:
             raise EndpointError("the answer repeats a field") from None
         except ValueError:
             raise EndpointError("the answer is not JSON") from None
-        if not isinstance(ans, Mapping) or set(ans) != {P.FIELD} or ans[P.FIELD] not in keys:
+        if (
+            not isinstance(ans, Mapping)
+            or set(ans) != {P.FIELD}
+            or ans[P.FIELD] not in keys
+        ):
             raise EndpointError(f"the answer is outside the options {list(keys)}")
         return ans[P.FIELD]
 
@@ -330,12 +498,25 @@ class Client:
         want = self.cfg.endpoint["expect"]
         model, provider = doc.get("model"), doc.get("provider")
         if model != want["model"]:
-            raise ServedMismatch(f"served by model {self.meta(model)!r}, the config pins {want['model']!r}")
+            raise ServedMismatch(
+                f"served by model {self.meta(model)!r}, the config pins {want['model']!r}"
+            )
         if provider != want["provider"]:
-            raise ServedMismatch(f"served by provider {self.meta(provider)!r}, the config pins {want['provider']!r}")
+            raise ServedMismatch(
+                f"served by provider {self.meta(provider)!r}, the config pins {want['provider']!r}"
+            )
         got: dict[str, Any] = {"model": model, "provider": provider}
-        if doc.get("system_fingerprint") is not None:
-            got["system_fingerprint"] = self.meta(doc["system_fingerprint"])
+        for field in (
+            "system_fingerprint",
+            "revision",
+            "served_revision",
+            "model_revision",
+            "weight_revision",
+            "weights_revision",
+            "deployment_revision",
+        ):
+            if doc.get(field) is not None:
+                got[field] = self.meta(doc[field])
         return got
 
 

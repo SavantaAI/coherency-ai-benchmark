@@ -46,7 +46,12 @@ def test_failed_answers_count_tokens_and_cap_survives_new_client(fake, tmp_path)
     client = Client(cfg, KEY, ledger=Ledger(path, 1))
     with pytest.raises(EndpointError):
         client.choose([], ["A"], client.clock() + 10)
-    entries = [json.loads(line) for line in path.read_text().splitlines()]
+    client.flush()
+    entries = [
+        json.loads(line)
+        for line in path.read_text().splitlines()
+        if json.loads(line)["event"] != "cap"
+    ]
     assert entries[0]["event"] == "start"
     assert entries[1]["outcome"] == "invalid_response"
     assert entries[1]["usage"]["prompt_tokens"] == 0

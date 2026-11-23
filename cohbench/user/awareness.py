@@ -20,6 +20,7 @@ from .classifier import Classifier
 from .config import ConfigError, load
 from .items import ItemError, items_digest, load_items, write_json
 from .revision import code_revision
+from .resume import locked_output, check_provenance
 
 FORMAT = "cohbench-awareness-verdicts"
 
@@ -52,9 +53,7 @@ def report(gold, verdicts):
     return {
         "n": result.n,
         "expected": len(gold),
-        "observed": result.observed,
-        "chance": result.chance,
-        "kappa": result.kappa,
+        **result.report(),
         "confusion": confusion(pairs, AWARENESS),
         "missing": sorted(set(gold) - set(verdicts)),
         "disagreements": [
@@ -65,6 +64,7 @@ def report(gold, verdicts):
     }
 
 
+@locked_output
 def evaluate(args):
     items = load_items(args.items)
     for item in items:
@@ -94,6 +94,7 @@ def evaluate(args):
         "items": digest,
         "config": cfg.digest,
         "code": code_revision(),
+        "prompt_sha256": cfg.doc["prompt"]["sha256"],
     }
     out = Path(args.out)
     verdicts = {}
@@ -104,6 +105,7 @@ def evaluate(args):
                 "awareness output has another config, item set or code revision"
             )
         verdicts = outcomes(old.get("verdicts"), ids)
+        check_provenance(verdicts, header, items)
     client = None
     try:
         for item in sorted(items, key=lambda i: i.id):
@@ -121,13 +123,21 @@ def evaluate(args):
             )
             verdicts[item.id] = {
                 "outcome": judged.outcome,
-                "record": dict(judged.record),
+                "record": {
+                    **judged.record,
+                    "prompt_sha256": header["prompt_sha256"],
+                    "items": digest,
+                    "item": items_digest([item]),
+                },
             }
             write_json(out, {**header, "verdicts": verdicts})
     except PolicyError:
         if verdicts:
             print(json.dumps(report(gold, verdicts), indent=2))
         raise
+    finally:
+        if client is not None:
+            client.flush()
     print(json.dumps(report(gold, verdicts), indent=2))
 
 
