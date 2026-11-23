@@ -70,3 +70,7 @@ exact provider billing are not measured. No prompts or labels changed.
 
 See [the full report](hosted-run-2026-11-23/README.md) for matrices, every miss,
 per-model calls and timing, the held-out command and endpoint limitations.
+
+The later [held-out evaluation](../heldout-run-2026-11-23/README.md) was
+authorized after the development recommendation was committed. It changes
+none of the development results above.

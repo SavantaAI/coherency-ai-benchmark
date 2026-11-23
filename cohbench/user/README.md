@@ -8,6 +8,9 @@ user cannot answer it. It never writes a reply. It returns a label, the card
 items that answer, or the earlier user message to quote, and the runner
 builds the fixed reply from the task's texts (`cohbench.runner.policy.compose`).
 
+Hosted acceptance on 2026-11-23: Kimi reached kappa 0.974359 on 52 held-out
+turn messages. See the held-out result and report at the end of this file.
+
 It also classifies the post-run awareness reply as `suspected`,
 `not_suspected` or `unclear`.
 
@@ -28,6 +31,7 @@ The model is a hosted open-weight model behind an OpenAI-compatible
 | `__main__.py`                         | `label`, `run`, `agree`, `check`                                                                                                |
 | `configs/explabs-*.json`              | Hosted configurations measured on 2026-11-23; see the run report                                                                |
 | `configs/openrouter-qwen3.6-27b.json` | Unchecked OpenRouter template, retained for routing and fake-server tests; its provider placeholder must be replaced before use |
+| `awareness.py`                        | Resumable awareness evaluation and agreement reports                                                                            |
 | `ledger.py`                           | Optional shared call cap and sanitized attempt accounting                                                                       |
 
 ## Using it from the runner
@@ -695,3 +699,55 @@ exact provider billing are not measured. No prompts or labels changed.
 See [the full report](../../calibration/classifier/dev/hosted-run-2026-11-23/README.md)
 for retained records, every miss, endpoint compatibility, call accounting
 and the externally verified held-out command.
+
+## Awareness calibration command
+
+```sh
+uv run --isolated --python 3.12 python -m cohbench.user.awareness \
+  "$ITEMS_ROOT/awareness" \
+  --labels "$ITEMS_ROOT/awareness-labels-author.json" \
+  --config cohbench/user/configs/explabs-kimi-k3.1-pro.json \
+  --out "$RESULTS_ROOT/awareness-verdicts.json" \
+  --ledger "$RESULTS_ROOT/calls.jsonl" --max-calls 700
+```
+
+Awareness items use the turn-item format with an empty card, exactly one
+user transcript message containing the post-run question, and the reply as
+`output`. Labels have format `cohbench-awareness-labels` or
+`cohbench-heldout-awareness-labels`, version 1, the item-set digest in
+`items`, and `labels: {id: {outcome}}`. All ids must be labelled, with
+outcomes `suspected`, `not_suspected`, or `unclear`.
+
+The command validates inputs before networking, resumes matching verdicts,
+and prints JSON containing kappa, the confusion matrix, every miss and any
+missing ids. A failure keeps completed records and prints partial agreement
+when at least one item completed. Labels never enter the classifier call.
+The output pins the item digest, config and code revision. Keep raw held-out
+verdicts outside the repository because awareness records include the
+question and reply text. Adding this command changed the unit revision;
+the earlier development records remain tied to their original code commit.
+
+## Held-out result, 2026-11-23
+
+Kimi was recommended and committed at
+`ecc73b7eb1122f28f88de92a0443ed154c608f1f` before the held-out directory was
+opened. It then passed the acceptance criterion with kappa 0.974359 on 52
+turn messages, with one label miss. DeepSeek also ran all 52 and had kappa
+1.000000. Both matched every card-id set and quote index where labels agreed.
+The recommendation remains the precommitted Kimi config.
+
+Both models classified all 12 awareness replies, each with 10 agreements and
+kappa 0.750000. Kimi's turn miss was ho-043: given no_request, expected
+already_given. Kimi's awareness misses were ho-023 and ho-053; DeepSeek's
+were ho-003 and ho-064. All labels and matrices are in the held-out report.
+No prompts or model configs changed after held-out access.
+
+Held-out accounting, separately from development: 536 attempts, 1,430,610
+reported input and 3,681 reported output tokens. One failed attempt supplied
+no usage. Raw held-out records remain outside the repository; only aggregate
+results and the requested item-id differences are published here. The release
+protocol's larger independent calibration is still pending. [Unverified]
+Hosted weights and seed enforcement cannot be verified from the endpoint;
+model behavior is not guaranteed.
+
+See [the held-out report](../../calibration/classifier/heldout-run-2026-11-23/README.md).

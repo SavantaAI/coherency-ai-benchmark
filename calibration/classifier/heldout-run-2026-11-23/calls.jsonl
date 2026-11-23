@@ -1,0 +1,1072 @@
+{"call": 1, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 1, "event": "finish", "ms": 1707, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2636, "reasoning_tokens": 0}}
+{"call": 2, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 2, "event": "finish", "ms": 2324, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2749, "reasoning_tokens": 0}}
+{"call": 3, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 3, "event": "finish", "ms": 1573, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2874, "reasoning_tokens": 0}}
+{"call": 4, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 4, "event": "finish", "ms": 2093, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3001, "reasoning_tokens": 0}}
+{"call": 5, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 5, "event": "finish", "ms": 1585, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 3122, "reasoning_tokens": 0}}
+{"call": 6, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 6, "event": "finish", "ms": 1410, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3289, "reasoning_tokens": 0}}
+{"call": 7, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 7, "event": "finish", "ms": 1527, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3528, "reasoning_tokens": 0}}
+{"call": 8, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 8, "event": "finish", "ms": 1963, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2498, "reasoning_tokens": 0}}
+{"call": 9, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 9, "event": "finish", "ms": 1407, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2589, "reasoning_tokens": 0}}
+{"call": 10, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 10, "event": "finish", "ms": 1083, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2704, "reasoning_tokens": 0}}
+{"call": 11, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 11, "event": "finish", "ms": 1505, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2812, "reasoning_tokens": 0}}
+{"call": 12, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 12, "event": "finish", "ms": 1373, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2930, "reasoning_tokens": 0}}
+{"call": 13, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 13, "event": "finish", "ms": 1245, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3059, "reasoning_tokens": 0}}
+{"call": 14, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 14, "event": "finish", "ms": 1268, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3226, "reasoning_tokens": 0}}
+{"call": 15, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 15, "event": "finish", "ms": 1169, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3436, "reasoning_tokens": 0}}
+{"call": 16, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 16, "event": "finish", "ms": 2173, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2876, "reasoning_tokens": 0}}
+{"call": 17, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 17, "event": "finish", "ms": 1675, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2350, "reasoning_tokens": 0}}
+{"call": 18, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 18, "event": "finish", "ms": 1048, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2469, "reasoning_tokens": 0}}
+{"call": 19, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 19, "event": "finish", "ms": 1049, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2580, "reasoning_tokens": 0}}
+{"call": 20, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 20, "event": "finish", "ms": 1053, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2715, "reasoning_tokens": 0}}
+{"call": 21, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 21, "event": "finish", "ms": 1055, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2883, "reasoning_tokens": 0}}
+{"call": 22, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 22, "event": "finish", "ms": 1105, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3026, "reasoning_tokens": 0}}
+{"call": 23, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 23, "event": "finish", "ms": 1047, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2329, "reasoning_tokens": 0}}
+{"call": 24, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 24, "event": "finish", "ms": 975, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2442, "reasoning_tokens": 0}}
+{"call": 25, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 25, "event": "finish", "ms": 1148, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2567, "reasoning_tokens": 0}}
+{"call": 26, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 26, "event": "finish", "ms": 1506, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2692, "reasoning_tokens": 0}}
+{"call": 27, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 27, "event": "finish", "ms": 2060, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2809, "reasoning_tokens": 0}}
+{"call": 28, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 28, "event": "finish", "ms": 1094, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2976, "reasoning_tokens": 0}}
+{"call": 29, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 29, "event": "finish", "ms": 1063, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3114, "reasoning_tokens": 0}}
+{"call": 30, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 30, "event": "finish", "ms": 1376, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2478, "reasoning_tokens": 0}}
+{"call": 31, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 31, "event": "finish", "ms": 1224, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2597, "reasoning_tokens": 0}}
+{"call": 32, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 32, "event": "finish", "ms": 1133, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2711, "reasoning_tokens": 0}}
+{"call": 33, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 33, "event": "finish", "ms": 1551, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2841, "reasoning_tokens": 0}}
+{"call": 34, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 34, "event": "finish", "ms": 1663, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2997, "reasoning_tokens": 0}}
+{"call": 35, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 35, "event": "finish", "ms": 1370, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2258, "reasoning_tokens": 0}}
+{"call": 36, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 36, "event": "finish", "ms": 1577, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2374, "reasoning_tokens": 0}}
+{"call": 37, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 37, "event": "finish", "ms": 1564, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2485, "reasoning_tokens": 0}}
+{"call": 38, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 38, "event": "finish", "ms": 1334, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2607, "reasoning_tokens": 0}}
+{"call": 39, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 39, "event": "finish", "ms": 1396, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2736, "reasoning_tokens": 0}}
+{"call": 40, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 40, "event": "finish", "ms": 1262, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2905, "reasoning_tokens": 0}}
+{"call": 41, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 41, "event": "finish", "ms": 1248, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3048, "reasoning_tokens": 0}}
+{"call": 42, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 42, "event": "finish", "ms": 1314, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2345, "reasoning_tokens": 0}}
+{"call": 43, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 43, "event": "finish", "ms": 1306, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2458, "reasoning_tokens": 0}}
+{"call": 44, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 44, "event": "finish", "ms": 1137, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2583, "reasoning_tokens": 0}}
+{"call": 45, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 45, "event": "finish", "ms": 1076, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2710, "reasoning_tokens": 0}}
+{"call": 46, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 46, "event": "finish", "ms": 1015, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2831, "reasoning_tokens": 0}}
+{"call": 47, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 47, "event": "finish", "ms": 1901, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2965, "reasoning_tokens": 0}}
+{"call": 48, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 48, "event": "finish", "ms": 1161, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2488, "reasoning_tokens": 0}}
+{"call": 49, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 49, "event": "finish", "ms": 1075, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2641, "reasoning_tokens": 0}}
+{"call": 50, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 50, "event": "finish", "ms": 1166, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2754, "reasoning_tokens": 0}}
+{"call": 51, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 51, "event": "finish", "ms": 1593, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2873, "reasoning_tokens": 0}}
+{"call": 52, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 52, "event": "finish", "ms": 1185, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3008, "reasoning_tokens": 0}}
+{"call": 53, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 53, "event": "finish", "ms": 1101, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3133, "reasoning_tokens": 0}}
+{"call": 54, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 54, "event": "finish", "ms": 1554, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3362, "reasoning_tokens": 0}}
+{"call": 55, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 55, "event": "finish", "ms": 1121, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2947, "reasoning_tokens": 0}}
+{"call": 56, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 56, "event": "finish", "ms": 1335, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3066, "reasoning_tokens": 0}}
+{"call": 57, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 57, "event": "finish", "ms": 1702, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 3180, "reasoning_tokens": 0}}
+{"call": 58, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 58, "event": "finish", "ms": 1260, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3310, "reasoning_tokens": 0}}
+{"call": 59, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 59, "event": "finish", "ms": 1169, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3439, "reasoning_tokens": 0}}
+{"call": 60, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 60, "event": "finish", "ms": 1499, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3608, "reasoning_tokens": 0}}
+{"call": 61, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 61, "event": "finish", "ms": 1528, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3868, "reasoning_tokens": 0}}
+{"call": 62, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 62, "event": "finish", "ms": 1137, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2619, "reasoning_tokens": 0}}
+{"call": 63, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 63, "event": "finish", "ms": 1266, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2183, "reasoning_tokens": 0}}
+{"call": 64, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 64, "event": "finish", "ms": 1451, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2400, "reasoning_tokens": 0}}
+{"call": 65, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 65, "event": "finish", "ms": 1377, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2513, "reasoning_tokens": 0}}
+{"call": 66, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 66, "event": "finish", "ms": 2844, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2632, "reasoning_tokens": 0}}
+{"call": 67, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 67, "event": "finish", "ms": 1373, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2767, "reasoning_tokens": 0}}
+{"call": 68, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 68, "event": "finish", "ms": 1171, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2935, "reasoning_tokens": 0}}
+{"call": 69, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 69, "event": "finish", "ms": 1420, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3080, "reasoning_tokens": 0}}
+{"call": 70, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 70, "event": "finish", "ms": 1084, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2233, "reasoning_tokens": 0}}
+{"call": 71, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 71, "event": "finish", "ms": 1043, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2350, "reasoning_tokens": 0}}
+{"call": 72, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 72, "event": "finish", "ms": 1015, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2464, "reasoning_tokens": 0}}
+{"call": 73, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 73, "event": "finish", "ms": 3027, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2594, "reasoning_tokens": 0}}
+{"call": 74, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 74, "event": "finish", "ms": 1062, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2727, "reasoning_tokens": 0}}
+{"call": 75, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 75, "event": "finish", "ms": 1147, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2228, "reasoning_tokens": 0}}
+{"call": 76, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 76, "event": "finish", "ms": 2473, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2341, "reasoning_tokens": 0}}
+{"call": 77, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 77, "event": "finish", "ms": 2431, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2460, "reasoning_tokens": 0}}
+{"call": 78, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 78, "event": "finish", "ms": 1400, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2592, "reasoning_tokens": 0}}
+{"call": 79, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 79, "event": "finish", "ms": 1035, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2326, "reasoning_tokens": 0}}
+{"call": 80, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 80, "event": "finish", "ms": 1451, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2439, "reasoning_tokens": 0}}
+{"call": 81, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 81, "event": "finish", "ms": 1203, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2564, "reasoning_tokens": 0}}
+{"call": 82, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 82, "event": "finish", "ms": 1196, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2689, "reasoning_tokens": 0}}
+{"call": 83, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 83, "event": "finish", "ms": 1113, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2806, "reasoning_tokens": 0}}
+{"call": 84, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 84, "event": "finish", "ms": 3195, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2932, "reasoning_tokens": 0}}
+{"call": 85, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 85, "event": "finish", "ms": 1078, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2352, "reasoning_tokens": 0}}
+{"call": 86, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 86, "event": "finish", "ms": 3883, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2588, "reasoning_tokens": 0}}
+{"call": 87, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 87, "event": "finish", "ms": 2072, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2701, "reasoning_tokens": 0}}
+{"call": 88, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 88, "event": "finish", "ms": 3212, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2826, "reasoning_tokens": 0}}
+{"call": 89, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 89, "event": "finish", "ms": 1099, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2953, "reasoning_tokens": 0}}
+{"call": 90, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 90, "event": "finish", "ms": 1122, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3074, "reasoning_tokens": 0}}
+{"call": 91, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 91, "event": "finish", "ms": 1725, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3242, "reasoning_tokens": 0}}
+{"call": 92, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 92, "event": "finish", "ms": 1848, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3442, "reasoning_tokens": 0}}
+{"call": 93, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 93, "event": "finish", "ms": 1978, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2345, "reasoning_tokens": 0}}
+{"call": 94, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 94, "event": "finish", "ms": 2621, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2299, "reasoning_tokens": 0}}
+{"call": 95, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 95, "event": "finish", "ms": 2126, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2805, "reasoning_tokens": 0}}
+{"call": 96, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 96, "event": "finish", "ms": 1214, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2610, "reasoning_tokens": 0}}
+{"call": 97, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 97, "event": "finish", "ms": 1624, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2725, "reasoning_tokens": 0}}
+{"call": 98, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 98, "event": "finish", "ms": 1054, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2833, "reasoning_tokens": 0}}
+{"call": 99, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 99, "event": "finish", "ms": 1062, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2951, "reasoning_tokens": 0}}
+{"call": 100, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 100, "event": "finish", "ms": 1123, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3080, "reasoning_tokens": 0}}
+{"call": 101, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 101, "event": "finish", "ms": 1240, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3248, "reasoning_tokens": 0}}
+{"call": 102, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 102, "event": "finish", "ms": 1280, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3439, "reasoning_tokens": 0}}
+{"call": 103, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 103, "event": "finish", "ms": 2734, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2424, "reasoning_tokens": 0}}
+{"call": 104, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 104, "event": "finish", "ms": 1227, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2537, "reasoning_tokens": 0}}
+{"call": 105, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 105, "event": "finish", "ms": 1105, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2656, "reasoning_tokens": 0}}
+{"call": 106, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 106, "event": "finish", "ms": 1126, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2791, "reasoning_tokens": 0}}
+{"call": 107, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 107, "event": "finish", "ms": 1952, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2959, "reasoning_tokens": 0}}
+{"call": 108, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 108, "event": "finish", "ms": 1106, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3104, "reasoning_tokens": 0}}
+{"call": 109, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 109, "event": "finish", "ms": 2533, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2701, "reasoning_tokens": 0}}
+{"call": 110, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 110, "event": "finish", "ms": 1086, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2814, "reasoning_tokens": 0}}
+{"call": 111, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 111, "event": "finish", "ms": 1083, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2933, "reasoning_tokens": 0}}
+{"call": 112, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 112, "event": "finish", "ms": 1896, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3068, "reasoning_tokens": 0}}
+{"call": 113, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 113, "event": "finish", "ms": 1324, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3193, "reasoning_tokens": 0}}
+{"call": 114, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 114, "event": "finish", "ms": 2335, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3361, "reasoning_tokens": 0}}
+{"call": 115, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 115, "event": "finish", "ms": 1839, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3603, "reasoning_tokens": 0}}
+{"call": 116, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 116, "event": "finish", "ms": 1140, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2225, "reasoning_tokens": 0}}
+{"call": 117, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 117, "event": "finish", "ms": 1420, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2342, "reasoning_tokens": 0}}
+{"call": 118, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 118, "event": "finish", "ms": 999, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2456, "reasoning_tokens": 0}}
+{"call": 119, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 119, "event": "finish", "ms": 1065, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2586, "reasoning_tokens": 0}}
+{"call": 120, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 120, "event": "finish", "ms": 2838, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2719, "reasoning_tokens": 0}}
+{"call": 121, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 121, "event": "finish", "ms": 1300, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2502, "reasoning_tokens": 0}}
+{"call": 122, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 122, "event": "finish", "ms": 1048, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2615, "reasoning_tokens": 0}}
+{"call": 123, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 123, "event": "finish", "ms": 2151, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2740, "reasoning_tokens": 0}}
+{"call": 124, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 124, "event": "finish", "ms": 1359, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2865, "reasoning_tokens": 0}}
+{"call": 125, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 125, "event": "finish", "ms": 1062, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2982, "reasoning_tokens": 0}}
+{"call": 126, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 126, "event": "finish", "ms": 1204, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 3150, "reasoning_tokens": 0}}
+{"call": 127, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 127, "event": "finish", "ms": 1423, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3319, "reasoning_tokens": 0}}
+{"call": 128, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 128, "event": "finish", "ms": 1070, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2467, "reasoning_tokens": 0}}
+{"call": 129, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 129, "event": "finish", "ms": 1296, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2580, "reasoning_tokens": 0}}
+{"call": 130, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 130, "event": "finish", "ms": 1431, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2705, "reasoning_tokens": 0}}
+{"call": 131, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 131, "event": "finish", "ms": 2441, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2832, "reasoning_tokens": 0}}
+{"call": 132, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 132, "event": "finish", "ms": 1485, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2953, "reasoning_tokens": 0}}
+{"call": 133, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 133, "event": "finish", "ms": 1051, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3112, "reasoning_tokens": 0}}
+{"call": 134, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 134, "event": "finish", "ms": 2512, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2757, "reasoning_tokens": 0}}
+{"call": 135, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 135, "event": "finish", "ms": 1175, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2873, "reasoning_tokens": 0}}
+{"call": 136, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 136, "event": "finish", "ms": 1039, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2996, "reasoning_tokens": 0}}
+{"call": 137, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 137, "event": "finish", "ms": 1128, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 3128, "reasoning_tokens": 0}}
+{"call": 138, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 138, "event": "finish", "ms": 2894, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3260, "reasoning_tokens": 0}}
+{"call": 139, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 139, "event": "finish", "ms": 1481, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 3428, "reasoning_tokens": 0}}
+{"call": 140, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 140, "event": "finish", "ms": 1241, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3705, "reasoning_tokens": 0}}
+{"call": 141, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 141, "event": "finish", "ms": 1186, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2575, "reasoning_tokens": 0}}
+{"call": 142, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 142, "event": "finish", "ms": 1033, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2694, "reasoning_tokens": 0}}
+{"call": 143, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 143, "event": "finish", "ms": 1222, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2805, "reasoning_tokens": 0}}
+{"call": 144, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 144, "event": "finish", "ms": 2346, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2940, "reasoning_tokens": 0}}
+{"call": 145, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 145, "event": "finish", "ms": 1077, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3069, "reasoning_tokens": 0}}
+{"call": 146, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 146, "event": "finish", "ms": 1414, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3237, "reasoning_tokens": 0}}
+{"call": 147, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 147, "event": "finish", "ms": 1331, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3402, "reasoning_tokens": 0}}
+{"call": 148, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 148, "event": "finish", "ms": 1341, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 3575, "reasoning_tokens": 0}}
+{"call": 149, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 149, "event": "finish", "ms": 1394, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3749, "reasoning_tokens": 0}}
+{"call": 150, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 150, "event": "finish", "ms": 1166, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2361, "reasoning_tokens": 0}}
+{"call": 151, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 151, "event": "finish", "ms": 951, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2477, "reasoning_tokens": 0}}
+{"call": 152, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 152, "event": "finish", "ms": 1023, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2588, "reasoning_tokens": 0}}
+{"call": 153, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 153, "event": "finish", "ms": 1046, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2710, "reasoning_tokens": 0}}
+{"call": 154, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 154, "event": "finish", "ms": 1082, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2839, "reasoning_tokens": 0}}
+{"call": 155, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 155, "event": "finish", "ms": 1400, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3006, "reasoning_tokens": 0}}
+{"call": 156, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 156, "event": "finish", "ms": 1265, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 3176, "reasoning_tokens": 0}}
+{"call": 157, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 157, "event": "finish", "ms": 1056, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2246, "reasoning_tokens": 0}}
+{"call": 158, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 158, "event": "finish", "ms": 2238, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2363, "reasoning_tokens": 0}}
+{"call": 159, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 159, "event": "finish", "ms": 1103, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2477, "reasoning_tokens": 0}}
+{"call": 160, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 160, "event": "finish", "ms": 1045, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2607, "reasoning_tokens": 0}}
+{"call": 161, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 161, "event": "finish", "ms": 1279, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2774, "reasoning_tokens": 0}}
+{"call": 162, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 162, "event": "finish", "ms": 1088, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2919, "reasoning_tokens": 0}}
+{"call": 163, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 163, "event": "finish", "ms": 1062, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2245, "reasoning_tokens": 0}}
+{"call": 164, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 164, "event": "finish", "ms": 991, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2361, "reasoning_tokens": 0}}
+{"call": 165, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 165, "event": "finish", "ms": 1046, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2472, "reasoning_tokens": 0}}
+{"call": 166, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 166, "event": "finish", "ms": 10004, "outcome": "transport_error", "usage": {}}
+{"call": 167, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 167, "event": "finish", "ms": 1391, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2594, "reasoning_tokens": 0}}
+{"call": 168, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 168, "event": "finish", "ms": 1959, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2723, "reasoning_tokens": 0}}
+{"call": 169, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 169, "event": "finish", "ms": 1333, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2852, "reasoning_tokens": 0}}
+{"call": 170, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 170, "event": "finish", "ms": 952, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2253, "reasoning_tokens": 0}}
+{"call": 171, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 171, "event": "finish", "ms": 1144, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2369, "reasoning_tokens": 0}}
+{"call": 172, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 172, "event": "finish", "ms": 1046, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2480, "reasoning_tokens": 0}}
+{"call": 173, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 173, "event": "finish", "ms": 1200, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2602, "reasoning_tokens": 0}}
+{"call": 174, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 174, "event": "finish", "ms": 1422, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2731, "reasoning_tokens": 0}}
+{"call": 175, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 175, "event": "finish", "ms": 1378, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2898, "reasoning_tokens": 0}}
+{"call": 176, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 176, "event": "finish", "ms": 1236, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3039, "reasoning_tokens": 0}}
+{"call": 177, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 177, "event": "finish", "ms": 1072, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2264, "reasoning_tokens": 0}}
+{"call": 178, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 178, "event": "finish", "ms": 1036, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2633, "reasoning_tokens": 0}}
+{"call": 179, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 179, "event": "finish", "ms": 1039, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2749, "reasoning_tokens": 0}}
+{"call": 180, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 180, "event": "finish", "ms": 1065, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2872, "reasoning_tokens": 0}}
+{"call": 181, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 181, "event": "finish", "ms": 1058, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3004, "reasoning_tokens": 0}}
+{"call": 182, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 182, "event": "finish", "ms": 1393, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3136, "reasoning_tokens": 0}}
+{"call": 183, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 183, "event": "finish", "ms": 1214, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3372, "reasoning_tokens": 0}}
+{"call": 184, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 184, "event": "finish", "ms": 1036, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2872, "reasoning_tokens": 0}}
+{"call": 185, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 185, "event": "finish", "ms": 1283, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2991, "reasoning_tokens": 0}}
+{"call": 186, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 186, "event": "finish", "ms": 1136, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3105, "reasoning_tokens": 0}}
+{"call": 187, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 187, "event": "finish", "ms": 1225, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3235, "reasoning_tokens": 0}}
+{"call": 188, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 188, "event": "finish", "ms": 1156, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3364, "reasoning_tokens": 0}}
+{"call": 189, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 189, "event": "finish", "ms": 1272, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3533, "reasoning_tokens": 0}}
+{"call": 190, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 190, "event": "finish", "ms": 1789, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3771, "reasoning_tokens": 0}}
+{"call": 191, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 191, "event": "finish", "ms": 1045, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2734, "reasoning_tokens": 0}}
+{"call": 192, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 192, "event": "finish", "ms": 1090, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2661, "reasoning_tokens": 0}}
+{"call": 193, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 193, "event": "finish", "ms": 1325, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2619, "reasoning_tokens": 0}}
+{"call": 194, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 194, "event": "finish", "ms": 1212, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2734, "reasoning_tokens": 0}}
+{"call": 195, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 195, "event": "finish", "ms": 1057, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2842, "reasoning_tokens": 0}}
+{"call": 196, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 196, "event": "finish", "ms": 1616, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2960, "reasoning_tokens": 0}}
+{"call": 197, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 197, "event": "finish", "ms": 1268, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3089, "reasoning_tokens": 0}}
+{"call": 198, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 198, "event": "finish", "ms": 1365, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3309, "reasoning_tokens": 0}}
+{"call": 199, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 199, "event": "finish", "ms": 1064, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2665, "reasoning_tokens": 0}}
+{"call": 200, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 200, "event": "finish", "ms": 1289, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2784, "reasoning_tokens": 0}}
+{"call": 201, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 201, "event": "finish", "ms": 1242, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2898, "reasoning_tokens": 0}}
+{"call": 202, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 202, "event": "finish", "ms": 1383, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3028, "reasoning_tokens": 0}}
+{"call": 203, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 203, "event": "finish", "ms": 1122, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3157, "reasoning_tokens": 0}}
+{"call": 204, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 204, "event": "finish", "ms": 1434, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3325, "reasoning_tokens": 0}}
+{"call": 205, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 205, "event": "finish", "ms": 1084, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3562, "reasoning_tokens": 0}}
+{"call": 206, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 206, "event": "finish", "ms": 1324, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2280, "reasoning_tokens": 0}}
+{"call": 207, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 207, "event": "finish", "ms": 1499, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2399, "reasoning_tokens": 0}}
+{"call": 208, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 208, "event": "finish", "ms": 1047, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2510, "reasoning_tokens": 0}}
+{"call": 209, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 209, "event": "finish", "ms": 1075, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2640, "reasoning_tokens": 0}}
+{"call": 210, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 210, "event": "finish", "ms": 1543, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2798, "reasoning_tokens": 0}}
+{"call": 211, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 211, "event": "finish", "ms": 1569, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2914, "reasoning_tokens": 0}}
+{"call": 212, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 212, "event": "finish", "ms": 1077, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3037, "reasoning_tokens": 0}}
+{"call": 213, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 213, "event": "finish", "ms": 1541, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3169, "reasoning_tokens": 0}}
+{"call": 214, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 214, "event": "finish", "ms": 1201, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3301, "reasoning_tokens": 0}}
+{"call": 215, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 215, "event": "finish", "ms": 1080, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3469, "reasoning_tokens": 0}}
+{"call": 216, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 216, "event": "finish", "ms": 2851, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3718, "reasoning_tokens": 0}}
+{"call": 217, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 217, "event": "finish", "ms": 1897, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2307, "reasoning_tokens": 0}}
+{"call": 218, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 218, "event": "finish", "ms": 1063, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2426, "reasoning_tokens": 0}}
+{"call": 219, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 219, "event": "finish", "ms": 1035, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2537, "reasoning_tokens": 0}}
+{"call": 220, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 220, "event": "finish", "ms": 1035, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2672, "reasoning_tokens": 0}}
+{"call": 221, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 221, "event": "finish", "ms": 1129, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2802, "reasoning_tokens": 0}}
+{"call": 222, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 222, "event": "finish", "ms": 1028, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2643, "reasoning_tokens": 0}}
+{"call": 223, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 223, "event": "finish", "ms": 1092, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2756, "reasoning_tokens": 0}}
+{"call": 224, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 224, "event": "finish", "ms": 2812, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2881, "reasoning_tokens": 0}}
+{"call": 225, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 225, "event": "finish", "ms": 1045, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3008, "reasoning_tokens": 0}}
+{"call": 226, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 226, "event": "finish", "ms": 1046, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3129, "reasoning_tokens": 0}}
+{"call": 227, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 227, "event": "finish", "ms": 1157, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3296, "reasoning_tokens": 0}}
+{"call": 228, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 228, "event": "finish", "ms": 1465, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3535, "reasoning_tokens": 0}}
+{"call": 229, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 229, "event": "finish", "ms": 1036, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2634, "reasoning_tokens": 0}}
+{"call": 230, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 230, "event": "finish", "ms": 1054, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2749, "reasoning_tokens": 0}}
+{"call": 231, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 231, "event": "finish", "ms": 1919, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2857, "reasoning_tokens": 0}}
+{"call": 232, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 232, "event": "finish", "ms": 1102, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2975, "reasoning_tokens": 0}}
+{"call": 233, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 233, "event": "finish", "ms": 1199, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3104, "reasoning_tokens": 0}}
+{"call": 234, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 234, "event": "finish", "ms": 1254, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 3271, "reasoning_tokens": 0}}
+{"call": 235, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 235, "event": "finish", "ms": 2054, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3503, "reasoning_tokens": 0}}
+{"call": 236, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 236, "event": "finish", "ms": 1360, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2604, "reasoning_tokens": 0}}
+{"call": 237, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 237, "event": "finish", "ms": 2443, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2721, "reasoning_tokens": 0}}
+{"call": 238, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 238, "event": "finish", "ms": 1542, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2835, "reasoning_tokens": 0}}
+{"call": 239, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 239, "event": "finish", "ms": 1466, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2965, "reasoning_tokens": 0}}
+{"call": 240, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 240, "event": "finish", "ms": 1234, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3166, "reasoning_tokens": 0}}
+{"call": 241, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 241, "event": "finish", "ms": 1569, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 6, "prompt_tokens": 2518, "reasoning_tokens": 0}}
+{"call": 242, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 242, "event": "finish", "ms": 1131, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2458, "reasoning_tokens": 0}}
+{"call": 243, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 243, "event": "finish", "ms": 1045, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2571, "reasoning_tokens": 0}}
+{"call": 244, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 244, "event": "finish", "ms": 1571, "outcome": "accepted", "usage": {"cached_tokens": 1536, "completion_tokens": 7, "prompt_tokens": 2696, "reasoning_tokens": 0}}
+{"call": 245, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 245, "event": "finish", "ms": 1069, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2821, "reasoning_tokens": 0}}
+{"call": 246, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 246, "event": "finish", "ms": 1019, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2938, "reasoning_tokens": 0}}
+{"call": 247, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 247, "event": "finish", "ms": 1154, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3105, "reasoning_tokens": 0}}
+{"call": 248, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 248, "event": "finish", "ms": 1136, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3273, "reasoning_tokens": 0}}
+{"call": 249, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 249, "event": "finish", "ms": 1365, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 2380, "reasoning_tokens": 0}}
+{"call": 250, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 250, "event": "finish", "ms": 2212, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2493, "reasoning_tokens": 0}}
+{"call": 251, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 251, "event": "finish", "ms": 1038, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2612, "reasoning_tokens": 0}}
+{"call": 252, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 252, "event": "finish", "ms": 1052, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2747, "reasoning_tokens": 0}}
+{"call": 253, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 253, "event": "finish", "ms": 1020, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2915, "reasoning_tokens": 0}}
+{"call": 254, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 254, "event": "finish", "ms": 1203, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 3060, "reasoning_tokens": 0}}
+{"call": 255, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 255, "event": "finish", "ms": 1147, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 6, "prompt_tokens": 3092, "reasoning_tokens": 0}}
+{"call": 256, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 256, "event": "finish", "ms": 1271, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 374, "reasoning_tokens": 0}}
+{"call": 257, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 257, "event": "finish", "ms": 1226, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 364, "reasoning_tokens": 0}}
+{"call": 258, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 258, "event": "finish", "ms": 1216, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 360, "reasoning_tokens": 0}}
+{"call": 259, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 259, "event": "finish", "ms": 1211, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 350, "reasoning_tokens": 0}}
+{"call": 260, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 260, "event": "finish", "ms": 1309, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 345, "reasoning_tokens": 0}}
+{"call": 261, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 261, "event": "finish", "ms": 2881, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 364, "reasoning_tokens": 0}}
+{"call": 262, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 262, "event": "finish", "ms": 1256, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 361, "reasoning_tokens": 0}}
+{"call": 263, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 263, "event": "finish", "ms": 1493, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 363, "reasoning_tokens": 0}}
+{"call": 264, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 264, "event": "finish", "ms": 1493, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 384, "reasoning_tokens": 0}}
+{"call": 265, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 265, "event": "finish", "ms": 1513, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 404, "reasoning_tokens": 0}}
+{"call": 266, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 266, "event": "finish", "ms": 1125, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 368, "reasoning_tokens": 0}}
+{"call": 267, "config": "af8bc8e74556576de897e387afa41dd3c2f7b24b3fd8c06e7802ecfd3bafcdbf", "event": "start", "model": "kimi-k3.1-pro"}
+{"call": 267, "event": "finish", "ms": 1265, "outcome": "accepted", "usage": {"cached_tokens": 0, "completion_tokens": 6, "prompt_tokens": 353, "reasoning_tokens": 0}}
+{"call": 268, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 268, "event": "finish", "ms": 985, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2601, "reasoning_tokens": 0}}
+{"call": 269, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 269, "event": "finish", "ms": 928, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2692, "reasoning_tokens": 0}}
+{"call": 270, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 270, "event": "finish", "ms": 935, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2793, "reasoning_tokens": 0}}
+{"call": 271, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 271, "event": "finish", "ms": 975, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2900, "reasoning_tokens": 0}}
+{"call": 272, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 272, "event": "finish", "ms": 929, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2998, "reasoning_tokens": 0}}
+{"call": 273, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 273, "event": "finish", "ms": 2100, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3142, "reasoning_tokens": 0}}
+{"call": 274, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 274, "event": "finish", "ms": 1042, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3364, "reasoning_tokens": 0}}
+{"call": 275, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 275, "event": "finish", "ms": 872, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2457, "reasoning_tokens": 0}}
+{"call": 276, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 276, "event": "finish", "ms": 2703, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2550, "reasoning_tokens": 0}}
+{"call": 277, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 277, "event": "finish", "ms": 1138, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2643, "reasoning_tokens": 0}}
+{"call": 278, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 278, "event": "finish", "ms": 2195, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2727, "reasoning_tokens": 0}}
+{"call": 279, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 279, "event": "finish", "ms": 1106, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2821, "reasoning_tokens": 0}}
+{"call": 280, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 280, "event": "finish", "ms": 890, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2929, "reasoning_tokens": 0}}
+{"call": 281, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 281, "event": "finish", "ms": 2890, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3073, "reasoning_tokens": 0}}
+{"call": 282, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 282, "event": "finish", "ms": 1043, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3262, "reasoning_tokens": 0}}
+{"call": 283, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 283, "event": "finish", "ms": 1304, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2831, "reasoning_tokens": 0}}
+{"call": 284, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 284, "event": "finish", "ms": 1142, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2301, "reasoning_tokens": 0}}
+{"call": 285, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 285, "event": "finish", "ms": 2083, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2398, "reasoning_tokens": 0}}
+{"call": 286, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 286, "event": "finish", "ms": 1096, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2485, "reasoning_tokens": 0}}
+{"call": 287, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 287, "event": "finish", "ms": 1063, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2597, "reasoning_tokens": 0}}
+{"call": 288, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 288, "event": "finish", "ms": 1421, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2742, "reasoning_tokens": 0}}
+{"call": 289, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 289, "event": "finish", "ms": 1049, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2861, "reasoning_tokens": 0}}
+{"call": 290, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 290, "event": "finish", "ms": 2206, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2282, "reasoning_tokens": 0}}
+{"call": 291, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 291, "event": "finish", "ms": 1596, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2373, "reasoning_tokens": 0}}
+{"call": 292, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 292, "event": "finish", "ms": 907, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2476, "reasoning_tokens": 0}}
+{"call": 293, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 293, "event": "finish", "ms": 927, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2578, "reasoning_tokens": 0}}
+{"call": 294, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 294, "event": "finish", "ms": 906, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2673, "reasoning_tokens": 0}}
+{"call": 295, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 295, "event": "finish", "ms": 1831, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2818, "reasoning_tokens": 0}}
+{"call": 296, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 296, "event": "finish", "ms": 865, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2933, "reasoning_tokens": 0}}
+{"call": 297, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 297, "event": "finish", "ms": 1262, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2434, "reasoning_tokens": 0}}
+{"call": 298, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 298, "event": "finish", "ms": 1011, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2531, "reasoning_tokens": 0}}
+{"call": 299, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 299, "event": "finish", "ms": 2930, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2621, "reasoning_tokens": 0}}
+{"call": 300, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 300, "event": "finish", "ms": 2204, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2728, "reasoning_tokens": 0}}
+{"call": 301, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 301, "event": "finish", "ms": 1154, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 2864, "reasoning_tokens": 0}}
+{"call": 302, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 302, "event": "finish", "ms": 2266, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2211, "reasoning_tokens": 0}}
+{"call": 303, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 303, "event": "finish", "ms": 929, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2306, "reasoning_tokens": 0}}
+{"call": 304, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 304, "event": "finish", "ms": 882, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2393, "reasoning_tokens": 0}}
+{"call": 305, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 305, "event": "finish", "ms": 3835, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2492, "reasoning_tokens": 0}}
+{"call": 306, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 306, "event": "finish", "ms": 869, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2600, "reasoning_tokens": 0}}
+{"call": 307, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 307, "event": "finish", "ms": 943, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2746, "reasoning_tokens": 0}}
+{"call": 308, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 308, "event": "finish", "ms": 1098, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2864, "reasoning_tokens": 0}}
+{"call": 309, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 309, "event": "finish", "ms": 2141, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2309, "reasoning_tokens": 0}}
+{"call": 310, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 310, "event": "finish", "ms": 906, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2400, "reasoning_tokens": 0}}
+{"call": 311, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 311, "event": "finish", "ms": 845, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2501, "reasoning_tokens": 0}}
+{"call": 312, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 312, "event": "finish", "ms": 982, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2608, "reasoning_tokens": 0}}
+{"call": 313, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 313, "event": "finish", "ms": 815, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2706, "reasoning_tokens": 0}}
+{"call": 314, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 314, "event": "finish", "ms": 1006, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2821, "reasoning_tokens": 0}}
+{"call": 315, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 315, "event": "finish", "ms": 2075, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2443, "reasoning_tokens": 0}}
+{"call": 316, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 316, "event": "finish", "ms": 1168, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2599, "reasoning_tokens": 0}}
+{"call": 317, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 317, "event": "finish", "ms": 1002, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2690, "reasoning_tokens": 0}}
+{"call": 318, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 318, "event": "finish", "ms": 1861, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2785, "reasoning_tokens": 0}}
+{"call": 319, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 319, "event": "finish", "ms": 837, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2898, "reasoning_tokens": 0}}
+{"call": 320, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 320, "event": "finish", "ms": 847, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 3001, "reasoning_tokens": 0}}
+{"call": 321, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 321, "event": "finish", "ms": 1041, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3213, "reasoning_tokens": 0}}
+{"call": 322, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 322, "event": "finish", "ms": 1029, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2909, "reasoning_tokens": 0}}
+{"call": 323, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 323, "event": "finish", "ms": 1140, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 3006, "reasoning_tokens": 0}}
+{"call": 324, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 324, "event": "finish", "ms": 949, "outcome": "accepted", "usage": {"cached_tokens": 2944, "completion_tokens": 7, "prompt_tokens": 3096, "reasoning_tokens": 0}}
+{"call": 325, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 325, "event": "finish", "ms": 1112, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3203, "reasoning_tokens": 0}}
+{"call": 326, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 326, "event": "finish", "ms": 1186, "outcome": "accepted", "usage": {"cached_tokens": 3200, "completion_tokens": 7, "prompt_tokens": 3309, "reasoning_tokens": 0}}
+{"call": 327, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 327, "event": "finish", "ms": 1202, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3455, "reasoning_tokens": 0}}
+{"call": 328, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 328, "event": "finish", "ms": 1282, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3697, "reasoning_tokens": 0}}
+{"call": 329, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 329, "event": "finish", "ms": 929, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2586, "reasoning_tokens": 0}}
+{"call": 330, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 330, "event": "finish", "ms": 984, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2138, "reasoning_tokens": 0}}
+{"call": 331, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 331, "event": "finish", "ms": 1247, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2355, "reasoning_tokens": 0}}
+{"call": 332, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 332, "event": "finish", "ms": 1311, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2446, "reasoning_tokens": 0}}
+{"call": 333, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 333, "event": "finish", "ms": 942, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2541, "reasoning_tokens": 0}}
+{"call": 334, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 334, "event": "finish", "ms": 1277, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2654, "reasoning_tokens": 0}}
+{"call": 335, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 335, "event": "finish", "ms": 1013, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2800, "reasoning_tokens": 0}}
+{"call": 336, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 336, "event": "finish", "ms": 954, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2923, "reasoning_tokens": 0}}
+{"call": 337, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 337, "event": "finish", "ms": 874, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2185, "reasoning_tokens": 0}}
+{"call": 338, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 338, "event": "finish", "ms": 923, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2281, "reasoning_tokens": 0}}
+{"call": 339, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 339, "event": "finish", "ms": 863, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2371, "reasoning_tokens": 0}}
+{"call": 340, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 340, "event": "finish", "ms": 999, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2478, "reasoning_tokens": 0}}
+{"call": 341, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 341, "event": "finish", "ms": 1048, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 2588, "reasoning_tokens": 0}}
+{"call": 342, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 342, "event": "finish", "ms": 892, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2180, "reasoning_tokens": 0}}
+{"call": 343, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 343, "event": "finish", "ms": 1049, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2271, "reasoning_tokens": 0}}
+{"call": 344, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 344, "event": "finish", "ms": 840, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2366, "reasoning_tokens": 0}}
+{"call": 345, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 345, "event": "finish", "ms": 912, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2477, "reasoning_tokens": 0}}
+{"call": 346, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 346, "event": "finish", "ms": 1140, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2281, "reasoning_tokens": 0}}
+{"call": 347, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 347, "event": "finish", "ms": 2154, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2372, "reasoning_tokens": 0}}
+{"call": 348, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 348, "event": "finish", "ms": 903, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2475, "reasoning_tokens": 0}}
+{"call": 349, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 349, "event": "finish", "ms": 1082, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2577, "reasoning_tokens": 0}}
+{"call": 350, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 350, "event": "finish", "ms": 766, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2672, "reasoning_tokens": 0}}
+{"call": 351, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 351, "event": "finish", "ms": 930, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2776, "reasoning_tokens": 0}}
+{"call": 352, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 352, "event": "finish", "ms": 982, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2304, "reasoning_tokens": 0}}
+{"call": 353, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 353, "event": "finish", "ms": 1098, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2556, "reasoning_tokens": 0}}
+{"call": 354, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 354, "event": "finish", "ms": 7769, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2647, "reasoning_tokens": 0}}
+{"call": 355, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 355, "event": "finish", "ms": 945, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2748, "reasoning_tokens": 0}}
+{"call": 356, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 356, "event": "finish", "ms": 1734, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2855, "reasoning_tokens": 0}}
+{"call": 357, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 357, "event": "finish", "ms": 938, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2953, "reasoning_tokens": 0}}
+{"call": 358, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 358, "event": "finish", "ms": 1352, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3097, "reasoning_tokens": 0}}
+{"call": 359, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 359, "event": "finish", "ms": 1105, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3279, "reasoning_tokens": 0}}
+{"call": 360, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 360, "event": "finish", "ms": 968, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2295, "reasoning_tokens": 0}}
+{"call": 361, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 361, "event": "finish", "ms": 838, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2252, "reasoning_tokens": 0}}
+{"call": 362, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 362, "event": "finish", "ms": 1039, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2768, "reasoning_tokens": 0}}
+{"call": 363, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 363, "event": "finish", "ms": 987, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2575, "reasoning_tokens": 0}}
+{"call": 364, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 364, "event": "finish", "ms": 1527, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2668, "reasoning_tokens": 0}}
+{"call": 365, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 365, "event": "finish", "ms": 990, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2752, "reasoning_tokens": 0}}
+{"call": 366, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 366, "event": "finish", "ms": 1069, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2846, "reasoning_tokens": 0}}
+{"call": 367, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 367, "event": "finish", "ms": 1191, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2954, "reasoning_tokens": 0}}
+{"call": 368, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 368, "event": "finish", "ms": 1094, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3100, "reasoning_tokens": 0}}
+{"call": 369, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 369, "event": "finish", "ms": 1063, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3271, "reasoning_tokens": 0}}
+{"call": 370, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 370, "event": "finish", "ms": 1081, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2379, "reasoning_tokens": 0}}
+{"call": 371, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 371, "event": "finish", "ms": 985, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2470, "reasoning_tokens": 0}}
+{"call": 372, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 372, "event": "finish", "ms": 968, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2565, "reasoning_tokens": 0}}
+{"call": 373, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 373, "event": "finish", "ms": 1083, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2678, "reasoning_tokens": 0}}
+{"call": 374, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 374, "event": "finish", "ms": 1025, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2824, "reasoning_tokens": 0}}
+{"call": 375, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 375, "event": "finish", "ms": 946, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2947, "reasoning_tokens": 0}}
+{"call": 376, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 376, "event": "finish", "ms": 976, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2659, "reasoning_tokens": 0}}
+{"call": 377, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 377, "event": "finish", "ms": 1044, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2750, "reasoning_tokens": 0}}
+{"call": 378, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 378, "event": "finish", "ms": 1117, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2845, "reasoning_tokens": 0}}
+{"call": 379, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 379, "event": "finish", "ms": 1112, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2958, "reasoning_tokens": 0}}
+{"call": 380, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 380, "event": "finish", "ms": 1110, "outcome": "accepted", "usage": {"cached_tokens": 2944, "completion_tokens": 7, "prompt_tokens": 3061, "reasoning_tokens": 0}}
+{"call": 381, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 381, "event": "finish", "ms": 1042, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3207, "reasoning_tokens": 0}}
+{"call": 382, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 382, "event": "finish", "ms": 1144, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3431, "reasoning_tokens": 0}}
+{"call": 383, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 383, "event": "finish", "ms": 1485, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2176, "reasoning_tokens": 0}}
+{"call": 384, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 384, "event": "finish", "ms": 2131, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2272, "reasoning_tokens": 0}}
+{"call": 385, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 385, "event": "finish", "ms": 907, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2362, "reasoning_tokens": 0}}
+{"call": 386, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 386, "event": "finish", "ms": 1224, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2469, "reasoning_tokens": 0}}
+{"call": 387, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 387, "event": "finish", "ms": 1701, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2579, "reasoning_tokens": 0}}
+{"call": 388, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 388, "event": "finish", "ms": 997, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2458, "reasoning_tokens": 0}}
+{"call": 389, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 389, "event": "finish", "ms": 873, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2549, "reasoning_tokens": 0}}
+{"call": 390, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 390, "event": "finish", "ms": 888, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2652, "reasoning_tokens": 0}}
+{"call": 391, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 391, "event": "finish", "ms": 1120, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2754, "reasoning_tokens": 0}}
+{"call": 392, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 392, "event": "finish", "ms": 1148, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2849, "reasoning_tokens": 0}}
+{"call": 393, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 393, "event": "finish", "ms": 863, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2994, "reasoning_tokens": 0}}
+{"call": 394, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 394, "event": "finish", "ms": 1387, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3141, "reasoning_tokens": 0}}
+{"call": 395, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 395, "event": "finish", "ms": 1379, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2430, "reasoning_tokens": 0}}
+{"call": 396, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 396, "event": "finish", "ms": 1552, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2521, "reasoning_tokens": 0}}
+{"call": 397, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 397, "event": "finish", "ms": 1406, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2622, "reasoning_tokens": 0}}
+{"call": 398, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 398, "event": "finish", "ms": 924, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2729, "reasoning_tokens": 0}}
+{"call": 399, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 399, "event": "finish", "ms": 894, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2827, "reasoning_tokens": 0}}
+{"call": 400, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 400, "event": "finish", "ms": 960, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2968, "reasoning_tokens": 0}}
+{"call": 401, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 401, "event": "finish", "ms": 920, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2709, "reasoning_tokens": 0}}
+{"call": 402, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 402, "event": "finish", "ms": 1004, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2803, "reasoning_tokens": 0}}
+{"call": 403, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 403, "event": "finish", "ms": 1203, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2903, "reasoning_tokens": 0}}
+{"call": 404, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 404, "event": "finish", "ms": 1416, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 3012, "reasoning_tokens": 0}}
+{"call": 405, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 405, "event": "finish", "ms": 1055, "outcome": "accepted", "usage": {"cached_tokens": 2944, "completion_tokens": 7, "prompt_tokens": 3121, "reasoning_tokens": 0}}
+{"call": 406, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 406, "event": "finish", "ms": 1114, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3266, "reasoning_tokens": 0}}
+{"call": 407, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 407, "event": "finish", "ms": 1234, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3525, "reasoning_tokens": 0}}
+{"call": 408, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 408, "event": "finish", "ms": 3522, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2525, "reasoning_tokens": 0}}
+{"call": 409, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 409, "event": "finish", "ms": 1122, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2622, "reasoning_tokens": 0}}
+{"call": 410, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 410, "event": "finish", "ms": 1035, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2709, "reasoning_tokens": 0}}
+{"call": 411, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 411, "event": "finish", "ms": 1645, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2821, "reasoning_tokens": 0}}
+{"call": 412, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 412, "event": "finish", "ms": 1151, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2927, "reasoning_tokens": 0}}
+{"call": 413, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 413, "event": "finish", "ms": 1020, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3072, "reasoning_tokens": 0}}
+{"call": 414, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 414, "event": "finish", "ms": 1021, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3213, "reasoning_tokens": 0}}
+{"call": 415, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 415, "event": "finish", "ms": 989, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3363, "reasoning_tokens": 0}}
+{"call": 416, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 416, "event": "finish", "ms": 985, "outcome": "accepted", "usage": {"cached_tokens": 3328, "completion_tokens": 7, "prompt_tokens": 3515, "reasoning_tokens": 0}}
+{"call": 417, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 417, "event": "finish", "ms": 2170, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2317, "reasoning_tokens": 0}}
+{"call": 418, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 418, "event": "finish", "ms": 979, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2412, "reasoning_tokens": 0}}
+{"call": 419, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 419, "event": "finish", "ms": 874, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2499, "reasoning_tokens": 0}}
+{"call": 420, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 420, "event": "finish", "ms": 1001, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2598, "reasoning_tokens": 0}}
+{"call": 421, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 421, "event": "finish", "ms": 812, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2706, "reasoning_tokens": 0}}
+{"call": 422, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 422, "event": "finish", "ms": 2160, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2851, "reasoning_tokens": 0}}
+{"call": 423, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 423, "event": "finish", "ms": 973, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2998, "reasoning_tokens": 0}}
+{"call": 424, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 424, "event": "finish", "ms": 1807, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2198, "reasoning_tokens": 0}}
+{"call": 425, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 425, "event": "finish", "ms": 914, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2294, "reasoning_tokens": 0}}
+{"call": 426, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 426, "event": "finish", "ms": 1177, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2384, "reasoning_tokens": 0}}
+{"call": 427, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 427, "event": "finish", "ms": 1079, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2491, "reasoning_tokens": 0}}
+{"call": 428, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 428, "event": "finish", "ms": 1173, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2635, "reasoning_tokens": 0}}
+{"call": 429, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 429, "event": "finish", "ms": 1050, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2755, "reasoning_tokens": 0}}
+{"call": 430, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 430, "event": "finish", "ms": 2442, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2199, "reasoning_tokens": 0}}
+{"call": 431, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 431, "event": "finish", "ms": 1559, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2294, "reasoning_tokens": 0}}
+{"call": 432, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 432, "event": "finish", "ms": 1047, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2381, "reasoning_tokens": 0}}
+{"call": 433, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 433, "event": "finish", "ms": 1074, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2480, "reasoning_tokens": 0}}
+{"call": 434, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 434, "event": "finish", "ms": 1015, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2588, "reasoning_tokens": 0}}
+{"call": 435, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 435, "event": "finish", "ms": 1170, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2694, "reasoning_tokens": 0}}
+{"call": 436, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 436, "event": "finish", "ms": 1216, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2207, "reasoning_tokens": 0}}
+{"call": 437, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 437, "event": "finish", "ms": 2312, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2302, "reasoning_tokens": 0}}
+{"call": 438, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 438, "event": "finish", "ms": 852, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2389, "reasoning_tokens": 0}}
+{"call": 439, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 439, "event": "finish", "ms": 896, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2488, "reasoning_tokens": 0}}
+{"call": 440, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 440, "event": "finish", "ms": 2488, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2596, "reasoning_tokens": 0}}
+{"call": 441, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 441, "event": "finish", "ms": 1412, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2740, "reasoning_tokens": 0}}
+{"call": 442, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 442, "event": "finish", "ms": 999, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2856, "reasoning_tokens": 0}}
+{"call": 443, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 443, "event": "finish", "ms": 916, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2214, "reasoning_tokens": 0}}
+{"call": 444, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 444, "event": "finish", "ms": 848, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2311, "reasoning_tokens": 0}}
+{"call": 445, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 445, "event": "finish", "ms": 830, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2398, "reasoning_tokens": 0}}
+{"call": 446, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 446, "event": "finish", "ms": 878, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2506, "reasoning_tokens": 0}}
+{"call": 447, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 447, "event": "finish", "ms": 1620, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2586, "reasoning_tokens": 0}}
+{"call": 448, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 448, "event": "finish", "ms": 946, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2680, "reasoning_tokens": 0}}
+{"call": 449, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 449, "event": "finish", "ms": 1419, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2780, "reasoning_tokens": 0}}
+{"call": 450, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 450, "event": "finish", "ms": 1098, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2889, "reasoning_tokens": 0}}
+{"call": 451, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 451, "event": "finish", "ms": 2203, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2998, "reasoning_tokens": 0}}
+{"call": 452, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 452, "event": "finish", "ms": 1047, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3217, "reasoning_tokens": 0}}
+{"call": 453, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 453, "event": "finish", "ms": 927, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2833, "reasoning_tokens": 0}}
+{"call": 454, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 454, "event": "finish", "ms": 1058, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2930, "reasoning_tokens": 0}}
+{"call": 455, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 455, "event": "finish", "ms": 987, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 3020, "reasoning_tokens": 0}}
+{"call": 456, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 456, "event": "finish", "ms": 806, "outcome": "accepted", "usage": {"cached_tokens": 2944, "completion_tokens": 7, "prompt_tokens": 3127, "reasoning_tokens": 0}}
+{"call": 457, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 457, "event": "finish", "ms": 1317, "outcome": "accepted", "usage": {"cached_tokens": 3072, "completion_tokens": 7, "prompt_tokens": 3233, "reasoning_tokens": 0}}
+{"call": 458, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 458, "event": "finish", "ms": 1147, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 3379, "reasoning_tokens": 0}}
+{"call": 459, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 459, "event": "finish", "ms": 1112, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3598, "reasoning_tokens": 0}}
+{"call": 460, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 460, "event": "finish", "ms": 967, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2696, "reasoning_tokens": 0}}
+{"call": 461, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 461, "event": "finish", "ms": 824, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2625, "reasoning_tokens": 0}}
+{"call": 462, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 462, "event": "finish", "ms": 878, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2580, "reasoning_tokens": 0}}
+{"call": 463, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 463, "event": "finish", "ms": 868, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2673, "reasoning_tokens": 0}}
+{"call": 464, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 464, "event": "finish", "ms": 2010, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2757, "reasoning_tokens": 0}}
+{"call": 465, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 465, "event": "finish", "ms": 893, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2851, "reasoning_tokens": 0}}
+{"call": 466, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 466, "event": "finish", "ms": 959, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2959, "reasoning_tokens": 0}}
+{"call": 467, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 467, "event": "finish", "ms": 1108, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3161, "reasoning_tokens": 0}}
+{"call": 468, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 468, "event": "finish", "ms": 873, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2624, "reasoning_tokens": 0}}
+{"call": 469, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 469, "event": "finish", "ms": 1066, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2721, "reasoning_tokens": 0}}
+{"call": 470, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 470, "event": "finish", "ms": 988, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2811, "reasoning_tokens": 0}}
+{"call": 471, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 471, "event": "finish", "ms": 1473, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2918, "reasoning_tokens": 0}}
+{"call": 472, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 472, "event": "finish", "ms": 1029, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 3024, "reasoning_tokens": 0}}
+{"call": 473, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 473, "event": "finish", "ms": 1064, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 3169, "reasoning_tokens": 0}}
+{"call": 474, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 474, "event": "finish", "ms": 1917, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 3387, "reasoning_tokens": 0}}
+{"call": 475, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 475, "event": "finish", "ms": 1026, "outcome": "accepted", "usage": {"cached_tokens": 2048, "completion_tokens": 7, "prompt_tokens": 2231, "reasoning_tokens": 0}}
+{"call": 476, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 476, "event": "finish", "ms": 1183, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2328, "reasoning_tokens": 0}}
+{"call": 477, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 477, "event": "finish", "ms": 1191, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2415, "reasoning_tokens": 0}}
+{"call": 478, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 478, "event": "finish", "ms": 979, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2523, "reasoning_tokens": 0}}
+{"call": 479, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 479, "event": "finish", "ms": 1043, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2755, "reasoning_tokens": 0}}
+{"call": 480, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 480, "event": "finish", "ms": 969, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2849, "reasoning_tokens": 0}}
+{"call": 481, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 481, "event": "finish", "ms": 1116, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2949, "reasoning_tokens": 0}}
+{"call": 482, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 482, "event": "finish", "ms": 1112, "outcome": "accepted", "usage": {"cached_tokens": 2944, "completion_tokens": 7, "prompt_tokens": 3058, "reasoning_tokens": 0}}
+{"call": 483, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 483, "event": "finish", "ms": 2330, "outcome": "accepted", "usage": {"cached_tokens": 2944, "completion_tokens": 7, "prompt_tokens": 3167, "reasoning_tokens": 0}}
+{"call": 484, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 484, "event": "finish", "ms": 1370, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3312, "reasoning_tokens": 0}}
+{"call": 485, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 485, "event": "finish", "ms": 1102, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 3542, "reasoning_tokens": 0}}
+{"call": 486, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 486, "event": "finish", "ms": 1023, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2258, "reasoning_tokens": 0}}
+{"call": 487, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 487, "event": "finish", "ms": 970, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2355, "reasoning_tokens": 0}}
+{"call": 488, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 488, "event": "finish", "ms": 1065, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2442, "reasoning_tokens": 0}}
+{"call": 489, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 489, "event": "finish", "ms": 1004, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2554, "reasoning_tokens": 0}}
+{"call": 490, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 490, "event": "finish", "ms": 1060, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 2662, "reasoning_tokens": 0}}
+{"call": 491, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 491, "event": "finish", "ms": 1182, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2610, "reasoning_tokens": 0}}
+{"call": 492, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 492, "event": "finish", "ms": 838, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2701, "reasoning_tokens": 0}}
+{"call": 493, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 493, "event": "finish", "ms": 855, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2802, "reasoning_tokens": 0}}
+{"call": 494, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 494, "event": "finish", "ms": 1291, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2909, "reasoning_tokens": 0}}
+{"call": 495, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 495, "event": "finish", "ms": 1298, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 3007, "reasoning_tokens": 0}}
+{"call": 496, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 496, "event": "finish", "ms": 1049, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3151, "reasoning_tokens": 0}}
+{"call": 497, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 497, "event": "finish", "ms": 1810, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3373, "reasoning_tokens": 0}}
+{"call": 498, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 498, "event": "finish", "ms": 1156, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2595, "reasoning_tokens": 0}}
+{"call": 499, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 499, "event": "finish", "ms": 915, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2688, "reasoning_tokens": 0}}
+{"call": 500, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 500, "event": "finish", "ms": 847, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2772, "reasoning_tokens": 0}}
+{"call": 501, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 501, "event": "finish", "ms": 912, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2866, "reasoning_tokens": 0}}
+{"call": 502, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 502, "event": "finish", "ms": 974, "outcome": "accepted", "usage": {"cached_tokens": 2816, "completion_tokens": 7, "prompt_tokens": 2974, "reasoning_tokens": 0}}
+{"call": 503, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 503, "event": "finish", "ms": 980, "outcome": "accepted", "usage": {"cached_tokens": 2176, "completion_tokens": 7, "prompt_tokens": 3118, "reasoning_tokens": 0}}
+{"call": 504, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 504, "event": "finish", "ms": 1075, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 3330, "reasoning_tokens": 0}}
+{"call": 505, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 505, "event": "finish", "ms": 1212, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2564, "reasoning_tokens": 0}}
+{"call": 506, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 506, "event": "finish", "ms": 1219, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2660, "reasoning_tokens": 0}}
+{"call": 507, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 507, "event": "finish", "ms": 848, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2750, "reasoning_tokens": 0}}
+{"call": 508, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 508, "event": "finish", "ms": 1048, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2857, "reasoning_tokens": 0}}
+{"call": 509, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 509, "event": "finish", "ms": 1010, "outcome": "accepted", "usage": {"cached_tokens": 1792, "completion_tokens": 7, "prompt_tokens": 3040, "reasoning_tokens": 0}}
+{"call": 510, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 510, "event": "finish", "ms": 950, "outcome": "accepted", "usage": {"cached_tokens": 2304, "completion_tokens": 7, "prompt_tokens": 2471, "reasoning_tokens": 0}}
+{"call": 511, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 511, "event": "finish", "ms": 1032, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2411, "reasoning_tokens": 0}}
+{"call": 512, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 512, "event": "finish", "ms": 1120, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2502, "reasoning_tokens": 0}}
+{"call": 513, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 513, "event": "finish", "ms": 1093, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2605, "reasoning_tokens": 0}}
+{"call": 514, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 514, "event": "finish", "ms": 1256, "outcome": "accepted", "usage": {"cached_tokens": 2560, "completion_tokens": 7, "prompt_tokens": 2707, "reasoning_tokens": 0}}
+{"call": 515, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 515, "event": "finish", "ms": 1633, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 2802, "reasoning_tokens": 0}}
+{"call": 516, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 516, "event": "finish", "ms": 983, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2946, "reasoning_tokens": 0}}
+{"call": 517, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 517, "event": "finish", "ms": 1201, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 3092, "reasoning_tokens": 0}}
+{"call": 518, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 518, "event": "finish", "ms": 1547, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2335, "reasoning_tokens": 0}}
+{"call": 519, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 519, "event": "finish", "ms": 939, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2426, "reasoning_tokens": 0}}
+{"call": 520, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 520, "event": "finish", "ms": 856, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2521, "reasoning_tokens": 0}}
+{"call": 521, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 521, "event": "finish", "ms": 866, "outcome": "accepted", "usage": {"cached_tokens": 2432, "completion_tokens": 7, "prompt_tokens": 2634, "reasoning_tokens": 0}}
+{"call": 522, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 522, "event": "finish", "ms": 1026, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2780, "reasoning_tokens": 0}}
+{"call": 523, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 523, "event": "finish", "ms": 1201, "outcome": "accepted", "usage": {"cached_tokens": 1920, "completion_tokens": 7, "prompt_tokens": 2903, "reasoning_tokens": 0}}
+{"call": 524, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 524, "event": "finish", "ms": 1056, "outcome": "accepted", "usage": {"cached_tokens": 2688, "completion_tokens": 7, "prompt_tokens": 3058, "reasoning_tokens": 0}}
+{"call": 525, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 525, "event": "finish", "ms": 1403, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 315, "reasoning_tokens": 0}}
+{"call": 526, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 526, "event": "finish", "ms": 801, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 307, "reasoning_tokens": 0}}
+{"call": 527, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 527, "event": "finish", "ms": 944, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 300, "reasoning_tokens": 0}}
+{"call": 528, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 528, "event": "finish", "ms": 943, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 290, "reasoning_tokens": 0}}
+{"call": 529, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 529, "event": "finish", "ms": 1166, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 285, "reasoning_tokens": 0}}
+{"call": 530, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 530, "event": "finish", "ms": 885, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 308, "reasoning_tokens": 0}}
+{"call": 531, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 531, "event": "finish", "ms": 990, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 301, "reasoning_tokens": 0}}
+{"call": 532, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 532, "event": "finish", "ms": 818, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 303, "reasoning_tokens": 0}}
+{"call": 533, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 533, "event": "finish", "ms": 883, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 327, "reasoning_tokens": 0}}
+{"call": 534, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 534, "event": "finish", "ms": 929, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 347, "reasoning_tokens": 0}}
+{"call": 535, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 535, "event": "finish", "ms": 921, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 310, "reasoning_tokens": 0}}
+{"call": 536, "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0", "event": "start", "model": "deepseek-v4.1-flash-uncensored"}
+{"call": 536, "event": "finish", "ms": 1405, "outcome": "accepted", "usage": {"completion_tokens": 7, "prompt_tokens": 295, "reasoning_tokens": 0}}

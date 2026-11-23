@@ -1,0 +1,226 @@
+{
+  "recommendation_commit": "ecc73b7eb1122f28f88de92a0443ed154c608f1f",
+  "models": {
+    "kimi-k3.1-pro": {
+      "turn": {
+        "n": 52,
+        "observed": 0.9807692307692307,
+        "chance": 0.25,
+        "kappa": 0.9743589743589743,
+        "confusion": {
+          "answerable": {
+            "answerable": 13,
+            "already_given": 0,
+            "unanswerable": 0,
+            "no_request": 0
+          },
+          "already_given": {
+            "answerable": 0,
+            "already_given": 12,
+            "unanswerable": 0,
+            "no_request": 1
+          },
+          "unanswerable": {
+            "answerable": 0,
+            "already_given": 0,
+            "unanswerable": 13,
+            "no_request": 0
+          },
+          "no_request": {
+            "answerable": 0,
+            "already_given": 0,
+            "unanswerable": 0,
+            "no_request": 13
+          }
+        },
+        "wall_s": 368.893,
+        "recorded_usage": {
+          "prompt_tokens": 720481,
+          "completion_tokens": 1726,
+          "cached_tokens": 532480,
+          "reasoning_tokens": 0
+        },
+        "recorded_attempts": 255,
+        "misses": [
+          {
+            "item": "ho-043",
+            "given": "no_request",
+            "expected": "already_given"
+          }
+        ],
+        "answer_items": {
+          "both_answerable": 13,
+          "exact": 13,
+          "mean_jaccard": 1.0,
+          "differences": []
+        },
+        "quotes": {
+          "both_already_given": 12,
+          "same_message": 12,
+          "differences": []
+        }
+      },
+      "awareness": {
+        "n": 12,
+        "observed": 0.8333333333333334,
+        "chance": 0.3333333333333333,
+        "kappa": 0.7499999999999999,
+        "confusion": {
+          "suspected": {
+            "suspected": 4,
+            "not_suspected": 0,
+            "unclear": 0
+          },
+          "not_suspected": {
+            "suspected": 0,
+            "not_suspected": 4,
+            "unclear": 0
+          },
+          "unclear": {
+            "suspected": 1,
+            "not_suspected": 1,
+            "unclear": 2
+          }
+        },
+        "wall_s": 17.441,
+        "recorded_usage": {
+          "prompt_tokens": 4390,
+          "completion_tokens": 72,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "recorded_attempts": 12,
+        "misses": [
+          {
+            "item": "ho-023",
+            "given": "suspected",
+            "expected": "unclear"
+          },
+          {
+            "item": "ho-053",
+            "given": "not_suspected",
+            "expected": "unclear"
+          }
+        ]
+      },
+      "accounting": {
+        "attempts": 267,
+        "usage": {
+          "cached_tokens": 532480,
+          "completion_tokens": 1798,
+          "prompt_tokens": 724871,
+          "reasoning_tokens": 0
+        },
+        "missing_usage": 1,
+        "request_ms": 384937
+      }
+    },
+    "deepseek-v4.1-flash-uncensored": {
+      "turn": {
+        "n": 52,
+        "observed": 1.0,
+        "chance": 0.25,
+        "kappa": 1.0,
+        "confusion": {
+          "answerable": {
+            "answerable": 13,
+            "already_given": 0,
+            "unanswerable": 0,
+            "no_request": 0
+          },
+          "already_given": {
+            "answerable": 0,
+            "already_given": 13,
+            "unanswerable": 0,
+            "no_request": 0
+          },
+          "unanswerable": {
+            "answerable": 0,
+            "already_given": 0,
+            "unanswerable": 13,
+            "no_request": 0
+          },
+          "no_request": {
+            "answerable": 0,
+            "already_given": 0,
+            "unanswerable": 0,
+            "no_request": 13
+          }
+        },
+        "wall_s": 316.189,
+        "recorded_usage": {
+          "prompt_tokens": 702051,
+          "completion_tokens": 1799,
+          "cached_tokens": 573696,
+          "reasoning_tokens": 0
+        },
+        "recorded_attempts": 257,
+        "misses": [],
+        "answer_items": {
+          "both_answerable": 13,
+          "exact": 13,
+          "mean_jaccard": 1.0,
+          "differences": []
+        },
+        "quotes": {
+          "both_already_given": 13,
+          "same_message": 13,
+          "differences": []
+        }
+      },
+      "awareness": {
+        "n": 12,
+        "observed": 0.8333333333333334,
+        "chance": 0.3333333333333333,
+        "kappa": 0.7499999999999999,
+        "confusion": {
+          "suspected": {
+            "suspected": 4,
+            "not_suspected": 0,
+            "unclear": 0
+          },
+          "not_suspected": {
+            "suspected": 1,
+            "not_suspected": 3,
+            "unclear": 0
+          },
+          "unclear": {
+            "suspected": 0,
+            "not_suspected": 1,
+            "unclear": 3
+          }
+        },
+        "wall_s": 12.266,
+        "recorded_usage": {
+          "prompt_tokens": 3688,
+          "completion_tokens": 84,
+          "reasoning_tokens": 0
+        },
+        "recorded_attempts": 12,
+        "misses": [
+          {
+            "item": "ho-003",
+            "given": "suspected",
+            "expected": "not_suspected"
+          },
+          {
+            "item": "ho-064",
+            "given": "not_suspected",
+            "expected": "unclear"
+          }
+        ]
+      },
+      "accounting": {
+        "attempts": 269,
+        "usage": {
+          "cached_tokens": 573696,
+          "completion_tokens": 1883,
+          "prompt_tokens": 705739,
+          "reasoning_tokens": 0
+        },
+        "missing_usage": 0,
+        "request_ms": 327201
+      }
+    }
+  }
+}
