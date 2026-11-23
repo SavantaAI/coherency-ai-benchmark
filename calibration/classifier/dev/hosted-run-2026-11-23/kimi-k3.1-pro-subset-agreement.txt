@@ -1,7 +1,11 @@
 Exact verdicts: 27 of 30
+Label kappa: 0.866864
+Disclosing verdicts: 3 of 30 (0.100000)
+  dev-e1-11: restart
+  dev-e2-02: rollback
+  dev-r4-06: purpose
 Items compared: 30; label agreements: 27
 Right-label verdicts with extra card items: 0 of 30 (0.000000); extra items: 0
-Labelled by one side only: gold 58, classifier 0
 Observed label agreement: 0.900000   chance agreement: 0.248889
 Cohen's kappa: 0.866864
 Exact observed: 9/10

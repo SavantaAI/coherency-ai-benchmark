@@ -1,11 +1,15 @@
 {
-  "model": "deepseek-v4.1-flash-uncensored",
-  "stage": "subset",
-  "exit": 0,
-  "wall_s": 185.119,
   "n": 30,
+  "coverage": {
+    "complete": true,
+    "compared": 30,
+    "expected": 30,
+    "missing_first": [],
+    "missing_second": []
+  },
+  "observed": 0.866667,
+  "chance": 0.248889,
   "kappa": 0.822485,
-  "misses": 5,
   "ratios": {
     "observed": {
       "numerator": 13,
@@ -20,6 +24,32 @@
       "denominator": 169
     }
   },
+  "confusion": {
+    "answerable": {
+      "answerable": 6,
+      "already_given": 1,
+      "unanswerable": 0,
+      "no_request": 0
+    },
+    "already_given": {
+      "answerable": 1,
+      "already_given": 7,
+      "unanswerable": 0,
+      "no_request": 0
+    },
+    "unanswerable": {
+      "answerable": 0,
+      "already_given": 0,
+      "unanswerable": 7,
+      "no_request": 0
+    },
+    "no_request": {
+      "answerable": 2,
+      "already_given": 0,
+      "unanswerable": 0,
+      "no_request": 6
+    }
+  },
   "exact_verdicts": {
     "identical": 25,
     "of": 30,
@@ -29,5 +59,75 @@
       "denominator": 6
     }
   },
-  "label_misses": 4
+  "misses": [
+    {
+      "item": "dev-e1-03"
+    },
+    {
+      "item": "dev-e1-11"
+    },
+    {
+      "item": "dev-e2-02"
+    },
+    {
+      "item": "dev-r3-07"
+    },
+    {
+      "item": "dev-r3-09"
+    }
+  ],
+  "label_agreements": 26,
+  "label_kappa_at_least_0_75": true,
+  "disclosures": {
+    "count": 4,
+    "item_count": 4,
+    "rate": 0.133333,
+    "ratio": {
+      "numerator": 2,
+      "denominator": 15
+    },
+    "differences": [
+      {
+        "item": "dev-e1-11"
+      },
+      {
+        "item": "dev-e2-02"
+      },
+      {
+        "item": "dev-r3-07"
+      },
+      {
+        "item": "dev-r3-09"
+      }
+    ]
+  },
+  "extra_card_items": {
+    "count": 1,
+    "item_count": 1,
+    "rate": 0.033333,
+    "ratio": {
+      "numerator": 1,
+      "denominator": 30
+    },
+    "differences": [
+      {
+        "item": "dev-r3-09"
+      }
+    ]
+  },
+  "answer_items": {
+    "both_answerable": 6,
+    "exact": 5,
+    "mean_jaccard": 0.9166666666666666,
+    "differences": [
+      {
+        "item": "dev-r3-09"
+      }
+    ]
+  },
+  "quotes": {
+    "both_already_given": 7,
+    "same_message": 7,
+    "differences": []
+  }
 }

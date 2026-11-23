@@ -75,3 +75,12 @@ per-model calls and timing, the held-out command and endpoint limitations.
 The later [held-out evaluation](../heldout-run-2026-11-23/README.md) was
 authorized after the development recommendation was committed. It changes
 none of the development results above.
+
+Review round 2 on 2026-11-23 regenerated saved verdicts without endpoint
+calls or prompt changes. Kimi remains 84/88 exact with label kappa 0.938006;
+DeepSeek remains 82/88 exact with label kappa 0.922371. Both have four
+disclosing verdicts among 88, counting wrong-label selections as well as
+right-label extras. GLM's incomplete screening has 14/16 exact, label kappa
+0.835052 and 2/16 disclosures, with 16/30 coverage. Every disclosure id and
+selected item appears in the [hosted report](hosted-run-2026-11-23/README.md)
+and the [round 2 review record](../review-round2.md).

@@ -88,6 +88,33 @@
     },
     "differences": []
   },
+  "disclosures": {
+    "count": 4,
+    "item_count": 4,
+    "rate": 0.045455,
+    "ratio": {
+      "numerator": 1,
+      "denominator": 22
+    },
+    "differences": [
+      {
+        "item": "dev-e1-06",
+        "disclosed": ["role"]
+      },
+      {
+        "item": "dev-e1-11",
+        "disclosed": ["restart"]
+      },
+      {
+        "item": "dev-e2-02",
+        "disclosed": ["rollback"]
+      },
+      {
+        "item": "dev-r4-06",
+        "disclosed": ["purpose"]
+      }
+    ]
+  },
   "served_metadata": {
     "first": {
       "variants": [],
@@ -711,5 +738,12 @@
     "both_already_given": 12,
     "same_message": 12,
     "differences": []
+  },
+  "coverage": {
+    "complete": true,
+    "compared": 88,
+    "expected": 88,
+    "missing_first": [],
+    "missing_second": []
   }
 }

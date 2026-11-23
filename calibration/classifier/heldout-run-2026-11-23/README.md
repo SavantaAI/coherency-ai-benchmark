@@ -64,6 +64,11 @@ kappa 38/39 and 51/52 exact verdicts; the rational comparison to 3/4 passes.
 The 12-item awareness result is separate, with kappa exactly 3/4 for both
 models. The recommendation was not revised after seeing these results.
 
+Disclosing turn verdicts, regardless of label: Kimi 0/52, rate 0.000000,
+ids none; DeepSeek 0/52, rate 0.000000, ids none. Awareness has no card
+selection, so disclosure is not applicable. This third headline counts every
+selected item outside the gold answering set, including wrong-label cases.
+
 Right-label verdicts with extra card items: Kimi 0/52, rate 0.000000,
 exact rate 0/1, zero extra items. DeepSeek 0/52, rate 0.000000, exact rate
 0/1, zero extra items. No reported deployment metadata changed within either
@@ -224,3 +229,11 @@ verdict records are absent from the commit. `git diff --check` passed.
 
 Review round 1 regenerated agreement from these saved verdicts without new
 endpoint calls. See [the ruling-by-ruling changes and regression tests](../review-round1.md).
+
+Review round 2 regenerates every aggregate field, including confusion
+matrices and misses, from the saved inputs. It reads no prior results file.
+Incomplete inputs are refused with missing ids before any output is written;
+`--allow-partial` marks incomplete coverage in every affected output. Public
+JSON contains aggregate counts and miss ids; full reports remain outside the
+repository. Historical timing and billing in this README comes from the
+original logs and ledgers. See [round 2 rulings and tests](../review-round2.md).

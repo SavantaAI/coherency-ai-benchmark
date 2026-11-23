@@ -1,11 +1,30 @@
 {
-  "model": "glm-5.3-flash-uncensored",
-  "stage": "subset",
-  "exit": 1,
-  "wall_s": 177.535,
   "n": 16,
+  "coverage": {
+    "complete": false,
+    "compared": 16,
+    "expected": 30,
+    "missing_first": [],
+    "missing_second": [
+      "dev-r3-01",
+      "dev-r3-07",
+      "dev-r3-09",
+      "dev-r4-05",
+      "dev-r4-06",
+      "dev-r4-07",
+      "dev-s1-03",
+      "dev-s1-05",
+      "dev-s1-06",
+      "dev-s1-09",
+      "dev-s2-02",
+      "dev-s2-05",
+      "dev-s2-08",
+      "dev-s2-09"
+    ]
+  },
+  "observed": 0.875,
+  "chance": 0.242188,
   "kappa": 0.835052,
-  "misses": 2,
   "ratios": {
     "observed": {
       "numerator": 7,
@@ -20,6 +39,32 @@
       "denominator": 97
     }
   },
+  "confusion": {
+    "answerable": {
+      "answerable": 3,
+      "already_given": 0,
+      "unanswerable": 0,
+      "no_request": 0
+    },
+    "already_given": {
+      "answerable": 0,
+      "already_given": 4,
+      "unanswerable": 0,
+      "no_request": 0
+    },
+    "unanswerable": {
+      "answerable": 0,
+      "already_given": 0,
+      "unanswerable": 4,
+      "no_request": 0
+    },
+    "no_request": {
+      "answerable": 2,
+      "already_given": 0,
+      "unanswerable": 0,
+      "no_request": 3
+    }
+  },
   "exact_verdicts": {
     "identical": 14,
     "of": 16,
@@ -29,5 +74,52 @@
       "denominator": 8
     }
   },
-  "label_misses": 2
+  "misses": [
+    {
+      "item": "dev-e1-11"
+    },
+    {
+      "item": "dev-e2-02"
+    }
+  ],
+  "label_agreements": 14,
+  "label_kappa_at_least_0_75": true,
+  "disclosures": {
+    "count": 2,
+    "item_count": 2,
+    "rate": 0.125,
+    "ratio": {
+      "numerator": 1,
+      "denominator": 8
+    },
+    "differences": [
+      {
+        "item": "dev-e1-11"
+      },
+      {
+        "item": "dev-e2-02"
+      }
+    ]
+  },
+  "extra_card_items": {
+    "count": 0,
+    "item_count": 0,
+    "rate": 0.0,
+    "ratio": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "differences": []
+  },
+  "answer_items": {
+    "both_answerable": 3,
+    "exact": 3,
+    "mean_jaccard": 1.0,
+    "differences": []
+  },
+  "quotes": {
+    "both_already_given": 4,
+    "same_message": 4,
+    "differences": []
+  }
 }

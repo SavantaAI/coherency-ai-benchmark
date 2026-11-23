@@ -1,4 +1,10 @@
 Exact verdicts: 84 of 88
+Label kappa: 0.938006
+Disclosing verdicts: 4 of 88 (0.045455)
+  dev-e1-06: role
+  dev-e1-11: restart
+  dev-e2-02: rollback
+  dev-r4-06: purpose
 Items compared: 88; label agreements: 84
 Right-label verdicts with extra card items: 0 of 88 (0.000000); extra items: 0
 Observed label agreement: 0.954545   chance agreement: 0.266787

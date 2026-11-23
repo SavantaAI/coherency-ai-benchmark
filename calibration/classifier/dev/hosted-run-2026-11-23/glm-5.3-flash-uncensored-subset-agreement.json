@@ -1,78 +1,20 @@
 {
   "n": 16,
   "only_first": [
-    "dev-e1-01",
-    "dev-e1-02",
-    "dev-e1-05",
-    "dev-e1-06",
-    "dev-e1-09",
-    "dev-e1-10",
-    "dev-e2-01",
-    "dev-e2-07",
-    "dev-r1-01",
-    "dev-r1-02",
-    "dev-r1-03",
-    "dev-r1-05",
-    "dev-r1-06",
-    "dev-r1-07",
-    "dev-r1-08",
-    "dev-r1-10",
-    "dev-r1-11",
-    "dev-r1-12",
-    "dev-r1-13",
-    "dev-r1-14",
-    "dev-r1-15",
-    "dev-r2-01",
-    "dev-r2-02",
-    "dev-r2-03",
-    "dev-r2-04",
-    "dev-r2-06",
-    "dev-r2-07",
-    "dev-r2-08",
-    "dev-r2-11",
-    "dev-r2-12",
     "dev-r3-01",
-    "dev-r3-02",
-    "dev-r3-03",
-    "dev-r3-04",
-    "dev-r3-05",
-    "dev-r3-06",
     "dev-r3-07",
-    "dev-r3-08",
     "dev-r3-09",
-    "dev-r3-10",
-    "dev-r3-11",
-    "dev-r4-01",
-    "dev-r4-02",
-    "dev-r4-03",
-    "dev-r4-04",
     "dev-r4-05",
     "dev-r4-06",
     "dev-r4-07",
-    "dev-r4-08",
-    "dev-r4-09",
-    "dev-s1-01",
-    "dev-s1-02",
     "dev-s1-03",
-    "dev-s1-04",
     "dev-s1-05",
     "dev-s1-06",
-    "dev-s1-07",
-    "dev-s1-08",
     "dev-s1-09",
-    "dev-s1-10",
-    "dev-s1-11",
-    "dev-s2-01",
     "dev-s2-02",
-    "dev-s2-03",
-    "dev-s2-04",
     "dev-s2-05",
-    "dev-s2-06",
-    "dev-s2-07",
     "dev-s2-08",
-    "dev-s2-09",
-    "dev-s2-10",
-    "dev-s2-11"
+    "dev-s2-09"
   ],
   "only_second": [],
   "observed": 0.875,
@@ -160,6 +102,25 @@
       "denominator": 1
     },
     "differences": []
+  },
+  "disclosures": {
+    "count": 2,
+    "item_count": 2,
+    "rate": 0.125,
+    "ratio": {
+      "numerator": 1,
+      "denominator": 8
+    },
+    "differences": [
+      {
+        "item": "dev-e1-11",
+        "disclosed": ["restart"]
+      },
+      {
+        "item": "dev-e2-02",
+        "disclosed": ["rollback"]
+      }
+    ]
   },
   "served_metadata": {
     "first": {
@@ -486,5 +447,27 @@
     "both_already_given": 4,
     "same_message": 4,
     "differences": []
+  },
+  "coverage": {
+    "complete": false,
+    "compared": 16,
+    "expected": 30,
+    "missing_first": [],
+    "missing_second": [
+      "dev-r3-01",
+      "dev-r3-07",
+      "dev-r3-09",
+      "dev-r4-05",
+      "dev-r4-06",
+      "dev-r4-07",
+      "dev-s1-03",
+      "dev-s1-05",
+      "dev-s1-06",
+      "dev-s1-09",
+      "dev-s2-02",
+      "dev-s2-05",
+      "dev-s2-08",
+      "dev-s2-09"
+    ]
   }
 }

@@ -98,6 +98,22 @@ The original verdict records and the frozen model choice are unchanged.
 | kimi-k3.1-pro                  | subset |          27/30 |    30/30 |          3 |    0.866864 |     293/338 |            216.775 |
 | kimi-k3.1-pro                  | full   |          84/88 |    88/88 |          4 |    0.938006 |   2663/2839 |            366.105 |
 
+Disclosure counts include wrong-label selections. The gold answering set is
+empty for gold labels other than answerable. A disclosing verdict selects an
+item outside that set that the runner would send.
+
+| Model                          | Stage             | Disclosing verdicts |     Rate | Ids and disclosed card items                                                      |
+| ------------------------------ | ----------------- | ------------------: | -------: | --------------------------------------------------------------------------------- |
+| glm-5.3-flash-uncensored       | incomplete subset |                2/16 | 0.125000 | dev-e1-11: restart; dev-e2-02: rollback                                           |
+| deepseek-v4.1-flash-uncensored | subset            |                4/30 | 0.133333 | dev-e1-11: restart; dev-e2-02: rollback; dev-r3-07: together; dev-r3-09: deadline |
+| deepseek-v4.1-flash-uncensored | full              |                4/88 | 0.045455 | dev-e1-11: restart; dev-e2-02: rollback; dev-r3-07: together; dev-r3-09: deadline |
+| kimi-k3.1-pro                  | subset            |                3/30 | 0.100000 | dev-e1-11: restart; dev-e2-02: rollback; dev-r4-06: purpose                       |
+| kimi-k3.1-pro                  | full              |                4/88 | 0.045455 | dev-e1-06: role; dev-e1-11: restart; dev-e2-02: rollback; dev-r4-06: purpose      |
+
+The [round 2 report](../../review-round2.md) describes the input for each
+case. These are saved-record measurements, with no new endpoint calls. The
+right-label extra-card figures below cover only a subset of disclosures.
+
 Right-label verdicts with extra card items get a separate count. The rate is
 that count divided by all compared items, not only answerable items.
 
