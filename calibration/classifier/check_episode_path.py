@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 import sys
 import time
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -16,6 +17,7 @@ from cohbench.user.api import Client, read_key
 from cohbench.user.classifier import Classifier
 from cohbench.user.config import load
 from cohbench.user.ledger import Ledger
+from cohbench.runner.run import admit_policy_delay
 from tests.runner.conftest import Run, no_events
 from tests.runner.fake import Act, T0
 
@@ -90,6 +92,12 @@ def main():
     if summary_path.exists() or (args.out/'calls.jsonl').exists():
         ap.error('output already has hosted evidence; use a fresh directory')
     cfg=load(args.config)
+    if args.include_short_deadline:
+        try:
+            admit_policy_delay(SimpleNamespace(return_delay_ms=7000),
+                               SimpleNamespace(max_judgement_s=cfg.limits['verdict_deadline_s']))
+        except ValueError as exc:
+            ap.error(str(exc))
     client=Client(cfg,read_key(),ledger=Ledger(args.out/'calls.jsonl',40))
     scenarios={
         'single_question':[Act(duration_s=.01,state='question',ask='Which day should I hold the review?')],

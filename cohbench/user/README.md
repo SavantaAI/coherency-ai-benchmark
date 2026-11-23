@@ -994,6 +994,9 @@ a positive declaration whose task return delay is below that maximum plus the
 Zero declarations retain the scripted path, including the two-second fixture.
 The shipped classifier requires 28 seconds; every one of the 88 generated
 public development tasks passes. The generator's lower bound is 30 seconds.
+The hosted-check script's historical `--include-short-deadline` option uses
+seven seconds. With the shipped config it is rejected before credentials or
+paid requests; omit that option for the current three-scenario check.
 
 A correction carried by a reply uses the original send instant for both its
 event and watcher mark, as on `main`. A later receipt does not move that
