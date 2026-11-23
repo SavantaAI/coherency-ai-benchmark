@@ -48,16 +48,17 @@ The unchanged p9 prompts were measured on Experiential Labs. Screening used
 Kimi and DeepSeek then completed all 88, reusing the screening verdicts.
 GLM stopped after 16 screening items when the 25-second deadline expired.
 
-| Model                          |                   Completed |                       Kappa | Label misses |
-| ------------------------------ | --------------------------: | --------------------------: | -----------: |
-| kimi-k3.1-pro                  |                       88/88 |                    0.938006 |            4 |
-| deepseek-v4.1-flash-uncensored |                       88/88 |                    0.922371 |            5 |
-| glm-5.3-flash-uncensored       | 16/30 screening, incomplete | 0.835052 on completed items |            2 |
+| Model                          |                    Coverage | Exact verdicts | Label kappa | All misses |
+| ------------------------------ | --------------------------: | -------------: | ----------: | ---------: |
+| kimi-k3.1-pro                  |                       88/88 |          84/88 |    0.938006 |          4 |
+| deepseek-v4.1-flash-uncensored |                       88/88 |          82/88 |    0.922371 |          6 |
+| glm-5.3-flash-uncensored       | 16/30 screening, incomplete |          14/16 |    0.835052 |          2 |
 
 Kimi misses: dev-e1-06, dev-e1-11, dev-e2-02, dev-r4-06.
 DeepSeek misses: dev-e1-02, dev-e1-03, dev-e1-11, dev-e2-02, dev-r3-07.
-GLM completed-item misses: dev-e1-11, dev-e2-02. DeepSeek also names an
-extra card item for dev-r3-09 where both sides say answerable.
+GLM completed-item misses: dev-e1-11, dev-e2-02. DeepSeek also misses dev-r3-09 with the right label and an extra card item.
+That is included in its six exact-verdict misses. Its right-label extra-card
+count is 1/88, rate 0.011364, with one extra item; Kimi and GLM have none.
 
 [Inference] Kimi is the recommended held-out config, based on its higher
 development agreement and exact card-id and quote choices where labels

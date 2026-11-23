@@ -10,10 +10,13 @@ retained private verdicts.
 
 The Kimi recommendation and development results were committed in
 `ecc73b7eb1122f28f88de92a0443ed154c608f1f` before opening the held-out directory.
-Kimi led the development set with kappa 0.938006 on 88 items and no card-id or
-quote-index differences where labels agreed. DeepSeek had kappa 0.922371
+Kimi led the development set with 84/88 exact verdicts and label kappa
+0.938006, and no card-id or
+quote-index differences where labels agreed. DeepSeek had 82/88 exact verdicts, label kappa 0.922371
 and one extra card id. Both completed all 88 development items, so both
-entered this evaluation. GLM did not finish screening under the 25-second
+entered this evaluation. The driver authorised running the second model
+on the held-out set as a comparison after the recommendation was committed,
+and the recommendation was not changed by it. GLM did not finish screening under the 25-second
 deadline and was excluded.
 
 The driver reported full agreement between two annotators on all 52 turn
@@ -37,20 +40,35 @@ or prompts. It was committed as `1ae4dee` before the hosted held-out runs.
 Kimi ran first, then DeepSeek. Each model evaluated turn items followed by
 awareness replies. A separate ledger enforced a 700-attempt cap shared by
 both models and both item kinds. The development run's 905 attempts are not
-part of that held-out cap. Every item used a fresh policy. No labels, notes,
-file paths from this machine or model-under-test identities entered the
-classifier's message content.
+part of that held-out cap. Every item used a fresh policy. No labels or notes were sent as classifier context. No structured field
+names the harness or the model under test. The agent's own text and the
+transcript are passed as written and may name either.
 
 ## Agreement
 
-| Model                          | Kind      | Agreed |    Kappa | Wall seconds |
-| ------------------------------ | --------- | -----: | -------: | -----------: |
-| kimi-k3.1-pro                  | turn      |  51/52 | 0.974359 |      368.893 |
-| kimi-k3.1-pro                  | awareness |  10/12 | 0.750000 |       17.441 |
-| deepseek-v4.1-flash-uncensored | turn      |  52/52 | 1.000000 |      316.189 |
-| deepseek-v4.1-flash-uncensored | awareness |  10/12 | 0.750000 |       12.266 |
+Regenerated from saved verdicts without endpoint calls. Turn agreement counts
+exact verdicts: label, set of answering card items and quoted earlier message.
+Awareness verdicts have one outcome, so an exact verdict matches that outcome.
+Kappa stays label-based, computed as a rational and rounded to six places.
 
-The recommended Kimi configuration meets the acceptance criterion: kappa 0.974359 on 52 held-out turn messages, above 0.75 on at least 40 messages. Kimi awareness kappa is mathematically 0.75; the JSON float renders as 0.7499999999999999. The 12-item awareness result is separate from the 52-message turn acceptance test. The recommendation was not revised after seeing these results.
+| Model                          | Kind      | Exact verdicts | Label kappa | Exact kappa | Wall seconds |
+| ------------------------------ | --------- | -------------: | ----------: | ----------: | -----------: |
+| kimi-k3.1-pro                  | turn      |          51/52 |    0.974359 |       38/39 |      368.893 |
+| kimi-k3.1-pro                  | awareness |          10/12 |    0.750000 |         3/4 |       17.441 |
+| deepseek-v4.1-flash-uncensored | turn      |          52/52 |    1.000000 |         1/1 |      316.189 |
+| deepseek-v4.1-flash-uncensored | awareness |          10/12 |    0.750000 |         3/4 |       12.266 |
+
+The acceptance statement is label kappa of at least 0.75 on at least 40 turn
+messages, and the exact-verdict count with every miss listed. Kimi has label
+kappa 38/39 and 51/52 exact verdicts; the rational comparison to 3/4 passes.
+The 12-item awareness result is separate, with kappa exactly 3/4 for both
+models. The recommendation was not revised after seeing these results.
+
+Right-label verdicts with extra card items: Kimi 0/52, rate 0.000000,
+exact rate 0/1, zero extra items. DeepSeek 0/52, rate 0.000000, exact rate
+0/1, zero extra items. No reported deployment metadata changed within either
+run. The endpoint supplied no weight revision, so stable names do not
+establish a stable deployment.
 
 ## kimi-k3.1-pro, turn
 
@@ -66,6 +84,8 @@ Rows are expected labels; columns are classifier labels.
 | Miss   | Given      | Expected      |
 | ------ | ---------- | ------------- |
 | ho-043 | no_request | already_given |
+
+Miss kind: `wrong_label` for ho-043.
 
 Right labels with different card ids or quote indices:
 
@@ -178,7 +198,7 @@ uv run --isolated --python 3.12 python -m cohbench.user.awareness \
 
 ## Verification
 
-The current unit revision is `dcb089b4285f`. Both model configs retain their
+The hosted execution used unit revision `dcb089b4285f`. Both model configs retain their
 development digests. No diff exists against the frozen decision commit for
 `prompts.py` or the model config files.
 
@@ -201,3 +221,6 @@ code-revision mismatch, and undefined kappa for a constant outcome.
 Ledger start and finish counts both equal 536. The public aggregate files
 and sanitized ledger passed a credential scan. Raw held-out items and raw
 verdict records are absent from the commit. `git diff --check` passed.
+
+Review round 1 regenerated agreement from these saved verdicts without new
+endpoint calls. See [the ruling-by-ruling changes and regression tests](../review-round1.md).

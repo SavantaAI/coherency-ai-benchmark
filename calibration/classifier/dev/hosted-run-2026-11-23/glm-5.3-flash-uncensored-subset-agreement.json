@@ -76,8 +76,22 @@
   ],
   "only_second": [],
   "observed": 0.875,
-  "chance": 0.2421875,
-  "kappa": 0.8350515463917526,
+  "chance": 0.242188,
+  "kappa": 0.835052,
+  "ratios": {
+    "observed": {
+      "numerator": 7,
+      "denominator": 8
+    },
+    "chance": {
+      "numerator": 31,
+      "denominator": 128
+    },
+    "kappa": {
+      "numerator": 81,
+      "denominator": 97
+    }
+  },
   "confusion": {
     "answerable": {
       "answerable": 3,
@@ -126,9 +140,46 @@
       "agree": 3
     }
   },
+  "label_agreements": 14,
+  "label_kappa_at_least_0_75": true,
+  "exact_verdicts": {
+    "identical": 14,
+    "of": 16,
+    "rate": 0.875,
+    "ratio": {
+      "numerator": 7,
+      "denominator": 8
+    }
+  },
+  "extra_card_items": {
+    "count": 0,
+    "item_count": 0,
+    "rate": 0.0,
+    "ratio": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "differences": []
+  },
+  "served_metadata": {
+    "first": {
+      "variants": [],
+      "changed": false
+    },
+    "second": {
+      "variants": [
+        {
+          "model": "glm-5.3-flash-uncensored",
+          "provider": "experiential_cloud"
+        }
+      ],
+      "changed": false
+    }
+  },
   "disagreements": [
     {
       "item": "dev-e1-11",
+      "kinds": ["wrong_label"],
       "first": {
         "label": "no_request",
         "answer_ids": [],
@@ -277,6 +328,7 @@
     },
     {
       "item": "dev-e2-02",
+      "kinds": ["wrong_label"],
       "first": {
         "label": "no_request",
         "answer_ids": [],

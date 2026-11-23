@@ -84,15 +84,36 @@ contract and was not done.
 
 ## Agreement and timing
 
-| Model                          | Stage  | Completed | Label misses |    Kappa | Stage wall seconds |
-| ------------------------------ | ------ | --------: | -----------: | -------: | -----------------: |
-| glm-5.3-flash-uncensored       | subset |   16 / 30 |            2 | 0.835052 |            177.535 |
-| deepseek-v4.1-flash-uncensored | subset |   30 / 30 |            4 | 0.822485 |            185.119 |
-| deepseek-v4.1-flash-uncensored | full   |   88 / 88 |            5 | 0.922371 |            318.085 |
-| kimi-k3.1-pro                  | subset |   30 / 30 |            3 | 0.866864 |            216.775 |
-| kimi-k3.1-pro                  | full   |   88 / 88 |            4 | 0.938006 |            366.105 |
+Recomputed from saved verdicts under review ruling V1. No model was called.
+An exact verdict matches the label, the set of answering card ids and the
+quoted earlier message. Every inexact verdict is a miss. Kappa stays defined
+on labels. Ratios are calculated exactly; decimals are rounded to six places.
+The original verdict records and the frozen model choice are unchanged.
 
-The full-stage wall time covers only the remaining 58 items. Add subset and full wall times for the 88-item evaluation time. Probe and compatibility time is excluded from those wall figures. Failed and retried requests remain included in the attempt and usage totals below.
+| Model                          | Stage  | Exact verdicts | Coverage | All misses | Label kappa | Exact kappa | Stage wall seconds |
+| ------------------------------ | ------ | -------------: | -------: | ---------: | ----------: | ----------: | -----------------: |
+| glm-5.3-flash-uncensored       | subset |          14/16 |    16/30 |          2 |    0.835052 |       81/97 |            177.535 |
+| deepseek-v4.1-flash-uncensored | subset |          25/30 |    30/30 |          5 |    0.822485 |     139/169 |            185.119 |
+| deepseek-v4.1-flash-uncensored | full   |          82/88 |    88/88 |          6 |    0.922371 |   1307/1417 |            318.085 |
+| kimi-k3.1-pro                  | subset |          27/30 |    30/30 |          3 |    0.866864 |     293/338 |            216.775 |
+| kimi-k3.1-pro                  | full   |          84/88 |    88/88 |          4 |    0.938006 |   2663/2839 |            366.105 |
+
+Right-label verdicts with extra card items get a separate count. The rate is
+that count divided by all compared items, not only answerable items.
+
+| Model                          | Stage  | Count / compared | Extra items |     Rate | Exact rate |
+| ------------------------------ | ------ | ---------------: | ----------: | -------: | ---------: |
+| glm-5.3-flash-uncensored       | subset |             0/16 |           0 | 0.000000 |        0/1 |
+| deepseek-v4.1-flash-uncensored | subset |             1/30 |           1 | 0.033333 |       1/30 |
+| deepseek-v4.1-flash-uncensored | full   |             1/88 |           1 | 0.011364 |       1/88 |
+| kimi-k3.1-pro                  | subset |             0/30 |           0 | 0.000000 |        0/1 |
+| kimi-k3.1-pro                  | full   |             0/88 |           0 | 0.000000 |        0/1 |
+
+The full-stage wall time covers only the remaining 58 items. Add subset and
+full wall times for the 88-item evaluation. Probe and compatibility time is
+excluded from those wall figures. Failed and retried requests remain in the
+attempt and usage totals below. No reported deployment metadata changed
+within any retained run; absent revisions cannot identify the weights.
 
 ## Calls and reported tokens
 
@@ -117,14 +138,10 @@ Matrices use expected labels as rows and classifier labels as columns. Label ord
 | unanswerable     |          0 |             0 |            4 |          0 |
 | no_request       |          2 |             0 |            0 |          3 |
 
-| Item      | Given      | Expected   |
-| --------- | ---------- | ---------- |
-| dev-e1-11 | answerable | no_request |
-| dev-e2-02 | answerable | no_request |
-
-Additional differences where labels agree:
-
-None.
+| Item      | Kind        | Given               | Expected   |
+| --------- | ----------- | ------------------- | ---------- |
+| dev-e1-11 | wrong_label | answerable restart  | no_request |
+| dev-e2-02 | wrong_label | answerable rollback | no_request |
 
 [Complete agreement report](glm-5.3-flash-uncensored-subset-agreement.txt), [verdict records](glm-5.3-flash-uncensored-subset-verdicts.json).
 
@@ -137,17 +154,14 @@ None.
 | unanswerable     |          0 |             0 |           27 |          0 |
 | no_request       |          2 |             0 |            1 |         24 |
 
-| Item      | Given         | Expected      |
-| --------- | ------------- | ------------- |
-| dev-e1-02 | unanswerable  | no_request    |
-| dev-e1-03 | already_given | answerable    |
-| dev-e1-11 | answerable    | no_request    |
-| dev-e2-02 | answerable    | no_request    |
-| dev-r3-07 | answerable    | already_given |
-
-Additional differences where labels agree:
-
-- dev-r3-09: card ids given `deadline,together`, expected `together`.
+| Item      | Kind             | Given                           | Expected                        |
+| --------- | ---------------- | ------------------------------- | ------------------------------- |
+| dev-e1-02 | wrong_label      | unanswerable                    | no_request                      |
+| dev-e1-03 | wrong_label      | already_given [message index 0] | answerable restart              |
+| dev-e1-11 | wrong_label      | answerable restart              | no_request                      |
+| dev-e2-02 | wrong_label      | answerable rollback             | no_request                      |
+| dev-r3-07 | wrong_label      | answerable together             | already_given [message index 0] |
+| dev-r3-09 | extra_card_items | answerable deadline,together    | answerable together             |
 
 [Complete agreement report](deepseek-v4.1-flash-uncensored-full-agreement.txt), [verdict records](deepseek-v4.1-flash-uncensored-full-verdicts.json).
 
@@ -160,16 +174,12 @@ Additional differences where labels agree:
 | unanswerable     |          2 |             0 |           25 |          0 |
 | no_request       |          2 |             0 |            0 |         25 |
 
-| Item      | Given      | Expected     |
-| --------- | ---------- | ------------ |
-| dev-e1-06 | answerable | unanswerable |
-| dev-e1-11 | answerable | no_request   |
-| dev-e2-02 | answerable | no_request   |
-| dev-r4-06 | answerable | unanswerable |
-
-Additional differences where labels agree:
-
-None.
+| Item      | Kind        | Given               | Expected     |
+| --------- | ----------- | ------------------- | ------------ |
+| dev-e1-06 | wrong_label | answerable role     | unanswerable |
+| dev-e1-11 | wrong_label | answerable restart  | no_request   |
+| dev-e2-02 | wrong_label | answerable rollback | no_request   |
+| dev-r4-06 | wrong_label | answerable purpose  | unanswerable |
 
 [Complete agreement report](kimi-k3.1-pro-full-agreement.txt), [verdict records](kimi-k3.1-pro-full-verdicts.json).
 
@@ -194,9 +204,10 @@ uv run --isolated --python 3.12 python -m cohbench.user agree \
 ## Recommendation
 
 [Inference] Use `configs/explabs-kimi-k3.1-pro.json` for the held-out run.
-Kimi had 84/88 label agreements, kappa 0.938006, and exact card ids on all
+Kimi had 84/88 exact verdicts and label agreements, label kappa 0.938006, and exact card ids on all
 22 jointly answerable items and exact quoted messages on all 12 jointly
-already-given items. DeepSeek had 83/88, kappa 0.922371, and one extra
+already-given items. DeepSeek had 82/88 exact verdicts and 83/88 label agreements, label kappa
+0.922371, and one extra
 card-id selection. Kimi's 88-item evaluation took 582.880 seconds versus
 503.204 for DeepSeek. This is a development-set choice, and behavior on
 new data is not guaranteed. GLM is excluded under the 25-second deadline.
@@ -281,3 +292,14 @@ This development report and the Kimi recommendation were finalized before
 opening the held-out directory. A subsequent driver instruction authorized
 held-out evaluation with a separate 700-attempt budget. Those results belong
 in a separate report; the development results and decision above are frozen.
+
+## Exploratory provider probe
+
+Ledger call 1 was an exploratory probe before the expected-provider
+requirement was enforced. Its snapshot has `expect.provider: null`, so it
+does not load under the committed client. The field is present with a null
+value, rather than absent. The snapshot is preserved as historical evidence;
+it is not a usable pinned configuration.
+
+See [the review round 1 report](../../review-round1.md) for each ruling,
+its regression test and the exact-verdict recomputation.

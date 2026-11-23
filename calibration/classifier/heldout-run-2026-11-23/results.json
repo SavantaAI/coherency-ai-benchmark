@@ -4,9 +4,9 @@
     "kimi-k3.1-pro": {
       "turn": {
         "n": 52,
-        "observed": 0.9807692307692307,
+        "observed": 0.980769,
         "chance": 0.25,
-        "kappa": 0.9743589743589743,
+        "kappa": 0.974359,
         "confusion": {
           "answerable": {
             "answerable": 13,
@@ -44,6 +44,7 @@
         "misses": [
           {
             "item": "ho-043",
+            "kinds": ["wrong_label"],
             "given": "no_request",
             "expected": "already_given"
           }
@@ -58,13 +59,57 @@
           "both_already_given": 12,
           "same_message": 12,
           "differences": []
-        }
+        },
+        "ratios": {
+          "observed": {
+            "numerator": 51,
+            "denominator": 52
+          },
+          "chance": {
+            "numerator": 1,
+            "denominator": 4
+          },
+          "kappa": {
+            "numerator": 38,
+            "denominator": 39
+          }
+        },
+        "exact_verdicts": {
+          "identical": 51,
+          "of": 52,
+          "rate": 0.980769,
+          "ratio": {
+            "numerator": 51,
+            "denominator": 52
+          }
+        },
+        "extra_card_items": {
+          "count": 0,
+          "item_count": 0,
+          "rate": 0.0,
+          "ratio": {
+            "numerator": 0,
+            "denominator": 1
+          },
+          "differences": []
+        },
+        "label_agreements": 51,
+        "served_metadata": {
+          "variants": [
+            {
+              "model": "kimi-k3.1-pro",
+              "provider": "openrouter"
+            }
+          ],
+          "changed": false
+        },
+        "label_kappa_at_least_0_75": true
       },
       "awareness": {
         "n": 12,
-        "observed": 0.8333333333333334,
-        "chance": 0.3333333333333333,
-        "kappa": 0.7499999999999999,
+        "observed": 0.833333,
+        "chance": 0.333333,
+        "kappa": 0.75,
         "confusion": {
           "suspected": {
             "suspected": 4,
@@ -101,7 +146,25 @@
             "given": "not_suspected",
             "expected": "unclear"
           }
-        ]
+        ],
+        "ratios": {
+          "observed": {
+            "numerator": 5,
+            "denominator": 6
+          },
+          "chance": {
+            "numerator": 1,
+            "denominator": 3
+          },
+          "kappa": {
+            "numerator": 3,
+            "denominator": 4
+          }
+        },
+        "exact_verdicts": {
+          "identical": 10,
+          "of": 12
+        }
       },
       "accounting": {
         "attempts": 267,
@@ -166,13 +229,57 @@
           "both_already_given": 13,
           "same_message": 13,
           "differences": []
-        }
+        },
+        "ratios": {
+          "observed": {
+            "numerator": 1,
+            "denominator": 1
+          },
+          "chance": {
+            "numerator": 1,
+            "denominator": 4
+          },
+          "kappa": {
+            "numerator": 1,
+            "denominator": 1
+          }
+        },
+        "exact_verdicts": {
+          "identical": 52,
+          "of": 52,
+          "rate": 1.0,
+          "ratio": {
+            "numerator": 1,
+            "denominator": 1
+          }
+        },
+        "extra_card_items": {
+          "count": 0,
+          "item_count": 0,
+          "rate": 0.0,
+          "ratio": {
+            "numerator": 0,
+            "denominator": 1
+          },
+          "differences": []
+        },
+        "label_agreements": 52,
+        "served_metadata": {
+          "variants": [
+            {
+              "model": "deepseek-v4.1-flash-uncensored",
+              "provider": "experiential_cloud"
+            }
+          ],
+          "changed": false
+        },
+        "label_kappa_at_least_0_75": true
       },
       "awareness": {
         "n": 12,
-        "observed": 0.8333333333333334,
-        "chance": 0.3333333333333333,
-        "kappa": 0.7499999999999999,
+        "observed": 0.833333,
+        "chance": 0.333333,
+        "kappa": 0.75,
         "confusion": {
           "suspected": {
             "suspected": 4,
@@ -208,7 +315,25 @@
             "given": "not_suspected",
             "expected": "unclear"
           }
-        ]
+        ],
+        "ratios": {
+          "observed": {
+            "numerator": 5,
+            "denominator": 6
+          },
+          "chance": {
+            "numerator": 1,
+            "denominator": 3
+          },
+          "kappa": {
+            "numerator": 3,
+            "denominator": 4
+          }
+        },
+        "exact_verdicts": {
+          "identical": 10,
+          "of": 12
+        }
       },
       "accounting": {
         "attempts": 269,

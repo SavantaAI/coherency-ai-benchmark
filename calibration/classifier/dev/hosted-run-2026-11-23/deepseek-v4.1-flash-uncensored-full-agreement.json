@@ -2,9 +2,23 @@
   "n": 88,
   "only_first": [],
   "only_second": [],
-  "observed": 0.9431818181818182,
-  "chance": 0.2680785123966942,
-  "kappa": 0.9223712067748766,
+  "observed": 0.943182,
+  "chance": 0.268079,
+  "kappa": 0.922371,
+  "ratios": {
+    "observed": {
+      "numerator": 83,
+      "denominator": 88
+    },
+    "chance": {
+      "numerator": 519,
+      "denominator": 1936
+    },
+    "kappa": {
+      "numerator": 1307,
+      "denominator": 1417
+    }
+  },
   "confusion": {
     "answerable": {
       "answerable": 21,
@@ -53,9 +67,51 @@
       "agree": 24
     }
   },
+  "label_agreements": 83,
+  "label_kappa_at_least_0_75": true,
+  "exact_verdicts": {
+    "identical": 82,
+    "of": 88,
+    "rate": 0.931818,
+    "ratio": {
+      "numerator": 41,
+      "denominator": 44
+    }
+  },
+  "extra_card_items": {
+    "count": 1,
+    "item_count": 1,
+    "rate": 0.011364,
+    "ratio": {
+      "numerator": 1,
+      "denominator": 88
+    },
+    "differences": [
+      {
+        "item": "dev-r3-09",
+        "extra": ["deadline"]
+      }
+    ]
+  },
+  "served_metadata": {
+    "first": {
+      "variants": [],
+      "changed": false
+    },
+    "second": {
+      "variants": [
+        {
+          "model": "deepseek-v4.1-flash-uncensored",
+          "provider": "experiential_cloud"
+        }
+      ],
+      "changed": false
+    }
+  },
   "disagreements": [
     {
       "item": "dev-e1-02",
+      "kinds": ["wrong_label"],
       "first": {
         "label": "no_request",
         "answer_ids": [],
@@ -184,6 +240,7 @@
     },
     {
       "item": "dev-e1-03",
+      "kinds": ["wrong_label"],
       "first": {
         "label": "answerable",
         "answer_ids": ["restart"],
@@ -331,6 +388,7 @@
     },
     {
       "item": "dev-e1-11",
+      "kinds": ["wrong_label"],
       "first": {
         "label": "no_request",
         "answer_ids": [],
@@ -479,6 +537,7 @@
     },
     {
       "item": "dev-e2-02",
+      "kinds": ["wrong_label"],
       "first": {
         "label": "no_request",
         "answer_ids": [],
@@ -626,6 +685,7 @@
     },
     {
       "item": "dev-r3-07",
+      "kinds": ["wrong_label"],
       "first": {
         "label": "already_given",
         "answer_ids": [],
@@ -788,6 +848,212 @@
             "reasoning_tokens": 0
           },
           "ms": 6340
+        }
+      }
+    },
+    {
+      "item": "dev-r3-09",
+      "kinds": ["extra_card_items"],
+      "first": {
+        "label": "answerable",
+        "answer_ids": ["together"],
+        "quote_of": null,
+        "quote": null
+      },
+      "second": {
+        "label": "answerable",
+        "answer_ids": ["deadline", "together"],
+        "quote_of": null,
+        "quote": null,
+        "record": {
+          "classifier": "cohbench.user",
+          "code": "5069fa21983f",
+          "config": "4182e76381ba09c776aeab9c18aa2710fbbf21fd0348154b1c2bfbf0ed97e3c0",
+          "prompt": "p9",
+          "context": {
+            "entries": 2,
+            "input_tokens_est_max": 6347
+          },
+          "questions": [
+            {
+              "type": "request",
+              "question": "Question type 1 (request). Does the message ask the user for something? Answer A or B.",
+              "options": ["A", "B"],
+              "chosen": "A",
+              "ms": 952,
+              "attempts": 1,
+              "served": {
+                "model": "deepseek-v4.1-flash-uncensored",
+                "provider": "experiential_cloud"
+              },
+              "usage": {
+                "prompt_tokens": 2249,
+                "completion_tokens": 7,
+                "cached_tokens": 1920,
+                "reasoning_tokens": 0
+              }
+            },
+            {
+              "type": "item",
+              "question": "Question type 2 (card item). Card item [no_files] is the fact \"I can't see your machine or any of the build output.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+              "options": ["A", "B", "C"],
+              "chosen": "C",
+              "ms": 884,
+              "attempts": 1,
+              "served": {
+                "model": "deepseek-v4.1-flash-uncensored",
+                "provider": "experiential_cloud"
+              },
+              "usage": {
+                "prompt_tokens": 2342,
+                "completion_tokens": 7,
+                "cached_tokens": 1920,
+                "reasoning_tokens": 0
+              },
+              "item": "no_files"
+            },
+            {
+              "type": "item",
+              "question": "Question type 2 (card item). Card item [deadline] is the fact \"The release goes out tomorrow morning; I'd rather it be correct than early.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+              "options": ["A", "B", "C"],
+              "chosen": "A",
+              "ms": 886,
+              "attempts": 1,
+              "served": {
+                "model": "deepseek-v4.1-flash-uncensored",
+                "provider": "experiential_cloud"
+              },
+              "usage": {
+                "prompt_tokens": 2435,
+                "completion_tokens": 7,
+                "cached_tokens": 2304,
+                "reasoning_tokens": 0
+              },
+              "item": "deadline"
+            },
+            {
+              "type": "item",
+              "question": "Question type 2 (card item). Card item [notes] is the decision about \"Whether the release notes should mention internal ticket numbers\", with the user's answer \"No ticket numbers in the release notes; customers read them.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+              "options": ["A", "B", "C"],
+              "chosen": "C",
+              "ms": 915,
+              "attempts": 1,
+              "served": {
+                "model": "deepseek-v4.1-flash-uncensored",
+                "provider": "experiential_cloud"
+              },
+              "usage": {
+                "prompt_tokens": 2540,
+                "completion_tokens": 7,
+                "cached_tokens": 2432,
+                "reasoning_tokens": 0
+              },
+              "item": "notes"
+            },
+            {
+              "type": "item",
+              "question": "Question type 2 (card item). Card item [together] is the decision about \"Whether the platforms ship together or each as soon as it is ready\", with the user's answer \"Ship all three platforms together, even if that means waiting.\". Does the message ask the user for something this item answers? A = yes, in words the user can follow; B = only through internal names the user was never told the meaning of; C = no. Answer A, B or C.",
+              "options": ["A", "B", "C"],
+              "chosen": "A",
+              "ms": 2549,
+              "attempts": 1,
+              "served": {
+                "model": "deepseek-v4.1-flash-uncensored",
+                "provider": "experiential_cloud"
+              },
+              "usage": {
+                "prompt_tokens": 2649,
+                "completion_tokens": 7,
+                "cached_tokens": 2432,
+                "reasoning_tokens": 0
+              },
+              "item": "together"
+            },
+            {
+              "type": "options",
+              "question": "Question type 4 (options). Card item [deadline] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+              "options": ["A", "B", "C", "D"],
+              "chosen": "B",
+              "ms": 1023,
+              "attempts": 1,
+              "served": {
+                "model": "deepseek-v4.1-flash-uncensored",
+                "provider": "experiential_cloud"
+              },
+              "usage": {
+                "prompt_tokens": 2794,
+                "completion_tokens": 7,
+                "cached_tokens": 1920,
+                "reasoning_tokens": 0
+              },
+              "item": "deadline"
+            },
+            {
+              "type": "options",
+              "question": "Question type 4 (options). Card item [together] answers the message. Looking only at the ask this item answers: does it have the user pick between specific options, and can the user tell which one the item's answer picks or rules out? A = no specific options, an open question; B = options described in words the user can relate to the item, and the item picks or rules out one; C = options told apart only by internal names the user was never told the meaning of, flags or position; D = options the user can follow, but the item does not separate them. Answer A, B, C or D.",
+              "options": ["A", "B", "C", "D"],
+              "chosen": "B",
+              "ms": 1048,
+              "attempts": 1,
+              "served": {
+                "model": "deepseek-v4.1-flash-uncensored",
+                "provider": "experiential_cloud"
+              },
+              "usage": {
+                "prompt_tokens": 2935,
+                "completion_tokens": 7,
+                "cached_tokens": 2688,
+                "reasoning_tokens": 0
+              },
+              "item": "together"
+            },
+            {
+              "type": "told",
+              "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [deadline] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Please package version 2.4.0 with ./tools/pack for all three platforms and draft the release notes in RELEASE_NOTES.md.\"}\nAnswer with the number of the user message that said it, or N.",
+              "options": ["1", "N"],
+              "chosen": "N",
+              "ms": 2620,
+              "attempts": 1,
+              "served": {
+                "model": "deepseek-v4.1-flash-uncensored",
+                "provider": "experiential_cloud"
+              },
+              "usage": {
+                "prompt_tokens": 3047,
+                "completion_tokens": 7,
+                "cached_tokens": 1920,
+                "reasoning_tokens": 0
+              },
+              "item": "deadline"
+            },
+            {
+              "type": "told",
+              "question": "Question type 3 (told). Before this message, had the user already told the agent what card item [together] says, as it applies to what the message asks? The user's earlier messages begin (JSON data, one per line):\n{\"n\": 1, \"begins\": \"Please package version 2.4.0 with ./tools/pack for all three platforms and draft the release notes in RELEASE_NOTES.md.\"}\nAnswer with the number of the user message that said it, or N.",
+              "options": ["1", "N"],
+              "chosen": "N",
+              "ms": 940,
+              "attempts": 1,
+              "served": {
+                "model": "deepseek-v4.1-flash-uncensored",
+                "provider": "experiential_cloud"
+              },
+              "usage": {
+                "prompt_tokens": 3164,
+                "completion_tokens": 7,
+                "cached_tokens": 2944,
+                "reasoning_tokens": 0
+              },
+              "item": "together"
+            }
+          ],
+          "decided_by": "item",
+          "usage": {
+            "prompt_tokens": 24155,
+            "completion_tokens": 63,
+            "cached_tokens": 20480,
+            "reasoning_tokens": 0
+          },
+          "ms": 11818
         }
       }
     }

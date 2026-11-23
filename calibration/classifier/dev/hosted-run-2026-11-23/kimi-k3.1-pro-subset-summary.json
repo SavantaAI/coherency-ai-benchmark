@@ -4,6 +4,30 @@
   "exit": 0,
   "wall_s": 216.775,
   "n": 30,
-  "kappa": 0.866863905325444,
-  "misses": 3
+  "kappa": 0.866864,
+  "misses": 3,
+  "ratios": {
+    "observed": {
+      "numerator": 9,
+      "denominator": 10
+    },
+    "chance": {
+      "numerator": 56,
+      "denominator": 225
+    },
+    "kappa": {
+      "numerator": 293,
+      "denominator": 338
+    }
+  },
+  "exact_verdicts": {
+    "identical": 27,
+    "of": 30,
+    "rate": 0.9,
+    "ratio": {
+      "numerator": 9,
+      "denominator": 10
+    }
+  },
+  "label_misses": 3
 }

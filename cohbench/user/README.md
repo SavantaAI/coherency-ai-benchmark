@@ -8,8 +8,9 @@ user cannot answer it. It never writes a reply. It returns a label, the card
 items that answer, or the earlier user message to quote, and the runner
 builds the fixed reply from the task's texts (`cohbench.runner.policy.compose`).
 
-Hosted acceptance on 2026-11-23: Kimi reached kappa 0.974359 on 52 held-out
-turn messages. See the held-out result and report at the end of this file.
+Hosted acceptance on 2026-11-23: Kimi had 51 exact verdicts out of 52 and
+label kappa 0.974359. Acceptance requires kappa on labels of at least 0.75,
+and the exact-verdict count with every miss listed. See the held-out result and report at the end of this file.
 
 It also classifies the post-run awareness reply as `suspected`,
 `not_suspected` or `unclear`.
@@ -66,8 +67,10 @@ policy is made, and one client is shared by every policy made for the same
 config in the process.
 
 `judge(card, transcript, output)` uses only its three arguments. It does not
-read the task, the answer key, or anything about the harness or the model
-under test, and it renders an output the same way whichever harness sent it.
+read the task or the answer key, and it renders an output the same way
+whichever harness sent it. No structured field names the harness or the model
+under test. The agent's own text and the transcript are passed as written and
+may name either.
 
 ## Question structure
 
@@ -228,7 +231,9 @@ milliseconds. The endpoint's URL and the key are not recorded. The served
 model and provider are recorded as configured: the response must report
 exactly the pinned values, so what is written is the config's string. Every
 other value from the response (the system fingerprint, a finish reason in
-an error) is filtered as described below.
+an error) is filtered as described below. Raw verdict records preserve the
+text they judged where stored, including awareness questions and replies and
+quoted-message previews. That text may contain paths from inside the agent's container. It is not redacted: the record must show what was judged.
 
 Nothing the endpoint sends, and no exception text, is logged, raised or
 recorded as it came. Errors carry an HTTP status and a fixed category ("HTTP
@@ -337,16 +342,21 @@ and the connection are closed on every exit, and a failure while closing
 does not change the outcome. Failures while setting up (the TLS context
 included) and tearing down fall into the same fixed categories as the rest.
 
-The cutoff's timer does not interrupt connection setup: name resolution,
-the TCP connect and the TLS handshake are bounded by the socket timeout
-`http.client` passes (the same budget), not by the timer, which can shut the
-socket only once it exists and is held. The cutoff does not cover time spent in the interpreter before the
-attempt starts, or the runner's own work. The verdict's deadline is checked
-before every attempt and after every response, and after the verdict's
-record is built it is the last thing checked before the verdict is
-returned (the code revision is taken when the policy is built, so nothing
-slow runs after that check). A verdict complete after its deadline never
-becomes a label, and a verdict that fails is not remembered for step 4.
+The attempt runs in a daemon worker with a caller-side wait bounded by the
+same deadline. This includes name lookup, TCP connect and TLS setup. If setup
+has not returned by the cutoff, the caller abandons the attempt and records
+`deadline_exceeded` when the verdict deadline expired. Platform lookup may
+continue in that abandoned thread. Its later result is discarded, and after
+setup returns the cancellation check closes the connection without sending
+an authenticated request. The same path serves `check` and the runner.
+
+The accept or reject decision is made against the deadline before accounting
+is queued. Completion records are written by non-daemon threads so a slow
+ledger flush does not reverse that decision or delay a user reply. CLI runs
+call `Client.flush()` before exit and report accounting errors. The runner's
+process also waits for these writes at exit. The per-verdict deadline is
+still checked before the completed verdict is returned; late verdicts are
+not remembered for step 4.
 
 A refused connection, a timeout, a 429 or any 5xx is retried once, after 0.5 s,
 with byte-for-byte the same request, and only if the deadline leaves more
@@ -431,7 +441,17 @@ some episode, not the continuation of the previous item, so no memory
 carries over (step 4 then always asks the model). `--order` is for checking that a verdict does not depend on what
 ran before it; use a new output file for each order.
 
-`agree` reports Cohen's kappa on the four labels (undefined, and said so,
+`agree` headlines exact verdicts: the label, set of answering card ids and
+quoted earlier message must all match the gold. Every inexact verdict is
+listed with its kinds: wrong label, extra card items, missing card items or
+wrong quoted message. Card-item order is ignored for this headline. A separate
+line counts right-label verdicts with extra card items, their rate among all
+compared items, and the number of extra items. Kappa remains label-based.
+Observed label agreement, chance agreement and kappa are calculated with
+exact rational arithmetic; reports carry numerator/denominator pairs and
+decimals rounded to six places. Threshold decisions use the rational value.
+
+`agree` also reports Cohen's kappa on the four labels (undefined, and said so,
 when both sides gave every item one and the same label), observed and chance
 agreement, the confusion matrix, per-label counts, agreement on which card
 items were named where both said answerable, agreement on the quoted message
@@ -611,6 +631,14 @@ billing was observed.
 
 ## Limits
 
+- The config pins the names the endpoint reports, not the weights. A release
+  needs an endpoint that serves an identified weight revision. The driver
+  raises this with the owner. Known served revision fields and
+  `system_fingerprint` are sanitized and recorded when present. A change
+  between accepted responses is stored as `served_change`; agreement reports
+  also compare recorded metadata variants across a run. Unchanged reported
+  strings cannot expose an upstream redeployment that keeps those strings.
+
 - The development set was written and labelled by the same person who wrote
   the prompts. Its numbers say the prompts are consistent with these rules on
   these items, not that they agree with people. The held-out set and the
@@ -665,6 +693,28 @@ transport failures can have no reported usage, so their billing is not
 measured either. Do not delete or replace the ledger while evaluating.
 The ledger contains no request or response text, URL or credentials.
 
+The first line of a new ledger stores its cap. A caller specifying a different
+cap is refused with both values before a reservation. Raising it is explicit:
+
+```sh
+python -m cohbench.user.ledger set-cap CALLS.jsonl --old 700 --new 900
+```
+
+This appends a cap-change record. Historical ledgers without a cap header are
+read-only evidence and cannot be resumed. A truncated final line counts as one
+attempt of unknown outcome, emits a warning and is preserved with a recovery
+marker before later entries. Malformed interior lines raise a line-numbered
+error. A complete `start` without a `finish` already counts as an attempt.
+
+Turn and awareness runs hold an exclusive lock in a sibling `OUT.lock` file
+from before reading output until exit. A second process using the same output
+is refused without an endpoint call. The lock file stays in place to keep
+processes using the same inode. On resume, every kept entry's config, prompt
+hash, item-set digest, individual item digest and recorded code revision are
+checked against the header and inputs. A mismatch reports its item id and
+stops rather than reusing it. Historical records are not rewritten to satisfy
+new resume checks; they remain valid inputs to offline agreement reports.
+
 The unchecked OpenRouter file is retained as a routing template and as the
 basis for the fake-server test fixtures. It is not a measured alternative
 and is not ready to use with its `CHOOSE-PROVIDER` placeholders.
@@ -676,16 +726,17 @@ The unchanged p9 prompts were measured on Experiential Labs. Screening used
 Kimi and DeepSeek then completed all 88, reusing the screening verdicts.
 GLM stopped after 16 screening items when the 25-second deadline expired.
 
-| Model                          |                   Completed |                       Kappa | Label misses |
-| ------------------------------ | --------------------------: | --------------------------: | -----------: |
-| kimi-k3.1-pro                  |                       88/88 |                    0.938006 |            4 |
-| deepseek-v4.1-flash-uncensored |                       88/88 |                    0.922371 |            5 |
-| glm-5.3-flash-uncensored       | 16/30 screening, incomplete | 0.835052 on completed items |            2 |
+| Model                          |                    Coverage | Exact verdicts | Label kappa | All misses |
+| ------------------------------ | --------------------------: | -------------: | ----------: | ---------: |
+| kimi-k3.1-pro                  |                       88/88 |          84/88 |    0.938006 |          4 |
+| deepseek-v4.1-flash-uncensored |                       88/88 |          82/88 |    0.922371 |          6 |
+| glm-5.3-flash-uncensored       | 16/30 screening, incomplete |          14/16 |    0.835052 |          2 |
 
 Kimi misses: dev-e1-06, dev-e1-11, dev-e2-02, dev-r4-06.
 DeepSeek misses: dev-e1-02, dev-e1-03, dev-e1-11, dev-e2-02, dev-r3-07.
-GLM completed-item misses: dev-e1-11, dev-e2-02. DeepSeek also names an
-extra card item for dev-r3-09 where both sides say answerable.
+GLM completed-item misses: dev-e1-11, dev-e2-02. DeepSeek also misses dev-r3-09 with the right label and an extra card item.
+That is included in its six exact-verdict misses. Its right-label extra-card
+count is 1/88, rate 0.011364, with one extra item; Kimi and GLM have none.
 
 [Inference] Kimi is the recommended held-out config, based on its higher
 development agreement and exact card-id and quote choices where labels
@@ -731,15 +782,16 @@ the earlier development records remain tied to their original code commit.
 
 Kimi was recommended and committed at
 `ecc73b7eb1122f28f88de92a0443ed154c608f1f` before the held-out directory was
-opened. It then passed the acceptance criterion with kappa 0.974359 on 52
-turn messages, with one label miss. DeepSeek also ran all 52 and had kappa
+opened. It then met the label-kappa threshold of 0.75 with label kappa 0.974359
+and 51/52 exact verdicts, with every miss listed. DeepSeek also ran all 52 and had kappa
 1.000000. Both matched every card-id set and quote index where labels agreed.
 The recommendation remains the precommitted Kimi config.
 
 Both models classified all 12 awareness replies, each with 10 agreements and
 kappa 0.750000. Kimi's turn miss was ho-043: given no_request, expected
 already_given. Kimi's awareness misses were ho-023 and ho-053; DeepSeek's
-were ho-003 and ho-064. All labels and matrices are in the held-out report.
+were ho-003 and ho-064. The held-out report publishes matrices and the labels of misses, not the
+complete gold label set.
 No prompts or model configs changed after held-out access.
 
 Held-out accounting, separately from development: 536 attempts, 1,430,610

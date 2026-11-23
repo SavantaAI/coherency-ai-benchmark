@@ -1,16 +1,21 @@
-Items compared: 16
-Labelled by one side only: labels (labels) 72, glm-5.3-flash-uncensored-subset-verdicts (verdicts) 0
-Observed agreement: 0.875   chance agreement: 0.242
-Cohen's kappa: 0.835
+Exact verdicts: 14 of 16
+Items compared: 16; label agreements: 14
+Right-label verdicts with extra card items: 0 of 16 (0.000000); extra items: 0
+Labelled by one side only: gold 72, classifier 0
+Observed label agreement: 0.875000   chance agreement: 0.242188
+Cohen's kappa: 0.835052
+Exact observed: 7/8
+Exact chance: 31/128
+Exact kappa: 81/97
 
-Confusion (labels (labels) in rows, glm-5.3-flash-uncensored-subset-verdicts (verdicts) in columns):
+Confusion (gold in rows, classifier in columns):
                  answerable  already_give  unanswerable    no_request
 answerable                3             0             0             0
 already_given             0             4             0             0
 unanswerable              0             0             4             0
 no_request                2             0             0             3
 
-Per label (labels (labels) count, glm-5.3-flash-uncensored-subset-verdicts (verdicts) count, agreed; recall of labels (labels)'s label):
+Per label (gold count, classifier count, agreed; recall of gold's label):
   answerable        3    5    3   1.00
   already_given     4    4    4   1.00
   unanswerable      4    4    4   1.00
@@ -20,18 +25,18 @@ Card items named, where both said answerable: 3 of 3 identical, mean Jaccard 1.0
 Earlier message quoted, where both said already_given: 4 of 4 the same
 
 Disagreements: 2
-- dev-e1-11: labels (labels) no_request   glm-5.3-flash-uncensored-subset-verdicts (verdicts) answerable restart
+- dev-e1-11 (wrong_label): gold no_request   classifier answerable restart
     message: Last thing: I'd like to restart the build agent on m3 with I/O tracing for ten minutes to confirm the disk theory with hard numbers. Is that OK?
-    glm-5.3-flash-uncensored-subset-verdicts (verdicts) record:
+    classifier record:
       request: options A/B -> A
       item [no_files]: options A/B/C -> C
       item [role]: options A/B/C -> C
       item [restart]: options A/B/C -> A
       options [restart]: options A/B/C/D -> A
       told [restart]: options 1/3/5/7/N -> N
-- dev-e2-02: labels (labels) no_request   glm-5.3-flash-uncensored-subset-verdicts (verdicts) answerable rollback
+- dev-e2-02 (wrong_label): gold no_request   classifier answerable rollback
     message: In plain words: last week's update accidentally lowered how many database connections api-2 can use at once, from 200 to 40. At busy times requests wait in line for a free connection, so pages load slowly. The quickest fix is to roll back last week's deploy on api-2. Want me to do that now?
-    glm-5.3-flash-uncensored-subset-verdicts (verdicts) record:
+    classifier record:
       request: options A/B -> A
       item [no_files]: options A/B/C -> C
       item [since]: options A/B/C -> C
