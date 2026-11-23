@@ -284,3 +284,17 @@ def test_r4_failed_end_coverage_still_closes_pending_jobs(run_factory, runners, 
     assert policies[0].jobs[0].ready()
     assert runners[0]._jobs==[]
     assert {e['ref']['item'] for e in run.events('unjudged')} == set(runners[0]._observed)
+
+
+def test_r4_completion_does_not_fire_an_elapsed_branch_after_handback(run_factory, runners):
+    def edit(doc):
+        no_events(doc)
+        doc['user']['return_delay_ms']=30_000
+        doc['events']=[{'name':'elapsed_or_verdict','required':False,'action':{'type':'observe'},
+                        'trigger':{'any':[{'verdicts':{'label':'answerable','at_least':1}},
+                                          {'elapsed_ms':{'at_least':1001}}]}}]
+    run=run_factory([Act(duration_s=1,final='Done.'),Act()],edit=edit,poll_s=1,
+                    pol=lambda:ScheduledPolicy(run,{'Done.':.002}))
+    run.go()
+    assert runners[0].ev['elapsed_or_verdict'].reached_utc is None
+    assert not any(row['type']=='event_fired' and row['name']=='elapsed_or_verdict' for row in run.log)

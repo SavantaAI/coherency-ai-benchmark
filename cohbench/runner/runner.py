@@ -1278,8 +1278,9 @@ class Runner:
             if job.value is None:
                 self._unjudged(seen.output)
             else:
+                previous_verdicts = self._context_at(at).verdicts
                 self._apply_verdict(seen, job.value, card, tr, snapshot_at, at, completed_at=job.completed_at)
-                self._evaluate(as_of=at, verdicts_only=True)
+                self._evaluate(as_of=at, previous_verdicts=previous_verdicts)
 
     def _begin_judging(self, at: datetime) -> None:
         """One absolute window, also used by this hand-back's reset drain."""
@@ -1316,7 +1317,7 @@ class Runner:
 
     # ----- triggers and actions ------------------------------------------------------------
 
-    def _evaluate(self, handback: int | None = None, as_of: datetime | None = None, *, verdicts_only=False) -> None:
+    def _evaluate(self, handback: int | None = None, as_of: datetime | None = None, *, previous_verdicts=None) -> None:
         """Evaluate every idle event, on the state now or as of a time (the
         workspace, the clock and the fired events as they stood then).
         `handback` is the hand-back being processed, or None (an event then
@@ -1329,11 +1330,13 @@ class Runner:
             view = self.ctx.work.as_of(as_of)
             fired = {n: snap for n, snap in self.ctx.fired.items() if self.ev[n].fired_dt is None or self.ev[n].fired_dt <= as_of}
             ctx = dataclasses.replace(self._context_at(as_of), work=view, elapsed_ms=self._elapsed_at(as_of), fired=fired)
+        before = (dataclasses.replace(ctx, verdicts=previous_verdicts, fired=dict(ctx.fired))
+                  if previous_verdicts is not None else None)
         changed = True
         while changed:
             changed = False
             for e in self.task.events:
-                if verdicts_only and e.name not in self._verdict_events:
+                if before is not None and (e.name not in self._verdict_events or triggers.holds(e.trigger, before)):
                     continue
                 st = self.ev[e.name]
                 if st.status != "idle" or not triggers.holds(e.trigger, ctx):

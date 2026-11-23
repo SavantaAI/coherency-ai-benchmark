@@ -35,7 +35,10 @@ Additional differences found during this work:
 - Evaluating every trigger at late verdict completion could fire an
   elapsed-only event after a final hand-back. Completion now evaluates only
   verdict-dependent triggers. The replay property includes
-  `test_a_live_threshold_reads_the_origin_clock[0.0006]`.
+  `test_a_live_threshold_reads_the_origin_clock[0.0006]`. A dedicated
+  compound-trigger regression also checks that an elapsed branch of `any`
+  is not fired merely because a verdict completed:
+  `test_r4_completion_does_not_fire_an_elapsed_branch_after_handback`.
 - Two queued endpoint failures could skip the next output before observation.
   `test_r4_endpoint_failure_does_not_remove_following_observations` failed
   before observation moved ahead of failure handling.
@@ -71,9 +74,12 @@ Final coverage and per-scenario results: verification in progress.
 The generated development suite has 88 tasks and 116 planted events. None
 has a verdict-dependent event or card unlock. Neither checked-in runner task
 fixture has one. Existing trigger unit tests exercise the predicate directly.
-The new asynchronous regression fixture contains one planted event:
-`after`, triggered by one `no_request` verdict, with action `observe` and no
-card unlock. It fires at ordered verdict completion.
+The new asynchronous regression fixtures contain two verdict-dependent
+planted events, both with action `observe` and no card unlock: `after`,
+triggered by one `no_request` verdict, and `elapsed_or_verdict`, an `any`
+trigger with one `answerable` verdict or 1,001 ms elapsed. The first checks
+ordered completion; the second checks that a completion cannot fire its
+elapsed branch after the hand-back.
 
 ## Verification
 

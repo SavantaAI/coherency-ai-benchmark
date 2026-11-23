@@ -890,8 +890,8 @@ The exact replay comparison fields and exclusions are documented in
 [the runner policy contract](../runner/README.md). Verdict-count baseline
 differences are retained explicitly. No generated development-suite task
 or checked-in runner task fixture has a verdict-dependent planted event or
-card unlock. The round 4 regression fixture has one such event, `after`,
-to check completion-time behavior. Prompts, pinned configs, development
+card unlock. The round 4 regression fixtures add `after` and `elapsed_or_verdict`
+to check completion-time behavior, with no card unlocks. Prompts, pinned configs, development
 agreement outputs and held-out evidence are unchanged.
 
 See [the round 4 report](../../calibration/classifier/review-round4.md) for
