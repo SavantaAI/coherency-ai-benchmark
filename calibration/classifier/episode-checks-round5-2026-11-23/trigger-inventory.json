@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "generated": {
+    "tasks": 88,
+    "planted_events": 116,
+    "dependencies": []
+  },
+  "fixtures": {
+    "tasks": 2,
+    "planted_events": 4,
+    "dependencies": []
+  },
+  "dynamic_regression_fixtures": []
+}

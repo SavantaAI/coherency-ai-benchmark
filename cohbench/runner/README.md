@@ -862,59 +862,76 @@ one user message carry the union of their delivered items, including items
 whose reply texts happen to be identical. This side channel is not model
 prompt text. Quote indices refer to the supplied transcript snapshot.
 
-The classifier implements
-`start_judgement(card, transcript, output, *, utcnow, timeout_s=None)`.
-Each output starts an independent job when the runner observes it. Its card
-and transcript are frozen at the output's delivery instant, before that
-output enters the transcript. Coverage polling continues while jobs run.
-The classifier limit counts from each job's start. At a hand-back the runner
-tightens every unfinished job to one deadline: the closing output's return
-time less the 3-second dispatch allowance, also clipped by the episode end.
-A reset drain reuses that deadline. No new request starts after the episode
-end. Results are applied in output order; a completed later result waits for
-the earlier job to finish or expire. `completed_at` records completion and
-`effective_at` records ordered application. Only verdict-dependent triggers
-are evaluated on completion. Other triggers remain on the observed timeline.
+The classifier implements `judge(card, transcript, output, *, deadline)`
+and supplies `verdict_deadline_s` and `clock()`. The runner calls it
+synchronously in output order. Each call receives the card and transcript
+at that output's own delivery instant, before the output enters the
+transcript. This applies to several outputs observed in one hand-back poll.
+Scripted policies keep their existing synchronous signature and behavior.
 
-The reply schedule is unchanged: replies go at a hand-back, from its closing
-output. A mid-run message has no separate reply wait. The synchronous
-scripted policy retains its per-output path. The classifier's standalone
-`judge_batch` remains available for callers outside the episode runner.
+The absolute deadline is the earlier of the classifier limit from the
+call's own start and the shared hand-back cutoff. That cutoff is the reply
+due time less the 3-second dispatch allowance, clipped by the episode end
+less the allowance. A reset drain shares it. At a reset, grace or the
+reported hand-back is selected before judging, according to which came
+first. Mid-run outputs get the classifier's own limit and no separate reply
+wait. A pending native question also gets the full limit; expiry makes the
+episode unusable instead of sending invented answer text. A scripted empty
+reply retains `main`'s behavior, including an eligible event's reopen sent
+as the pending answer.
 
 Every observed output enters the transcript and output counts at delivery,
-including an output without a verdict. It can close a hand-back and be a
-probe target. `as_of` names the judgement snapshot; `output_at` names the
-output's delivery and is the trajectory verdict timestamp. A shared-deadline
-expiry is a missing judgement. An endpoint failure before that deadline
-makes the episode unusable.
+including one without a verdict. It can close a hand-back and be a probe
+target. `as_of` names the judgement snapshot; `output_at` names delivery and
+is the trajectory verdict timestamp. Both now name the output's delivery
+instant. A classifier expiry records `unjudged` with reason `deadline`.
+Other endpoint failures record `endpoint_failure` and make the episode
+unusable. The historical `cutoff` reason remains for outputs outside judging
+coverage and scripted policy failures.
 
 User transcript rows carry `delivered_ids` for every policy. They also carry
 `wire_text`: usually the same as `text`, but a native option's submitted
 value can differ from the user's label. Classifier quotes use `text`.
-A refusal steer enters the transcript only when the driver reports that the
-harness took it. Acceptance alone adds no message or delivered card item.
+`cohbench/delivery.py` decides receipt instants for the live driver and
+trajectory, including plain messages, native answers, steers and restarts.
+A refusal steer enters the transcript only on established receipt.
+Scorer-facing `verdict.reply` stays null until that receipt; dispatch alone
+adds no delivered card item.
 
-The replay property matches verdict rows by output identity. With the same
-inputs and verdicts it compares complete episode, handoff, transcript,
-classifier, manifest and journal records except declared metadata:
-classifier `as_of`, `card_items`, historical `batch_outputs`, `completed_at`,
-`effective_at`, `record.context`, `record.ms`, and `record.questions[].ms`;
-awareness-record write `utc`, its `as_of`, `card_items`, `batch_outputs`,
-`completed_at`, `effective_at`, `record.context`, `record.ms`, and
-`record.questions[].ms` when present; journal `n`, `clock_ms`, and its automatically written `utc`. Semantic times
-such as `output_at`, `sent_utc`, `at`, delivery `utc`, wait bounds and event
-`utc` remain compared. Verdict journal rows are matched separately by output
-identity. Fixture storage roots and staging directory identities are mapped
-to the same input location in the reversed-completion test.
+The replay property matches verdict rows by output item id, never text,
+and checks the exact card, transcript and delivery provenance received by
+each call. It compares whole episode, handoff, transcript, classifier,
+awareness, manifest and journal records. Only measured `record.ms` and
+`record.questions[].ms` are masked. Snapshot `as_of`, `card_items`,
+`record.context`, journal `n`, `utc` and `clock_ms` all remain compared.
+The forked fixture copies keep original path identities and clock advances.
 
-Verdict-count baselines are reported separately, not masked: a delayed
-verdict becomes available at completion. With missing verdicts, only
-verdict-dependent fields are removed, and comparison stops at the first
-absent reply or changed hand-back decision and its consequences. Each
-scenario records that point. The property replays explicit fixture clock
-advances in all variants to keep observed inputs identical. It uses saved
-verdicts, not endpoint calls. See the round 4 report for coverage and the
-inventory of verdict-dependent events.
+With every verdict missing, expected verdict rows become required unjudged
+rows with the same output, time and journal ordinal. Transcript `label`
+becomes null and `unjudged` names the cause. Classifier verdict rows and
+baseline `verdicts` counts are the removed verdict-dependent fields. All
+other records remain exact. Each scenario reports the first absent reply,
+including a failed native-question answer, or complete agreement through
+the end. No changed input alone is an accepted divergence. See the
+[round 5 report](../../calibration/classifier/review-round5.md) for coverage
+and the inventory of verdict-dependent planted events and card unlocks.
+
+Serial judging has a polling cost. While a call is in progress the loop
+does not poll, so an event or correction after a mid-run message can be
+dispatched late by up to the judgement's duration. Records retain the true
+observation and delivery instants. Full-limit regression calls cover usage
+grace, interrupts, elapsed end and reset grace, preserving their boundary
+instants even when processing resumes later.
+
+The classifier client retains bounded-return transport threads. Python
+cannot cancel a blocked name lookup or connect. An abandoned thread's
+result is unused, it cannot submit a later request, and its only permitted
+ledger write is closing its own attempt. The end-of-episode `flush()` hook
+waits at most 0.25 seconds by default. `run.json` stores its
+`classifier_cleanup.blocked_transport_threads` and
+`classifier_cleanup.pending_accounting_threads` counts. Accounting errors
+make the episode unusable. No runner judgement job survives a reset because
+there are no runner judgement jobs.
 
 `Judgement(label, answer_ids, quote_of, quote, record)`. The policy never
 writes a reply. It names the label (`answerable`, `already_given`,
@@ -1498,6 +1515,16 @@ hand-back to the report; `after_report_ms`, from the report to the wait).
 
 ## Limits
 
+- Classifier judgements are synchronous. While one is in progress the loop
+  does not poll, so a planted event or correction after a mid-run message
+  can be dispatched late by up to that judgement's duration. Recorded
+  observation and delivery instants remain the true ones. Full 25-second
+  regression calls cover usage grace, interrupts, elapsed end and reset grace.
+- Python cannot cancel blocked name lookup or connect. An abandoned
+  classifier transport thread can outlive its call, with its result unused
+  and late submission blocked. The bounded end flush reports still-blocked
+  transport and pending accounting counts in `run.json.classifier_cleanup`.
+
 What the unit does not do, or does only within these bounds, as of
 2026-11-22:
 
@@ -1510,7 +1537,7 @@ What the unit does not do, or does only within these bounds, as of
 - A token cutoff is known only when usage is read: once per slice, at each
   hand-back and before every dispatch. Its instant is when that read began,
   so the cap can have been crossed up to one slice (`poll_s`, 5 s) plus the
-  driver's finish allowance (`finish_s`, at most 15 s) earlier. The
+  driver's finish allowance (`finish_s`, at most 15 s) earlier. Classifier judging between reads adds its elapsed time to that lag. The
   overshoot on a real harness is not measured. A read that begins after the
   end does not relabel the end, so an episode can be recorded `finished`
   with a final token count over the cap when the cap was crossed after the

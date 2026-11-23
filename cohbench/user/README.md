@@ -310,34 +310,30 @@ available, and it should be part of every release's calibration.
 
 ## Retries and the deadline
 
-The reply is due at the hand-back plus the return delay. Each output starts
-an independent judgement when the runner observes it, using the card and
-conversation as they stood at its delivery instant. The job runs off the
-runner's main loop and has its own `limits.verdict_deadline_s` limit
-(25 seconds in the shipped configs), counted from its start.
+The reply is due at the hand-back plus the return delay. Judging is
+synchronous and serial in the episode loop, as on `main`. Each call receives
+the card and conversation as they stood at that output's own delivery
+instant, even when one poll observes several outputs. A mid-run output is
+judged when observed and has no separate reply wait.
 
-At a hand-back the runner tightens every unfinished job to one shared
-cutoff: the reply due time less the 3-second dispatch allowance, also clipped
-by the episode cutoff less that allowance. A reset drain reuses that same
-cutoff; it does not open another window. An end bound also cancels outstanding
-jobs if final coverage fails. The earlier per-job limit remains in force.
+Every classifier `judge` call receives an absolute deadline. Its limit is
+`limits.verdict_deadline_s` from its own start, 25 seconds in the shipped
+configs. At a hand-back this is also bounded by one shared cutoff: the reply
+due time less the 3-second dispatch allowance, clipped by the episode cutoff
+less that allowance. The reset drain shares that cutoff. A reset's grace or
+reported hand-back is chosen before judging, according to which came first.
+There are no runner jobs, batch judgements or deferred verdict applications.
+Scripted policies retain their existing call signature and behavior.
 
-Each worker has its own client session. Accepted results are applied in
-output order: a completed later result waits for the earlier job to finish
-or expire. `completed_at` and `effective_at` distinguish those instants.
 Observation, output counts, closing items and probes do not depend on a
-verdict. A missing judgement at its deadline is recorded as unjudged.
-`DeadlineExceeded` carries that cause. Every other endpoint failure with
-time left remains a policy failure and makes the episode unusable.
-
-Scripted policies retain their synchronous path. Replies still go only at
-a hand-back; a mid-run message gets no separate reply wait. Standalone
-`judge` uses the configured per-verdict limit. Standalone `judge_batch`
-continues to run concurrent independent judgements under a caller-supplied
-cutoff, but the runner uses per-output jobs and arrival snapshots.
-The regressions cover concurrent 16-second jobs within a 30-second return
-delay, one slow result among three, reverse completion, reset drains,
-arrival snapshots, ordered event effects and endpoint failures.
+verdict. An expired call records `unjudged` with reason `deadline`. Every
+other endpoint failure records `endpoint_failure` and makes the episode
+unusable. A native pending question gets the full classifier limit because
+the agent is blocked. If it still has no verdict, the episode is unusable;
+a reopen is not substituted for the absent answer. A scripted policy's
+empty reply retains `main`'s behavior: an eligible event's reopen may answer
+the pending question. Secret requests still get the fixed refusal even
+when their judgement expires.
 
 Each attempt has an absolute cutoff: the smaller of the request timeout and
 what is left of the verdict's deadline. It covers creating the TLS context,
@@ -355,16 +351,21 @@ included) and tearing down fall into the same fixed categories as the rest.
 The attempt runs in a daemon worker with a caller-side wait bounded by the
 same deadline. This includes name lookup, TCP connect and TLS setup. If setup
 has not returned by the cutoff, the caller abandons the attempt and records
-`deadline_exceeded` when the verdict deadline expired. Platform lookup may
+`deadline_exceeded` when the verdict deadline expired. Python cannot cancel a blocked platform name lookup or connect. It may
 continue in that abandoned thread. Its later result is discarded, and after
 setup returns the cancellation check closes the connection without sending
-an authenticated request. The same path serves `check` and the runner.
+an authenticated request. The abandoned thread cannot submit a later request or change accepted
+verdicts, conversation state or served-model metadata. Its only permitted
+ledger change is closing its own attempt. The same path serves `check` and
+the runner.
 
 The accept or reject decision is made against the deadline before accounting
 is queued. Completion records are written by non-daemon threads so a slow
-ledger flush does not reverse that decision or delay a user reply. CLI runs
-call `Client.flush()` before exit and report accounting errors. The runner's
-process also waits for these writes at exit. The per-verdict deadline is
+ledger flush does not reverse that decision or delay a user reply. CLI runs and the runner call `Client.flush()` at the end. The hook waits
+at most 0.25 seconds by default and reports `blocked_transport_threads` and
+`pending_accounting_threads`. The episode's `run.json` records these in
+`classifier_cleanup`; accounting errors make the episode unusable. Python
+also waits for non-daemon accounting threads at process exit. The per-verdict deadline is
 still checked before the completed verdict is returned; late verdicts are
 not applied to the reply.
 
@@ -642,6 +643,16 @@ billing was observed.
 
 ## Limits
 
+- While a judgement is in progress the episode loop does not poll. A planted
+  event or correction can be dispatched late by up to that judgement's
+  duration after a mid-run message. Observation and delivery records keep
+  their own timestamps. Full 25-second regression calls cover usage grace,
+  interrupts, the elapsed end and reset grace. Usage recovery is checked
+  after judging; elapsed and reset boundaries retain their original instants.
+- Python cannot cancel a blocked name lookup or connect. Bounded-return
+  transport threads can outlive `judge`; their late results are discarded.
+  Episode cleanup reports any still-blocked threads after its short wait.
+
 - The config pins the names the endpoint reports, not the weights. A release
   needs an endpoint that serves an identified weight revision. The driver
   raises this with the owner. Known served revision fields and
@@ -878,37 +889,33 @@ saved-report validation. Prompts, configs and calibration verdicts stayed
 unchanged. See the [round 3 record](../../calibration/classifier/review-round3.md)
 for the regressions and verification commands.
 
-Review round 4 on 2026-11-23 separates output observation from judgement.
-Outputs count and remain closing/probe candidates without verdicts. Each
-classifier job uses the conversation at the output's arrival and runs off
-the episode loop. A hand-back shares one cutoff across unfinished jobs and
-its reset drain; each job also keeps its own 25-second limit. Verdicts take
-effect in output order at completion, while replies retain the hand-back
-schedule. `job.py` owns job completion and cancellation. Client flush waits
-for outstanding job accounting.
+Review round 4 on 2026-11-23 separated output observation from judgement.
+Its asynchronous path was replaced in round 5 on 2026-11-23 by serial
+judging with absolute deadlines. Delivery provenance, separate user and wire
+text, typed failures, credential admission and calibration tooling remain.
+`output_at` and `as_of` both name the output's delivery instant. The shared
+receipt function in `cohbench/delivery.py` supplies driver and trajectory
+timestamps for plain replies, native answers, steers and restarts. A
+scorer-facing `verdict.reply` stays null until delivery is established.
 
-All policies now receive delivery provenance from actual user messages.
-Host transcript `text` is the user's words, `wire_text` is the submitted
-native value, and `delivered_ids` names only card items actually delivered.
-A refusal accepted for steering is added when the driver observes delivery.
-Snapshot `as_of`, output `output_at`, and asynchronous `completed_at` and
-`effective_at` are separate fields. The trajectory uses `output_at`.
+The strict replay property checks every scripted runner scenario. It matches
+verdicts by output item id and compares the card and transcript supplied to
+each call. Only measured `record.ms` and `record.questions[].ms` are masked.
+Missing verdicts retain exact unjudged audits and compare the common input
+prefix through the first absent reply. The [runner contract](../runner/README.md)
+lists the comparison fields. The [round 5 report](../../calibration/classifier/review-round5.md)
+records coverage, timer regressions, the trigger inventory and hosted checks.
+Prompts, pinned configs and saved development and held-out results are
+unchanged. The [round 4 report](../../calibration/classifier/review-round4.md)
+remains the historical record of its earlier checks.
 
-The exact replay comparison fields and exclusions are documented in
-[the runner policy contract](../runner/README.md). Verdict-count baseline
-differences are retained explicitly. No generated development-suite task
-or checked-in runner task fixture has a verdict-dependent planted event or
-card unlock. The round 4 regression fixtures add `after` and `elapsed_or_verdict`
-to check completion-time behavior, with no card unlocks. Prompts, pinned configs, development
-agreement outputs and held-out evidence are unchanged.
-
-The three hosted episode checks on 2026-11-23 used the unchanged Kimi
-config. All were usable, with no unjudged outputs or reply overruns. The
-repeat ask was `already_given` and quoted the delivered answer. They used
-26 calls, 54,444 input tokens and 171 output tokens, with usage reported for
-every call. These checks use a fake harness; real-harness latency is not
-measured here. Both Python versions passed the user, runner, whole unit and
-slow pipeline suites.
-
-See [the round 4 report](../../calibration/classifier/review-round4.md) for
-regressions, replay coverage, test commands and the hosted episode checks.
+The round 5 hosted checks on 2026-11-23 used 30 reserved attempts and sent
+29 requests. All four episodes were usable, including a three-output
+hand-back whose final question expired and remained the closing item.
+There were no reply overruns; cleanup reported zero blocked threads.
+All transmitted requests reported usage, totaling 59,075 input and 189
+output tokens. The unsent reservation consumed one cap slot. Both Python
+versions passed 280 user tests, 556 runner tests, 3,691 whole-unit tests and
+13 slow pipeline checks. Strict replay covered 240 scenarios per Python
+with zero differences. These fixture checks do not measure real-harness
+latency; the earlier development and held-out figures remain unchanged.

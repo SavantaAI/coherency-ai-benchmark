@@ -1,0 +1,3531 @@
+{
+  "date": "2026-11-23",
+  "source_commit": "c8f9e44c131c4f5f6a68a2a0e4f7113153ac2557",
+  "python": "3.12",
+  "scenarios": 240,
+  "variants": 480,
+  "verdicts": 2761,
+  "checkpoints": 8006,
+  "results": [
+    {
+      "scenario": "tests/runner/test_classifier_review4.py::test_r4_v1_native_option_keeps_user_words_and_wire_value#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_classifier_review4.py::test_r4_v1_refusal_steer_waits_for_observed_delivery[2]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_classifier_review4.py::test_r4_v1_refusal_steer_waits_for_observed_delivery[None]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_classifier_review5.py::test_r5_full_limit_respects_usage_grace[False]#1",
+      "verdicts": 1,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_classifier_review5.py::test_r5_full_limit_respects_usage_grace[True]#1",
+      "verdicts": 2,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_classifier_review5.py::test_r5_full_limit_preserves_elapsed_end_and_interrupt#1",
+      "verdicts": 1,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_classifier_review5.py::test_r5_full_limit_preserves_reset_grace_instant#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_classifier_review5.py::test_r5_strict_replay_keeps_snapshot_context_and_missing_audits#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_cli.py::test_run_with_a_factory#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_cli.py::test_run_not_reached_exits_3#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_collection.py::test_fake_collection_is_in_the_episode_record[one\\n-collected]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_collection.py::test_fake_collection_is_in_the_episode_record[None-absent]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_collection.py::test_fake_collection_is_in_the_episode_record[data2-oversize]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_collection.py::test_failing_collection_read_is_an_export_failure#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_collection.py::test_fake_collection_keeps_both_sides_of_reset#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_collection.py::test_verdict_keeps_selected_ids_when_the_reply_is_cut_off#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_collection.py::test_reset_collection_failure_remains_an_export_failure#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_full_episode#1",
+      "verdicts": 6,
+      "checkpoints": 15,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 6,
+          "kind": "decision",
+          "identity": [2, "2026-11-22T12:01:02+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_records_hold_no_t3_ids_or_names#1",
+      "verdicts": 6,
+      "checkpoints": 15,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 6,
+          "kind": "decision",
+          "identity": [2, "2026-11-22T12:01:02+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_event_log_alone_reconstructs_what_was_sent#1",
+      "verdicts": 6,
+      "checkpoints": 15,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 6,
+          "kind": "decision",
+          "identity": [2, "2026-11-22T12:01:02+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_episode_directory#1",
+      "verdicts": 6,
+      "checkpoints": 15,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 6,
+          "kind": "decision",
+          "identity": [2, "2026-11-22T12:01:02+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_question_through_a_tool_and_in_a_final_message_come_out_alike#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_question_through_a_tool_and_in_a_final_message_come_out_alike#2",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_answer_matching_an_option_is_sent_as_the_option#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_answer_matching_an_option_is_sent_as_the_option#2",
+      "verdicts": 300,
+      "checkpoints": 899,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_secret_request_is_refused#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_unanswerable_and_already_given#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_policies_are_made_per_episode#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_policies_are_made_per_episode#2",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reopen_until_the_required_event_fires#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reopen_limit_is_not_an_ordinary_success#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reopen_waits_for_prerequisites#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_correction_after_the_agent_finished_goes_as_the_next_message#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_correction_racing_the_end_of_the_turn_is_deferred#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_queued_correction_fires_only_at_delivery#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_undelivered_correction_is_not_fired#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_delivery_observed_at_the_cutoff#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reset_with_a_pending_question_after_the_notice#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 4,
+          "kind": "output",
+          "identity": "item-run-2-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_since_counts_from_the_actual_fire_point#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_metric_since_ignores_the_marks_own_reading#1",
+      "verdicts": 300,
+      "checkpoints": 899,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_probe_waits_for_an_idle_boundary#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_probe_about_output_on_an_output_less_hand_back#1",
+      "verdicts": 1,
+      "checkpoints": 4,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_probe_unavailable#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_probe_about_a_change_or_attempt_names_the_batch_at_the_event[change]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_probe_about_a_change_or_attempt_names_the_batch_at_the_event[attempt]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_probe_event_is_stamped_before_the_copy#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_probe_not_taken_when_the_episode_ends_first#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_elapsed_cutoff_mid_turn#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_end_mark_captures_a_write_awaiting_its_batch#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_return_delay_that_meets_the_budget_sends_nothing#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_return_delay_that_meets_the_budget_sends_nothing#2",
+      "verdicts": 1,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_wait_charges_never_exceed_the_user_wait_budget#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_elapsed_cutoff_during_the_return_delay#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_fixed_follow_up_is_charged_as_a_fixed_message#1",
+      "verdicts": 300,
+      "checkpoints": 899,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 5,
+          "kind": "decision",
+          "identity": [2, "2026-11-22T12:00:22+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_token_limit_with_unusable_usage[none-driver_failure]#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_token_limit_with_unusable_usage[partial-driver_failure]#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_token_limit_with_growing_lagging_usage#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_token_limit_tolerates_a_short_gap#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_harness_failure_mid_episode#1",
+      "verdicts": 1,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_pending_question_at_the_end_is_interrupted_without_awareness#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_turn_cap_is_checked_before_another_turn#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_guard_runs_on_every_send#1",
+      "verdicts": 300,
+      "checkpoints": 899,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_guard_runs_on_every_send#2",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_output_without_an_item_id_is_a_driver_failure#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_awareness_question_is_after_the_end_and_tagged#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_close_failure_fails_the_episode#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_export_rejected#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_time_limit_slices_are_not_failures#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_stall_is_a_harness_failure#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_coached_mode_passes_the_validated_manifests#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_explanation_two_answers[final_with_offer]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_explanation_two_answers[status_then_final]#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_explanation_two_answers[question_tool]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_actions_at_one_hand_back_go_in_the_documented_order#1",
+      "verdicts": 300,
+      "checkpoints": 899,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_index_on_an_episode_with_no_output#1",
+      "verdicts": 0,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_an_output_first_seen_by_the_drain_follows_the_end_filter[14.9-True]#1",
+      "verdicts": 2,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_an_output_first_seen_by_the_drain_follows_the_end_filter[16.0-False]#1",
+      "verdicts": 1,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reset_into_a_segment_without_changes#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_delivery_without_a_driver_mark_is_recorded_unavailable#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_question_batch_logs_the_submitted_map#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_final_usage_read_decides_the_token_cutoff#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_turn_cap_applies_on_the_reset_path#1",
+      "verdicts": 2,
+      "checkpoints": 4,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reopen_counts_only_when_sent#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_closing_item_not_a_progress_message#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_secret_first_keeps_the_follow_up_at_the_first_hand_back#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reopen_needs_only_hard_prerequisites[trigger0]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reopen_needs_only_hard_prerequisites[trigger1]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_event_times_never_precede_their_output_or_go_back#1",
+      "verdicts": 300,
+      "checkpoints": 899,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reach_is_in_the_record_both_ways#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_reach_is_in_the_record_both_ways#2",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_main_run_ending_while_a_subagent_works_is_not_a_hand_back#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:16+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_silent_continuation_closes_a_hand_back_with_no_output#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_transcript_labels_scheduled_messages#1",
+      "verdicts": 6,
+      "checkpoints": 15,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 6,
+          "kind": "decision",
+          "identity": [2, "2026-11-22T12:01:02+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_transcript_labels_scheduled_messages#2",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_wait_names_every_output_whose_verdict_reply_it_carries#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_an_output_is_judged_and_stamped_at_its_delivery_not_when_read#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_correction_with_no_run_to_steer_is_held_for_the_hand_back#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_watchers_word_on_a_correction_mark_is_carried[False]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_watchers_word_on_a_correction_mark_is_carried[True]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_an_incomplete_probe_cleanup_is_kept_in_the_run_manifest#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_several_pending_requests_are_each_judged_and_answered_in_turn#1",
+      "verdicts": 4,
+      "checkpoints": 9,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-child0",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_requests_seen_before_a_cutoff_all_have_verdicts#1",
+      "verdicts": 2,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-child0",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_metric_directory_is_staged_from_its_manifest#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_later_correction_does_not_leak_into_an_earlier_verdict[1.0]#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:12+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_later_correction_does_not_leak_into_an_earlier_verdict[5.0]#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:12+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_later_correction_gives_the_same_verdicts_at_both_intervals#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:12+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_later_correction_gives_the_same_verdicts_at_both_intervals#2",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:12+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_probe_target_is_the_batch_at_the_event_never_a_later_one[2.0]#1",
+      "verdicts": 2,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_probe_target_is_the_batch_at_the_event_never_a_later_one[20.0]#1",
+      "verdicts": 2,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_path_exists_from_its_batchs_first_write[1.0]#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_path_exists_from_its_batchs_first_write[5.0]#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_pending_tree_stopped_at_a_cutoff_is_drained#1",
+      "verdicts": 2,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_pending_tree_stopped_at_a_reset_is_drained_and_judged#1",
+      "verdicts": 4,
+      "checkpoints": 9,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 4,
+          "kind": "output",
+          "identity": "item-run-2-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_fixed_message_due_at_the_reset_follows_the_continuation#1",
+      "verdicts": 4,
+      "checkpoints": 11,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 11
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_held_correction_a_fixed_message_and_a_refusal_go_in_one_message#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_explanation_follow_up_passes_the_trajectory_units_check[no_request_final]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_explanation_follow_up_passes_the_trajectory_units_check[secret]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_failed_mark_never_fails_a_correction_sent_with_the_next_message#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_fatal_failure_in_a_probe_ends_the_episode_as_a_driver_failure#1",
+      "verdicts": 1,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_reply_is_due_at_delivery_plus_the_return_delay[0.5-2000-0]#1",
+      "verdicts": 300,
+      "checkpoints": 899,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_reply_is_due_at_delivery_plus_the_return_delay[3.5-2000-1500]#1",
+      "verdicts": 266,
+      "checkpoints": 798,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_held_correction_is_steered_into_t3s_continuation_run#1",
+      "verdicts": 2,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_correction_record_takes_the_mechanism_at_settlement#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_judging_waits_for_the_watcher_to_publish#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_judging_waits_for_the_watcher_to_publish#2",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_unconfirmed_coverage_makes_the_episode_unusable#1",
+      "verdicts": 0,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_silent_hand_back_with_a_verdict_reply_waits_from_the_hand_back#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_no_reply_goes_out_once_the_token_cap_is_reached#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_delay_that_does_not_fit_the_user_wait_allowance_is_clipped#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_an_elapsed_cutoff_ends_at_its_deadline#1",
+      "verdicts": 1,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_threshold_that_becomes_known_in_the_slice_joins_its_replay[1.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_threshold_that_becomes_known_in_the_slice_joins_its_replay[5.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_tree_that_never_reads_stopped_fails_a_cutoff#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_tree_that_never_reads_stopped_stops_a_reset#1",
+      "verdicts": 2,
+      "checkpoints": 4,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 4,
+          "kind": "output",
+          "identity": "item-run-2-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_replay_sent_keeps_the_submitted_map_and_rows_carry_their_own_clock#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_mechanism_known_only_after_settlement_reaches_the_manifest#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_shared_wait_with_an_answerable_request_is_not_wasted[unanswerable_first]#1",
+      "verdicts": 3,
+      "checkpoints": 7,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-child0",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_shared_wait_with_an_answerable_request_is_not_wasted[answerable_first]#1",
+      "verdicts": 3,
+      "checkpoints": 7,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-child0",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_coverage_never_splits_a_batch#1",
+      "verdicts": 2,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_coverage_never_splits_a_batch#2",
+      "verdicts": 2,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_slow_usage_read_never_carries_a_reply_past_the_deadline#1",
+      "verdicts": 1,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_slow_verdict_does_not_erase_the_clipped_wait[0.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_slow_verdict_does_not_erase_the_clipped_wait[1.5]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_correction_delivered_after_the_deadline_is_audit_only#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_deadline_instant_never_falls_inside_an_excluded_interval#1",
+      "verdicts": 1,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_late_confirmed_hand_back_keeps_its_wait[0.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:14+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_late_confirmed_hand_back_keeps_its_wait[3.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:14+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_end_does_not_move_with_judging_time[0.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_end_does_not_move_with_judging_time[0.0]#2",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:14+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_end_does_not_move_with_judging_time[1.5]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_end_does_not_move_with_judging_time[1.5]#2",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:14+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_straddled_batch_keeps_its_last_write[2.05]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_straddled_batch_keeps_its_last_write[5.0]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_events_are_stamped_at_their_own_instants#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_next_message_correction_is_marked_at_its_send_time#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_reset_handoff_is_excluded_time#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_no_dispatch_with_less_than_the_allowance_left#1",
+      "verdicts": 1,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_an_unsent_dispatch_sends_nothing#1",
+      "verdicts": 1,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_policy_failure_in_the_final_replay_makes_the_episode_unusable#1",
+      "verdicts": 2,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_an_event_dated_inside_an_excluded_interval_moves_to_its_end#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g1_a_probe_never_moves_a_user_wait_cutoff#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g1_a_probe_at_the_final_hand_back_is_taken_whatever_judging_took[0.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g1_a_probe_at_the_final_hand_back_is_taken_whatever_judging_took[3.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g2_a_batch_straddling_the_deadline_is_outside_the_trigger_view#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g3_the_earliest_end_wins#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:59+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g3_an_earlier_deadline_beats_a_later_token_read#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g4_an_event_after_a_hand_back_does_not_attach_to_it#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g5_a_late_metric_reading_does_not_change_a_verdict[1.0]#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g5_a_late_metric_reading_does_not_change_a_verdict[5.0]#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 3,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 3
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g6_a_batch_straddling_a_correction_counts_on_neither_side#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_reset_whose_continuation_was_unsent_is_launched_again#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g1_an_event_reached_after_the_final_hand_back_gets_no_probe#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g2_a_reset_drain_is_clipped_to_the_deadline#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:02+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g3_a_late_confirmed_final_beats_a_later_cap#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g3_the_wait_allowance_beats_a_later_token_read#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g4_a_reopen_reads_the_state_at_the_hand_back[0.0]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g4_a_reopen_reads_the_state_at_the_hand_back[3.0]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g4_an_overriding_message_due_by_dispatch_replaces_the_reply#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g4_a_message_due_during_the_reset_wait_follows_the_continuation#1",
+      "verdicts": 4,
+      "checkpoints": 11,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 11
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g5_the_final_replay_waits_for_the_readings[0.0]#1",
+      "verdicts": 1,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g5_the_final_replay_waits_for_the_readings[5.0]#1",
+      "verdicts": 1,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g6_a_straddle_without_a_delivery_mark_comes_from_the_log[True]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_g6_a_straddle_without_a_delivery_mark_comes_from_the_log[False]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_choose_end_gives_the_same_answer_at_every_site[loop]#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_choose_end_gives_the_same_answer_at_every_site[hand_back]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:59+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_choose_end_gives_the_same_answer_at_every_site[final_read]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_due_as_of_gives_the_same_answer_at_every_site[decision]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_due_as_of_gives_the_same_answer_at_every_site[compose]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:10+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_due_as_of_gives_the_same_answer_at_every_site[reset]#1",
+      "verdicts": 4,
+      "checkpoints": 11,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 11
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_replay_upto_bounds_every_site_by_the_deadline[slice]#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_replay_upto_bounds_every_site_by_the_deadline[reset_drain]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:02+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_replay_upto_bounds_every_site_by_the_deadline[final]#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_straddle_is_derived_one_way_at_both_delivery_sites[True-mid_turn]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_straddle_is_derived_one_way_at_both_delivery_sites[True-next_message]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_straddle_is_derived_one_way_at_both_delivery_sites[False-mid_turn]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_straddle_is_derived_one_way_at_both_delivery_sites[False-next_message]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_an_unsent_continuation_then_a_cutoff_is_one_handoff_and_usable#1",
+      "verdicts": 2,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_straddled_end_at_an_elapsed_cutoff_is_accepted#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_held_refusal_waits_after_the_wait_it_follows#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_raw_wait_line_says_what_the_exported_wait_says#1",
+      "verdicts": 1,
+      "checkpoints": 3,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 2,
+          "kind": "decision",
+          "identity": [1, "2026-11-22T12:00:08+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_late_steer_is_queued_before_the_cutoff#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_drain_that_raises_keeps_what_it_already_returned#1",
+      "verdicts": 1,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_drained_hand_back_counts_in_the_manifest#1",
+      "verdicts": 1,
+      "checkpoints": 1,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_live_threshold_reads_the_origin_clock[0.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_live_threshold_reads_the_origin_clock[0.0006]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_reset_triggered_mid_turn_steers_its_notice_and_resets_at_the_hand_back#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_reset_whose_agent_never_hands_back_comes_at_the_grace#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_reset_due_while_idle_goes_with_the_next_message_as_before#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_notice_with_no_run_to_steer_goes_with_the_next_message[pending_request]#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 1,
+          "kind": "output",
+          "identity": "item-run-1-question",
+          "reason": "absent native-question reply"
+        },
+        "checkpoints": 1
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_notice_with_no_run_to_steer_goes_with_the_next_message[main_run_ended]#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_an_elapsed_cutoff_during_the_grace_ends_the_episode#1",
+      "verdicts": 0,
+      "checkpoints": 0,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 0
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_grace_and_the_hand_back_are_decided_from_instants#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_grace_and_the_hand_back_are_decided_from_instants#2",
+      "verdicts": 1,
+      "checkpoints": 4,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_grace_and_the_hand_back_are_decided_from_instants#3",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_grace_and_the_hand_back_are_decided_from_instants#4",
+      "verdicts": 1,
+      "checkpoints": 4,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_grace_and_the_hand_back_are_decided_from_instants#5",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_grace_and_the_hand_back_are_decided_from_instants#6",
+      "verdicts": 1,
+      "checkpoints": 4,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_explanation_answers_after_the_reset#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_episode_record_carries_the_task_digest_once_the_table_lists_it#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_the_episode_record_carries_the_task_digest_once_the_table_lists_it#2",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_steered_notice_is_never_a_correction[notice_first]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_a_steered_notice_is_never_a_correction[correction_first]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_correction_after_reset_uses_one_delivery_and_mark_instant#1",
+      "verdicts": 4,
+      "checkpoints": 11,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 11
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_unperformed_scheduled_reset_is_explicit_in_episode_record#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_grace_reset_records_handback_and_takes_due_probe#1",
+      "verdicts": 1,
+      "checkpoints": 4,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_fixed_scorer_id_produces_identical_episode_record_bytes#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_fixed_scorer_id_produces_identical_episode_record_bytes#2",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_count_elapsed_threshold_replays_at_its_own_instant#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_grace_cancelled_usage_is_settled_before_the_return_wait[41000]#1",
+      "verdicts": 1,
+      "checkpoints": 4,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_grace_cancelled_usage_is_settled_before_the_return_wait[68000]#1",
+      "verdicts": 1,
+      "checkpoints": 4,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 4
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_correction_due_at_reset_is_delivered_after_its_continuation[False-False]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_correction_due_at_reset_is_delivered_after_its_continuation[False-True]#1",
+      "verdicts": 2,
+      "checkpoints": 5,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_correction_due_at_reset_is_delivered_after_its_continuation[True-False]#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_correction_due_at_reset_is_delivered_after_its_continuation[True-True]#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 8
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_planted_conflict_fires_while_reset_notice_is_pending[1]#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_planted_conflict_fires_while_reset_notice_is_pending[5]#1",
+      "verdicts": 3,
+      "checkpoints": 6,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 6
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_planted_conflict_fires_at_its_write_during_the_reset_wait[1]#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 5,
+          "kind": "decision",
+          "identity": [2, "2026-11-22T12:01:12.001000+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_planted_conflict_fires_at_its_write_during_the_reset_wait[5]#1",
+      "verdicts": 3,
+      "checkpoints": 8,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": {
+          "checkpoint": 5,
+          "kind": "decision",
+          "identity": [2, "2026-11-22T12:01:12.001000+00:00"],
+          "reason": "absent verdict reply at hand-back decision"
+        },
+        "checkpoints": 5
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_directory_move_triggers_replay_at_their_own_instants[1.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    },
+    {
+      "scenario": "tests/runner/test_runner.py::test_directory_move_triggers_replay_at_their_own_instants[5.0]#1",
+      "verdicts": 1,
+      "checkpoints": 2,
+      "same": {
+        "differences": []
+      },
+      "missing": {
+        "differences": [],
+        "divergence": null,
+        "checkpoints": 2
+      }
+    }
+  ]
+}
