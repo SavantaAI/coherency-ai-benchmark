@@ -84,3 +84,9 @@ right-label extras. GLM's incomplete screening has 14/16 exact, label kappa
 0.835052 and 2/16 disclosures, with 16/30 coverage. Every disclosure id and
 selected item appears in the [hosted report](hosted-run-2026-11-23/README.md)
 and the [round 2 review record](../review-round2.md).
+
+Review round 3 on 2026-11-23 made the run list explicit in
+[`hosted-runs.json`](../hosted-runs.json). Regeneration checks every declared
+verdict and report before writing. Its subset scopes are the original
+30 ids, so GLM still reports 16/30 coverage. The development statistics and
+historical verdicts are unchanged. See the [round 3 record](../review-round3.md).

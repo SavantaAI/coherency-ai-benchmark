@@ -265,6 +265,36 @@ def report_fixture(tmp_path):
             }
         },
     )
+    runs = []
+    for model in models:
+        for kind in ("turn", "awareness"):
+            name = f"{model}-{kind}"
+            runs.append(
+                {
+                    "name": name,
+                    "model": model,
+                    "set": "heldout",
+                    "kind": kind,
+                    "inputs": {
+                        "root": "heldout",
+                        "items": "items" if kind == "turn" else "awareness",
+                        "labels": "labels-author.json"
+                        if kind == "turn"
+                        else "awareness-labels-author.json",
+                    },
+                    "verdicts": {"root": "private", "path": name + "-verdicts.json"},
+                    "outputs": {
+                        "root": "private",
+                        "json": name + "-agreement.json",
+                        "text": name + "-agreement.txt",
+                    },
+                    "aggregate": "calibration/classifier/heldout-run-2026-11-23/results.json",
+                }
+            )
+    write_json(
+        repo / "calibration/classifier/hosted-runs.json",
+        {"version": 1, "runs": runs, "evidence": []},
+    )
     return script, held, private, public, models
 
 

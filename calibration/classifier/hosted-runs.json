@@ -1,0 +1,327 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "name": "deepseek-v4.1-flash-uncensored-full",
+      "model": "deepseek-v4.1-flash-uncensored",
+      "set": "development",
+      "kind": "turn",
+      "inputs": {
+        "root": "repo",
+        "items": "calibration/classifier/dev/items",
+        "labels": "calibration/classifier/dev/labels.json"
+      },
+      "verdicts": {
+        "root": "repo",
+        "path": "calibration/classifier/dev/hosted-run-2026-11-23/deepseek-v4.1-flash-uncensored-full-verdicts.json"
+      },
+      "outputs": {
+        "root": "repo",
+        "json": "calibration/classifier/dev/hosted-run-2026-11-23/deepseek-v4.1-flash-uncensored-full-agreement.json",
+        "text": "calibration/classifier/dev/hosted-run-2026-11-23/deepseek-v4.1-flash-uncensored-full-agreement.txt",
+        "summary": "calibration/classifier/dev/hosted-run-2026-11-23/deepseek-v4.1-flash-uncensored-full-summary.json"
+      }
+    },
+    {
+      "name": "deepseek-v4.1-flash-uncensored-subset",
+      "model": "deepseek-v4.1-flash-uncensored",
+      "set": "development",
+      "kind": "turn",
+      "inputs": {
+        "root": "repo",
+        "items": "calibration/classifier/dev/items",
+        "labels": "calibration/classifier/dev/labels.json",
+        "ids": [
+          "dev-e2-08",
+          "dev-e1-03",
+          "dev-e1-07",
+          "dev-e1-04",
+          "dev-r4-07",
+          "dev-r3-01",
+          "dev-r4-05",
+          "dev-r2-10",
+          "dev-s1-09",
+          "dev-s2-02",
+          "dev-s1-06",
+          "dev-s2-08",
+          "dev-e2-05",
+          "dev-e2-04",
+          "dev-e2-02",
+          "dev-e2-06",
+          "dev-r1-04",
+          "dev-r3-09",
+          "dev-r1-09",
+          "dev-r4-06",
+          "dev-s1-05",
+          "dev-s2-09",
+          "dev-s2-05",
+          "dev-s1-03",
+          "dev-e1-08",
+          "dev-e1-11",
+          "dev-e2-03",
+          "dev-r3-07",
+          "dev-r2-05",
+          "dev-r2-09"
+        ]
+      },
+      "verdicts": {
+        "root": "repo",
+        "path": "calibration/classifier/dev/hosted-run-2026-11-23/deepseek-v4.1-flash-uncensored-subset-verdicts.json"
+      },
+      "outputs": {
+        "root": "repo",
+        "json": "calibration/classifier/dev/hosted-run-2026-11-23/deepseek-v4.1-flash-uncensored-subset-agreement.json",
+        "text": "calibration/classifier/dev/hosted-run-2026-11-23/deepseek-v4.1-flash-uncensored-subset-agreement.txt",
+        "summary": "calibration/classifier/dev/hosted-run-2026-11-23/deepseek-v4.1-flash-uncensored-subset-summary.json"
+      }
+    },
+    {
+      "name": "external-command",
+      "model": "kimi-k3.1-pro",
+      "set": "development",
+      "kind": "turn",
+      "inputs": {
+        "root": "repo",
+        "items": "calibration/classifier/dev/items",
+        "labels": "calibration/classifier/dev/labels.json"
+      },
+      "verdicts": {
+        "root": "repo",
+        "path": "calibration/classifier/dev/hosted-run-2026-11-23/external-command-verdicts.json"
+      },
+      "outputs": {
+        "root": "repo",
+        "json": "calibration/classifier/dev/hosted-run-2026-11-23/external-command-agreement.json",
+        "text": "calibration/classifier/dev/hosted-run-2026-11-23/external-command-agreement.txt",
+        "summary": "calibration/classifier/dev/hosted-run-2026-11-23/external-command-summary.json"
+      }
+    },
+    {
+      "name": "glm-5.3-flash-uncensored-subset",
+      "model": "glm-5.3-flash-uncensored",
+      "set": "development",
+      "kind": "turn",
+      "inputs": {
+        "root": "repo",
+        "items": "calibration/classifier/dev/items",
+        "labels": "calibration/classifier/dev/labels.json",
+        "ids": [
+          "dev-e2-08",
+          "dev-e1-03",
+          "dev-e1-07",
+          "dev-e1-04",
+          "dev-r4-07",
+          "dev-r3-01",
+          "dev-r4-05",
+          "dev-r2-10",
+          "dev-s1-09",
+          "dev-s2-02",
+          "dev-s1-06",
+          "dev-s2-08",
+          "dev-e2-05",
+          "dev-e2-04",
+          "dev-e2-02",
+          "dev-e2-06",
+          "dev-r1-04",
+          "dev-r3-09",
+          "dev-r1-09",
+          "dev-r4-06",
+          "dev-s1-05",
+          "dev-s2-09",
+          "dev-s2-05",
+          "dev-s1-03",
+          "dev-e1-08",
+          "dev-e1-11",
+          "dev-e2-03",
+          "dev-r3-07",
+          "dev-r2-05",
+          "dev-r2-09"
+        ]
+      },
+      "verdicts": {
+        "root": "repo",
+        "path": "calibration/classifier/dev/hosted-run-2026-11-23/glm-5.3-flash-uncensored-subset-verdicts.json"
+      },
+      "outputs": {
+        "root": "repo",
+        "json": "calibration/classifier/dev/hosted-run-2026-11-23/glm-5.3-flash-uncensored-subset-agreement.json",
+        "text": "calibration/classifier/dev/hosted-run-2026-11-23/glm-5.3-flash-uncensored-subset-agreement.txt",
+        "summary": "calibration/classifier/dev/hosted-run-2026-11-23/glm-5.3-flash-uncensored-subset-summary.json"
+      }
+    },
+    {
+      "name": "kimi-k3.1-pro-full",
+      "model": "kimi-k3.1-pro",
+      "set": "development",
+      "kind": "turn",
+      "inputs": {
+        "root": "repo",
+        "items": "calibration/classifier/dev/items",
+        "labels": "calibration/classifier/dev/labels.json"
+      },
+      "verdicts": {
+        "root": "repo",
+        "path": "calibration/classifier/dev/hosted-run-2026-11-23/kimi-k3.1-pro-full-verdicts.json"
+      },
+      "outputs": {
+        "root": "repo",
+        "json": "calibration/classifier/dev/hosted-run-2026-11-23/kimi-k3.1-pro-full-agreement.json",
+        "text": "calibration/classifier/dev/hosted-run-2026-11-23/kimi-k3.1-pro-full-agreement.txt",
+        "summary": "calibration/classifier/dev/hosted-run-2026-11-23/kimi-k3.1-pro-full-summary.json"
+      }
+    },
+    {
+      "name": "kimi-k3.1-pro-subset",
+      "model": "kimi-k3.1-pro",
+      "set": "development",
+      "kind": "turn",
+      "inputs": {
+        "root": "repo",
+        "items": "calibration/classifier/dev/items",
+        "labels": "calibration/classifier/dev/labels.json",
+        "ids": [
+          "dev-e2-08",
+          "dev-e1-03",
+          "dev-e1-07",
+          "dev-e1-04",
+          "dev-r4-07",
+          "dev-r3-01",
+          "dev-r4-05",
+          "dev-r2-10",
+          "dev-s1-09",
+          "dev-s2-02",
+          "dev-s1-06",
+          "dev-s2-08",
+          "dev-e2-05",
+          "dev-e2-04",
+          "dev-e2-02",
+          "dev-e2-06",
+          "dev-r1-04",
+          "dev-r3-09",
+          "dev-r1-09",
+          "dev-r4-06",
+          "dev-s1-05",
+          "dev-s2-09",
+          "dev-s2-05",
+          "dev-s1-03",
+          "dev-e1-08",
+          "dev-e1-11",
+          "dev-e2-03",
+          "dev-r3-07",
+          "dev-r2-05",
+          "dev-r2-09"
+        ]
+      },
+      "verdicts": {
+        "root": "repo",
+        "path": "calibration/classifier/dev/hosted-run-2026-11-23/kimi-k3.1-pro-subset-verdicts.json"
+      },
+      "outputs": {
+        "root": "repo",
+        "json": "calibration/classifier/dev/hosted-run-2026-11-23/kimi-k3.1-pro-subset-agreement.json",
+        "text": "calibration/classifier/dev/hosted-run-2026-11-23/kimi-k3.1-pro-subset-agreement.txt",
+        "summary": "calibration/classifier/dev/hosted-run-2026-11-23/kimi-k3.1-pro-subset-summary.json"
+      }
+    },
+    {
+      "name": "kimi-k3.1-pro-heldout-turn",
+      "model": "kimi-k3.1-pro",
+      "set": "heldout",
+      "kind": "turn",
+      "inputs": {
+        "root": "heldout",
+        "items": "items",
+        "labels": "labels-author.json"
+      },
+      "verdicts": {
+        "root": "private",
+        "path": "kimi-k3.1-pro-turn-verdicts.json"
+      },
+      "outputs": {
+        "root": "private",
+        "json": "kimi-k3.1-pro-turn-agreement.json",
+        "text": "kimi-k3.1-pro-turn-agreement.txt",
+        "summary": "kimi-k3.1-pro-turn-summary.json"
+      },
+      "aggregate": "calibration/classifier/heldout-run-2026-11-23/results.json"
+    },
+    {
+      "name": "kimi-k3.1-pro-heldout-awareness",
+      "model": "kimi-k3.1-pro",
+      "set": "heldout",
+      "kind": "awareness",
+      "inputs": {
+        "root": "heldout",
+        "items": "awareness",
+        "labels": "awareness-labels-author.json"
+      },
+      "verdicts": {
+        "root": "private",
+        "path": "kimi-k3.1-pro-awareness-verdicts.json"
+      },
+      "outputs": {
+        "root": "private",
+        "json": "kimi-k3.1-pro-awareness-agreement.json",
+        "text": "kimi-k3.1-pro-awareness-agreement.txt",
+        "summary": "kimi-k3.1-pro-awareness-summary.json"
+      },
+      "aggregate": "calibration/classifier/heldout-run-2026-11-23/results.json"
+    },
+    {
+      "name": "deepseek-v4.1-flash-uncensored-heldout-turn",
+      "model": "deepseek-v4.1-flash-uncensored",
+      "set": "heldout",
+      "kind": "turn",
+      "inputs": {
+        "root": "heldout",
+        "items": "items",
+        "labels": "labels-author.json"
+      },
+      "verdicts": {
+        "root": "private",
+        "path": "deepseek-v4.1-flash-uncensored-turn-verdicts.json"
+      },
+      "outputs": {
+        "root": "private",
+        "json": "deepseek-v4.1-flash-uncensored-turn-agreement.json",
+        "text": "deepseek-v4.1-flash-uncensored-turn-agreement.txt",
+        "summary": "deepseek-v4.1-flash-uncensored-turn-summary.json"
+      },
+      "aggregate": "calibration/classifier/heldout-run-2026-11-23/results.json"
+    },
+    {
+      "name": "deepseek-v4.1-flash-uncensored-heldout-awareness",
+      "model": "deepseek-v4.1-flash-uncensored",
+      "set": "heldout",
+      "kind": "awareness",
+      "inputs": {
+        "root": "heldout",
+        "items": "awareness",
+        "labels": "awareness-labels-author.json"
+      },
+      "verdicts": {
+        "root": "private",
+        "path": "deepseek-v4.1-flash-uncensored-awareness-verdicts.json"
+      },
+      "outputs": {
+        "root": "private",
+        "json": "deepseek-v4.1-flash-uncensored-awareness-agreement.json",
+        "text": "deepseek-v4.1-flash-uncensored-awareness-agreement.txt",
+        "summary": "deepseek-v4.1-flash-uncensored-awareness-summary.json"
+      },
+      "aggregate": "calibration/classifier/heldout-run-2026-11-23/results.json"
+    }
+  ],
+  "evidence": [
+    {
+      "root": "repo",
+      "path": "calibration/classifier/dev/hosted-run-2026-11-23/usage-summary.json",
+      "reason": "Original call and timing accounting, not an agreement report."
+    },
+    {
+      "root": "repo",
+      "path": "calibration/classifier/dev/hosted-run-2026-11-23/glm-5.3-flash-uncensored-initial16-summary.json",
+      "reason": "Original interrupted invocation timing and exit status, not an agreement report."
+    }
+  ]
+}

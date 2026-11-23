@@ -1,7 +1,9 @@
 """The user policy (contract 2): how the simulated user judges what the agent
 showed it.
 
-A policy has two calls.
+A policy has two required calls. A batch policy may also implement
+`judge_batch(card, transcript, outputs, *, timeout_s)`, returning results
+in output order, with None for a result missing at the shared cutoff.
 
 - `judge(card, transcript, output)`: one user-channel output (a final
   message, a text sent through the driver's message tool, a pending question
@@ -15,7 +17,9 @@ What the policy receives is what the user would see and nothing else. The
 transcript is the role (`user` or `agent`) and text of each message, in the
 order the messages were delivered: a correction enters it when the harness
 took it, not when it was queued. There are no message kinds, no tool calls,
-no file contents, no answer key and no harness. The card is a deep copy
+no file contents, no answer key and no harness. `DeliveredTranscript` adds
+an index-aligned host-only side channel naming the card items each actual
+user message delivered. This metadata is not included in model prompts. The card is a deep copy
 holding only the items available at that moment: an item with
 `available_after: <event>` appears once that event has fired.
 
@@ -52,6 +56,20 @@ class Entry:
 
     role: str  # user or agent
     text: str
+
+
+class DeliveredTranscript(tuple):
+    """Role/text entries plus the runner's delivery facts at matching indices.
+
+    Entry stays the two-field interface used by scripted policies. Delivery
+    facts are not text and are never included in a classifier prompt.
+    """
+    def __new__(cls, entries, delivered_ids):
+        result = super().__new__(cls, entries)
+        result.delivered_ids = tuple(None if ids is None else tuple(ids) for ids in delivered_ids)
+        if len(result) != len(result.delivered_ids):
+            raise ValueError("delivery facts must match transcript entries")
+        return result
 
 
 @dataclass(frozen=True)

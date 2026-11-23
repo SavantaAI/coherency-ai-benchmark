@@ -115,6 +115,8 @@ class _Attempt:
         self.gate = threading.Lock()
         self.ticket = None
         self.sent = False
+        self.submitting = False
+        self.submission_done = threading.Event()
 
     def written(self, entry):
         self.ticket = entry["call"]
@@ -122,6 +124,27 @@ class _Attempt:
     def cancel(self):
         with self.gate:
             self.cancelled.set()
+            if not self.submitting:
+                self.submission_done.set()
+
+
+class _SendingSocket:
+    """Record transmission only after the socket accepts request bytes."""
+
+    def __init__(self, sock, attempt):
+        self.sock, self.attempt = sock, attempt
+
+    def __getattr__(self, name):
+        return getattr(self.sock, name)
+
+    def sendall(self, data, flags=0):
+        remaining = memoryview(data)
+        while remaining:
+            count = self.sock.send(remaining, flags)
+            if not count:
+                raise OSError("connection closed during submission")
+            self.attempt.sent = True
+            remaining = remaining[count:]
 
 
 class Client:
@@ -166,6 +189,16 @@ class Client:
         if isinstance(v, str) and SAFE_META.fullmatch(v) and self._key not in v:
             return v
         return WITHHELD
+
+    def fork(self):
+        """An independent conversation and metadata session for a batch worker."""
+        client = Client(
+            self.cfg, self._key, sleep=self.sleep, clock=self.clock, ledger=self.ledger
+        )
+        # Completion accounting remains owned by the parent CLI's flush.
+        client._finishes = self._finishes
+        client._accounting_errors = self._accounting_errors
+        return client
 
     def session(self) -> threading.RLock:
         """Held for a whole verdict, so one verdict's questions are not interleaved with another's."""
@@ -213,6 +246,7 @@ class Client:
             try:
                 attempt.reserved.wait()
                 if attempt.ticket is not None:
+                    attempt.submission_done.wait()
                     if not attempt.sent:
                         self.ledger.not_sent(attempt.ticket)
                     self.ledger.finish(attempt.ticket, usage, outcome, ms)
@@ -252,6 +286,7 @@ class Client:
                     (False, _Transient("transport error (connection or protocol)"))
                 )
             finally:
+                attempt.submission_done.set()
                 done.set()
 
         thread = threading.Thread(target=exchange, daemon=True)
@@ -315,25 +350,29 @@ class Client:
                 conn.connect()
                 if conn.sock is not None:
                     held.append(conn.sock)
+                    conn.sock = _SendingSocket(conn.sock, attempt)
                 if late():
                     raise _Transient("transport error (timeout at attempt deadline)")
-                # Mark a submitted request under the same gate as cancellation.
+                # Admit submission under the same gate as cancellation.
                 # Do not hold the gate during potentially blocking socket I/O.
                 with attempt.gate:
                     if late():
                         raise _Transient(
                             "transport error (timeout at attempt deadline)"
                         )
-                    attempt.sent = True
-                conn.request(
-                    "POST",
-                    self._path,
-                    body=data,
-                    headers={
-                        "Content-Type": "application/json",
-                        "Authorization": f"Bearer {self._key}",
-                    },
-                )
+                    attempt.submitting = True
+                try:
+                    conn.request(
+                        "POST",
+                        self._path,
+                        body=data,
+                        headers={
+                            "Content-Type": "application/json",
+                            "Authorization": f"Bearer {self._key}",
+                        },
+                    )
+                finally:
+                    attempt.submission_done.set()
                 resp = conn.getresponse()
                 status = resp.status
                 if status != 200:

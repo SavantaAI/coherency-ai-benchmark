@@ -94,23 +94,18 @@ option keys; the client checks it again. The steps:
    but the item's answer does not separate them. `C` and `D` drop the item,
    as a `B` in step 2 would. The card-item question states the same rule:
    an item answers a choice when it picks an option or rules one out.
-4. **Told**, for each item still kept. In code only for what this policy
-   caused: a policy lives for one episode and names the items of every
-   `answerable` verdict it gives, so it remembers, per instance, each such
-   verdict's items, the output it judged and the reply the runner composes
-   from them (the items' reply texts, `Task.card_texts`, joined by single
-   spaces in the order named). The item counts as already told in code only
-   when this policy named it in an earlier `answerable` verdict, that
-   verdict's output is still at its place in the transcript, and a user
-   message equal to that verdict's composed reply comes after it; the quote
-   is that whole message. Everything else goes to the model, which picks the
-   earlier user message that told the agent this, or `N`: a policy with no
-   memory of the transcript (a fresh one, as in the calibration `run`
-   command, which makes one per item), a reply the runner replaced with a
-   fixed message, and card text inside any other message. Inferring from
-   text alone what the user's message answered produced wrong replies three
-   different ways in review (overlapping texts, a text two items share, a
-   card text quoted for another purpose), so it is no longer done.
+4. **Told**, for each item still kept. The runner passes a
+   `DeliveredTranscript`: ordinary role/text entries with an index-aligned
+   `delivered_ids` side channel. Each actual user message names the card
+   items it delivered, or an empty tuple for a fixed message, notice,
+   correction, continuation or opening prompt. A proposed, replaced or
+   unsent reply contributes no delivery. Code selects the actual message
+   that delivered the item and quotes that whole message. Identical reply
+   texts for different card items do not establish delivery. This metadata
+   stays out of the model prompt. Calibration items have no delivery
+   provenance, so the model still selects a prior user message or `N` for
+   them. In an episode, a known user message that delivered no selected item
+   is not offered as evidence that the item was told.
 5. **Already answered**, only when no item was kept: the model picks the
    earlier user message that already answered the request, or `N`.
 
@@ -315,19 +310,25 @@ available, and it should be part of every release's calibration.
 
 ## Retries and the deadline
 
-The reply is due at the hand-back plus the return delay, and judging happens
-inside that delay. The per-verdict deadline is a config value
-(`limits.verdict_deadline_s`), not computed per task. Derive it from the
-shortest return delay the tasks run with:
+The reply is due at the hand-back plus the return delay. The runner passes
+one judging window to `judge_batch`, ending at that due time less its
+3-second dispatch margin, or at the episode cutoff less the same margin,
+whichever comes first. The classifier caps this window at
+`limits.verdict_deadline_s` (25 seconds in the shipped configs). Setup already
+spent since the hand-back reduces the remaining window. A standalone `judge`
+call uses the configured per-verdict limit.
 
-    deadline = return delay - 3.5 s (the driver reports a hand-back 2 to 3.5 s
-               after the closing output) - a margin for the runner's own work
-
-D-039 sets the floor for generated tasks at 30 s. The shipped config uses 25 s
-(30 - 3.5 - 1.5). Tasks with a longer delay can use a config with a longer
-deadline; that is a different config and has a different digest. Each
-request's timeout is the smaller of `request_timeout_s` (10 s) and what is
-left of the deadline.
+All outputs from the hand-back use one card and conversation snapshot taken
+when the hand-back began. Streamed outputs wait for that boundary. Independent
+workers judge them concurrently, each with its own client session and the
+same absolute cutoff. The runner applies accepted results in output order.
+An output with no verdict by the cutoff is recorded as unjudged; a late worker
+cannot add a result afterwards. Other policy errors still fail the episode.
+Scripted policies retain their existing serial path. Each request's timeout
+is the smaller of `request_timeout_s` and the time left before the shared
+cutoff. The fake-clock regressions cover two 16-second verdicts within a
+30-second return delay, a slow verdict among three, and reversed completion
+order.
 
 Each attempt has an absolute cutoff: the smaller of the request timeout and
 what is left of the verdict's deadline. It covers creating the TLS context,
@@ -356,13 +357,14 @@ ledger flush does not reverse that decision or delay a user reply. CLI runs
 call `Client.flush()` before exit and report accounting errors. The runner's
 process also waits for these writes at exit. The per-verdict deadline is
 still checked before the completed verdict is returned; late verdicts are
-not remembered for step 4.
+not applied to the reply.
 
 A refused connection, a timeout, a 429 or any 5xx is retried once, after 0.5 s,
 with byte-for-byte the same request, and only if the deadline leaves more
 than the pause. Any other HTTP status (including every 3xx and 4xx), a second
-failure, or the deadline passing raises `EndpointError`, a `PolicyError`: the
-runner ends the episode as unusable. An answer outside the options, an answer
+failure raises `EndpointError`, a `PolicyError`. The runner records a
+batch deadline failure as unjudged and ends the episode as unusable for
+other policy failures. An answer outside the options, an answer
 whose finish reason is anything but `stop` (cut off, filtered), an answer
 object that repeats its field, a refusal or a response that is not one chat
 completion raises without a retry. No label is ever guessed.
@@ -649,22 +651,19 @@ billing was observed.
   still uses development labels written alongside the prompts.
 - `already_given` quotes the whole earlier message. A long opening prompt is
   quoted whole.
-- The policy's memory knows what it caused, not how the runner delivered
-  it. If the runner replaced a reply with a fixed message and a later user
-  message happens to equal the composed reply, that later message is taken
-  as the reply. A reply the runner merged into a larger message (several
-  replies due at one hand-back) matches nothing and goes to the model. Two
-  outputs judged before the same hand-back can each be `answerable`, since
-  neither reply has been sent when the second is judged.
-- Step 4 decides in code only for this policy's own earlier answers. On a
-  calibration item, which a fresh policy judges, every "already told" is the
-  model's call, so calibration measures the model there even where a live
-  episode would not ask it.
+- Several outputs in one hand-back can each be `answerable`, since none of
+  their replies has been sent when that shared snapshot is taken.
+- Calibration items carry only role and text. Their "already told" decision
+  remains a model call. Live episodes use runner delivery provenance for
+  selected card items, so the calibration does not measure that code path.
+- If a reservation write crosses the cutoff, it can persist after the
+  caller has returned. A `not_sent` line closes it, but it still consumes one slot
+  of the cap. The cap is a calibration spending guard and counts conservatively.
 - No proxy is used: the client connects to the endpoint directly.
 - Every question of a verdict is a sequential request (3k + 1 at most for a
   card of k ≥ 1 items, 2 for an empty card), and all of them must fit the
-  deadline. A slow provider ends
-  episodes as unusable rather than late.
+  deadline. The batch path records a verdict that misses its deadline as
+  unjudged.
 - After agent messages are dropped for length, a name the agent explained in
   a dropped message counts as unexplained (see "Context overflow").
 - An agreement figure computed with `agree` needs the item set its files
@@ -716,8 +715,9 @@ without a `finish` already counts as an attempt.
 The caller computes one absolute cutoff for each attempt. Lock acquisition,
 reservation and transport share it. A caller whose lock wait expires reports
 `attempt not started: ledger unavailable before deadline`, with no reservation
-or request. If a reservation was written but transport did not start, a
-`not_sent` line names its ticket. This still consumes the reserved budget.
+or request. If a reservation was written but no request bytes were
+transmitted, a `not_sent` line names its ticket. Transmission is counted only
+after the socket accepts bytes, including a partial submission that later fails. This still consumes the reserved budget.
 Reservation flushes and completion accounting may finish after the caller
 leaves; CLI exit waits for accounting. Process loss can leave an unfinished
 reservation, whose usage remains not measured.
@@ -849,3 +849,21 @@ items. Public held-out JSON contains aggregate counts and miss ids only;
 full agreement reports remain private. Original timing and billing evidence
 remains in the hosted logs and call ledgers rather than being carried into
 regenerated agreement statistics.
+
+The committed `calibration/classifier/hosted-runs.json` manifest names the
+models, sets, saved verdicts, item scopes and every regenerated output.
+Without private arguments regeneration selects its six development runs;
+with `--heldout-root` and `--private-results` it also selects the four
+held-out runs. Missing declared inputs and unowned published agreement or
+summary files stop the command before any writes. Subset ids select from a
+shared item and gold-label pool. Verdict ids outside that declared scope
+are errors, even with `--allow-partial`; a labels file cannot fill the
+verdict slot. Errors name files relative to the supplied root directories.
+Original accounting and interrupted-invocation evidence is explicitly
+listed separately in the manifest. It is not an agreement output.
+
+Review round 3 on 2026-11-23 changed delivery provenance and hand-back
+judging in the episode path, credential admission, transport accounting and
+saved-report validation. Prompts, configs and calibration verdicts stayed
+unchanged. See the [round 3 record](../../calibration/classifier/review-round3.md)
+for the regressions and verification commands.

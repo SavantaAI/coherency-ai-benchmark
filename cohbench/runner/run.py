@@ -120,12 +120,12 @@ def spec_for(task: Task, cfg: RunConfig, out_dir: Path, metric_dir: Path | None 
 
 
 def host_files(cfg: RunConfig, policy: tuple[str, Path]) -> dict[str, Path]:
-    """The host-only documents a run opens: its policy file, and a scripted
-    upstream's model script (a real upstream's key file is never opened, so
-    never named)."""
+    """Host-only files opened by the policy or a scripted upstream."""
     out = {"user policy": Path(policy[1])}
     if cfg.upstream[0] == "scripted":
         out["model script"] = Path(cfg.upstream[1])
+    if policy[0] == "classifier" and (key := os.environ.get("COHBENCH_CLASSIFIER_KEY_FILE")):
+        out["classifier credential"] = Path(key)
     return out
 
 

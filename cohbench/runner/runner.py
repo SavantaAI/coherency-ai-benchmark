@@ -7,6 +7,7 @@ is written to the event log as it is made.
 
 from __future__ import annotations
 
+import copy
 import dataclasses
 import secrets
 import time
@@ -20,7 +21,7 @@ from cohbench.trajectory import format as F
 
 from . import triggers
 from .eventlog import EventLog, utc_iso
-from .policy import AGENT, ASKING, AWARENESS, USER, Entry, PolicyError, UserPolicy, checked, compose
+from .policy import AGENT, ASKING, AWARENESS, USER, DeliveredTranscript, Entry, PolicyError, UserPolicy, checked, compose
 from .port import Delivery, EpisodeFailure, EpisodePort, MarkAck, Output, Pending, Sent, Turn, TurnNotRunning
 from .task import Event, Task
 from .words import message_words
@@ -246,6 +247,7 @@ class Runner:
         self._last_stamp: datetime | None = None
         self._replayed_to: datetime | None = None  # the end of the last slice replayed
         self._final_replay = False  # the replay in progress is bounded by the episode's end
+        self._batch_pending: list[Output] = []  # batch policies defer streamed outputs until hand-back
         self._carry: list[Output] = []  # outputs dated past the last confirmed instant
         self._pending_deliveries: dict[int, Delivery] = {}
         self._end_at: datetime | None = None
@@ -414,12 +416,16 @@ class Runner:
 
     def _line(self, role: str, text: str, utc: str, **meta: Any) -> None:
         """A transcript row, with the episode clock at its own instant (m2), not at the read."""
+        if role == USER:
+            meta["delivered_ids"] = tuple(meta.get("delivered_ids", ()))
         self.lines.append(_Line(_dt(utc), len(self.lines), Entry(role, text), {"utc": utc, "elapsed_ms": self._elapsed_at(_dt(utc)), **meta}))  # type: ignore[arg-type]
 
-    def transcript(self, as_of: datetime | None = None) -> list[Entry]:
+    def transcript(self, as_of: datetime | None = None) -> DeliveredTranscript:
         """The user-visible transcript in order of delivery, as it stood at
         `as_of`: what the policy gets."""
-        return [x.entry for x in self.ordered() if as_of is None or x.utc <= as_of]
+        lines = [x for x in self.ordered() if as_of is None or x.utc <= as_of]
+        return DeliveredTranscript((x.entry for x in lines),
+                                   (x.meta.get("delivered_ids") for x in lines))
 
     def ordered(self) -> list[_Line]:
         return sorted(self.lines, key=lambda x: (x.utc, x.n))
@@ -808,7 +814,7 @@ class Runner:
         return label
 
     def _replay_upto(self, outputs: tuple[Output, ...] | list[Output], deliveries: list[tuple[datetime, _Queued, Delivery]] | None = None, *,
-                     until: datetime, why: str, final: bool = False, judge: bool = True, label: str | None = None) -> str:
+                     until: datetime, why: str, final: bool = False, judge: bool = True, label: str | None = None, handback_at: datetime | None = None) -> str:
         """The one entry point that replays observations up to an instant, and the
         only way outputs get judged: the normal slice, the reset drain, the late
         confirmation, the dispatch instant and the final replay all call it with
@@ -819,6 +825,16 @@ class Runner:
         outputs are kept: carried to the end replay, or at the end recorded
         unjudged; none is dropped. `final`: the bound is the episode's end.
         Returns the coverage mark's label."""
+        batched = callable(getattr(self.policy, "judge_batch", None))
+        if batched:
+            if why == "coverage" and not final:
+                self._batch_pending.extend(outputs)
+                outputs = []
+            else:
+                outputs = self._batch_pending + list(outputs)
+                self._batch_pending = []
+            if why == "end":
+                judge = False  # no fresh model judgement after the episode ends
         self._bound_from_deadline()
         dl = self._deadline()
         if dl is not None:
@@ -841,7 +857,38 @@ class Runner:
                 self._carry += list(outputs)  # recorded at the end, unjudged (no confirmed log to judge them on)
                 self._requeue(deliveries)
             raise
-        self._replay(outputs, deliveries, until=bound, judge=judge and not self._coverage_failed, final=final)
+        prepared = None
+        if batched and judge and not self._coverage_failed and (outputs or self._carry):
+            # First settle actual user deliveries and timed events. No batch output
+            # enters this snapshot, including outputs collected in earlier slices.
+            carried, self._carry = self._carry, []
+            self._replay([], deliveries, until=bound, judge=True, final=final)
+            self._carry = carried
+            deliveries = []
+            as_of = min(handback_at or bound, bound)
+            tr = self.transcript(as_of=as_of)
+            card = self.task.card_for(self._fired_by(as_of))
+            combined = sorted(carried + list(outputs), key=lambda o: _dt(o.delivered_utc) or as_of)
+            eligible = [o for o in combined if (_dt(o.delivered_utc) or as_of) <= bound]
+            for o in eligible:
+                self._need_item(o)
+            due = self._wall_after(handback_at or bound, self.task.return_delay_ms)
+            cutoff = due - timedelta(seconds=DISPATCH_ALLOWANCE_S)
+            episode_end = self._deadline_at()
+            if episode_end is not None:
+                cutoff = min(cutoff, episode_end - timedelta(seconds=DISPATCH_ALLOWANCE_S))
+            timeout_s = max(0.0, (cutoff - self.utcnow()).total_seconds())
+            try:
+                results = self.policy.judge_batch(copy.deepcopy(card), tr, [o.text for o in eligible], timeout_s=timeout_s) if timeout_s else [None] * len(eligible)
+                if len(results) != len(eligible):
+                    raise PolicyError("judge_batch returned the wrong number of verdicts")
+            except Exception as exc:
+                self._carry.extend(outputs)
+                if isinstance(exc, PolicyError):
+                    raise
+                raise PolicyError(f"judge_batch raised {type(exc).__name__}") from exc
+            prepared = {o.item_id: (j, card, tr, as_of) for o, j in zip(eligible, results)}
+        self._replay(outputs, deliveries, until=bound, judge=judge and not self._coverage_failed, final=final, prepared=prepared)
         return label
 
     def _loop(self) -> None:
@@ -870,7 +917,7 @@ class Runner:
             # The newest instant this slice replays: now, or a delivery dated a hair later on
             # the driver's clock; `_replay_upto` clips it to the deadline. One mark per slice.
             newest = max([slice_at, *(t for t, _q, _d in deliveries), *(d for o in turn.outputs for d in [_dt(o.delivered_utc)] if d is not None)])
-            self._replay_upto(turn.outputs, deliveries, until=newest, why="hand-back" if handback else "coverage")
+            self._replay_upto(turn.outputs, deliveries, until=newest, why="hand-back" if handback else "coverage", handback_at=hb_instant if handback else None)
             g = self._grace_at()
             if g is not None and ((handback and hb_instant > g) or (not handback and self.utcnow() >= g)):
                 # D-046: the reset's grace ran out before any hand-back. Which came first is
@@ -986,7 +1033,7 @@ class Runner:
             self.pending = t.pending
             self._report_at = self.utcnow()
             newest = max([at, *(d for o in t.outputs for d in [_dt(o.delivered_utc)] if d is not None)])
-            self._replay_upto(t.outputs, until=newest, why="hand-back", final=True)
+            self._replay_upto(t.outputs, until=newest, why="hand-back", final=True, handback_at=at)
             self._hand_back(t, at)
         else:
             self._carry += list(t.outputs)
@@ -994,7 +1041,7 @@ class Runner:
     # ----- one timeline -------------------------------------------------------------------
 
     def _replay(self, outputs: tuple[Output, ...] | list[Output], deliveries: list[tuple[datetime, _Queued, Delivery]] | None = None, *,
-                until: datetime | None = None, judge: bool = True, final: bool = False) -> None:
+                until: datetime | None = None, judge: bool = True, final: bool = False, prepared=None) -> None:
         """A slice as a replay in time order of everything that happened in
         it (V2, S3, B3): watcher batches beginning and coming into effect,
         elapsed-time thresholds (also those that become known when their
@@ -1054,7 +1101,7 @@ class Runner:
                 if x[0] != "output":
                     continue
                 try:
-                    self._output(x[1], t)
+                    self._output(x[1], t, prepared)
                     pending.remove(x[1])
                     judged = True
                 except PolicyError:
@@ -1131,19 +1178,26 @@ class Runner:
 
     # ----- outputs and verdicts ------------------------------------------------------------
 
-    def _output(self, o: Output, t: datetime) -> None:
-        """Judge one output, once, against the transcript and card as they stood at its delivery."""
+    def _output(self, o: Output, t: datetime, prepared=None) -> None:
+        """Apply one result in output order. Legacy policies are judged here."""
         self._need_item(o)
+        if prepared is not None:
+            j, card, tr, snapshot_at = prepared[o.item_id]
+            if j is None:
+                self._unjudged(o)
+                return
+        else:
+            snapshot_at = t
+            card = self.task.card_for(self._fired_by(t))
+            tr = self.transcript(as_of=t)
+            try:
+                j = self.policy.judge(copy.deepcopy(card), tr, o.text)
+            except PolicyError:
+                raise
+            except Exception as exc:
+                raise PolicyError(f"judge raised {exc!r}") from exc
         self.ctx.outputs += 1
-        card = self.task.card_for(self._fired_by(t))
-        texts = Task.card_texts(card)  # before the call: what the policy does to its copy changes nothing here
-        tr = self.transcript(as_of=t)
-        try:
-            j = self.policy.judge(card, tuple(tr), o.text)
-        except PolicyError:
-            raise
-        except Exception as exc:  # noqa: BLE001 - the policy is outside the runner; its crash is a runner abort
-            raise PolicyError(f"judge raised {exc!r}") from exc
+        texts = Task.card_texts(card)
         j = checked(j)
         reply = compose(j, texts, tr, self.task.replies.unanswerable, self.task.replies.already_given)
         # One delivery time (D-027, sixth trajectory review): the verdict, the
@@ -1156,7 +1210,9 @@ class Runner:
         self._line(AGENT, o.text, o.delivered_utc or utc, label=j.label, output_kind=o.kind, item=o.item_id)
         row = {"utc": utc, "elapsed_ms": self._elapsed_at(t), "output": {"item": o.item_id}, "output_kind": o.kind, "text": o.text, "label": j.label,
                "answer_ids": list(j.answer_ids), "quote_of": j.quote_of, "quote": j.quote, "reply": reply, "record": dict(j.record),
-               "card_items": sorted(texts), "as_of": utc_us(t)}
+               "card_items": sorted(texts), "as_of": utc_us(snapshot_at)}
+        if prepared is not None:
+            row["batch_outputs"] = list(prepared)
         self.classifier.append(row)
         self.log.write("verdict", **row)
 
@@ -1422,9 +1478,9 @@ class Runner:
         # answered under an earlier wait; a request that arrived since (a third
         # subagent's, say) gets this hand-back's own wait, and so does a held secret
         # request's refusal (it is no reply of the earlier wait).
-        fresh = [o for o in first.replies_to if o.item_id not in self._waited]
-        if secret and marked is not None and marked not in self._waited:
-            fresh.append(next(s.output for s in outs if s.output.item_id == marked))
+        fresh = any(o.item_id not in self._waited for o in first.replies_to)
+        # The fixed refusal needs its wait even when the secret has no verdict.
+        fresh |= secret and marked is not None and marked not in self._waited
         if self._shared_wait and not fresh:
             self.log.write("wait_shared", request=marked, why="pending at an earlier hand-back, whose wait covered it")
             due = first
@@ -1445,7 +1501,12 @@ class Runner:
             self.log.write("policy_overridden", by=[e.name for e in due.delivered if e.action.type == "message" and e.action.override_policy])
         via = "refuse_secret" if secret else "answer" if self.pending is not None else "reply"
         pending = self.pending
-        sent = self._send(text, due.kind, via, due.meta)
+        delivered_ids = tuple(dict.fromkeys(
+            item for seen, _ in due.used if seen.label == "answerable"
+            and not (secret and seen.output.kind == "secret")
+            for item in seen.verdict["fields"]["answer_ids"]
+        ))
+        sent = self._send(text, due.kind, via, due.meta, delivered_ids=delivered_ids)
         ref = self._msg_ref(sent, pending)
         for s, reply in due.used:
             s.verdict["fields"]["reply"] = reply
@@ -1897,7 +1958,7 @@ class Runner:
         self.after_deadline.append({"kind": kind, "via": via, "sent_utc": sent.utc, "message": sent.message_id, "text": text})
         self._cutoff("time", at=self._deadline_at())
 
-    def _send(self, text: str, kind: str, via: str, meta: list[dict[str, Any]], *, check_late: bool = True) -> Sent:
+    def _send(self, text: str, kind: str, via: str, meta: list[dict[str, Any]], *, check_late: bool = True, delivered_ids: tuple[str, ...] = ()) -> Sent:
         limit = self._dispatch_gate()
         if via == "reset":
             # The handoff has its own infrastructure timeout (the driver's), not the episode
@@ -1955,7 +2016,7 @@ class Runner:
         self.pending = None
         ref = self._msg_ref(sent, pending)
         self._record_send(sent, text, kind, via, meta, ref=ref, submitted=submitted)
-        self._line(USER, text, sent.utc, kind=kind, ref=ref, shown_as=_shown_as(kind, meta))
+        self._line(USER, text, sent.utc, kind=kind, ref=ref, shown_as=_shown_as(kind, meta), delivered_ids=delivered_ids)
         return sent
 
     def _dispatch(self, text: str, via: str, pending: Pending | None, limit: dict[str, Any]) -> Sent:

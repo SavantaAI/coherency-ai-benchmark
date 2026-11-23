@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from cohbench.runner.policy import Entry, Judgement, compose
+from cohbench.runner.policy import DeliveredTranscript, Entry, Judgement, compose
 from cohbench.runner.task import Task
 from cohbench.user import classifier as C
 from cohbench.user import prompts as P
@@ -60,10 +60,10 @@ def test_m1_own_answer_is_decided_in_code(fake, cfg):
     fake.decide = asked_items({"slot": "A"})
     first = pol.judge(CARD, (OPEN,), q)
     assert first.label == "answerable" and first.answer_ids == ("slot",)
-    tr = (OPEN, Entry("agent", q), Entry("user", runner_reply(CARD, ["slot"])))
+    tr = DeliveredTranscript((OPEN, Entry("agent", q), Entry("user", runner_reply(CARD, ["slot"]))), ((), None, ("slot",)))
     again = pol.judge(CARD, tr, "Before I finish: which batch gets the nightly slot?")
     assert again.label == "already_given" and again.quote_of == 2 and again.quote is None
-    assert again.record["decided_by"] == "told_own_reply" and "told" not in types(again)
+    assert again.record["decided_by"] == "told_delivery" and "told" not in types(again)
 
 
 def test_m1_reviewers_case_overlapping_texts(fake, cfg):
@@ -145,7 +145,7 @@ def test_m1_a_failed_verdict_is_not_remembered(fake, cfg, monkeypatch):
     monkeypatch.setattr(C, "_total_usage", lambda asked: (setattr(clock, "t", clock.t + 999), real(asked))[1])
     with pytest.raises(EndpointError):
         pol.judge(CARD, (OPEN,), "Which keeps the nightly slot?")
-    assert pol._answered == []
+    assert pol.told_by_delivery("slot", (OPEN,)) is None
 
 
 def test_run_uses_a_fresh_policy_per_item(tmp_path, key_file):
@@ -347,20 +347,20 @@ def test_label_completion_prompt_at_end_of_input(tmp_path):
 
 # ----- final review pass ----------------------------------------------------------------------------
 
-def test_f1_deadline_crossed_while_preparing_the_reply_memory(fake, cfg, monkeypatch):
+def test_f1_deadline_crossed_while_preparing_the_final_record(fake, cfg, monkeypatch):
     clock = Clock()
     pol = policy(cfg, clock=clock)
     fake.decide = asked_items({"slot": "A"})
-    real = Task.card_texts
+    real = C._total_usage
 
-    def slow(card):
+    def slow(questions):
         clock.t += cfg.limits["verdict_deadline_s"] + 0.001
-        return real(card)
+        return real(questions)
 
-    monkeypatch.setattr(C.Task, "card_texts", staticmethod(slow))
+    monkeypatch.setattr(C, "_total_usage", slow)
     with pytest.raises(EndpointError, match="deadline"):
         pol.judge(CARD, (OPEN,), "Which batch keeps the nightly slot?")
-    assert pol._answered == []
+    assert pol.told_by_delivery("slot", (OPEN,)) is None
 
 
 def test_f2_line_and_direction_controls_are_escaped_and_round_trip():

@@ -3,9 +3,8 @@ open-weight model that only ever picks one option key.
 
 `Classifier(cfg, client)` satisfies `cohbench.runner.policy.UserPolicy`.
 `factory(cfg, client)` gives a `PolicyFactory` for the runner; every policy
-it makes shares the one endpoint client. A policy lives for one episode and
-remembers one thing between verdicts: which card items its own `answerable`
-verdicts named, and the reply the runner composes from them.
+it makes shares the one endpoint client. Delivered card-item ids come from
+the runner's transcript side channel. Proposed replies create no delivery state.
 
 How one verdict is reached (README.md, "Question structure"):
 
@@ -15,11 +14,9 @@ How one verdict is reached (README.md, "Question structure"):
 3. Options, for each item answered A: if the message asks the user to pick
    between options, can the user tell which one the item picks or rules out?
    C (only internal names) and D (the item does not separate them) drop it.
-4. For each item kept: had the user already told the agent? In code only
-   when this policy named the item in an earlier `answerable` verdict and the
-   reply the runner composed from that verdict appears, as a whole user
-   message, after the output it judged. Otherwise the model picks the
-   earlier user message or none.
+4. For each item kept: had the user already told the agent? The runner's
+   delivered ids name the actual message. Model inference is used only for
+   unannotated calibration messages, never for a runner message with no ids.
 5. If no item was kept: did an earlier user message already answer the
    request? The model picks the message or none.
 
@@ -30,12 +27,14 @@ in step 5; otherwise `unanswerable`.
 
 from __future__ import annotations
 
+import copy
 import math
+import threading
+import time
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
 from cohbench.runner.policy import AGENT, USER, AwarenessJudgement, Entry, Judgement, PolicyError, PolicyFactory
-from cohbench.runner.task import Task
 
 from . import prompts as P
 from .api import Client, EndpointError
@@ -79,17 +78,6 @@ class _Chain:
         return got
 
 
-@dataclass(frozen=True)
-class _Answered:
-    """An `answerable` verdict this policy gave: the output it judged, where
-    that output sits in the transcript, the items it named and the reply the
-    runner composes from them."""
-
-    position: int
-    output: str
-    ids: tuple[str, ...]
-    reply: str
-
 
 def estimate(cfg: Config, text: str) -> int:
     """Tokens for `text`, estimated from its length. No tokenizer is available
@@ -107,24 +95,12 @@ class Classifier:
         self.cfg = cfg
         self.client = client
         self.code = code_revision()  # once, before any verdict: nothing slow runs after the deadline check
-        self._answered: list[_Answered] = []
 
-    # ----- what this policy caused ---------------------------------------------------------
-
-    def told_by_own_reply(self, item_id: str, transcript: Sequence[Entry]) -> int | None:
-        """The index of the user message that carried this policy's own earlier
-        answer naming `item_id`, or None. The output that verdict judged must
-        still be where it was, and the user message must equal the reply the
-        runner composed from it and come after that output."""
-        for a in reversed(self._answered):
-            if item_id not in a.ids:
-                continue
-            if a.position >= len(transcript) or transcript[a.position].role != AGENT or transcript[a.position].text != a.output:
-                continue
-            for i in range(len(transcript) - 1, a.position, -1):
-                if transcript[i].role == USER and transcript[i].text == a.reply:
-                    return i
-        return None
+    def told_by_delivery(self, item_id: str, transcript: Sequence[Entry]) -> int | None:
+        """The actual delivered message carrying an item, as the runner records it."""
+        deliveries = getattr(transcript, "delivered_ids", (None,) * len(transcript))
+        return next((i for i in range(len(transcript) - 1, -1, -1)
+                     if transcript[i].role == USER and item_id in (deliveries[i] or ())), None)
 
     # ----- context ---------------------------------------------------------------------
 
@@ -196,26 +172,64 @@ class Classifier:
 
     # ----- the verdict -------------------------------------------------------------------
 
-    def judge(self, card: Mapping[str, Any], transcript: Sequence[Entry], output: str) -> Judgement:
-        t0 = self.client.clock()
-        with self.client.session():
+    def judge(self, card: Mapping[str, Any], transcript: Sequence[Entry], output: str, *, deadline=None, client=None) -> Judgement:
+        client = client or self.client
+        t0 = client.clock()
+        deadline = min(deadline if deadline is not None else math.inf, t0 + self.cfg.limits["verdict_deadline_s"])
+        with client.session():
             ctx, note = self._layout(card, transcript, output)
-            ch = _Chain(self.client, [{"role": "system", "content": P.SYSTEM}], t0 + self.cfg.limits["verdict_deadline_s"], pending=ctx)
+            ch = _Chain(client, [{"role": "system", "content": P.SYSTEM}], deadline, pending=ctx)
             label, ids, quote_of, quote, how = self._decide(ch, card, transcript)
             rec = {"classifier": "cohbench.user", "code": self.code, "config": self.cfg.digest, "prompt": P.VERSION, "context": note,
                    "questions": ch.asked, "decided_by": how, "usage": _total_usage(ch.asked),
                    "ms": round((self.client.clock() - t0) * 1000)}
             j = Judgement(label, answer_ids=tuple(ids), quote_of=quote_of, quote=quote, record=rec)
-            memo = None
-            if label == "answerable":  # prepared now, kept only if the verdict stands
-                texts = Task.card_texts(dict(card))
-                memo = _Answered(len(transcript), output, tuple(ids), " ".join(texts[i] for i in dict.fromkeys(ids)))
             # The last check before returning: a verdict complete after its deadline is no verdict.
             if self.client.clock() > ch.deadline:
                 raise EndpointError("the verdict's deadline passed before the verdict was complete")
-            if memo is not None:
-                self._answered.append(memo)  # a list append: nothing that takes time runs after the check
             return j
+
+    def judge_batch(self, card, transcript, outputs, *, timeout_s):
+        """Independent judgements with one cutoff and stable output positions.
+
+        Late daemon workers cannot change delivery state or runner records.
+        The real monotonic wait also bounds test clients with stationary clocks.
+        """
+        budget = max(0, min(timeout_s, self.cfg.limits["verdict_deadline_s"]))
+        cutoff = self.client.clock() + budget
+        wall_cutoff = time.monotonic() + budget
+        results = [None] * len(outputs)
+        done = [threading.Event() for _ in outputs]
+        closed = threading.Event()
+        gate = threading.Lock()
+
+        def work(index, output):
+            try:
+                result = self.judge(copy.deepcopy(card), transcript, output,
+                                    deadline=cutoff, client=self.client.fork())
+            except EndpointError as exc:
+                result = None if "deadline" in str(exc) or "timeout" in str(exc) else exc
+            except Exception as exc:
+                result = exc
+            with gate:
+                if not closed.is_set() and self.client.clock() <= cutoff and time.monotonic() <= wall_cutoff:
+                    results[index] = result
+                done[index].set()
+
+        if budget:
+            for i, output in enumerate(outputs):
+                if self.client.clock() >= cutoff or time.monotonic() >= wall_cutoff:
+                    break
+                threading.Thread(target=work, args=(i, output), daemon=True).start()
+            for event in done:
+                event.wait(max(0, min(cutoff - self.client.clock(), wall_cutoff - time.monotonic())))
+        with gate:
+            closed.set()
+            answer = list(results)
+        for result in answer:
+            if isinstance(result, Exception):
+                raise result
+        return answer
 
     def _decide(self, ch: _Chain, card: Mapping[str, Any], transcript: Sequence[Entry]) -> tuple[str, list[str], int | None, str | None, str]:
         if ch.ask(P.Q_REQUEST, ("A", "B"), "request") == "B":
@@ -232,12 +246,16 @@ class Classifier:
         fresh: list[str] = []
         told: list[tuple[int, str | None, str]] = []
         for _, it in picked:
-            i = self.told_by_own_reply(it["id"], transcript)
+            i = self.told_by_delivery(it["id"], transcript)
             if i is not None:
-                told.append((i, None, "told_own_reply"))
+                told.append((i, None, "told_delivery"))
                 continue
-            if users:
-                got = ch.ask(P.q_told(it["id"], uopts), nkeys, "told", it["id"])
+            # Model inference is only for unannotated calibration messages.
+            # A delivered message assigned to another item is not an option.
+            deliveries = getattr(transcript, "delivered_ids", (None,) * len(transcript))
+            unknown = [(n, text) for n, text in uopts if deliveries[n - 1] is None]
+            if unknown:
+                got = ch.ask(P.q_told(it["id"], unknown), tuple(str(n) for n, _ in unknown) + ("N",), "told", it["id"])
                 if got != "N":
                     told.append((int(got) - 1, None, "told_model"))
                     continue

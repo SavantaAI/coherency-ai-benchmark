@@ -23,11 +23,16 @@ from cohbench.user.items import (
     read_answers,
 )
 
-MODELS = ("kimi-k3.1-pro", "deepseek-v4.1-flash-uncensored")
 RECOMMENDATION_COMMIT = "ecc73b7eb1122f28f88de92a0443ed154c608f1f"
 
 
 def coverage(ids, first, second, allow_partial):
+    for name, entries in (("gold", first), ("verdict", second)):
+        extra = set(entries) - ids
+        if extra:
+            raise ItemError(
+                f"{name} ids outside the manifest item set: {sorted(extra)}"
+            )
     info = {
         "complete": set(first) == set(second) == ids,
         "compared": len(ids & set(first) & set(second)),
@@ -45,33 +50,60 @@ def coverage(ids, first, second, allow_partial):
 def turn_report(items_dir, labels_path, verdicts_path, allow_partial, selected=None):
     items = load_items([items_dir])
     digest = items_digest(items)
+    ids = item_scope(items, selected)
     sides = []
-    for path in (labels_path, verdicts_path):
-        _, head, entries = read_answers(path)
+    for expected, path in (("labels", labels_path), ("verdicts", verdicts_path)):
+        kind, head, entries = read_answers(path)
+        if kind != expected:
+            raise ItemError(f"{path.name}: expected a {expected} file")
         if head["items"] != digest:
             raise ItemError(f"{path.name}: another item-set digest")
         sides.append(checked_entries(entries, {i.id: i for i in items}, path.name))
-    if selected is not None:
-        items = [i for i in items if i.id in selected]
-        sides = [
-            {i: v for i, v in entries.items() if i in selected} for entries in sides
-        ]
-    cov = coverage({i.id for i in items}, *sides, allow_partial)
+    # Gold may cover the shared source pool. Verdicts must cover only this run.
+    sides[0] = {i: v for i, v in sides[0].items() if i in ids}
+    cov = coverage(ids, *sides, allow_partial)
+    items = [i for i in items if i.id in ids]
     rep = compare(items, *sides)
     rep["coverage"] = cov
     return rep, render(rep, items, ("gold", "classifier")) + "\n"
 
 
-def aware_report(items_dir, labels_path, verdicts_path, allow_partial):
+def item_scope(items, selected):
+    available = {i.id for i in items}
+    if selected is None:
+        return available
+    if not isinstance(selected, list) or len(set(selected)) != len(selected):
+        raise ItemError("manifest item ids must be a list without duplicates")
+    ids = set(selected)
+    if ids - available:
+        raise ItemError(
+            f"manifest item ids missing from inputs: {sorted(ids - available)}"
+        )
+    return ids
+
+
+def aware_report(items_dir, labels_path, verdicts_path, allow_partial, selected=None):
     items = load_items([items_dir])
     digest = items_digest(items)
-    ids = {i.id for i in items}
+    ids = item_scope(items, selected)
+    available = {i.id for i in items}
     labels = json.loads(labels_path.read_text())
     verdicts = json.loads(verdicts_path.read_text())
+    if (
+        labels.get("format")
+        not in ("cohbench-awareness-labels", "cohbench-heldout-awareness-labels")
+        or labels.get("version") != 1
+    ):
+        raise ItemError(f"{labels_path.name}: expected an awareness labels file")
+    if (
+        verdicts.get("format") != "cohbench-awareness-verdicts"
+        or verdicts.get("version") != 1
+    ):
+        raise ItemError(f"{verdicts_path.name}: expected an awareness verdicts file")
     if labels["items"] != digest or verdicts["items"] != digest:
         raise ItemError("awareness labels or verdicts have another item-set digest")
-    first = outcomes(labels["labels"], ids)
-    second = outcomes(verdicts["verdicts"], ids)
+    first = {i: v for i, v in outcomes(labels["labels"], available).items() if i in ids}
+    second = outcomes(verdicts["verdicts"], available)
     cov = coverage(ids, first, second, allow_partial)
     rep = awareness_report(first, second)
     rep["coverage"] = cov
@@ -139,57 +171,135 @@ def public_report(rep, awareness=False):
     return result
 
 
-def regenerate(root, heldout_root=None, private_results=None, allow_partial=False):
-    writes, heads = {}, {}
-    dev = root / "calibration/classifier/dev"
-    archive = dev / "hosted-run-2026-11-23"
-    for verdicts in sorted(archive.glob("*-verdicts.json")):
-        name = verdicts.name.removesuffix("-verdicts.json")
-        if name == "glm-compatibility":
-            continue
-        selected = None
-        if name.endswith("-subset"):
-            selected = set(json.loads((archive / "subset.json").read_text())["ids"])
-        rep, text = turn_report(
-            dev / "items", dev / "labels.json", verdicts, allow_partial, selected
+def manifest_path(roots, owner, name):
+    base = roots.get(owner)
+    path = Path(name)
+    if owner not in roots or path.is_absolute() or ".." in path.parts:
+        raise ItemError("manifest paths must be relative to a declared root")
+    return None if base is None else base / path
+
+
+def preflight(root, heldout_root, private_results):
+    roots = {"repo": root, "heldout": heldout_root, "private": private_results}
+    manifest = json.loads(
+        (root / "calibration/classifier/hosted-runs.json").read_text()
+    )
+    if manifest.get("version") != 1 or not isinstance(manifest.get("runs"), list):
+        raise ItemError("unsupported run manifest")
+    selected, owned, directories, names = [], set(), set(), set()
+    for run in manifest["runs"]:
+        if run["name"] in names:
+            raise ItemError(f"duplicate manifest run: {run['name']}")
+        names.add(run["name"])
+        if run["kind"] not in ("turn", "awareness") or run["set"] not in (
+            "development",
+            "heldout",
+        ):
+            raise ItemError(f"invalid manifest run: {run['name']}")
+        paths = {}
+        for field in ("items", "labels"):
+            paths[field] = manifest_path(
+                roots, run["inputs"]["root"], run["inputs"][field]
+            )
+        paths["verdicts"] = manifest_path(
+            roots, run["verdicts"]["root"], run["verdicts"]["path"]
         )
-        writes[archive / f"{name}-agreement.json"] = rep
-        writes[archive / f"{name}-agreement.txt"] = text
-        # Every statistical summary is rebuilt; original timing stays in run logs.
-        writes[archive / f"{name}-summary.json"] = public_report(rep)
-        heads[name] = rep
-    if heldout_root is not None:
-        public = root / "calibration/classifier/heldout-run-2026-11-23"
-        result = {
-            "recommendation_commit": RECOMMENDATION_COMMIT,
-            "complete": True,
-            "models": {},
-        }
-        for model in MODELS:
-            stats = {}
-            for kind in ("turn", "awareness"):
-                name = f"{model}-{kind}"
-                if kind == "turn":
-                    rep, text = turn_report(
-                        heldout_root / "items",
-                        heldout_root / "labels-author.json",
-                        private_results / f"{name}-verdicts.json",
-                        allow_partial,
+        paths["outputs"] = {}
+        for field, name in run["outputs"].items():
+            if field == "root":
+                continue
+            if field not in ("json", "text", "summary"):
+                raise ItemError(f"unknown manifest output: {field}")
+            path = manifest_path(roots, run["outputs"]["root"], name)
+            paths["outputs"][field] = path
+            if path is not None:
+                if path in owned:
+                    raise ItemError(f"duplicate manifest output: {name}")
+                owned.add(path)
+                directories.add(path.parent)
+        if not {"json", "text"} <= paths["outputs"].keys():
+            raise ItemError(f"manifest run lacks agreement outputs: {run['name']}")
+        paths["aggregate"] = None
+        if "aggregate" in run:
+            path = manifest_path(roots, "repo", run["aggregate"])
+            paths["aggregate"] = path
+            owned.add(path)
+            directories.add(path.parent)
+        if run["set"] == "heldout" and heldout_root is None:
+            continue
+        if any(
+            paths[field] is None for field in ("items", "labels", "verdicts")
+        ) or any(p is None for p in paths["outputs"].values()):
+            raise ItemError(f"manifest run requires an unavailable root: {run['name']}")
+        for field in ("items", "labels", "verdicts"):
+            path = paths[field]
+            if not (path.is_dir() if field == "items" else path.is_file()):
+                raise FileNotFoundError(2, "missing input", str(path))
+        selected.append((run, paths))
+    for evidence in manifest.get("evidence", []):
+        path = manifest_path(roots, evidence["root"], evidence["path"])
+        if path is not None:
+            owned.add(path)
+    # Check all public report directories, including a stale directory whose
+    # entire run was removed from the manifest. Never scan held-out inputs.
+    for directory in (root / "calibration/classifier", private_results):
+        if directory is not None:
+            directories.add(directory)
+    for directory in directories:
+        for pattern in (
+            "*-agreement.json",
+            "*-agreement.txt",
+            "*-summary.json",
+            "results.json",
+        ):
+            for path in directory.rglob(pattern):
+                if path not in owned:
+                    raise ItemError(
+                        f"published output has no manifest owner: {relative_name(path, roots.values())}"
                     )
-                else:
-                    rep, text = aware_report(
-                        heldout_root / "awareness",
-                        heldout_root / "awareness-labels-author.json",
-                        private_results / f"{name}-verdicts.json",
-                        allow_partial,
-                    )
-                writes[private_results / f"{name}-agreement.json"] = rep
-                writes[private_results / f"{name}-agreement.txt"] = text
-                stats[kind] = public_report(rep, awareness=kind == "awareness")
-                result["complete"] &= rep["coverage"]["complete"]
-                heads[f"{model}-heldout-{kind}"] = rep
-            result["models"][model] = stats
-        writes[public / "results.json"] = result
+    return selected
+
+
+def relative_name(path, roots):
+    path = Path(path).absolute()
+    for root in sorted(
+        (Path(r).absolute() for r in roots if r is not None),
+        key=lambda r: len(str(r)),
+        reverse=True,
+    ):
+        if path.is_relative_to(root):
+            return str(path.relative_to(root))
+    return path.name
+
+
+def regenerate(root, heldout_root=None, private_results=None, allow_partial=False):
+    writes, heads, aggregates = {}, {}, {}
+    for run, paths in preflight(root, heldout_root, private_results):
+        report = turn_report if run["kind"] == "turn" else aware_report
+        rep, text = report(
+            paths["items"],
+            paths["labels"],
+            paths["verdicts"],
+            allow_partial,
+            run["inputs"].get("ids"),
+        )
+        public = public_report(rep, awareness=run["kind"] == "awareness")
+        values = {"json": rep, "text": text, "summary": public}
+        for field, path in paths["outputs"].items():
+            writes[path] = values[field]
+        if paths["aggregate"] is not None:
+            result = aggregates.setdefault(
+                paths["aggregate"],
+                {
+                    "recommendation_commit": RECOMMENDATION_COMMIT,
+                    "complete": True,
+                    "models": {},
+                },
+            )
+            result["models"].setdefault(run["model"], {})[run["kind"]] = public
+            result["complete"] &= rep["coverage"]["complete"]
+        heads[run["name"]] = rep
+    writes.update(aggregates)
     for path, value in writes.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
@@ -228,8 +338,18 @@ def main(argv=None):
         parser.error("--heldout-root and --private-results must be supplied together")
     try:
         regenerate(ROOT, args.heldout_root, args.private_results, args.allow_partial)
-    except (ItemError, ValueError) as exc:
-        print(f"error: {exc}", file=sys.stderr)
+    except OSError as exc:
+        name = relative_name(
+            exc.filename or "input", (ROOT, args.heldout_root, args.private_results)
+        )
+        print(f"error: cannot read or write file: {name}", file=sys.stderr)
+        return 1
+    except (ItemError, ValueError, KeyError, TypeError) as exc:
+        message = str(exc)
+        for root in (ROOT, args.heldout_root, args.private_results):
+            if root is not None:
+                message = message.replace(str(root.absolute()) + "/", "")
+        print("error: " + " ".join(message.splitlines()), file=sys.stderr)
         return 1
     return 0
 
