@@ -174,7 +174,7 @@ Using a geometric mean prevents two strong sub-scores from masking a collapsed t
 To ensure scores measure coherency rather than raw problem-solving ability:
 
 1. **Design-time floor.** Every atomic step must pass the 90% isolation bar in Section 4.
-2. **Eligibility bar.** Each task family includes explicit-instruction controls that name the exact answer or next action. A model must pass at least 90% of controls to be ranked in that family (for Explanation, this means identifying the cause when asked directly). Models below the bar are published as *unranked* with raw numbers.
+2. **Eligibility bar.** Each task family includes explicit-instruction controls that name the exact answer or next action. A model must pass at least 90% of controls to be ranked in that family (for Explanation, this means identifying the cause when asked directly). The bar is applied separately for each mode and horizon: a result at one mode and horizon is ranked only on the controls run at that same mode and horizon. Models below the bar are published as *unranked* with raw numbers.
 3. **No cherry-picking.** Once a model is eligible, every trial counts, including failures.
 4. **Diagnostic probes.** The probe table reveals how many failures occurred even when the agent had the required fact in context.
 5. **Correlation transparency.** Every release reports the rank correlation between the coherency headline and a capability composite, without adjusting the headline for it.
